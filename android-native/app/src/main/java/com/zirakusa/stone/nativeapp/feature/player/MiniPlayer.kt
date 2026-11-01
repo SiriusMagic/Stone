@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +25,8 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-@Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit, song: Song? = null) {
+@Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
+    song: Song? = null, onEnergySaver: () -> Unit = {}) {
     if (state.queue.isEmpty()) return
     Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp).clickable(onClick = open),
         shape = RoundedCornerShape(24.dp), color = StonePalette.MiniBackground,
@@ -37,6 +40,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 Text(stringResource(if (state.playing) R.string.now_playing else R.string.tap_to_play),
                     Modifier.padding(top = 4.dp), color = StonePalette.MiniSubtitle, fontSize = 12.sp,
                     maxLines = 1, letterSpacing = 0.sp)
+            }
+            IconButton(onClick = onEnergySaver) {
+                Icon(Icons.Default.BatterySaver, "Modo de ahorro de energía", tint = StonePalette.Yellow)
             }
             StoneIconButton(StoneGlyph.Options, stringResource(R.string.queue), open)
             StoneIconButton(if (state.playing) StoneGlyph.Pause else StoneGlyph.Play,

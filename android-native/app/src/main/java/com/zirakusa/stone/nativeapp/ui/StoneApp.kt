@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
     var language by rememberSaveable { mutableStateOf(settingsStore.read().language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
+    var energySaver by rememberSaveable { mutableStateOf(false) }
     val state by library.state.collectAsStateWithLifecycle()
     val player by playback.state.collectAsStateWithLifecycle()
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
@@ -79,13 +80,14 @@ import kotlinx.coroutines.delay
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
-        if (!playerOpen) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            state.songs.find { it.id == player.currentId })
+        if (!playerOpen && !energySaver) MiniPlayer(player, { playerOpen = true }, playback::toggle,
+            state.songs.find { it.id == player.currentId }, onEnergySaver = { energySaver = true })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
-            if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
+            if (energySaver) EnergySaverScreen(player, playback) { energySaver = false }
+            else if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
                 { playerOpen = false }, library::hide, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f))
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },

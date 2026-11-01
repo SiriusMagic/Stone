@@ -11,8 +11,8 @@ android {
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.4.2"
+        versionCode = 9
+        versionName = "1.4.4"
     }
     buildFeatures { compose = true }
     testOptions {

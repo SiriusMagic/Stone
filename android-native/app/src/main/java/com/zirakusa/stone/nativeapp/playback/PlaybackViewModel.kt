@@ -96,7 +96,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
 
     private fun publish() {
         val player = controller ?: return
-        equalizer.attach(StonePlaybackService.playbackAudioSessionId)
         mutable.value = PlaybackState(ready = true,
             title = player.mediaMetadata.title?.toString().orEmpty(),
             artist = player.mediaMetadata.artist?.toString().orEmpty(), playing = player.isPlaying,
@@ -181,12 +180,25 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         }
         publish()
     }
-    fun playAt(index: Int) { controller?.run { seekToDefaultPosition(index); play() } }
+    fun playAt(index: Int) {
+        controller?.takeIf { index in 0 until it.mediaItemCount }?.run {
+            seekToDefaultPosition(index); play()
+        }
+    }
     fun move(from: Int, to: Int) {
         val player = controller ?: return
         if (from !in 0 until player.mediaItemCount || to !in 0 until player.mediaItemCount || from == to) return
         player.moveMediaItem(from, to)
         originalQueueIds = queueIds(player)
+        publish()
+    }
+
+    fun removeAt(index: Int) {
+        controller?.takeIf { index in 0 until it.mediaItemCount }?.run {
+            removeMediaItem(index)
+            originalQueueIds = queueIds(this)
+            publish()
+        }
     }
 
     private fun queueIds(player: Player): List<String> = List(player.mediaItemCount) {

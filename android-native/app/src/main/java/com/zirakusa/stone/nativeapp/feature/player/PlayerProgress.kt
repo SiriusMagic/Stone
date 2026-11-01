@@ -24,7 +24,9 @@ import kotlinx.coroutines.isActive
             do {
                 progress = playback.progress()
                 if (!state.playing) break
-                delay(1000)
+                // A half-second cadence keeps timed lyrics responsive without
+                // introducing a background service or a permanent worker.
+                delay(500)
             } while (isActive)
         }
     }

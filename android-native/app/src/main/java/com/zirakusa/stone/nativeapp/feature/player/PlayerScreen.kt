@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +45,7 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.data.library.SongActions
+import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
@@ -63,19 +65,27 @@ import kotlinx.coroutines.withContext
     var optionsVisible by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf<PlayerTool?>(null) }
     var energySaver by remember { mutableStateOf(false) }
+    val dynamicBackground by produceState(Color(0xFF0D0C11), song?.uri, song?.modifiedMs) {
+        value = withContext(Dispatchers.IO) {
+            song?.uri?.let { uri -> ArtworkLoader.load(context.applicationContext, uri, song.modifiedMs) }
+                ?.let(::coverBackgroundColor) ?: Color(0xFF0D0C11)
+        }
+    }
     if (energySaver) {
         EnergySaverScreen(state, playback) { energySaver = false }
         return
     }
     val progress = rememberPlayerProgress(state, playback)
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier.fillMaxSize().background(dynamicBackground)) {
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
-            onOptions = { optionsVisible = true }, onQueue = { queueVisible = true })
+            onOptions = { optionsVisible = true }, onEqualizer = { tool = PlayerTool.Equalizer },
+            onQueue = { queueVisible = true })
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             onOptions = { optionsVisible = true }, onLyrics = { lyricsVisible = true },
+            onEqualizer = { tool = PlayerTool.Equalizer },
             onQueue = { queueVisible = true })
     } else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
@@ -127,7 +137,7 @@ import kotlinx.coroutines.withContext
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton(onClick = { optionsVisible = true }) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+            IconButton(onClick = { tool = PlayerTool.Equalizer }) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
             CurrentLyricChip(song, progress.first, { lyricsVisible = true }, Modifier.weight(1f))
             IconButton(onClick = { queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
         }
@@ -163,9 +173,24 @@ import kotlinx.coroutines.withContext
     }
 }
 
+private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
+    var red = 0L; var green = 0L; var blue = 0L; var count = 0L
+    val stepX = (bitmap.width / 24).coerceAtLeast(1)
+    val stepY = (bitmap.height / 24).coerceAtLeast(1)
+    for (y in 0 until bitmap.height step stepY) for (x in 0 until bitmap.width step stepX) {
+        val pixel = bitmap.getPixel(x, y)
+        red += android.graphics.Color.red(pixel); green += android.graphics.Color.green(pixel)
+        blue += android.graphics.Color.blue(pixel); count++
+    }
+    val darken = .52f
+    return Color((red / count / 255f * darken).toFloat().coerceIn(.035f, .25f),
+        (green / count / 255f * darken).toFloat().coerceIn(.035f, .25f),
+        (blue / count / 255f * darken).toFloat().coerceIn(.035f, .25f))
+}
+
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit) {
+    onOptions: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit) {
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
@@ -204,7 +229,7 @@ import kotlinx.coroutines.withContext
                     stringResource(R.string.next), Modifier.size(38.dp)) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                IconButton(onClick = onOptions) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+                IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
                 IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
             }
         }
@@ -213,7 +238,7 @@ import kotlinx.coroutines.withContext
 
 @Composable private fun LandscapeAudioPlayer(state: PlaybackState, song: Song?,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onLyrics: () -> Unit, onQueue: () -> Unit) {
+    onOptions: () -> Unit, onLyrics: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit) {
     Row(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(.9f).fillMaxHeight().padding(8.dp), contentAlignment = Alignment.Center) {
@@ -262,7 +287,7 @@ import kotlinx.coroutines.withContext
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onOptions) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+                IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
                 FilledTonalButton(onClick = onLyrics) { Icon(Icons.Default.ChatBubbleOutline, null); Text(stringResource(R.string.lyrics)) }
                 IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
             }

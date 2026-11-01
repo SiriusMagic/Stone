@@ -11,8 +11,29 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+    private fun isVolumeKey(keyCode: Int): Boolean =
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (isVolumeKey(keyCode) && com.zirakusa.stone.nativeapp.playback.StonePlaybackService.hasActivePlayback()) {
+            if (event.repeatCount == 0) {
+                com.zirakusa.stone.nativeapp.playback.StonePlaybackService.handleVolumeKey(
+                    if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5)
+            }
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (isVolumeKey(keyCode) && com.zirakusa.stone.nativeapp.playback.StonePlaybackService.hasActivePlayback()) {
+            return true
+        }
+        return super.onKeyUp(keyCode, event)
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        val volumeKey = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        val volumeKey = isVolumeKey(event.keyCode)
         val service = com.zirakusa.stone.nativeapp.playback.StonePlaybackService
         if (volumeKey && service.hasActivePlayback()) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {

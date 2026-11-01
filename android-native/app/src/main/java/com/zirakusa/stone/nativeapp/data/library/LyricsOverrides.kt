@@ -13,4 +13,8 @@ class LyricsOverrides(context: Context) {
         val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
         database.putString("lyrics", lyrics.put(songId, value).toString())
     }
+    fun delete(songId: String) {
+        val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
+        database.putString("lyrics", lyrics.apply { remove(songId) }.toString())
+    }
 }

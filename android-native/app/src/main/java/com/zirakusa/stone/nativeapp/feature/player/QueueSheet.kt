@@ -80,7 +80,11 @@ private val QueueDark = Color(0xFF4A292B)
                             Text(item.artist, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 color = Color(0xFFD0BFC0), fontSize = 13.sp)
                         }
-                        if (editing) Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
+                        if (editing) {
+                            IconButton(onClick = { playback.removeAt(index) }) {
+                                Icon(Icons.Default.Delete, stringResource(R.string.delete))
+                            }
+                            Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
                             Modifier.size(38.dp).pointerInput(item.id, state.queue.size, editing) {
                                 var movingIndex = index
                                 val step = 66.dp.toPx()
@@ -108,6 +112,7 @@ private val QueueDark = Color(0xFF4A292B)
                                     }
                                 }
                             })
+                        }
                     }
                 }
             }
