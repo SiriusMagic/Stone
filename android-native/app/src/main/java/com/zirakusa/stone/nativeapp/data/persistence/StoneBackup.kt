@@ -5,8 +5,10 @@ import android.net.Uri
 import org.json.JSONObject
 
 object StoneBackup {
+    fun exportText(context: Context): String = StoneDatabase.get(context).exportJson().toString(2)
+
     fun export(context: Context, uri: Uri) {
-        val bytes = StoneDatabase.get(context).exportJson().toString(2).toByteArray()
+        val bytes = exportText(context).toByteArray()
         context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(bytes) }
             ?: error("No se pudo crear la copia")
     }

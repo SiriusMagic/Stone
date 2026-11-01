@@ -13,6 +13,7 @@ import androidx.media3.common.util.UnstableApi
 import com.zirakusa.stone.nativeapp.MainActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.roundToInt
 
 /** Sole owner of playback; the UI only connects with a MediaController. */
 class StonePlaybackService : MediaSessionService() {
@@ -29,7 +30,17 @@ class StonePlaybackService : MediaSessionService() {
 
         fun setVolumePercent(percent: Int, showOverlay: Boolean = true) {
             volumePercent = percent.coerceIn(0, 300)
-            activePlayer?.volume = if (volumePercent <= 100) volumePercent / 100f else 1f
+            instance?.let { service ->
+                val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+                val nativeLevel = if (volumePercent <= 100) {
+                    (max * volumePercent / 100f).roundToInt()
+                } else max
+                // Do not request the system UI: Stone owns the visible overlay.
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, nativeLevel,
+                    AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+            }
+            activePlayer?.volume = 1f
             volumeBoost?.setPercent(volumePercent)
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay)
@@ -65,6 +76,12 @@ class StonePlaybackService : MediaSessionService() {
             setWakeMode(C.WAKE_MODE_LOCAL)
         }
         activePlayer = player
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        if (volumePercent <= 100) {
+            val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+            volumePercent = (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) * 100f / max)
+                .roundToInt().coerceIn(0, 100)
+        }
         ecoEngine = StoneEcoEngine(applicationContext).also {
             it.apply(AudioMode.BALANCED, player)
         }

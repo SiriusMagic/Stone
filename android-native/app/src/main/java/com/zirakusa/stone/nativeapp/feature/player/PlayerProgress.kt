@@ -19,15 +19,15 @@ import kotlinx.coroutines.isActive
 @Composable fun rememberPlayerProgress(state: PlaybackState, playback: PlaybackViewModel): Pair<Long, Long> {
     var progress by remember { mutableStateOf(0L to 0L) }
     val owner = LocalLifecycleOwner.current
-    LaunchedEffect(owner, state) {
+    LaunchedEffect(owner, state.playing) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            do {
+            while (isActive) {
                 progress = playback.progress()
                 if (!state.playing) break
-                // A half-second cadence keeps timed lyrics responsive without
-                // introducing a background service or a permanent worker.
-                delay(500)
-            } while (isActive)
+                // A quarter-second cadence follows timed lyrics smoothly while
+                // keeping a single lightweight UI coroutine.
+                delay(250)
+            }
         }
     }
     return progress

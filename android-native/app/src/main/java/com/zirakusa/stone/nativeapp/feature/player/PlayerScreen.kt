@@ -65,6 +65,7 @@ import kotlinx.coroutines.withContext
     var optionsVisible by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf<PlayerTool?>(null) }
     var energySaver by remember { mutableStateOf(false) }
+    var videoFullscreen by remember { mutableStateOf(false) }
     val dynamicBackground by produceState(Color(0xFF0D0C11), song?.uri, song?.modifiedMs) {
         value = withContext(Dispatchers.IO) {
             song?.uri?.let { uri -> ArtworkLoader.load(context.applicationContext, uri, song.modifiedMs) }
@@ -75,13 +76,31 @@ import kotlinx.coroutines.withContext
         EnergySaverScreen(state, playback) { energySaver = false }
         return
     }
+    if (videoFullscreen && song?.isVideo == true) {
+        BackHandler { videoFullscreen = false }
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            AndroidView(factory = { context ->
+                PlayerView(context).apply {
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    player = playback.player()
+                }
+            }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+            IconButton(onClick = { videoFullscreen = false }, modifier = Modifier
+                .align(Alignment.BottomStart).padding(18.dp)
+                .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
+                Icon(Icons.Default.FullscreenExit, "Salir de pantalla completa", tint = Color.White)
+            }
+        }
+        return
+    }
     val progress = rememberPlayerProgress(state, playback)
     BoxWithConstraints(modifier.fillMaxSize().background(dynamicBackground)) {
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
             onOptions = { optionsVisible = true }, onEqualizer = { tool = PlayerTool.Equalizer },
-            onQueue = { queueVisible = true })
+            onQueue = { queueVisible = true }, onFullscreen = { videoFullscreen = true })
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             onOptions = { optionsVisible = true }, onLyrics = { lyricsVisible = true },
@@ -100,11 +119,18 @@ import kotlinx.coroutines.withContext
                     overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
             }
         }
-        if (song?.isVideo == true) AndroidView(factory = { context ->
-            PlayerView(context).apply { useController = false; resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                player = playback.player() }
-        }, update = { it.player = playback.player() }, modifier = Modifier.weight(1f)
-            .fillMaxWidth().clip(RoundedCornerShape(20.dp)))
+        if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
+            AndroidView(factory = { context ->
+                PlayerView(context).apply { useController = false; resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    player = playback.player() }
+            }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize()
+                .clip(RoundedCornerShape(20.dp)))
+            IconButton(onClick = { videoFullscreen = true }, modifier = Modifier
+                .align(Alignment.BottomStart).padding(14.dp)
+                .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
+                Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
+            }
+        }
         else if (song != null) StoneArtwork(song.uri, song.modifiedMs,
             Modifier.weight(1f).aspectRatio(1f).fillMaxWidth().clip(RoundedCornerShape(28.dp)))
         else Box(Modifier.weight(1f).aspectRatio(1f).fillMaxWidth())
@@ -190,7 +216,8 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
 
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit) {
+    onOptions: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit,
+    onFullscreen: () -> Unit) {
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
@@ -229,6 +256,10 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
                     stringResource(R.string.next), Modifier.size(38.dp)) }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                IconButton(onClick = onFullscreen, modifier = Modifier
+                    .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
+                    Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
+                }
                 IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
                 IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
             }

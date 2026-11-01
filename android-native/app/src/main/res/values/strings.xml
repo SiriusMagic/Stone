@@ -208,6 +208,7 @@
     <string name="notifications_unavailable">Las notificaciones locales de nuevos archivos aún no están disponibles.</string>
     <string name="export_stone_backup">Exportar copia de Stone Kotlin</string>
     <string name="import_stone_backup">Importar copia de Stone Kotlin</string>
+    <string name="share_stone_backup">Compartir respaldo de Stone</string>
     <string name="settings_home_shortcuts">Iconos de inicio</string>
     <string name="home_shortcut_hint">Elige qué accesos rápidos aparecen en la barra principal.</string>
     <string name="home_shortcut_toggle_hint">Mostrar este icono en inicio.</string>

@@ -24,7 +24,7 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     currentId: String = "", onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onRestoreHidden: (Song) -> Unit = {}, onRestoreDeleted: (Song) -> Unit = {},
-    onExport: () -> Unit = {}, onImport: () -> Unit = {},
+    onExport: () -> Unit = {}, onImport: () -> Unit = {}, onShare: () -> Unit = {},
     theme: String = "dark", onThemeChange: (String) -> Unit = {}, language: String = "es",
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
@@ -86,7 +86,7 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
         null, onSettingsPage)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,
-        scan, { sheet = it }, playbackViewModel, onExport, onImport) { key, visible ->
+        scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare) { key, visible ->
         shortcuts = shortcuts + (key to visible)
     }
     if (homeTool == "equalizer" && playbackViewModel != null && playbackState != null)

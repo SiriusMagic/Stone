@@ -39,7 +39,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     onLanguage: (String) -> Unit, store: StoneSettingsStore?, page: String?,
     onPage: (String?) -> Unit, onClose: () -> Unit, onFolder: () -> Unit,
     onScan: () -> Unit, onLibrarySheet: (String) -> Unit, playback: PlaybackViewModel?,
-    onExport: () -> Unit, onImport: () -> Unit,
+    onExport: () -> Unit, onImport: () -> Unit, onShare: () -> Unit,
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
@@ -65,6 +65,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                 }
                 SettingsGroup {
                     SettingsRow(Icons.Default.FileUpload, R.string.export_stone_backup, "") { onClose(); onExport() }
+                    SettingsRow(Icons.Default.Share, R.string.share_stone_backup, "") { onClose(); onShare() }
                     SettingsRow(Icons.Default.FileDownload, R.string.import_stone_backup, "") { onClose(); onImport() }
                 }
                 SettingsGroup {

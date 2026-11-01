@@ -26,7 +26,9 @@ data class LyricLine(val timeMs: Long, val text: String)
 data class LyricsDocument(val plain: List<String>, val synced: List<LyricLine>)
 
 object LyricsParser {
-    private val timestamp = Regex("\\[(\\d{1,3}):(\\d{2})(?:[.:](\\d{1,3}))?]")
+    // Accept common LRC variants: [mm:ss], [mm:ss.5], [mm:ss,50],
+    // [mm:ss:500] and the less common [hh:mm:ss].
+    private val timestamp = Regex("\\[(?:(\\d{1,2}):)?(\\d{1,3}):(\\d{2})(?:[.:,](\\d{1,3}))?]")
     private val tags = Regex("\\[[^]]+]")
     private val offset = Regex("\\[offset:([+-]?\\d+)]", RegexOption.IGNORE_CASE)
 
@@ -39,11 +41,12 @@ object LyricsParser {
             if (text.isEmpty()) return@forEach
             plain += text
             timestamp.findAll(raw).forEach { match ->
-                val minutes = match.groupValues[1].toLong()
-                val seconds = match.groupValues[2].toLong()
-                val fraction = match.groupValues[3].ifEmpty { "0" }
+                val hours = match.groupValues[1].ifEmpty { "0" }.toLong()
+                val minutes = match.groupValues[2].toLong()
+                val seconds = match.groupValues[3].toLong()
+                val fraction = match.groupValues[4].ifEmpty { "0" }
                     .padEnd(3, '0').take(3).toLong()
-                synced += LyricLine((minutes * 60_000 + seconds * 1_000 + fraction + shift)
+                synced += LyricLine((hours * 3_600_000 + minutes * 60_000 + seconds * 1_000 + fraction + shift)
                     .coerceAtLeast(0), text)
             }
         }

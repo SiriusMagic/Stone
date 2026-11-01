@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,18 +27,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
+import kotlinx.coroutines.launch
 
 @Composable fun LibraryHeader(scanning: Boolean, onSearch: () -> Unit, onFolder: () -> Unit,
     onScan: () -> Unit, onDownload: () -> Unit, onSort: () -> Unit, onSettings: () -> Unit,
     onEqualizer: () -> Unit = {}, onSleep: () -> Unit = {},
+    onPenguinClick: () -> Unit = {},
     showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
     showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
     showSleep: Boolean = true) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
+    val penguinMotion = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Image(painterResource(R.drawable.stone_penguin), stringResource(R.string.stone),
-            Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Fit)
+            Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).clickable {
+                onPenguinClick()
+                scope.launch {
+                    penguinMotion.snapTo(0f)
+                    penguinMotion.animateTo(1f, tween(180))
+                    penguinMotion.animateTo(0f, tween(260))
+                }
+            }.graphicsLayer {
+                rotationZ = (penguinMotion.value * 8f) - 4f
+                translationY = (kotlin.math.sin(penguinMotion.value * Math.PI) * -3.5f).toFloat()
+            }, contentScale = ContentScale.Fit)
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {

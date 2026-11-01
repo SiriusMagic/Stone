@@ -81,7 +81,7 @@ import kotlinx.coroutines.delay
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
         if (!playerOpen && !energySaver) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            state.songs.find { it.id == player.currentId }, onEnergySaver = { energySaver = true })
+            state.songs.find { it.id == player.currentId })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
@@ -95,6 +95,7 @@ import kotlinx.coroutines.delay
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
+                { shareStoneBackup(context) },
                 onOpenSettings = { settingsPage = null }, theme = theme,
                 onThemeChange = { theme = it; settingsStore.setTheme(it); (context as? Activity)?.recreate() }, language = language,
                 onLanguageChange = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() },
@@ -114,4 +115,14 @@ import kotlinx.coroutines.delay
             VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
         }
     } }
+}
+
+private fun shareStoneBackup(context: android.content.Context) {
+    val text = runCatching { StoneBackup.exportText(context) }.getOrNull() ?: return
+    context.startActivity(android.content.Intent.createChooser(
+        android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "Stone - respaldo de playlists")
+            putExtra(android.content.Intent.EXTRA_TEXT, text)
+        }, "Compartir respaldo de Stone"))
 }
