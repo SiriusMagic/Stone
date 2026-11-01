@@ -1,0 +1,28 @@
+TASK: library screen -> src/features/library/LibraryPage.tsx
+TASK: player screen -> app/player.tsx
+TASK: library route -> app/library.tsx
+TASK: download sheet -> src/features/library/components/QuickDownloadSheet.tsx
+TASK: download playlist toolbar -> src/features/library/components/QuickDownloadPlaylistSummary.tsx
+TASK: download playlist rows -> src/features/library/components/QuickDownloadPlaylistRow.tsx
+TASK: download playlist wrapper -> src/features/library/components/QuickDownloadPlaylistScreen.tsx
+TASK: download api -> src/features/library/download-api.ts
+TASK: library map -> src/features/library/MAP.md
+TASK: library header -> src/features/library/zones/01-header/HeaderZone.tsx
+TASK: library tabs -> src/features/library/zones/02-tabs/TabsZone.tsx
+TASK: library content -> src/features/library/zones/03-track-list/TrackListZone.tsx
+TASK: library mini player -> src/features/library/zones/05-mini-player/MiniPlayerZone.tsx
+TASK: library sheets -> src/features/library/zones/06-sheets/SheetsZone.tsx
+TASK: library settings flow -> src/features/library/zones/06-sheets/SettingsFlowZone.tsx
+TASK: library settings menu -> src/features/library/zones/06-sheets/SettingsMenuZone.tsx
+TASK: library settings preferences -> src/features/library/zones/06-sheets/SettingsPreferencesZone.tsx
+TASK: library hidden flow -> src/features/library/zones/06-sheets/HiddenFilesZone.tsx
+TASK: library hidden tools -> src/features/library/zones/06-sheets/HiddenFilesToolsZone.tsx
+TASK: library deleted flow -> src/features/library/zones/06-sheets/DeletedFilesZone.tsx
+TASK: hidden files -> src/features/library/components/HiddenFilesModal.tsx
+TASK: recent deleted -> src/features/library/components/RecentDeletedModal.tsx
+TASK: settings -> src/features/library/components/SettingsSheet.tsx
+TASK: sleep timer -> src/features/library/components/SleepTimerSheet.tsx
+TASK: language -> src/features/library/components/LanguageSheet.tsx
+TASK: styles -> src/features/library/styles.ts
+TASK: check app -> npm run check
+TASK: build app -> npm run build

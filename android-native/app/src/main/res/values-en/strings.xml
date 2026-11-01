@@ -1,0 +1,117 @@
+<resources>
+    <string name="app_name">Stone Kotlin · Preview</string><string name="stone">Stone</string>
+    <string name="choose_folder">Add folder</string><string name="refresh">Refresh</string>
+    <string name="search">Search songs, artists, albums…</string><string name="songs">Songs</string>
+    <string name="folders">Folders</string><string name="artists">Artists</string><string name="albums">Albums</string>
+    <string name="empty_library">Choose your music folder to get started.</string><string name="no_results">No songs found.</string>
+    <string name="scanning">Updating library…</string><string name="scan_failed">Could not read the folder. Check access or choose it again. Your previous library is preserved.</string>
+    <string name="playback_failed">Could not play this song. Check the file and folder access.</string>
+    <string name="playback_connect_failed">Could not connect to the player. Reopen Stone.</string>
+    <string name="play">Play</string><string name="pause">Pause</string><string name="next">Next</string>
+    <string name="previous">Previous</string><string name="back">Back</string><string name="shuffle">Shuffle</string>
+    <string name="repeat">Repeat</string><string name="queue">Up next</string><string name="now_playing">Now playing</string>
+    <string name="volume">Volume</string><string name="boost">BOOST</string><string name="native_volume">NATIVE</string>
+    <string name="seek">Playback position</string><string name="dismiss">Close</string>
+    <string name="search_toggle">Search</string><string name="clear_search">Clear search</string>
+    <string name="video_count">%1$d videos</string><string name="video_details">%1$s | %2$s</string>
+    <string name="video_folders">Video folders</string>
+    <string name="edit_queue">Edit queue</string><string name="done">Done</string>
+    <string name="choose_stone_folder">Choose Stone folder</string><string name="scan_folders">Scan folders</string>
+    <string name="scan_hint">Tap Scan folders to choose and load your Stone folder.</string>
+    <string name="no_songs">No songs yet</string><string name="songs_not_found">Can’t find your songs?</string>
+    <string name="videos">Videos</string><string name="playlists">Playlists</string><string name="downloads">Downloads</string>
+    <string name="sort">Sort</string><string name="settings">Settings</string><string name="sort_title">Title</string>
+    <string name="sort_duration">Duration</string><string name="ascending">Ascending</string><string name="descending">Descending</string>
+    <string name="song_count">%1$d songs</string><string name="downloads_pending">Downloads are not available in this preview yet.</string>
+    <string name="videos_pending">Videos are not available in this preview yet.</string><string name="playlists_pending">Playlists are not available in this preview yet.</string>
+    <string name="settings_pending">Other Stone settings are still pending in this preview.</string><string name="tap_to_play">Tap to play</string>
+    <string name="player_now">NOW PLAYING</string><string name="close_player">Close player</string><string name="favorite">Favorite</string>
+    <string name="more_options">More options</string><string name="equalizer">Equalizer</string><string name="lyrics">Lyrics</string>
+    <string name="lyrics_add">Add lyrics</string><string name="lyrics_paste">Paste</string><string name="save">Save</string>
+    <string name="lyrics_placeholder">Paste lyrics or LRC content…</string><string name="no_lyrics">No lyrics</string>
+    <string name="search_lyrics">Search lyrics</string><string name="go_to_current_song">Go to current song</string>
+    <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
+    <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
+    <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
+    <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string>
+    <string name="energy_saver">Energy saver</string><string name="hide">Hide</string><string name="delete">Delete</string>
+    <string name="default_value">Default</string><string name="off">Off</string><string name="minutes_later">In %1$d minutes</string>
+    <string name="finish_current_track">Finish current track</string><string name="title">Title</string><string name="artist">Artist</string>
+    <string name="custom_sleep_time">Custom time</string><string name="hours">Hours</string>
+    <string name="minutes_short">Min</string><string name="set_sleep_timer">Set timer</string>
+    <string name="custom">Custom</string><string name="set_custom">Set</string>
+    <string name="album">Album</string><string name="genre">Genre</string><string name="year">Year</string>
+    <string name="track_number">Track number</string><string name="ringtone_start">Trim start: %1$s</string>
+    <string name="ringtone_ready">Ringtone set</string><string name="ringtone_failed">Could not set ringtone</string>
+    <string name="allow_and_continue">Allow and continue</string><string name="delete_song_title">Delete song?</string>
+    <string name="hide_song_title">Hide song?</string><string name="delete_song_message">This song will move to “Recently deleted”. The physical file will not be deleted now.</string>
+    <string name="hide_song_message">This song will move to “Hidden files”.</string><string name="cancel">Cancel</string>
+    <string name="energy_saver_hint">Minimal interface to reduce animations and visual updates.</string>
+    <string name="playlist_next_batch">Playlists will be connected in Stone 1.3.6.</string>
+    <string name="eq_normal">Normal</string><string name="eq_bass">Bass boost</string><string name="eq_voice">Voice boost</string>
+    <string name="eq_treble">Treble boost</string><string name="eq_pop">Pop</string><string name="eq_custom">Custom</string>
+    <string name="eq_hiphop">HipHop</string><string name="eq_rock">Rock</string><string name="favorite_songs">Favorite songs</string>
+    <string name="recently_played">Recently played</string><string name="most_played">Most played</string><string name="with_lyrics">With lyrics</string>
+    <string name="new_playlist">New playlist</string><string name="playlist_name">Playlist name</string><string name="create">Create</string>
+    <string name="remove_from_playlist">Remove from playlist</string><string name="add_to_playlist_title">Add to playlist</string>
+    <string name="no_playlists">Create a playlist first</string><string name="restored">File restored</string>
+    <string name="hidden_files">Hidden files</string><string name="recently_deleted">Recently deleted</string><string name="restore">Restore</string>
+    <string name="export_backup">Export backup</string><string name="import_backup">Import backup</string>
+    <string name="backup_exported">Backup created</string><string name="backup_imported">Backup imported successfully</string>
+    <string name="backup_failed">Could not process the backup</string><string name="settings_stone_folder">Add media folder</string>
+    <string name="video_media">Video</string>
+    <string name="no_videos">No videos yet</string><string name="videos_not_found">Can’t find your videos?</string>
+    <string name="choose_video_folder">Choose video folder</string><string name="scan_video_folders">Scan videos</string>
+    <string name="settings_scan_library">Scan library</string><string name="settings_scan_mode">Scan mode</string>
+    <string name="scan_mode_intro">Configure when the library updates. Stone does not scan continuously.</string>
+    <string name="auto_rescan">Auto rescan</string><string name="auto_rescan_hint">Scan when Stone starts for new or removed files.</string>
+    <string name="manual_scan_hint">You can also start a manual scan by tapping the scan icon.</string>
+    <string name="hardware_acceleration">Hardware acceleration</string><string name="hardware_acceleration_intro">Availability depends on the device, audio output and file format.</string>
+    <string name="accel_automatic">Automatic</string><string name="accel_disabled">Disabled</string>
+    <string name="accel_decoding">Decoding acceleration</string><string name="accel_full">Full acceleration</string>
+    <string name="accel_adaptive">Adaptive (Eco Engine)</string>
+    <string name="accel_automatic_info">Android selects the compatible path.</string><string name="accel_disabled_info">Does not request additional acceleration.</string>
+    <string name="accel_decoding_info">Prefers hardware decoding when available.</string><string name="accel_full_info">Prioritizes audio offload when hardware supports it.</string>
+    <string name="accel_adaptive_info">Prioritizes battery life and stability for the format and device.</string>
+    <string name="hardware_acceleration_note">Hardware decoding and audio offload are not equivalent. Android may use a conventional fallback path.</string>
+    <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
+    <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
+    <string name="settings_feedback_about">Feedback     About</string><string name="theme_dark">Black</string>
+    <string name="feedback">Feedback</string><string name="about_stone">About Stone</string>
+    <string name="feedback_placeholder">Thanks for helping improve Stone. This section will be available soon.</string>
+    <string name="feedback_intro">Tell us about the problem</string><string name="feedback_lyrics">Lyrics</string>
+    <string name="feedback_ads">Ads</string><string name="feedback_missing_file">File not found</string>
+    <string name="feedback_unplayable">File cannot be played</string><string name="feedback_stops">Music stops</string>
+    <string name="feedback_slow">App is slow</string><string name="feedback_other">Other</string>
+    <string name="feedback_details">Details *</string><string name="feedback_details_hint">Describe the problem in detail</string>
+    <string name="feedback_attachments">Screenshots or videos (optional)</string>
+    <string name="feedback_consent">To continue, Stone would share the necessary data with the support service. Review the terms and privacy policy.</string>
+    <string name="feedback_submit">Submit</string>
+    <string name="feedback_attachment_count">%1$d attachments selected</string>
+    <string name="music_reminders">Music reminders</string><string name="music_reminders_hint">Receive up to two invitations to listen to music each day.</string>
+    <string name="morning_reminder">Morning</string><string name="morning_reminder_time">Between 8:00 and 9:00</string>
+    <string name="evening_reminder">Evening</string><string name="evening_reminder_time">Between 20:00 and 21:00</string>
+    <string name="reminder_play_choice">What to play when tapped</string>
+    <string name="reminder_not_implemented">Scheduling and playback actions will be added without permanent services.</string>
+    <string name="version_label">Version %1$s</string><string name="rate_stone">Rate Stone</string>
+    <string name="share_stone">Share Stone</string><string name="privacy_policy">Privacy policy</string>
+    <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
+    <string name="copyright_stone">© 2026 Stone.</string>
+    <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string><string name="audio_mode_battery">Long battery life</string>
+    <string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">High fidelity</string>
+    <string name="audio_mode_battery_info">Savings/offload depend on the device; policy is experimental.</string>
+    <string name="audio_mode_balanced_info">Standard Media3 playback path.</string>
+    <string name="audio_mode_hifi_info">USB/DAC: capability detection does not guarantee bit-perfect output.</string>
+    <string name="theme_gray">Gray</string><string name="theme_light">Light</string>
+    <string name="play_with_others">Play alongside other apps</string><string name="play_with_others_hint">Let Stone audio mix with audio from other apps.</string>
+    <string name="gapless">Gapless playback</string><string name="gapless_hint">Media3 handles gapless transitions automatically.</string>
+    <string name="crossfade">Crossfade</string><string name="crossfade_hint">Crossfade between tracks is not available yet.</string>
+    <string name="crossfade_seconds">Duration: %1$d seconds</string><string name="notify_new_files">New file notifications</string>
+    <string name="notify_new_files_hint">Notify when new files are found during a scan.</string>
+    <string name="push_notifications">Push notifications</string><string name="push_notifications_hint">Music recommendations are not available yet.</string>
+    <string name="notifications_unavailable">Local notifications for new files are not available yet.</string>
+    <string name="export_stone_backup">Export Stone Kotlin backup</string><string name="import_stone_backup">Import Stone Kotlin backup</string>
+    <string name="settings_home_shortcuts">Home shortcuts</string>
+    <string name="home_shortcut_hint">Choose which shortcuts appear in the main toolbar.</string>
+    <string name="home_shortcut_toggle_hint">Show this icon on the home screen.</string>
+</resources>

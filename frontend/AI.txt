@@ -1,0 +1,13 @@
+PROJECT: frontend
+
+RULES:
+1. Read ROUTES.txt first.
+2. Open max 2 files per task.
+3. Open max 1 dependency.
+4. Never scan the whole project.
+5. Never run npm run dev to verify.
+6. Use npm run check or npm run build.
+7. If a command hangs, stop it.
+8. Wait once for output.
+9. Max 1 retry.
+10. Report only final success or error.

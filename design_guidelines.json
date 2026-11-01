@@ -1,0 +1,207 @@
+{
+  "theme": "dark",
+  "archetype": "Electric & Neon (Modified for consumer music app)",
+  "colors": {
+    "background": "#0A0A0E",
+    "surface": "#1C1C24",
+    "surfaceHighlight": "#2A2A35",
+    "primary": "#F5C518",
+    "primaryGradient": ["#F5C518", "#F9A826"],
+    "textPrimary": "#FFFFFF",
+    "textSecondary": "#A0A0A5",
+    "border": "#2A2A35",
+    "error": "#FF4C4C"
+  },
+  "typography": {
+    "fontFamily": "System",
+    "h1": {
+      "fontSize": 28,
+      "fontWeight": "800",
+      "lineHeight": 34,
+      "letterSpacing": 0.5,
+      "color": "#FFFFFF"
+    },
+    "h2": {
+      "fontSize": 22,
+      "fontWeight": "700",
+      "lineHeight": 28,
+      "color": "#FFFFFF"
+    },
+    "bodyLarge": {
+      "fontSize": 18,
+      "fontWeight": "600",
+      "color": "#FFFFFF"
+    },
+    "bodyMedium": {
+      "fontSize": 16,
+      "fontWeight": "500",
+      "color": "#FFFFFF"
+    },
+    "bodySmall": {
+      "fontSize": 14,
+      "fontWeight": "400",
+      "color": "#A0A0A5"
+    },
+    "caption": {
+      "fontSize": 12,
+      "fontWeight": "400",
+      "color": "#A0A0A5"
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+  "radii": {
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "pill": 9999
+  },
+  "screens": {
+    "onboarding": {
+      "layout": "Flex column, center aligned content. Top half for floating music tiles illustration, bottom half for text and CTA.",
+      "components": [
+        "FloatingTilesGraphic",
+        "TitleText ('Reproduce tu música')",
+        "SubtitleText",
+        "PrimaryCTA"
+      ]
+    },
+    "languageSelection": {
+      "layout": "Flex column, padding horizontal 24px. Header top, scrollable list of language cards, fixed bottom CTA area.",
+      "components": [
+        "ScreenHeader ('Elige tu idioma')",
+        "RadioCardList (Español, English, etc.)",
+        "PrimaryCTA ('Empezar')",
+        "FooterLinks (Terms/Privacy)"
+      ]
+    },
+    "mainLibrary": {
+      "layout": "Flex column. Top navigation row -> horizontal filter chips -> FlatList of songs -> bottom padding for mini player.",
+      "components": [
+        "TopNavActions (Search, Sort, View toggle)",
+        "ChipFilters (Playlists, Carpetas, Artistas, Álbumes)",
+        "SongList (Cover art, Title, Subtitle)",
+        "ScanFoldersCard ('¿Canciones no encontradas? Escanear carpetas')",
+        "MiniPlayerFloatingPill"
+      ]
+    },
+    "fullPlayer": {
+      "layout": "Modal or Stack screen. Flex column, space-between. Top header (dismiss), large square cover art in center, track info, scrubber, playback controls at bottom.",
+      "components": [
+        "LargeCoverArt",
+        "TrackInfo",
+        "ProgressBar",
+        "PlaybackControls (Shuffle, Prev, Play/Pause, Next, Repeat)"
+      ]
+    }
+  },
+  "components": {
+    "primaryButton": {
+      "backgroundColor": "#F5C518",
+      "borderRadius": "pill",
+      "paddingVertical": 16,
+      "alignItems": "center",
+      "textColor": "#000000",
+      "textWeight": "700",
+      "testId": "primary-cta-button"
+    },
+    "chipFilter": {
+      "active": {
+        "backgroundColor": "#F5C518",
+        "textColor": "#000000",
+        "borderRadius": "pill",
+        "paddingHorizontal": 16,
+        "paddingVertical": 8
+      },
+      "inactive": {
+        "backgroundColor": "#1C1C24",
+        "textColor": "#FFFFFF",
+        "borderWidth": 1,
+        "borderColor": "#2A2A35"
+      },
+      "testId": "filter-chip"
+    },
+    "songCard": {
+      "flexDirection": "row",
+      "alignItems": "center",
+      "padding": 12,
+      "backgroundColor": "transparent",
+      "coverArtSize": 48,
+      "coverArtRadius": 8,
+      "testId": "song-list-item"
+    },
+    "radioCard": {
+      "backgroundColor": "#1C1C24",
+      "borderRadius": 12,
+      "padding": 16,
+      "borderWidth": 2,
+      "activeBorderColor": "#F5C518",
+      "inactiveBorderColor": "transparent",
+      "testId": "language-radio-card"
+    },
+    "miniPlayer": {
+      "position": "absolute",
+      "bottom": 24,
+      "left": 16,
+      "right": 16,
+      "backgroundColor": "#F5C518",
+      "borderRadius": "pill",
+      "flexDirection": "row",
+      "alignItems": "center",
+      "padding": 8,
+      "shadow": "Drop shadow underneath to elevate from list",
+      "testId": "floating-mini-player"
+    }
+  },
+  "media_assets": {
+    "app_icon": {
+      "url": "https://customer-assets.emergentagent.com/job_76e38cfc-d123-494d-b977-20c7b50770d7/artifacts/3wlz6t8o_1782653108966.jpg",
+      "description": "Black penguin with yellow headphones, use as primary app logo and in-app mascot."
+    },
+    "onboarding_reference": {
+      "url": "https://customer-assets.emergentagent.com/job_76e38cfc-d123-494d-b977-20c7b50770d7/artifacts/c688tzf4_1782657947909.jpg"
+    },
+    "language_selection_reference": {
+      "url": "https://customer-assets.emergentagent.com/job_76e38cfc-d123-494d-b977-20c7b50770d7/artifacts/5il18ev7_file_00000000b798720e92c2c43112e87a43.png"
+    },
+    "main_library_reference": {
+      "url": "https://customer-assets.emergentagent.com/job_76e38cfc-d123-494d-b977-20c7b50770d7/artifacts/gs71p7e2_file_00000000eddc720e807f70420f985a7e.png"
+    },
+    "demo_album_covers": [
+      {
+        "url": "https://images.pexels.com/photos/13069544/pexels-photo-13069544.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Demo track cover 1 - red and blue abstract"
+      },
+      {
+        "url": "https://images.pexels.com/photos/15578335/pexels-photo-15578335.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Demo track cover 2 - warm abstract swirl"
+      }
+    ]
+  },
+  "animation_and_motion": {
+    "pageTransitions": "React Navigation default slide-from-right for iOS, fade/scale for Android.",
+    "miniPlayer": "Slide up from bottom when first track is selected.",
+    "listItems": "Staggered fade-in for song list on initial load.",
+    "interactions": "Scale down slightly (0.95) on press for buttons and song cards (TouchableOpacity / Pressable with scaling)."
+  },
+  "accessibility": {
+    "contrast": "Ensure yellow text/icons on dark background meets 4.5:1 ratio. Black text on yellow background meets it.",
+    "testIds": "All interactive components must have data-testid (or testID for React Native) assigned.",
+    "touchTargets": "Minimum 44x44 points for all tap targets (icons, buttons)."
+  },
+  "instructions_to_main_agent": [
+    "Use React Native StyleSheet for styling. Do not use web CSS or Tailwind unless explicitly requested by the stack (e.g., NativeWind).",
+    "Match the screenshots exactly: Dark Navy/Black background (#0A0A0E) with Yellow Accent (#F5C518).",
+    "Implement the floating mini-player as an absolute positioned view sitting above the Bottom Tab Navigator or screen bottom, with a high zIndex.",
+    "Use react-native-vector-icons (or Expo vector icons like Ionicons/Feather) for all UI icons (search, sort, play, pause, shuffle).",
+    "For the mascot/app icon, fetch the image from the provided URL. Do not use text placeholders.",
+    "Implement the layout precisely for mobile viewports, relying heavily on Flexbox.",
+    "Files are structured as standard .js files for React Native. Keep components clean and use StyleSheet.create()."
+  ]
+}
