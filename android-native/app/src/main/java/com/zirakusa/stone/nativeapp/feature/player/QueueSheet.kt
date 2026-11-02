@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.R
 import kotlinx.coroutines.launch
 
@@ -73,7 +75,7 @@ private val QueueDark = Color(0xFF4A292B)
                             RoundedCornerShape(14.dp))
                         .clickable { playback.playAt(index) }.padding(horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(54.dp).background(Color(0xFF704B4D), RoundedCornerShape(12.dp)))
+                        StoneArtwork(item.uri, 0L, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(item.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.Bold)

@@ -24,7 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-data class QueueEntry(val id: String, val title: String, val artist: String)
+data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
 enum class AudioMode(val key: String) { BATTERY("battery"), BALANCED("balanced"), HIFI("hifi") }
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
@@ -86,9 +86,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 it.setPlaybackSpeed(speed)
                 applyAudioMixing(it, settings.read().playWithOthers)
                 StonePlaybackService.setVolumePercent(volumePercent, showOverlay = false)
+                StonePlaybackService.instance?.applyAudioMode(audioMode)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 equalizer.attach(StonePlaybackService.playbackAudioSessionId)
-                equalizer.configure(equalizerEnabled, equalizerValues)
+                equalizer.configure(audioMode != AudioMode.BATTERY && equalizerEnabled, equalizerValues)
                 publish()
             }.onFailure { mutable.value = PlaybackState(failed = true) }
         }, ContextCompat.getMainExecutor(application))
@@ -103,7 +104,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             queue = List(player.mediaItemCount) {
                 val item = player.getMediaItemAt(it)
                 QueueEntry(item.mediaId, item.mediaMetadata.title?.toString().orEmpty(),
-                    item.mediaMetadata.artist?.toString().orEmpty())
+                    item.mediaMetadata.artist?.toString().orEmpty(),
+                    item.localConfiguration?.uri?.toString())
             }, index = player.currentMediaItemIndex, failed = player.playerError != null,
             currentId = player.currentMediaItem?.mediaId.orEmpty(),
             favorite = data.isFavorite(player.currentMediaItem?.mediaId.orEmpty()),
@@ -133,6 +135,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         settings.setAudioMode(mode.key)
+        when (mode) {
+            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues)
+            AudioMode.BALANCED, AudioMode.HIFI -> equalizer.configure(equalizerEnabled, equalizerValues)
+        }
         StonePlaybackService.instance?.applyAudioMode(mode)
         publish()
     }

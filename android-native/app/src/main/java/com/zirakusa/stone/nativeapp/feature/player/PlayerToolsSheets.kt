@@ -125,13 +125,21 @@ private val EqMuted = Color(0xFF91A4A4)
     val frequencies = listOf("31", "63", "125", "250", "500", "1K", "2K", "4K", "8K", "16K")
     val presets = listOf(
         EqPreset(R.string.eq_custom, state.equalizerValues),
-        EqPreset(R.string.eq_bass, listOf(7,6,5,4,2,0,-1,-2,-3,-4)),
-        EqPreset(R.string.eq_voice, listOf(-2,-1,1,3,5,6,5,3,1,-1)),
-        EqPreset(R.string.eq_treble, listOf(-4,-3,-2,-1,0,2,4,5,6,7)),
+        EqPreset(R.string.eq_bass, listOf(5,5,3,1,0,0,0,0,0,0)),
+        EqPreset(R.string.eq_voice, listOf(0,0,0,0,1,4,3,4,0,0)),
+        EqPreset(R.string.eq_treble, listOf(0,0,0,0,0,1,2,2,3,5)),
         EqPreset(R.string.eq_normal, List(10) { 0 }),
-        EqPreset(R.string.eq_pop, listOf(-1,2,4,5,3,0,-1,1,3,4)),
-        EqPreset(R.string.eq_hiphop, listOf(6,4,1,4,-1,2,-1,3,0,4)),
-        EqPreset(R.string.eq_rock, listOf(5,3,2,-1,-3,-2,1,3,4,5)),
+        EqPreset(R.string.eq_pop, listOf(-1,-1,0,1,1,2,2,1,0,-1)),
+        EqPreset(R.string.eq_hiphop, listOf(5,5,3,0,-2,-2,2,3,4,4)),
+        EqPreset(R.string.eq_rock, listOf(5,3,2,0,0,1,0,2,2,4)),
+        EqPreset(R.string.eq_electronic, listOf(4,7,6,-1,-2,0,5,8,3,5)),
+        EqPreset(R.string.eq_heavy_metal, listOf(2,4,3,1,2,3,3,2,2,0)),
+        EqPreset(R.string.eq_rnb, listOf(5,5,4,0,-2,-1,2,2,2,3)),
+        EqPreset(R.string.eq_folk, listOf(0,2,3,0,0,0,6,3,2,-1)),
+        EqPreset(R.string.eq_dance, listOf(5,5,4,2,1,3,4,3,2,0)),
+        EqPreset(R.string.eq_jazz, listOf(3,3,2,0,-1,-1,0,2,3,4)),
+        EqPreset(R.string.eq_classical, listOf(0,1,-2,0,-1,0,2,-2,-2,3)),
+        EqPreset(R.string.eq_latin, listOf(1,3,2,0,0,-1,0,-1,0,3)),
     )
     val progress = rememberPlayerProgress(state, playback)
     ModalBottomSheet(onDismissRequest = close, containerColor = EqSurface,

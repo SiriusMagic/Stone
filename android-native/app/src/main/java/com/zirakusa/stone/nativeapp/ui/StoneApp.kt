@@ -86,7 +86,7 @@ import kotlinx.coroutines.delay
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
-            if (energySaver) EnergySaverScreen(player, playback) { energySaver = false }
+            if (energySaver) EnergySaverScreen(player, state.songs.find { it.id == player.currentId }, playback) { energySaver = false }
             else if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
                 { playerOpen = false }, library::hide, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f))

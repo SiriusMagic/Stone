@@ -115,6 +115,14 @@
     <string name="eq_custom">Personalizado</string>
     <string name="eq_hiphop">HipHop</string>
     <string name="eq_rock">Rock</string>
+    <string name="eq_electronic">Electrónica</string>
+    <string name="eq_heavy_metal">Heavy metal</string>
+    <string name="eq_rnb">R&amp;B</string>
+    <string name="eq_folk">Folk</string>
+    <string name="eq_dance">Baile</string>
+    <string name="eq_jazz">Jazz</string>
+    <string name="eq_classical">Clásico</string>
+    <string name="eq_latin">Latín</string>
     <string name="favorite_songs">Canciones favoritas</string>
     <string name="recently_played">Recientemente reproducidas</string>
     <string name="most_played">Más reproducido</string>

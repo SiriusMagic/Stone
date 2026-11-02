@@ -73,7 +73,7 @@ import kotlinx.coroutines.withContext
         }
     }
     if (energySaver) {
-        EnergySaverScreen(state, playback) { energySaver = false }
+        EnergySaverScreen(state, song, playback) { energySaver = false }
         return
     }
     if (videoFullscreen && song?.isVideo == true) {
