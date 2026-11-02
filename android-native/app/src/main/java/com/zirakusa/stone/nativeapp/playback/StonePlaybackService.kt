@@ -47,8 +47,6 @@ class StonePlaybackService : MediaSessionService() {
         }
 
         fun handleVolumeKey(delta: Int): Boolean {
-            val player = activePlayer ?: return false
-            if (player.mediaItemCount == 0) return false
             setVolumePercent(volumePercent + delta)
             return true
         }

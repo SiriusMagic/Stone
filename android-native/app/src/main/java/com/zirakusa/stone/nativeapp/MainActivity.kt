@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (isVolumeKey(keyCode) && com.zirakusa.stone.nativeapp.playback.StonePlaybackService.hasActivePlayback()) {
+        if (isVolumeKey(keyCode)) {
             if (event.repeatCount == 0) {
                 com.zirakusa.stone.nativeapp.playback.StonePlaybackService.handleVolumeKey(
                     if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5)
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (isVolumeKey(keyCode) && com.zirakusa.stone.nativeapp.playback.StonePlaybackService.hasActivePlayback()) {
+        if (isVolumeKey(keyCode)) {
             return true
         }
         return super.onKeyUp(keyCode, event)
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val volumeKey = isVolumeKey(event.keyCode)
         val service = com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-        if (volumeKey && service.hasActivePlayback()) {
+        if (volumeKey) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                 service.handleVolumeKey(if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5)
             }
