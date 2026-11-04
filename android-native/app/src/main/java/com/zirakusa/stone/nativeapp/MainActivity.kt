@@ -8,11 +8,16 @@ import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.util.Locale
 
 @SuppressLint("RestrictedApi")
 class MainActivity : ComponentActivity() {
+    private var pictureInPicture by mutableStateOf(false)
+
     private fun isVolumeKey(keyCode: Int): Boolean =
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
@@ -56,6 +61,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { com.zirakusa.stone.nativeapp.ui.StoneApp() }
+        pictureInPicture = isInPictureInPictureMode
+        setContent { com.zirakusa.stone.nativeapp.ui.StoneApp(isPictureInPicture = pictureInPicture) }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean,
+        newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pictureInPicture = isInPictureInPictureMode
     }
 }

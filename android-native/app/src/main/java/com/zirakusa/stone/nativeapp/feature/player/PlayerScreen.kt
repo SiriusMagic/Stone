@@ -2,6 +2,11 @@
 
 package com.zirakusa.stone.nativeapp.feature.player
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.os.Build
+import android.util.Rational
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -42,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.common.Player
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
@@ -58,13 +64,14 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerScreen(state: PlaybackState, song: Song?, playback: PlaybackViewModel,
     back: () -> Unit, onHide: (Song) -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
-    modifier: Modifier = Modifier, onArtist: () -> Unit = {}) {
+    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var queueVisible by remember { mutableStateOf(false) }
@@ -81,6 +88,10 @@ import kotlinx.coroutines.withContext
     }
     if (energySaver) {
         EnergySaverScreen(state, song, playback) { energySaver = false }
+        return
+    }
+    if (isPictureInPicture && song?.isVideo == true) {
+        PictureInPictureVideoPlayer(playback)
         return
     }
     if (videoFullscreen && song?.isVideo == true) {
@@ -192,6 +203,10 @@ import kotlinx.coroutines.withContext
             PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
                 .onFailure { error -> android.widget.Toast.makeText(context, error.message, android.widget.Toast.LENGTH_LONG).show() } }
             PlayerTool.Energy -> energySaver = true
+            PlayerTool.FloatingWindow -> {
+                enterVideoPictureInPicture(context, playback.player())
+                tool = null
+            }
             else -> tool = selected
         }
     }
@@ -214,6 +229,47 @@ import kotlinx.coroutines.withContext
         }, { tool = null })
         else -> Unit
     }
+}
+
+@Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel) {
+    AndroidView(factory = { context ->
+        PlayerView(context).apply {
+            useController = false
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            player = playback.player()
+        }
+    }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+}
+
+private fun enterVideoPictureInPicture(context: Context, player: Player?) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+    val activity = context.findActivity() ?: return
+    val videoSize = player?.videoSize
+    val fallback = if (activity.resources.configuration.orientation ==
+        android.content.res.Configuration.ORIENTATION_LANDSCAPE) Rational(16, 9) else Rational(9, 16)
+    val width = videoSize?.width ?: 0
+    val height = videoSize?.height ?: 0
+    val pixelRatio = videoSize?.pixelWidthHeightRatio?.takeIf { it > 0f } ?: 1f
+    val aspect = if (width > 0 && height > 0) {
+        val adjustedWidth = (width * pixelRatio).roundToInt().coerceAtLeast(1)
+        val ratio = adjustedWidth.toFloat() / height
+        when {
+            ratio > 2.39f -> Rational(239, 100)
+            ratio < 1f / 2.39f -> Rational(100, 239)
+            else -> Rational(adjustedWidth, height)
+        }
+    } else fallback
+    runCatching {
+        activity.enterPictureInPictureMode(
+            android.app.PictureInPictureParams.Builder().setAspectRatio(aspect).build()
+        )
+    }
+}
+
+private fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable private fun PortraitVideoPlayer(state: PlaybackState, progress: Pair<Long, Long>,

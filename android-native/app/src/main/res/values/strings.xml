@@ -99,6 +99,7 @@
     <string name="set_ringtone">Establecer como tono de llamada</string>
     <string name="sleep_timer">Temporizador para dormir</string>
     <string name="energy_saver">Modo de ahorro de energía</string>
+    <string name="floating_window">Ventana flotante</string>
     <string name="hide">Ocultar</string>
     <string name="delete">Borrar</string>
     <string name="manage">Administrar</string>

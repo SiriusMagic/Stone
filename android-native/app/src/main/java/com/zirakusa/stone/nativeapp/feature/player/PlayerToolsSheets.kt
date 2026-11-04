@@ -53,7 +53,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep, Energy, Visualizer, Hide, Delete }
+enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep, Energy, Visualizer,
+    FloatingWindow, Hide, Delete }
 
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
     val tool: PlayerTool)
@@ -72,6 +73,10 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
         ToolRow(Icons.Default.BatterySaver, R.string.energy_saver, PlayerTool.Energy),
         ToolRow(Icons.Default.VisibilityOff, R.string.hide, PlayerTool.Hide),
         ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
+    val videoRows = if (song?.isVideo == true) listOf(
+        ToolRow(Icons.Default.PictureInPictureAlt, R.string.floating_window, PlayerTool.FloatingWindow)
+    ) else emptyList()
+    val visibleRows = rows.take(8) + videoRows + rows.drop(8)
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
         LazyColumn(Modifier.padding(horizontal = 28.dp), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
@@ -87,7 +92,7 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
                     }
                 }
             }
-            items(rows) { row ->
+            items(visibleRows) { row ->
                 Row(Modifier.fillMaxWidth().height(64.dp).clickable { onClose(); onSelect(row.tool) },
                     verticalAlignment = Alignment.CenterVertically) {
                     Icon(row.icon, null, Modifier.size(28.dp))

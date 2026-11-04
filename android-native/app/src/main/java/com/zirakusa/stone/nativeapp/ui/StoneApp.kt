@@ -37,7 +37,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 
-@Composable fun StoneApp(library: LibraryViewModel = viewModel(), playback: PlaybackViewModel = viewModel()) {
+@Composable fun StoneApp(library: LibraryViewModel = viewModel(), playback: PlaybackViewModel = viewModel(),
+    isPictureInPicture: Boolean = false) {
     val context = LocalContext.current
     val settingsStore = remember(context) { StoneSettingsStore(context.applicationContext) }
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
@@ -111,7 +112,7 @@ import kotlinx.coroutines.delay
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
-        if (!playerOpen && !energySaver) MiniPlayer(player, { playerOpen = true }, playback::toggle,
+        if (!isPictureInPicture && !playerOpen && !energySaver) MiniPlayer(player, { playerOpen = true }, playback::toggle,
             state.songs.find { it.id == player.currentId })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -124,7 +125,7 @@ import kotlinx.coroutines.delay
                 onArtist = {
                     artistDestination = player.artist
                     playerOpen = false
-                })
+                }, isPictureInPicture = isPictureInPicture)
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
