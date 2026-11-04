@@ -23,6 +23,7 @@ import com.zirakusa.stone.nativeapp.feature.player.EqualizerSheet
 import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
+import kotlinx.coroutines.delay
 
 private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "equalizer", "sleep")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
@@ -65,6 +66,7 @@ private val legacyDefinitions = listOf(
     var sort by rememberSaveable { mutableStateOf(LibrarySort.Title) }
     var descending by rememberSaveable { mutableStateOf(false) }
     var moreQuickActions by rememberSaveable { mutableStateOf(false) }
+    var feedbackQuickActionId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
         settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys) ?: (it in homeShortcutKeys)
@@ -100,6 +102,13 @@ private val legacyDefinitions = listOf(
             null -> null
         }
     )
+    LaunchedEffect(feedbackQuickActionId) {
+        val id = feedbackQuickActionId ?: return@LaunchedEffect
+        delay(900)
+        if (feedbackQuickActionId == id) feedbackQuickActionId = null
+    }
+    val highlightedQuickActionIds = if (feedbackQuickActionId == null) activeQuickActionIds
+    else activeQuickActionIds + feedbackQuickActionId!!
     fun showQuickActionActivated(labelRes: Int) {
         Toast.makeText(context,
             context.getString(R.string.quick_action_activated, context.getString(labelRes)),
@@ -107,6 +116,9 @@ private val legacyDefinitions = listOf(
     }
     val scan = { if (state.hasFolder) onRefresh() else onFolder() }
     val dispatchQuickAction: (String) -> Unit = { id ->
+        // Every shortcut gets immediate visual feedback, including one-shot actions such as
+        // scanning or opening a collection. Stateful modes remain highlighted by their real state.
+        feedbackQuickActionId = id
         when (id) {
             "search" -> { searchVisible = true }
             "folder" -> onFolder()
@@ -193,7 +205,7 @@ private val legacyDefinitions = listOf(
             showSort = shortcuts["sort"] != false, showEqualizer = shortcuts["equalizer"] != false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
-            activeQuickActionIds = activeQuickActionIds)
+            activeQuickActionIds = highlightedQuickActionIds)
         if (searchVisible) LibrarySearch(query) { query = it }
         LibraryTabs(tab) { tab = it; collection = null }
         if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())
