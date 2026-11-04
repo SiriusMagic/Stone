@@ -62,6 +62,7 @@ private val legacyDefinitions = listOf(
         settingsStore?.shortcutVisible(it, it in homeShortcutKeys) ?: (it in homeShortcutKeys)
     }) }
     val quickActions = remember(shortcuts, settingsStore) {
+        if (settingsStore == null) return@remember emptyList()
         val definitions = legacyDefinitions + QuickActionRegistry.operational
         val ordered = settingsStore?.shortcutOrder(allQuickActionIds) ?: allQuickActionIds
         ordered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
