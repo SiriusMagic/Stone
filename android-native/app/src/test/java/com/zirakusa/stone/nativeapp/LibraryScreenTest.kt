@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp
 
+import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -7,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -32,17 +34,20 @@ import org.robolectric.annotation.GraphicsMode
 class LibraryScreenTest {
     @get:Rule val compose = createComposeRule()
 
+    private fun text(id: Int): String =
+        ApplicationProvider.getApplicationContext<Context>().getString(id)
+
     @Test fun emptyLibraryMatchesStoneAndOffersRealFolderActions() {
         var folderRequests = 0
         compose.setContent {
             StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(), true, { folderRequests++ }, {}, { _, _ -> }, Modifier.fillMaxSize()) } }
         }
-        compose.onNodeWithText("Canciones").assertIsSelected()
-        compose.onNodeWithContentDescription("Buscar canciones, artistas, álbumes…").assertDoesNotExist()
-        compose.onNodeWithText("No hay canciones todavía").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
+        compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
-        compose.onNodeWithText("Elegir carpeta Stone").performClick()
-        compose.onNodeWithText("Escanear carpetas").performClick()
+        compose.onNodeWithText(text(R.string.choose_stone_folder)).performClick()
+        compose.onNodeWithText(text(R.string.scan_folders)).performClick()
         assertEquals(2, folderRequests)
     }
 
@@ -55,12 +60,12 @@ class LibraryScreenTest {
                 { _, tracks -> queue = tracks }, Modifier.fillMaxSize()) } }
         }
         compose.onRoot().captureRoboImage("build/screenshots/stone-home-songs.png")
-        compose.onNodeWithContentDescription("Buscar").performClick()
-        compose.onNodeWithContentDescription("Buscar canciones, artistas, álbumes…").performTextInput("Mr.Kitty")
+        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.search)).performTextInput("Mr.Kitty")
         compose.onNodeWithText("Courtesy Call").assertDoesNotExist()
         compose.onNodeWithText("After Dark").performClick()
         assertEquals(listOf(songs.first()), queue)
-        compose.onNodeWithContentDescription("Buscar").performClick()
+        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
         compose.onNodeWithText("Courtesy Call").assertIsDisplayed()
     }
 
@@ -68,10 +73,10 @@ class LibraryScreenTest {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize())
         } } }
-        compose.onNodeWithContentDescription("Descargas").performClick()
-        compose.onNodeWithText("Las descargas todavía no están disponibles en esta versión de prueba.").assertIsDisplayed()
-        compose.onNodeWithText("Cerrar").performClick()
-        compose.onNodeWithText("No hay canciones todavía").assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.downloads)).performClick()
+        compose.onNodeWithText(text(R.string.downloads_pending)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.dismiss)).performClick()
+        compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
     }
 
     @Test fun miniPlayerToggleDoesNotOpenPlayer() {
@@ -87,19 +92,21 @@ class LibraryScreenTest {
             }
         } }
         compose.onRoot().captureRoboImage("build/screenshots/stone-home-miniplayer.png")
-        compose.onNodeWithContentDescription("Reproducir").performClick()
+        compose.onNodeWithContentDescription(text(R.string.play)).performClick()
         assertEquals(1, toggles)
         assertEquals(0, opens)
-        compose.onNodeWithContentDescription("A continuación").performClick()
+        compose.onNodeWithContentDescription(text(R.string.queue)).performClick()
         assertEquals(1, opens)
     }
 
     @Test @Config(qualifiers = "w360dp-h780dp-xhdpi")
     fun compactPhoneKeepsHeaderActionsAccessible() {
+        var settingsRequests = 0
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize())
+            LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize(),
+                onOpenSettings = { settingsRequests++ })
         } } }
-        compose.onNodeWithContentDescription("Ajustes").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Los demás ajustes de Stone aún están pendientes en esta versión de prueba.").assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.settings)).assertIsDisplayed().performClick()
+        assertEquals(1, settingsRequests)
     }
 }
