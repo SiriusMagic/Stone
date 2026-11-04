@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,7 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -94,6 +97,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
                             "reproducción notificaciones avisos", { onPage("notifications") })
                     )),
+                    SettingsMenuSection(R.string.settings_section_system, listOf(
+                        SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
+                            "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
+                    )),
                     SettingsMenuSection(R.string.settings_section_appearance, listOf(
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
                             "personalización tema apariencia colores", { onPage("theme") }),
@@ -153,7 +160,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
-                        { onPage("hardware-acceleration") }, { onPage("audio-diagnostics") })
+                        { onPage("hardware-acceleration") })
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "scan-mode" -> ScanModeDetail(store)
@@ -165,7 +172,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         onReceiveTransfer, onStopTransfer)
                     "wifi-transfer" -> TransferDetail(transferState, onHostTransfer,
                         onReceiveTransfer, onStopTransfer)
-                    "audio-diagnostics" -> AudioDiagnosticsDetail(playback)
+                    "system-diagnostics", "audio-diagnostics" -> SystemDiagnosticsDetail(playback)
                 }
             }
         }
@@ -195,7 +202,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "notifications" -> R.string.settings_notifications
     "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
     "library-transfer" -> R.string.transfer_library
-    "audio-diagnostics" -> R.string.audio_diagnostics; else -> R.string.settings
+    "system-diagnostics", "audio-diagnostics" -> R.string.system_diagnostics; else -> R.string.settings
 })
 
 @Composable private fun TransferDetail(state: LocalTransferUiState, host: () -> Unit,
@@ -407,7 +414,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 }
 
 @Composable private fun PlaybackDetail(store: StoneSettingsStore?, playback: PlaybackViewModel?,
-    openAudioMode: () -> Unit, openHardwareAcceleration: () -> Unit, openDiagnostics: () -> Unit) {
+    openAudioMode: () -> Unit, openHardwareAcceleration: () -> Unit) {
     var config by remember { mutableStateOf(store?.read()) }
     val playbackState = playback?.state?.collectAsState()?.value
     Text(stringResource(R.string.playback_section_mode), color = StonePalette.Yellow,
@@ -416,19 +423,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         PlaybackModeRow(playbackState?.audioMode ?: AudioMode.BALANCED, openAudioMode)
         HardwareAccelerationRow(playbackState?.hardwareAcceleration ?: HardwareAcceleration.AUTOMATIC,
             openHardwareAcceleration)
-    }
-    Text(stringResource(R.string.playback_section_diagnostics), color = StonePalette.Yellow,
-        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-    SettingsGroup {
-        Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(onClick = openDiagnostics),
-            verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Memory, null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
-            Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
-                Text(stringResource(R.string.audio_diagnostics), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.audio_diagnostics_hint), color = StonePalette.Muted, fontSize = 13.sp)
-            }
-            Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
-        }
     }
     Text(stringResource(R.string.playback_section_behavior), color = StonePalette.Yellow,
         fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
@@ -445,7 +439,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
-@Composable private fun AudioDiagnosticsDetail(playback: PlaybackViewModel?) {
+@Composable private fun SystemDiagnosticsDetail(playback: PlaybackViewModel?) {
     val context = LocalContext.current
     val mode = playback?.state?.collectAsState()?.value?.audioMode ?: AudioMode.BALANCED
     var snapshot by remember { mutableStateOf(PerformanceDiagnostics.read(context)) }
@@ -454,35 +448,80 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     var running by remember { mutableStateOf(false) }
     var duration by remember { mutableLongStateOf(30_000L) }
     val scope = rememberCoroutineScope()
-    Text(stringResource(R.string.audio_diagnostics_intro), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 16.dp))
-    Button(enabled = !running, onClick = { snapshot = PerformanceDiagnostics.read(context) },
-        modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.refresh_metrics)) }
+    val status = diagnosticStatus(snapshot)
+    val statusColor = when (status) {
+        "Crítico" -> Color(0xFFFF6B6B)
+        "Atención" -> StonePalette.Yellow
+        else -> Color(0xFF55D6BE)
+    }
+    val modeLabel = when (mode) {
+        AudioMode.BATTERY -> stringResource(R.string.audio_mode_battery)
+        AudioMode.BALANCED -> stringResource(R.string.audio_mode_balanced)
+        AudioMode.HIFI -> stringResource(R.string.audio_mode_hifi)
+    }
+    Text(stringResource(R.string.system_diagnostics_hint), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 14.dp))
+    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = StonePalette.Chip) {
+        Column(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Memory, null, tint = StonePalette.Yellow, modifier = Modifier.size(30.dp))
+                Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                    Text(stringResource(R.string.diagnostics_system_status), fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.audio_diagnostics_intro), color = StonePalette.Muted,
+                        fontSize = 12.sp)
+                }
+                Surface(shape = RoundedCornerShape(50), color = statusColor.copy(alpha = .16f)) {
+                    Text(status, color = statusColor, fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                }
+            }
+        }
+    }
+    Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        DiagnosticMetricCard(Icons.Default.Speed, stringResource(R.string.cpu_stone),
+            snapshot.cpuPercent?.let { "%.0f%%".format(it) } ?: "—", Modifier.weight(1f))
+        DiagnosticMetricCard(Icons.Default.Memory, stringResource(R.string.pss_total),
+            snapshot.pssTotalMb.takeIf { it >= 0 }?.let { "$it MB" } ?: "—", Modifier.weight(1f))
+        DiagnosticMetricCard(Icons.Default.BatteryFull, stringResource(R.string.battery_level),
+            snapshot.batteryPercent.takeIf { it >= 0 }?.let { "$it%" } ?: "—", Modifier.weight(1f))
+    }
+    Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(enabled = !running, onClick = { snapshot = PerformanceDiagnostics.read(context) },
+            modifier = Modifier.weight(1f)) { Text(stringResource(R.string.refresh_metrics)) }
+        OutlinedButton(enabled = !running, onClick = {
+            running = true; samples = emptyList()
+            scope.launch {
+                summary = PerformanceDiagnostics.session(context, duration) { sample ->
+                    snapshot = sample; samples = samples + sample
+                }
+                running = false
+            }
+        }, modifier = Modifier.weight(1f)) {
+            Text(if (running) stringResource(R.string.diagnostics_running) else stringResource(R.string.start_diagnostics))
+        }
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(30_000L to "30 s", 60_000L to "1 min", 300_000L to "5 min").forEach { (value, label) ->
             FilterChip(selected = duration == value, onClick = { duration = value }, label = { Text(label) })
         }
     }
-    Button(enabled = !running, onClick = {
-        running = true; samples = emptyList()
-        scope.launch {
-            summary = PerformanceDiagnostics.session(context, duration) { sample ->
-                snapshot = sample; samples = samples + sample
-            }
-            running = false
-        }
-    }, modifier = Modifier.fillMaxWidth()) { Text(if (running) stringResource(R.string.diagnostics_running) else stringResource(R.string.start_diagnostics)) }
     summary?.let { result ->
         OutlinedButton(onClick = { com.zirakusa.stone.nativeapp.playback.DiagnosticsReportExporter.share(context, result) }, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Default.Share, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.export_diagnostics))
         }
     }
     if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
-    DiagnosticSection(stringResource(R.string.diagnostics_summary)) {
-        DiagnosticValue(stringResource(R.string.audio_mode), mode.name)
-        DiagnosticValue(stringResource(R.string.diagnostic_status), diagnosticStatus(snapshot))
+    DiagnosticSection(stringResource(R.string.diagnostics_summary), initiallyOpen = true) {
+        DiagnosticValue(stringResource(R.string.audio_mode), modeLabel)
+        DiagnosticValue(stringResource(R.string.diagnostic_status), status)
         DiagnosticValue(stringResource(R.string.ram_used), "${snapshot.usedRamMb} MB")
         DiagnosticValue(stringResource(R.string.battery_level), if (snapshot.batteryPercent >= 0) "${snapshot.batteryPercent}%" else "No disponible")
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_device)) {
+        val model = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
+        DiagnosticValue(stringResource(R.string.diagnostics_device_model), model)
+        DiagnosticValue(stringResource(R.string.diagnostics_android), android.os.Build.VERSION.RELEASE)
+        DiagnosticValue(stringResource(R.string.diagnostics_api_level), android.os.Build.VERSION.SDK_INT.toString())
     }
     DiagnosticSection(stringResource(R.string.diagnostics_cpu)) {
         DiagnosticValue(stringResource(R.string.cpu_stone), snapshot.cpuPercent?.let { "%.1f%%".format(it) } ?: "Calculando")
@@ -515,8 +554,22 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
-@Composable private fun DiagnosticSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    var open by remember { mutableStateOf(true) }
+@Composable private fun DiagnosticMetricCard(icon: ImageVector, title: String, value: String,
+    modifier: Modifier = Modifier) {
+    Surface(modifier.height(92.dp), shape = RoundedCornerShape(18.dp), color = StonePalette.Chip) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Icon(icon, null, tint = StonePalette.Yellow, modifier = Modifier.size(20.dp))
+            Text(title, color = StonePalette.Muted, fontSize = 11.sp, maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
+            Text(value, fontWeight = FontWeight.Black, fontSize = 16.sp, maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable private fun DiagnosticSection(title: String, initiallyOpen: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit) {
+    var open by remember { mutableStateOf(initiallyOpen) }
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
         TextButton(onClick = { open = !open }, modifier = Modifier.fillMaxWidth()) {
             Text(title, Modifier.weight(1f), fontWeight = FontWeight.Black)

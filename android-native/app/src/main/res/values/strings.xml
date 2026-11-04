@@ -205,6 +205,7 @@
     <string name="settings_no_results">No se encontraron ajustes con esa búsqueda.</string>
     <string name="settings_section_library">Biblioteca</string>
     <string name="settings_section_playback">Reproducción</string>
+    <string name="settings_section_system">Sistema</string>
     <string name="settings_section_appearance">Personalización</string>
     <string name="settings_section_transfer">Transferencia y respaldo</string>
     <string name="settings_section_about">Ayuda y acerca de Stone</string>
@@ -213,6 +214,13 @@
     <string name="playback_section_behavior">Comportamiento</string>
     <string name="audio_mode">Modo de reproducción</string>
     <string name="audio_diagnostics">Diagnóstico de rendimiento</string>
+    <string name="system_diagnostics">Diagnóstico avanzado del sistema</string>
+    <string name="system_diagnostics_hint">Estado de Stone, memoria, CPU, audio, batería y temperatura bajo demanda.</string>
+    <string name="diagnostics_system_status">Estado del sistema</string>
+    <string name="diagnostics_device">Dispositivo</string>
+    <string name="diagnostics_device_model">Modelo</string>
+    <string name="diagnostics_android">Android</string>
+    <string name="diagnostics_api_level">Nivel de API</string>
     <string name="audio_diagnostics_hint">RAM, batería y memoria de Stone bajo demanda.</string>
     <string name="audio_diagnostics_intro">Estas métricas solo se leen cuando abres esta pantalla. Stone no mantiene un monitor en segundo plano.</string>
     <string name="refresh_metrics">Actualizar métricas</string>

@@ -76,6 +76,7 @@
     <string name="hardware_acceleration_note">Hardware decoding and audio offload are not equivalent. Android may use a conventional fallback path.</string>
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
+    <string name="settings_section_system">System</string>
     <string name="settings_feedback_about">Feedback     About</string><string name="theme_dark">Black</string>
     <string name="feedback">Feedback</string><string name="about_stone">About Stone</string>
     <string name="feedback_placeholder">Thanks for helping improve Stone. This section will be available soon.</string>
@@ -124,7 +125,7 @@
     <string name="eq_rnb">R&amp;B</string><string name="eq_folk">Folk</string><string name="eq_dance">Dance</string>
     <string name="eq_jazz">Jazz</string><string name="eq_classical">Classical</string><string name="eq_latin">Latin</string>
     <string name="musp_exported">.musp package created</string><string name="musp_failed">Could not process .musp package</string>
-    <string name="audio_diagnostics">Performance diagnostics</string>
+    <string name="audio_diagnostics">Performance diagnostics</string><string name="system_diagnostics">Advanced system diagnostics</string><string name="system_diagnostics_hint">Stone, memory, CPU, audio, battery and temperature status on demand.</string><string name="diagnostics_system_status">System status</string><string name="diagnostics_device">Device</string><string name="diagnostics_device_model">Model</string><string name="diagnostics_android">Android</string><string name="diagnostics_api_level">API level</string>
     <string name="audio_diagnostics_hint">Stone RAM, battery and memory on demand.</string>
     <string name="audio_diagnostics_intro">These metrics are read only when this screen is open. Stone does not keep a background monitor.</string>
     <string name="refresh_metrics">Refresh metrics</string><string name="ram_used">RAM used</string>
