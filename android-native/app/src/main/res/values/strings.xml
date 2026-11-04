@@ -64,6 +64,7 @@
     <string name="saved_eq_profiles">Perfiles guardados</string>
     <string name="compare_original">Comparar original</string>
     <string name="lyrics">Letras</string>
+    <string name="lyrics_badge">LETRAS</string>
     <string name="lyrics_add">Agregar letras</string>
     <string name="lyrics_edit">Editar letras</string>
     <string name="lyrics_paste">Pegar</string>
