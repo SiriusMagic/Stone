@@ -33,8 +33,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
-    LaunchedEffect(song?.uri, song?.modifiedMs, song?.isVideo) {
-        videoFrame = if (song?.isVideo == true) ArtworkLoader.loadVideoFrame(context, song.uri, song.modifiedMs) else null
+    val hasVideoSource = song?.isVideo == true || song?.uri?.substringBefore('?')?.substringAfterLast('.')?.lowercase() in setOf("mp4", "mkv", "mov", "webm")
+    LaunchedEffect(song?.uri, song?.modifiedMs, hasVideoSource) {
+        videoFrame = if (hasVideoSource && song != null) ArtworkLoader.loadVideoFrame(context, song.uri, song.modifiedMs) else null
     }
     Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp).clickable(onClick = open),
         shape = RoundedCornerShape(24.dp), color = StonePalette.MiniBackground,
@@ -42,7 +43,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                if (song?.isVideo == true && videoFrame?.bitmap != null) {
+                if (hasVideoSource && videoFrame?.bitmap != null) {
                     Image(videoFrame!!.bitmap!!.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 } else StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.fillMaxSize())
             }
