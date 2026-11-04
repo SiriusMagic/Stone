@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -80,6 +81,10 @@ import kotlin.math.roundToInt
     var tool by remember { mutableStateOf<PlayerTool?>(null) }
     var energySaver by remember { mutableStateOf(false) }
     var videoFullscreen by remember { mutableStateOf(false) }
+    var visualizerEnabled by rememberSaveable { mutableStateOf(false) }
+    var visualizerConfigured by rememberSaveable { mutableStateOf(false) }
+    var visualizerStyleKey by rememberSaveable { mutableStateOf(VisualizerStyle.Harmony.key) }
+    val visualizerStyle = visualizerStyleForKey(visualizerStyleKey)
     val dynamicBackground by produceState(Color(0xFF0D0C11), song?.uri, song?.modifiedMs) {
         value = withContext(Dispatchers.IO) {
             song?.uri?.let { uri -> ArtworkLoader.load(context.applicationContext, uri, song.modifiedMs) }
@@ -174,6 +179,14 @@ import kotlin.math.roundToInt
             }
             IconButton(onClick = { optionsVisible = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more_options)) }
         }
+        // Keep this slot in the layout even when the visualizer is disabled. Its fixed height
+        // prevents the progress bar and transport controls from jumping when it is enabled.
+        VisualizerSlot(
+            enabled = visualizerEnabled && tool != PlayerTool.Visualizer,
+            audioSessionId = StonePlaybackService.playbackAudioSessionId,
+            style = visualizerStyle,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+        )
         PlayerProgress(progress, playback)
         Row(Modifier.fillMaxWidth().height(104.dp), horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically) {
@@ -207,13 +220,32 @@ import kotlin.math.roundToInt
                 enterVideoPictureInPicture(context, playback.player())
                 tool = null
             }
+            PlayerTool.Visualizer -> {
+                // Preserve the old behavior: opening the visualizer the first time presents it
+                // enabled. If the user later turns it off, reopening respects that choice.
+                if (!visualizerConfigured) {
+                    visualizerEnabled = true
+                    visualizerConfigured = true
+                }
+                tool = selected
+            }
             else -> tool = selected
         }
     }
     when (tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback) { tool = null }
         PlayerTool.Equalizer -> EqualizerSheet(state, playback, song = song) { tool = null }
-        PlayerTool.Visualizer -> MusicVisualizerSheet(StonePlaybackService.playbackAudioSessionId) { tool = null }
+        PlayerTool.Visualizer -> MusicVisualizerSheet(
+            audioSessionId = StonePlaybackService.playbackAudioSessionId,
+            enabled = visualizerEnabled,
+            style = visualizerStyle,
+            onEnabledChange = {
+                visualizerEnabled = it
+                visualizerConfigured = true
+            },
+            onStyleChange = { visualizerStyleKey = it.key },
+            close = { tool = null }
+        )
         PlayerTool.Sleep -> SleepSheet(state, playback) { tool = null }
         PlayerTool.Tags -> song?.let { TagEditorSheet(it, { tool = null }) {
             tool = null; onMetadataChanged(); back()
@@ -494,6 +526,25 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
     val line = if (document.synced.isNotEmpty()) document.synced.getOrNull(index)?.text.orEmpty()
         else document.plain.firstOrNull().orEmpty()
     return index to line
+}
+
+/**
+ * A stable visualizer area for the portrait audio player. The box remains the same size when the
+ * visualizer is switched on or off, so the progress bar and controls never need to be repositioned.
+ */
+@Composable private fun VisualizerSlot(enabled: Boolean, audioSessionId: Int, style: VisualizerStyle,
+    modifier: Modifier = Modifier) {
+    Box(modifier.height(142.dp), contentAlignment = Alignment.Center) {
+        if (enabled) {
+            MusicVisualizerCanvas(
+                audioSessionId = audioSessionId,
+                style = style,
+                enabled = true,
+                tint = StonePalette.Secondary,
+                modifier = Modifier.fillMaxWidth().height(92.dp).padding(horizontal = 4.dp)
+            )
+        }
+    }
 }
 
 @Composable private fun CurrentLyricChip(song: Song?, positionMs: Long, onClick: () -> Unit,

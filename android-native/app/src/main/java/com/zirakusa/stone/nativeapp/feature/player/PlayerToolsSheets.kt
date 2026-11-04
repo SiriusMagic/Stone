@@ -104,12 +104,27 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
     }
 }
 
-private enum class VisualizerStyle(val label: String) { Harmony("Armonía"), Flow("Flujo"), Bounce("Rebote"), Ascent("Ascenso") }
+internal enum class VisualizerStyle(val key: String, val label: String) {
+    Harmony("harmony", "Armonía"),
+    Flow("flow", "Flujo"),
+    Bounce("bounce", "Rebote"),
+    Ascent("ascent", "Ascenso");
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable fun MusicVisualizerSheet(audioSessionId: Int, close: () -> Unit) {
-    var enabled by remember { mutableStateOf(true) }
-    var style by remember { mutableStateOf(VisualizerStyle.Harmony) }
+    companion object {
+        fun fromKey(key: String): VisualizerStyle = entries.firstOrNull { it.key == key } ?: Harmony
+    }
+}
+
+internal fun visualizerStyleForKey(key: String): VisualizerStyle = VisualizerStyle.fromKey(key)
+
+/**
+ * Shared renderer for the visualizer. The player uses it inside a reserved slot while the
+ * configuration sheet uses it as its live preview. Keeping the renderer here prevents the two
+ * surfaces from drifting apart visually.
+ */
+@Composable
+internal fun MusicVisualizerCanvas(audioSessionId: Int, style: VisualizerStyle, enabled: Boolean,
+    modifier: Modifier = Modifier, tint: Color = StonePalette.Yellow) {
     var values by remember { mutableStateOf(FloatArray(32) { 0f }) }
     var tick by remember { mutableIntStateOf(0) }
     val visualizer = remember(audioSessionId) {
@@ -117,32 +132,58 @@ private enum class VisualizerStyle(val label: String) { Harmony("Armonía"), Flo
     }
     DisposableEffect(visualizer) {
         visualizer?.let { effect ->
-            runCatching {
-                effect.captureSize = Visualizer.getCaptureSizeRange()[1]
-                effect.enabled = true
-            }
+            runCatching { effect.captureSize = Visualizer.getCaptureSizeRange()[1] }
         }
         onDispose { runCatching { visualizer?.enabled = false; visualizer?.release() } }
     }
     LaunchedEffect(visualizer, enabled) {
+        runCatching { visualizer?.enabled = enabled }
         while (true) {
             if (enabled) {
                 val wave = ByteArray(128)
                 val fft = ByteArray(128)
                 val captured = runCatching {
-                    visualizer?.getWaveForm(wave); visualizer?.getFft(fft); true
+                    visualizer?.getWaveForm(wave)
+                    visualizer?.getFft(fft)
+                    true
                 }.getOrDefault(false)
                 values = FloatArray(32) { index ->
                     if (captured && visualizer != null) {
                         val offset = index * 4
-                        ((kotlin.math.abs(wave[offset].toInt()) + kotlin.math.abs(fft[offset].toInt())) / 255f).coerceIn(.04f, 1f)
-                    } else (.12f + ((kotlin.math.sin((index + tick) * .45) + 1.0) * .22)).toFloat()
+                        ((kotlin.math.abs(wave[offset].toInt()) +
+                            kotlin.math.abs(fft[offset].toInt())) / 255f).coerceIn(.04f, 1f)
+                    } else {
+                        (.12f + ((kotlin.math.sin((index + tick) * .45) + 1.0) * .22)).toFloat()
+                    }
                 }
                 tick++
             }
             delay(70)
         }
     }
+    Canvas(modifier) {
+        val gap = size.width / values.size
+        values.forEachIndexed { index, value ->
+            val x = index * gap + gap / 2
+            val height = value * size.height
+            when (style) {
+                VisualizerStyle.Harmony, VisualizerStyle.Bounce, VisualizerStyle.Ascent -> drawRoundRect(
+                    tint, Offset(x - gap * .28f, size.height - height),
+                    androidx.compose.ui.geometry.Size(gap * .56f, height.coerceAtLeast(4f)),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(gap * .25f))
+                VisualizerStyle.Flow -> {
+                    val y = size.height / 2 +
+                        kotlin.math.sin(index * .38 + tick * .08).toFloat() * height / 2
+                    drawCircle(tint, gap * .22f, Offset(x, y))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable internal fun MusicVisualizerSheet(audioSessionId: Int, enabled: Boolean, style: VisualizerStyle,
+    onEnabledChange: (Boolean) -> Unit, onStyleChange: (VisualizerStyle) -> Unit, close: () -> Unit) {
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF203C3D),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
@@ -150,27 +191,14 @@ private enum class VisualizerStyle(val label: String) { Harmony("Armonía"), Flo
                 Icon(Icons.Default.GraphicEq, null, tint = StonePalette.Yellow, modifier = Modifier.size(32.dp))
                 Text(stringResource(R.string.music_visualizer), Modifier.weight(1f).padding(start = 14.dp),
                     fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Switch(enabled, { enabled = it })
+                Switch(enabled, onEnabledChange)
             }
-            Canvas(Modifier.fillMaxWidth().height(130.dp).padding(vertical = 18.dp)) {
-                val gap = size.width / values.size
-                values.forEachIndexed { index, value ->
-                    val x = index * gap + gap / 2
-                    val height = value * size.height
-                    when (style) {
-                        VisualizerStyle.Harmony, VisualizerStyle.Bounce, VisualizerStyle.Ascent -> drawRoundRect(
-                            StonePalette.Yellow, Offset(x - gap * .28f, size.height - height),
-                            androidx.compose.ui.geometry.Size(gap * .56f, height.coerceAtLeast(4f)), cornerRadius = androidx.compose.ui.geometry.CornerRadius(gap * .25f))
-                        VisualizerStyle.Flow -> {
-                            val y = size.height / 2 + kotlin.math.sin(index * .38 + tick * .08).toFloat() * height / 2
-                            drawCircle(StonePalette.Yellow, gap * .22f, Offset(x, y))
-                        }
-                    }
-                }
-            }
+            MusicVisualizerCanvas(audioSessionId, style, enabled,
+                Modifier.fillMaxWidth().height(130.dp).padding(vertical = 18.dp))
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 VisualizerStyle.entries.forEach { item ->
-                    FilterChip(selected = style == item, onClick = { style = item }, label = { Text(item.label) })
+                    FilterChip(selected = style == item, onClick = { onStyleChange(item) },
+                        label = { Text(item.label) })
                 }
             }
             Spacer(Modifier.height(18.dp))
