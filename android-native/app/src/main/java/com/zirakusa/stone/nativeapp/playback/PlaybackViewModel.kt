@@ -70,7 +70,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         SessionToken(application, ComponentName(application, StonePlaybackService::class.java))).buildAsync()
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
-        override fun onPlayerError(error: PlaybackException) = publish()
+        override fun onPlayerError(error: PlaybackException) {
+            PerformanceDiagnostics.recordPlaybackError()
+            publish()
+        }
     }
 
     init {

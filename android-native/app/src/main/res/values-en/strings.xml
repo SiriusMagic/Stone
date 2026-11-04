@@ -35,7 +35,7 @@
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
     <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string>
     <string name="energy_saver">Energy saver</string><string name="hide">Hide</string><string name="delete">Delete</string>
-    <string name="default_value">Default</string><string name="off">Off</string><string name="minutes_later">In %1$d minutes</string>
+    <string name="default_value">Default</string><string name="off">Off</string><string name="manage">Manage</string><string name="delete_album">Delete album</string><string name="select_all">Select all</string><string name="selected_count">%1$d selected</string><string name="delete_selected_message">Delete %1$d selected songs?</string><string name="floating_window_unavailable">Floating window (unavailable)</string><string name="playback_mode">Playback mode</string><string name="video_scale">Adjust scale</string><string name="audio_track">Audio track</string><string name="minutes_later">In %1$d minutes</string>
     <string name="finish_current_track">Finish current track</string><string name="title">Title</string><string name="artist">Artist</string>
     <string name="custom_sleep_time">Custom time</string><string name="hours">Hours</string>
     <string name="minutes_short">Min</string><string name="set_sleep_timer">Set timer</string>

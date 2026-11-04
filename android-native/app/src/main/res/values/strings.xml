@@ -85,6 +85,12 @@
     <string name="repeat_one">Repetir una</string>
     <string name="repeat_all">Repetir todo</string>
     <string name="tag_editor">Editor de etiquetas</string>
+    <string name="cover">Portada</string><string name="tags">Etiquetas</string><string name="information">Información</string><string name="extras">Extras</string>
+    <string name="cover_editor_unavailable">La portada se conserva; la integración segura de nuevas imágenes estará disponible en una próxima versión.</string>
+    <string name="album_artist">Artista del álbum</string><string name="composer">Compositor</string><string name="comment">Comentarios</string><string name="description">Descripción</string><string name="disc_number">Número de disco</string>
+    <string name="mp3_tags_only">Estos campos se guardan actualmente de forma segura en etiquetas ID3 de archivos MP3. Otros formatos permanecen sin cambios.</string>
+    <string name="file_name">Nombre</string><string name="format">Formato</string><string name="file_size">Peso</string><string name="file_bytes">Bytes</string><string name="duration">Duración</string><string name="bitrate">Bitrate</string><string name="sample_rate">Frecuencia</string><string name="channels">Canales</string><string name="mime">MIME</string><string name="location">Ubicación</string>
+    <string name="extras_unavailable">Las letras se gestionan desde el panel Letras. Conversión, hash y restauración aún no están habilitados porque requieren operaciones adicionales seguras.</string>
     <string name="add_to_playlist">Agregar a la lista de reproducción</string>
     <string name="share">Compartir</string>
     <string name="speed">Velocidad</string>
@@ -93,6 +99,15 @@
     <string name="energy_saver">Modo de ahorro de energía</string>
     <string name="hide">Ocultar</string>
     <string name="delete">Borrar</string>
+    <string name="manage">Administrar</string>
+    <string name="delete_album">Eliminar álbum</string>
+    <string name="select_all">Seleccionar todos</string>
+    <string name="selected_count">%1$d seleccionadas</string>
+    <string name="delete_selected_message">¿Borrar %1$d canciones seleccionadas?</string>
+    <string name="floating_window_unavailable">Ventana flotante (no disponible)</string>
+    <string name="playback_mode">Modo de reproducción</string>
+    <string name="video_scale">Ajustar escala</string>
+    <string name="audio_track">Pista de audio</string>
     <string name="default_value">Por defecto</string>
     <string name="off">Apagar</string>
     <string name="minutes_later">%1$d minutos más tarde</string>
@@ -192,6 +207,10 @@
     <string name="ram_available">RAM disponible</string>
     <string name="process_heap">Memoria de Stone</string>
     <string name="battery_level">Batería</string>
+    <string name="diagnostics_running">Analizando…</string><string name="start_diagnostics">Iniciar diagnóstico</string><string name="diagnostics_summary">Resumen</string><string name="diagnostics_cpu">CPU</string><string name="diagnostics_memory">Memoria</string><string name="diagnostics_audio">Audio</string><string name="diagnostics_energy">Energía</string><string name="diagnostics_advanced">Diagnóstico avanzado</string>
+    <string name="diagnostic_status">Estado</string><string name="cpu_stone">CPU de Stone</string><string name="cpu_threads">Hilos activos</string><string name="cpu_cores">Núcleos disponibles</string><string name="pss_total">PSS total</string><string name="pss_native">PSS nativa</string><string name="pss_dalvik">PSS administrada</string><string name="native_heap">Heap nativo</string><string name="audio_route">Ruta de audio</string><string name="audio_errors">Errores de reproducción</string><string name="audio_latency">Latencia</string><string name="battery_temperature">Temperatura de batería</string><string name="charging_state">Carga</string><string name="charging">Cargando</string><string name="not_charging">No cargando</string><string name="thermal_status">Estado térmico</string><string name="low_memory">Memoria baja</string><string name="low_memory_threshold">Umbral de memoria baja</string><string name="session_samples">Muestras de sesión</string><string name="not_available">No disponible</string>
+    <string name="diagnostics_limitations">La latencia física, el consumo exacto en mAh y algunas propiedades del dispositivo no están disponibles mediante APIs universales de Android. No se interpretan como mediciones reales.</string>
+    <string name="export_diagnostics">Compartir informe JSON</string>
     <string name="audio_mode_intro">Elige cómo quieres escuchar tu música.</string>
     <string name="audio_mode_battery">Larga duración de batería</string>
     <string name="audio_mode_balanced">Equilibrado</string>

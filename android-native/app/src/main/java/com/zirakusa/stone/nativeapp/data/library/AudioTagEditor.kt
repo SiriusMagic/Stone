@@ -8,7 +8,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 data class AudioTags(val title: String = "", val artist: String = "", val album: String = "",
-    val genre: String = "", val year: String = "", val trackNumber: String = "")
+    val genre: String = "", val year: String = "", val trackNumber: String = "",
+    val albumArtist: String = "", val composer: String = "", val comment: String = "",
+    val discNumber: String = "", val copyright: String = "", val description: String = "")
 
 /** Preserves unknown ID3 frames and rewrites only Stone's editable MP3 text frames. */
 class AudioTagEditor(private val context: Context) {
@@ -20,7 +22,10 @@ class AudioTagEditor(private val context: Context) {
             AudioTags(text(MediaMetadataRetriever.METADATA_KEY_TITLE),
                 text(MediaMetadataRetriever.METADATA_KEY_ARTIST), text(MediaMetadataRetriever.METADATA_KEY_ALBUM),
                 text(MediaMetadataRetriever.METADATA_KEY_GENRE), text(MediaMetadataRetriever.METADATA_KEY_YEAR),
-                text(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER))
+                text(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER),
+                text(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST),
+                text(MediaMetadataRetriever.METADATA_KEY_COMPOSER),
+                text(MediaMetadataRetriever.METADATA_KEY_WRITER))
         } finally { retriever.release() }
     }
 
@@ -32,7 +37,9 @@ class AudioTagEditor(private val context: Context) {
         val source = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             ?: error("No se pudo abrir el archivo")
         val updated = rewrite(source, mapOf("TIT2" to tags.title, "TPE1" to tags.artist,
-            "TALB" to tags.album, "TCON" to tags.genre, "TYER" to tags.year, "TRCK" to tags.trackNumber))
+            "TALB" to tags.album, "TCON" to tags.genre, "TYER" to tags.year, "TRCK" to tags.trackNumber,
+            "TPE2" to tags.albumArtist, "TCOM" to tags.composer, "COMM" to tags.comment,
+            "TPOS" to tags.discNumber, "TCOP" to tags.copyright, "TXXX" to tags.description))
         context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(updated) }
             ?: error("El proveedor no permite modificar este archivo")
     }
@@ -82,7 +89,8 @@ class AudioTagEditor(private val context: Context) {
     }
 
     private fun preserve(body: ByteArray, version: Int): ByteArray {
-        val replaced = setOf("TIT2", "TPE1", "TALB", "TCON", "TYER", "TDRC", "TRCK", "USLT")
+        val replaced = setOf("TIT2", "TPE1", "TALB", "TCON", "TYER", "TDRC", "TRCK", "USLT",
+            "TPE2", "TCOM", "COMM", "TPOS", "TCOP", "TXXX")
         val kept = ByteArrayOutputStream(); var offset = 0
         while (offset + 10 <= body.size) {
             val id = String(body, offset, 4, Charsets.ISO_8859_1)

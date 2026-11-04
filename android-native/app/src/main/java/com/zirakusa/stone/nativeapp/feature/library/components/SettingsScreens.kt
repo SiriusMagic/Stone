@@ -32,6 +32,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
+import kotlinx.coroutines.launch
 
 private data class Language(val code: String, val label: String)
 private val languages = listOf(Language("es", "Español"), Language("en", "English"))
@@ -329,16 +330,87 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     val context = LocalContext.current
     val mode = playback?.state?.collectAsState()?.value?.audioMode ?: AudioMode.BALANCED
     var snapshot by remember { mutableStateOf(PerformanceDiagnostics.read(context)) }
+    var samples by remember { mutableStateOf<List<com.zirakusa.stone.nativeapp.playback.PerformanceSnapshot>>(emptyList()) }
+    var summary by remember { mutableStateOf<com.zirakusa.stone.nativeapp.playback.DiagnosticSessionSummary?>(null) }
+    var running by remember { mutableStateOf(false) }
+    var duration by remember { mutableLongStateOf(30_000L) }
+    val scope = rememberCoroutineScope()
     Text(stringResource(R.string.audio_diagnostics_intro), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 16.dp))
-    Button(onClick = { snapshot = PerformanceDiagnostics.read(context) },
+    Button(enabled = !running, onClick = { snapshot = PerformanceDiagnostics.read(context) },
         modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.refresh_metrics)) }
-    DiagnosticValue(stringResource(R.string.audio_mode), mode.name)
-    DiagnosticValue(stringResource(R.string.ram_used), "${snapshot.usedRamMb} MB")
-    DiagnosticValue(stringResource(R.string.ram_available), "${snapshot.availableRamMb} MB")
-    DiagnosticValue(stringResource(R.string.process_heap), "${snapshot.processHeapMb} MB")
-    DiagnosticValue(stringResource(R.string.battery_level),
-        if (snapshot.batteryPercent >= 0) "${snapshot.batteryPercent}%" else "—")
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(30_000L to "30 s", 60_000L to "1 min", 300_000L to "5 min").forEach { (value, label) ->
+            FilterChip(selected = duration == value, onClick = { duration = value }, label = { Text(label) })
+        }
+    }
+    Button(enabled = !running, onClick = {
+        running = true; samples = emptyList()
+        scope.launch {
+            summary = PerformanceDiagnostics.session(context, duration) { sample ->
+                snapshot = sample; samples = samples + sample
+            }
+            running = false
+        }
+    }, modifier = Modifier.fillMaxWidth()) { Text(if (running) stringResource(R.string.diagnostics_running) else stringResource(R.string.start_diagnostics)) }
+    summary?.let { result ->
+        OutlinedButton(onClick = { com.zirakusa.stone.nativeapp.playback.DiagnosticsReportExporter.share(context, result) }, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Default.Share, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.export_diagnostics))
+        }
+    }
+    if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
+    DiagnosticSection(stringResource(R.string.diagnostics_summary)) {
+        DiagnosticValue(stringResource(R.string.audio_mode), mode.name)
+        DiagnosticValue(stringResource(R.string.diagnostic_status), diagnosticStatus(snapshot))
+        DiagnosticValue(stringResource(R.string.ram_used), "${snapshot.usedRamMb} MB")
+        DiagnosticValue(stringResource(R.string.battery_level), if (snapshot.batteryPercent >= 0) "${snapshot.batteryPercent}%" else "No disponible")
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_cpu)) {
+        DiagnosticValue(stringResource(R.string.cpu_stone), snapshot.cpuPercent?.let { "%.1f%%".format(it) } ?: "Calculando")
+        DiagnosticValue(stringResource(R.string.cpu_threads), snapshot.threadCount.toString())
+        DiagnosticValue(stringResource(R.string.cpu_cores), snapshot.cpuCount.toString())
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_memory)) {
+        DiagnosticValue(stringResource(R.string.pss_total), "${snapshot.pssTotalMb} MB")
+        DiagnosticValue(stringResource(R.string.pss_native), "${snapshot.pssNativeMb} MB")
+        DiagnosticValue(stringResource(R.string.pss_dalvik), "${snapshot.pssDalvikMb} MB")
+        DiagnosticValue(stringResource(R.string.process_heap), "${snapshot.processHeapMb} MB")
+        DiagnosticValue(stringResource(R.string.native_heap), "${snapshot.nativeHeapMb} MB")
+        DiagnosticValue(stringResource(R.string.ram_available), "${snapshot.availableRamMb} MB")
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_audio)) {
+        DiagnosticValue(stringResource(R.string.audio_route), snapshot.audioRoute)
+        DiagnosticValue(stringResource(R.string.audio_errors), snapshot.errorCount.toString())
+        DiagnosticValue(stringResource(R.string.audio_latency), stringResource(R.string.not_available))
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_energy)) {
+        DiagnosticValue(stringResource(R.string.battery_temperature), snapshot.batteryTemperatureC?.let { "$it °C" } ?: stringResource(R.string.not_available))
+        DiagnosticValue(stringResource(R.string.charging_state), if (snapshot.charging) stringResource(R.string.charging) else stringResource(R.string.not_charging))
+        DiagnosticValue(stringResource(R.string.thermal_status), snapshot.thermalStatus)
+    }
+    DiagnosticSection(stringResource(R.string.diagnostics_advanced)) {
+        DiagnosticValue(stringResource(R.string.low_memory), snapshot.lowMemory.toString())
+        DiagnosticValue(stringResource(R.string.low_memory_threshold), "${snapshot.lowMemoryThresholdMb} MB")
+        DiagnosticValue(stringResource(R.string.session_samples), samples.size.toString())
+        Text(stringResource(R.string.diagnostics_limitations), color = StonePalette.Muted, fontSize = 12.sp)
+    }
+}
+
+@Composable private fun DiagnosticSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    var open by remember { mutableStateOf(true) }
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        TextButton(onClick = { open = !open }, modifier = Modifier.fillMaxWidth()) {
+            Text(title, Modifier.weight(1f), fontWeight = FontWeight.Black)
+            Icon(if (open) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null)
+        }
+        if (open) Column(content = content)
+    }
+}
+
+private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.PerformanceSnapshot): String = when {
+    snapshot.thermalStatus in setOf("Grave", "Crítico", "Emergencia") -> "Crítico"
+    snapshot.lowMemory || (snapshot.cpuPercent ?: 0.0) > 85 -> "Atención"
+    else -> "Normal"
 }
 
 @Composable private fun DiagnosticValue(label: String, value: String) {

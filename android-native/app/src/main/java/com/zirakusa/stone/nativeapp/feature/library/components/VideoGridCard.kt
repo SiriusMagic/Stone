@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -28,7 +29,7 @@ import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.components.StoneGlyph
 import com.zirakusa.stone.nativeapp.ui.components.StoneIcon
 
-@Composable fun VideoGridCard(song: Song, play: () -> Unit) {
+@Composable fun VideoGridCard(song: Song, play: () -> Unit, onOptions: () -> Unit = {}) {
     val context = LocalContext.current.applicationContext
     var frame by remember(song.uri, song.modifiedMs) {
         mutableStateOf(ArtworkLoader.VideoFrame(null, 0, 0))
@@ -45,6 +46,10 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneIcon
             }
             Icon(Icons.Default.PlayArrow, stringResource(R.string.play),
                 Modifier.align(Alignment.BottomEnd).padding(8.dp).size(22.dp), tint = Color.White)
+            androidx.compose.material3.IconButton(onClick = onOptions,
+                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp)) {
+                Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
+            }
         }
         Text(song.title, Modifier.fillMaxWidth().padding(start = 4.dp, top = 9.dp),
             fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,

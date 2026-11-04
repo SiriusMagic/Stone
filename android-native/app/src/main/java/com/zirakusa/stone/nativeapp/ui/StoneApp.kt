@@ -134,6 +134,7 @@ import kotlinx.coroutines.delay
                 { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
+                onHide = library::hide,
                 transferState = transferState,
                 onHostTransfer = {
                     scope.launch {
@@ -183,7 +184,8 @@ import kotlinx.coroutines.delay
                     settingsVisible = it
                     if (!it) settingsPage = null
                 }, artistDestination = artistDestination,
-                onArtistDestinationConsumed = { artistDestination = null })
+                onArtistDestinationConsumed = { artistDestination = null },
+                onDelete = library::delete)
         }
     }
         if (volumeUi.visible) {

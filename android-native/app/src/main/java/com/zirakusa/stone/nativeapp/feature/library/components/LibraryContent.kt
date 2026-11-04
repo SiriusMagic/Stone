@@ -24,11 +24,13 @@ import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryContent(state: LibraryState, songs: List<Song>, tab: LibraryTab,
     collection: String?, select: (String?) -> Unit, searching: Boolean, canPlay: Boolean,
     currentId: String, onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     onScan: () -> Unit, modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
-    onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> }) {
+    onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
+    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist)
@@ -43,16 +45,37 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onScan)
+        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onScan, onDelete, onHide)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
+    var managing by remember(collection) { mutableStateOf(false) }
+    var selectedIds by remember(collection) { mutableStateOf<Set<String>>(emptySet()) }
+    var menuVisible by remember(collection) { mutableStateOf(false) }
+    var deleteConfirmVisible by remember(collection) { mutableStateOf(false) }
+    Column(modifier.fillMaxWidth()) {
+    LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
         run {
             if (collection != null) item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), { select(null) })
-                    Text(collection)
+                    if (managing) {
+                        StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), {
+                            managing = false; selectedIds = emptySet()
+                        })
+                        Text(stringResource(R.string.selected_count, selectedIds.size), fontWeight = FontWeight.Bold)
+                    } else {
+                        StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), { select(null) })
+                        Text(collection, Modifier.weight(1f))
+                        IconButton(onClick = { menuVisible = true }) {
+                            Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
+                        }
+                    }
+                }
+                if (managing) Row(Modifier.fillMaxWidth().clickable {
+                    selectedIds = if (selectedIds.size == visible.size) emptySet() else visible.map { it.id }.toSet()
+                }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selectedIds.size == visible.size && visible.isNotEmpty(), null)
+                    Text(stringResource(R.string.select_all), color = StonePalette.Yellow, fontWeight = FontWeight.Bold)
                 }
             }
             if (visible.isEmpty() && !state.scanning) item {
@@ -83,7 +106,14 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     }
                 }
             } else items(visible, key = { it.id }) { song ->
-                LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, visible) }
+                if (managing) Row(Modifier.fillMaxWidth().clickable {
+                    selectedIds = if (song.id in selectedIds) selectedIds - song.id else selectedIds + song.id
+                }, verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(song.id in selectedIds, null)
+                    Box(Modifier.weight(1f)) {
+                        LibrarySongRow(song, song.id == currentId, false) { }
+                    }
+                } else LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, visible) }
             }
             if (!searching && !state.hasFolder) item {
                 LibraryScanActions(state.scanning, state.songs.isEmpty(), onFolder, onScan,
@@ -91,13 +121,48 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             }
         }
     }
+    if (managing) Surface(color = StonePalette.Surface, tonalElevation = 8.dp) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            TextButton(enabled = selectedIds.isNotEmpty(), onClick = { deleteConfirmVisible = true }) {
+                Icon(Icons.Default.Delete, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.delete))
+            }
+        }
+    }
+    }
+    if (menuVisible) ModalBottomSheet(onDismissRequest = { menuVisible = false }) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+            TextButton(onClick = { menuVisible = false; managing = true }) {
+                Icon(Icons.Default.CheckCircle, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.manage))
+            }
+            TextButton(onClick = {
+                menuVisible = false; selectedIds = visible.map { it.id }.toSet(); managing = true; deleteConfirmVisible = true
+            }) {
+                Icon(Icons.Default.Delete, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.delete_album))
+            }
+        }
+    }
+    if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },
+        title = { Text(stringResource(R.string.delete)) },
+        text = { Text(stringResource(R.string.delete_selected_message, selectedIds.size)) },
+        confirmButton = { TextButton(onClick = {
+            visible.filter { it.id in selectedIds }.forEach(onDelete)
+            deleteConfirmVisible = false; managing = false; selectedIds = emptySet()
+        }) { Text(stringResource(R.string.delete)) } },
+        dismissButton = { TextButton(onClick = { deleteConfirmVisible = false }) {
+            Text(stringResource(R.string.cancel))
+        } })
 }
 
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, modifier: Modifier,
-    onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit, onScan: () -> Unit) {
+    onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit, onScan: () -> Unit,
+    onDelete: (Song) -> Unit, onHide: (Song) -> Unit) {
     var folderBrowser by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
+    var selectedVideo by remember { mutableStateOf<Song?>(null) }
+    var deleteConfirmVisible by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically) {
@@ -132,7 +197,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
                     top = 4.dp, bottom = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                items(visible, key = { it.id }) { video -> VideoGridCard(video) { onPlay(video, visible) } }
+                items(visible, key = { it.id }) { video ->
+                    VideoGridCard(video, { onPlay(video, visible) }) { selectedVideo = video }
+                }
             }
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {
                 item {
@@ -143,6 +210,46 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             }
         }
     }
+    selectedVideo?.let { video ->
+        ModalBottomSheet(onDismissRequest = { selectedVideo = null }) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
+                Text(video.title, fontWeight = FontWeight.Bold, maxLines = 2,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 12.dp))
+                TextButton(onClick = {
+                    selectedVideo = null
+                    com.zirakusa.stone.nativeapp.data.library.SongActions.share(context, video.uri, video.title)
+                }) { Icon(Icons.Default.Share, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.share)) }
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.PictureInPictureAlt, null); Spacer(Modifier.width(12.dp));
+                    Text(stringResource(R.string.floating_window_unavailable))
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.Repeat, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.playback_mode))
+                }
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.Fullscreen, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.video_scale))
+                }
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.GraphicEq, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.audio_track))
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                TextButton(onClick = { val item = selectedVideo; selectedVideo = null; item?.let(onHide) }) {
+                    Icon(Icons.Default.VisibilityOff, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.hide))
+                }
+                TextButton(onClick = { deleteConfirmVisible = true }) {
+                    Icon(Icons.Default.Delete, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.delete))
+                }
+            }
+        }
+    }
+    if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },
+        title = { Text(stringResource(R.string.delete_song_title)) },
+        text = { Text(stringResource(R.string.delete_song_message)) },
+        confirmButton = { TextButton(onClick = {
+            selectedVideo?.let(onDelete); selectedVideo = null; deleteConfirmVisible = false
+        }) { Text(stringResource(R.string.delete)) } },
+        dismissButton = { TextButton(onClick = { deleteConfirmVisible = false }) { Text(stringResource(R.string.cancel)) } })
 }
 
 @Composable private fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,
