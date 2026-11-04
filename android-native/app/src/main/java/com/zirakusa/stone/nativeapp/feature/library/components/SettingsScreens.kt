@@ -13,8 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -39,6 +41,10 @@ import kotlinx.coroutines.launch
 private data class Language(val code: String, val label: String)
 private val languages = listOf(Language("es", "Español"), Language("en", "English"))
 
+private data class SettingsMenuItem(val icon: ImageVector, val label: String, val value: String,
+    val keywords: String, val action: () -> Unit)
+private data class SettingsMenuSection(val title: Int, val items: List<SettingsMenuItem>)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun SettingsPanel(theme: String, onTheme: (String) -> Unit, language: String,
     onLanguage: (String) -> Unit, store: StoneSettingsStore?, page: String?,
@@ -51,39 +57,86 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     onStopTransfer: () -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var shareAppUnavailable by remember { mutableStateOf(false) }
+    var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxHeight(.88f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
             if (page == null) {
                 Text(stringResource(R.string.settings), fontSize = 27.sp, fontWeight = FontWeight.Black)
-                SettingsGroup {
-                    SettingsRow(Icons.Default.Folder, R.string.settings_stone_folder, "") { onClose(); onFolder() }
-                    SettingsRow(Icons.Default.Refresh, R.string.settings_scan_library, "") { onClose(); onScan() }
-                    SettingsRow(Icons.Default.Search, R.string.settings_scan_mode, "") { onPage("scan-mode") }
-                    SettingsRow(Icons.Default.Checkroom, R.string.settings_theme, themeLabel(theme)) { onPage("theme") }
-                    SettingsRow(Icons.Default.Language, R.string.settings_language,
-                        languages.find { it.code == language }?.label.orEmpty()) { onPage("language") }
-                    SettingsRow(Icons.Default.Apps, R.string.settings_home_shortcuts, "") { onPage("shortcuts") }
-                    SettingsRow(Icons.Default.Headphones, R.string.settings_playback, "") { onPage("playback") }
-                    SettingsRow(Icons.Default.Notifications, R.string.settings_notifications, "") { onPage("notifications") }
-                    SettingsRow(Icons.Default.Timer, R.string.sleep_timer, "") { onPage("sleep") }
-                    SettingsRow(Icons.Default.SwapHoriz, R.string.transfer_library, "") { onPage("library-transfer") }
-                }
-                SettingsGroup {
-                    SettingsRow(Icons.Default.VisibilityOff, R.string.hidden_files, "") { onClose(); onLibrarySheet("hidden") }
-                    SettingsRow(Icons.Default.Delete, R.string.recently_deleted, "") { onClose(); onLibrarySheet("deleted") }
-                }
-                SettingsGroup {
-                    SettingsRow(Icons.Default.Share, R.string.share_app, "") { shareAppUnavailable = true }
-                }
-                SettingsGroup {
-                    SettingsRow(Icons.Default.Archive, R.string.export_musp, "") { onClose(); onExportPackage() }
-                    SettingsRow(Icons.Default.Unarchive, R.string.import_musp, "") { onClose(); onImportPackage() }
-                }
-                SettingsGroup {
-                    SettingsRow(Icons.Default.ThumbUp, R.string.feedback, "") { onPage("feedback") }
-                    SettingsRow(Icons.Default.Info, R.string.about_stone, "") { onPage("about") }
+                OutlinedTextField(value = settingsQuery, onValueChange = { settingsQuery = it.take(60) },
+                    modifier = Modifier.fillMaxWidth().padding(top = 14.dp), singleLine = true,
+                    placeholder = { Text(stringResource(R.string.settings_search_hint)) },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    trailingIcon = {
+                        if (settingsQuery.isNotEmpty()) IconButton(onClick = { settingsQuery = "" }) {
+                            Icon(Icons.Default.Close, stringResource(R.string.clear_search))
+                        }
+                    })
+                val menuSections = listOf(
+                    SettingsMenuSection(R.string.settings_section_library, listOf(
+                        SettingsMenuItem(Icons.Default.Folder, stringResource(R.string.settings_stone_folder), "",
+                            "biblioteca carpeta multimedia almacenamiento", { onClose(); onFolder() }),
+                        SettingsMenuItem(Icons.Default.Refresh, stringResource(R.string.settings_scan_library), "",
+                            "biblioteca escanear actualizar archivos", { onClose(); onScan() }),
+                        SettingsMenuItem(Icons.Default.Search, stringResource(R.string.settings_scan_mode), "",
+                            "biblioteca escaneo automático manual", { onPage("scan-mode") }),
+                        SettingsMenuItem(Icons.Default.VisibilityOff, stringResource(R.string.hidden_files), "",
+                            "biblioteca ocultos", { onClose(); onLibrarySheet("hidden") }),
+                        SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
+                            "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_playback, listOf(
+                        SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
+                            "reproducción audio sonido modos salida diagnóstico", { onPage("playback") }),
+                        SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
+                            "reproducción temporizador dormir", { onPage("sleep") }),
+                        SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
+                            "reproducción notificaciones avisos", { onPage("notifications") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_appearance, listOf(
+                        SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
+                            "personalización tema apariencia colores", { onPage("theme") }),
+                        SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
+                            languages.find { it.code == language }?.label.orEmpty(), "personalización idioma lenguaje", { onPage("language") }),
+                        SettingsMenuItem(Icons.Default.Apps, stringResource(R.string.settings_home_shortcuts), "",
+                            "personalización inicio iconos accesos rápidos barra", { onPage("shortcuts") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_transfer, listOf(
+                        SettingsMenuItem(Icons.Default.SwapHoriz, stringResource(R.string.transfer_library), "",
+                            "transferencia biblioteca bluetooth wifi local código", { onPage("library-transfer") }),
+                        SettingsMenuItem(Icons.Default.Share, stringResource(R.string.share_app), "",
+                            "transferencia compartir aplicación app", { shareAppUnavailable = true }),
+                        SettingsMenuItem(Icons.Default.Archive, stringResource(R.string.export_musp), "",
+                            "respaldo exportar paquete musp", { onClose(); onExportPackage() }),
+                        SettingsMenuItem(Icons.Default.Unarchive, stringResource(R.string.import_musp), "",
+                            "respaldo importar paquete musp", { onClose(); onImportPackage() })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_about, listOf(
+                        SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback), "",
+                            "ayuda opinión sugerencias", { onPage("feedback") }),
+                        SettingsMenuItem(Icons.Default.Info, stringResource(R.string.about_stone), "",
+                            "ayuda acerca versión información", { onPage("about") })
+                    ))
+                )
+                val normalizedQuery = settingsQuery.trim()
+                val filteredSections = menuSections.map { section ->
+                    section.copy(items = if (normalizedQuery.isBlank()) section.items else
+                        section.items.filter { item ->
+                            item.label.contains(normalizedQuery, ignoreCase = true) ||
+                                item.keywords.contains(normalizedQuery, ignoreCase = true)
+                        })
+                }.filter { it.items.isNotEmpty() }
+                if (filteredSections.isEmpty()) {
+                    Text(stringResource(R.string.settings_no_results), color = StonePalette.Muted,
+                        modifier = Modifier.padding(top = 28.dp, bottom = 28.dp))
+                } else filteredSections.forEach { section ->
+                    SettingsGroup {
+                        Text(stringResource(section.title), color = StonePalette.Yellow,
+                            fontWeight = FontWeight.Black, fontSize = 14.sp,
+                            modifier = Modifier.padding(bottom = 4.dp))
+                        section.items.forEach { item -> SettingsRow(item) }
+                    }
                 }
             } else {
                 Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -203,9 +256,16 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
         QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
         QuickActionDefinition("equalizer", "Ecualizador", "Ajustar sonido", Icons.Default.GraphicEq, true),
         QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true))
-    val items = remember { legacy + QuickActionRegistry.definitions }
+    val legacyIds = remember { legacy.map { it.id } }
+    val defaultVisibleIds = legacyIds.toSet() + QuickActionRegistry.defaultVisibleIds
+    val items = remember {
+        legacy + QuickActionRegistry.preferredIds.mapNotNull { id ->
+            QuickActionRegistry.definitions.find { it.id == id }
+        } + QuickActionRegistry.definitions.filterNot { it.id in QuickActionRegistry.preferredIds }
+    }
     var order by remember(store) { mutableStateOf(store?.shortcutOrder(items.map { it.id }) ?: items.map { it.id }) }
-    var visible by remember(store) { mutableStateOf(items.associate { it.id to (store?.shortcutVisible(it.id, it.id in legacy.map { item -> item.id }) ?: (it.id in legacy.map { item -> item.id })) }) }
+    var visible by remember(store) { mutableStateOf(items.associate { it.id to
+        (store?.shortcutVisible(it.id, it.id in defaultVisibleIds) ?: (it.id in defaultVisibleIds)) }) }
     Text(stringResource(R.string.home_shortcut_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 10.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,7 +284,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     }
     OutlinedButton(onClick = {
         order = items.map { it.id }; store?.setShortcutOrder(order)
-        visible = items.associate { it.id to (it.id in legacy.map { item -> item.id }) }
+        visible = items.associate { it.id to (it.id in defaultVisibleIds) }
         visible.forEach { (key, value) -> store?.setShortcutVisible(key, value); onChange(key, value) }
     }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restore_defaults)) }
     order.forEachIndexed { index, key ->
@@ -350,27 +410,39 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     openAudioMode: () -> Unit, openHardwareAcceleration: () -> Unit, openDiagnostics: () -> Unit) {
     var config by remember { mutableStateOf(store?.read()) }
     val playbackState = playback?.state?.collectAsState()?.value
-    PlaybackModeRow(playbackState?.audioMode ?: AudioMode.BALANCED, openAudioMode)
-    HardwareAccelerationRow(playbackState?.hardwareAcceleration ?: HardwareAcceleration.AUTOMATIC,
-        openHardwareAcceleration)
-    Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(onClick = openDiagnostics),
-        verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Memory, null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
-        Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
-            Text(stringResource(R.string.audio_diagnostics), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.audio_diagnostics_hint), color = StonePalette.Muted, fontSize = 13.sp)
+    Text(stringResource(R.string.playback_section_mode), color = StonePalette.Yellow,
+        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
+    SettingsGroup {
+        PlaybackModeRow(playbackState?.audioMode ?: AudioMode.BALANCED, openAudioMode)
+        HardwareAccelerationRow(playbackState?.hardwareAcceleration ?: HardwareAcceleration.AUTOMATIC,
+            openHardwareAcceleration)
+    }
+    Text(stringResource(R.string.playback_section_diagnostics), color = StonePalette.Yellow,
+        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+    SettingsGroup {
+        Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(onClick = openDiagnostics),
+            verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Memory, null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
+            Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
+                Text(stringResource(R.string.audio_diagnostics), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.audio_diagnostics_hint), color = StonePalette.Muted, fontSize = 13.sp)
+            }
+            Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
         }
-        Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
     }
-    ToggleSetting(R.string.play_with_others, R.string.play_with_others_hint, config?.playWithOthers == true) {
-        playback?.setPlayWithOthers(it); config = store?.read()
+    Text(stringResource(R.string.playback_section_behavior), color = StonePalette.Yellow,
+        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+    SettingsGroup {
+        ToggleSetting(R.string.play_with_others, R.string.play_with_others_hint, config?.playWithOthers == true) {
+            playback?.setPlayWithOthers(it); config = store?.read()
+        }
+        Text(stringResource(R.string.gapless), fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 14.dp))
+        Text(stringResource(R.string.gapless_hint), color = StonePalette.Muted)
+        Text(stringResource(R.string.crossfade), fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 14.dp))
+        Text(stringResource(R.string.crossfade_hint), color = StonePalette.Muted)
     }
-    Text(stringResource(R.string.gapless), fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 14.dp))
-    Text(stringResource(R.string.gapless_hint), color = StonePalette.Muted)
-    Text(stringResource(R.string.crossfade), fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 14.dp))
-    Text(stringResource(R.string.crossfade_hint), color = StonePalette.Muted)
 }
 
 @Composable private fun AudioDiagnosticsDetail(playback: PlaybackViewModel?) {
@@ -604,6 +676,17 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         Text(stringResource(label), Modifier.weight(1f).padding(horizontal = 18.dp), fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold)
         if (value.isNotEmpty()) Text(value, color = StonePalette.Muted)
+        Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
+    }
+}
+
+@Composable private fun SettingsRow(item: SettingsMenuItem) {
+    Row(Modifier.fillMaxWidth().height(66.dp).clickable(onClick = item.action),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(item.icon, null, tint = StonePalette.Yellow, modifier = Modifier.size(25.dp))
+        Text(item.label, Modifier.weight(1f).padding(horizontal = 18.dp), fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold)
+        if (item.value.isNotEmpty()) Text(item.value, color = StonePalette.Muted)
         Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
     }
 }

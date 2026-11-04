@@ -9,16 +9,27 @@ data class QuickActionDefinition(val id: String, val label: String, val descript
 
 /** Single source of truth for home shortcuts. Unavailable actions stay out of the operational UI. */
 object QuickActionRegistry {
-    private val available = setOf("playlists", "favorites", "history", "lyrics", "albums", "artists", "appearance")
+    /** Actions that have a real destination or operation in the current app. */
+    private val available = setOf(
+        "playlists", "favorites", "history", "shuffle", "repeat", "lyrics", "albums", "artists",
+        "audio_mode", "playback_settings", "appearance", "battery_saver"
+    )
+
+    /** New playback shortcuts shown by default without changing existing user choices. */
+    val preferredIds = listOf("battery_saver", "playback_settings", "shuffle", "repeat")
+    val defaultVisibleIds = preferredIds.toSet()
+
     val definitions = listOf(
         QuickActionDefinition("playlists", "Listas de reproducción", "Abrir tus listas", Icons.Default.QueueMusic, true),
         QuickActionDefinition("favorites", "Favoritos", "Canciones favoritas", Icons.Default.Favorite, true),
         QuickActionDefinition("history", "Historial", "Reproducciones recientes", Icons.Default.History, true),
-        QuickActionDefinition("shuffle", "Reproducción aleatoria", "Alternar aleatorio", Icons.Default.Shuffle, false),
-        QuickActionDefinition("repeat", "Repetición", "Cambiar repetición", Icons.Default.Repeat, false),
+        QuickActionDefinition("shuffle", "Reproducción aleatoria", "Alternar aleatorio", Icons.Default.Shuffle, true),
+        QuickActionDefinition("repeat", "Repetición", "Cambiar repetición", Icons.Default.Repeat, true),
         QuickActionDefinition("lyrics", "Letras sincronizadas", "Abrir canciones con letras", Icons.Default.MusicNote, true),
         QuickActionDefinition("albums", "Álbumes", "Explorar álbumes", Icons.Default.Album, true),
         QuickActionDefinition("artists", "Artistas", "Explorar artistas", Icons.Default.Person, true),
+        QuickActionDefinition("audio_mode", "Modo de reproducción", "Batería, equilibrado o alta fidelidad", Icons.Default.Tune, true),
+        QuickActionDefinition("playback_settings", "Ajustes de reproducción", "Modos, salida y diagnóstico", Icons.Default.Headphones, true),
         QuickActionDefinition("tag_editor", "Editor de etiquetas", "Editar metadatos", Icons.Default.Edit, true),
         QuickActionDefinition("cover_editor", "Editor de portadas", "Cambiar portadas", Icons.Default.Image, false),
         QuickActionDefinition("visualizer", "Visualizador de audio", "Visualización en tiempo real", Icons.Default.GraphicEq, false),

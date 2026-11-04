@@ -21,7 +21,9 @@ import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
 
 private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "equalizer", "sleep")
-private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.operational.map { it.id }
+private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
+private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
+    QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
 private val legacyDefinitions = listOf(
     QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
     QuickActionDefinition("folder", "Agregar carpeta", "Elegir carpeta multimedia", Icons.Default.Folder, true),
@@ -49,7 +51,8 @@ private val legacyDefinitions = listOf(
     playbackViewModel: PlaybackViewModel? = null, onOpenSettings: () -> Unit = {},
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
-    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
+    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
+    onEnergySaver: () -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -59,7 +62,7 @@ private val legacyDefinitions = listOf(
     var descending by rememberSaveable { mutableStateOf(false) }
     var moreQuickActions by rememberSaveable { mutableStateOf(false) }
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
-        settingsStore?.shortcutVisible(it, it in homeShortcutKeys) ?: (it in homeShortcutKeys)
+        settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys) ?: (it in homeShortcutKeys)
     }) }
     val quickActions = remember(shortcuts, settingsStore) {
         if (settingsStore == null) return@remember emptyList()
@@ -86,11 +89,22 @@ private val legacyDefinitions = listOf(
             "sort" -> sheet = "sort"
             "equalizer" -> homeTool = "equalizer"
             "sleep" -> homeTool = "sleep"
+            "shuffle" -> playbackViewModel?.shuffle()
+            "repeat" -> playbackViewModel?.repeat()
+            "audio_mode" -> {
+                onOpenSettings(); onSettingsPage("audio-mode"); onSettingsSheetVisible(true)
+            }
+            "playback_settings" -> {
+                onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
+            }
+            "battery_saver" -> onEnergySaver()
             "albums" -> { tab = LibraryTab.Albums; collection = null }
             "artists" -> { tab = LibraryTab.Artists; collection = null }
             "playlists" -> { tab = LibraryTab.Playlists; collection = null }
             "favorites", "history", "lyrics" -> { tab = LibraryTab.Playlists; collection = id }
-            "appearance" -> onOpenSettings()
+            "appearance" -> {
+                onOpenSettings(); onSettingsPage(null); onSettingsSheetVisible(true)
+            }
         }
         moreQuickActions = false
     }
@@ -134,7 +148,7 @@ private val legacyDefinitions = listOf(
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
         onFolder, scan, { sheet = null }, state.hiddenSongs, state.deletedSongs,
         { sheet = "hidden" }, { sheet = "deleted" }, onRestoreHidden, onRestoreDeleted,
-        onExport, onImport, onOpenSettings, theme, onThemeChange, language, onLanguageChange,
+        onExport, onImport, { onOpenSettings(); onSettingsSheetVisible(true) }, theme, onThemeChange, language, onLanguageChange,
         null, onSettingsPage)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,

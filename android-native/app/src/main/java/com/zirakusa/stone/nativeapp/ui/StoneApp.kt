@@ -193,7 +193,8 @@ import kotlinx.coroutines.delay
                     if (!it) settingsPage = null
                 }, artistDestination = artistDestination,
                 onArtistDestinationConsumed = { artistDestination = null },
-                onDelete = library::delete)
+                onDelete = library::delete,
+                onEnergySaver = { energySaver = true })
         }
     }
         if (volumeUi.visible) {

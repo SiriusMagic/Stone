@@ -200,6 +200,16 @@
     <string name="settings_theme">Tema</string>
     <string name="settings_language">Idioma</string>
     <string name="settings_playback">Ajustes de reproducción</string>
+    <string name="settings_search_hint">Buscar un ajuste…</string>
+    <string name="settings_no_results">No se encontraron ajustes con esa búsqueda.</string>
+    <string name="settings_section_library">Biblioteca</string>
+    <string name="settings_section_playback">Reproducción</string>
+    <string name="settings_section_appearance">Personalización</string>
+    <string name="settings_section_transfer">Transferencia y respaldo</string>
+    <string name="settings_section_about">Ayuda y acerca de Stone</string>
+    <string name="playback_section_mode">Modo y calidad</string>
+    <string name="playback_section_diagnostics">Diagnóstico</string>
+    <string name="playback_section_behavior">Comportamiento</string>
     <string name="audio_mode">Modo de reproducción</string>
     <string name="audio_diagnostics">Diagnóstico de rendimiento</string>
     <string name="audio_diagnostics_hint">RAM, batería y memoria de Stone bajo demanda.</string>
