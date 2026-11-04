@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
@@ -54,6 +56,7 @@ import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +85,7 @@ import kotlinx.coroutines.withContext
     }
     if (videoFullscreen && song?.isVideo == true) {
         BackHandler { videoFullscreen = false }
+        val controls = rememberVideoControls(state.playing)
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             AndroidView(factory = { context ->
                 PlayerView(context).apply {
@@ -90,10 +94,15 @@ import kotlinx.coroutines.withContext
                     player = playback.player()
                 }
             }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-            IconButton(onClick = { videoFullscreen = false }, modifier = Modifier
-                .align(Alignment.BottomStart).padding(18.dp)
-                .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
-                Icon(Icons.Default.FullscreenExit, "Salir de pantalla completa", tint = Color.White)
+            Box(Modifier.matchParentSize().pointerInput(Unit) {
+                detectTapGestures(onTap = { controls.toggle() })
+            })
+            if (controls.visible) {
+                IconButton(onClick = { videoFullscreen = false }, modifier = Modifier
+                    .align(Alignment.BottomStart).padding(18.dp)
+                    .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
+                    Icon(Icons.Default.FullscreenExit, "Salir de pantalla completa", tint = Color.White)
+                }
             }
         }
         return
@@ -209,6 +218,7 @@ import kotlinx.coroutines.withContext
 
 @Composable private fun PortraitVideoPlayer(state: PlaybackState, progress: Pair<Long, Long>,
     playback: PlaybackViewModel, back: () -> Unit, onOptions: () -> Unit, onFullscreen: () -> Unit) {
+    val controls = rememberVideoControls(state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
@@ -217,29 +227,50 @@ import kotlinx.coroutines.withContext
                 player = playback.player()
             }
         }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-        Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton(onClick = onOptions) { Icon(Icons.Default.Settings, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(34.dp)) }
-            IconButton(onClick = back) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White, modifier = Modifier.size(38.dp)) }
-        }
-        IconButton(onClick = onFullscreen, modifier = Modifier.align(Alignment.Center)) {
-            Icon(Icons.Default.Fullscreen, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(64.dp))
-        }
-        Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 28.dp, vertical = 22.dp)) {
-            Text(state.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            PlayerProgress(progress, playback)
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically) {
-                IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), tint = Color.White, modifier = Modifier.size(52.dp)) }
-                IconButton(playback::toggle, Modifier.size(72.dp)) {
-                    Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        stringResource(if (state.playing) R.string.pause else R.string.play), tint = Color.White, modifier = Modifier.size(64.dp))
+        Box(Modifier.matchParentSize().pointerInput(Unit) {
+            detectTapGestures(onTap = { controls.toggle() })
+        })
+        if (controls.visible) {
+            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                IconButton(onClick = onOptions) { Icon(Icons.Default.Settings, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(34.dp)) }
+                IconButton(onClick = back) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White, modifier = Modifier.size(38.dp)) }
+            }
+            IconButton(onClick = onFullscreen, modifier = Modifier.align(Alignment.Center)) {
+                Icon(Icons.Default.Fullscreen, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(64.dp))
+            }
+            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 28.dp, vertical = 22.dp)) {
+                Text(state.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                PlayerProgress(progress, playback)
+                Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), tint = Color.White, modifier = Modifier.size(52.dp)) }
+                    IconButton(playback::toggle, Modifier.size(72.dp)) {
+                        Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            stringResource(if (state.playing) R.string.pause else R.string.play), tint = Color.White, modifier = Modifier.size(64.dp))
+                    }
+                    IconButton(playback::next) { Icon(Icons.Default.SkipNext, stringResource(R.string.next), tint = Color.White, modifier = Modifier.size(52.dp)) }
                 }
-                IconButton(playback::next) { Icon(Icons.Default.SkipNext, stringResource(R.string.next), tint = Color.White, modifier = Modifier.size(52.dp)) }
             }
         }
     }
+}
+
+private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit)
+
+@Composable private fun rememberVideoControls(playing: Boolean): VideoControlsState {
+    var visible by remember { mutableStateOf(true) }
+    LaunchedEffect(playing) {
+        if (!playing) visible = true
+    }
+    LaunchedEffect(visible, playing) {
+        if (visible && playing) {
+            delay(3_500)
+            visible = false
+        }
+    }
+    return VideoControlsState(visible) { visible = !visible }
 }
 
 private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
@@ -261,50 +292,63 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
     onOptions: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit,
     onFullscreen: () -> Unit) {
+    val controls = rememberVideoControls(state.playing)
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        AndroidView(factory = { context ->
-            PlayerView(context).apply {
-                useController = false
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                player = playback.player()
-            }
-        }, update = { it.player = playback.player() },
-            modifier = Modifier.weight(1.55f).fillMaxHeight().clip(RoundedCornerShape(18.dp)))
-        Column(Modifier.weight(1f).fillMaxHeight().padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 2.dp),
-            verticalArrangement = Arrangement.SpaceBetween) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = back) { Icon(Icons.Default.KeyboardArrowDown,
-                    stringResource(R.string.close_player), Modifier.size(30.dp)) }
-                Text(stringResource(R.string.videos), Modifier.weight(1f), textAlign = TextAlign.Center,
-                    color = StonePalette.Muted, fontWeight = FontWeight.Bold)
-                IconButton(onClick = onOptions) { Icon(Icons.Default.MoreVert,
-                    stringResource(R.string.more_options)) }
-            }
-            Column(Modifier.fillMaxWidth()) {
-                Text(state.title, fontSize = 21.sp, fontWeight = FontWeight.Black,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(song.folder, color = StonePalette.Muted, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis)
-            }
-            PlayerProgress(progress, playback)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically) {
-                IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious,
-                    stringResource(R.string.previous), Modifier.size(38.dp)) }
-                FilledIconButton(playback::toggle, Modifier.size(54.dp)) {
-                    Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(34.dp))
+        Box(Modifier.weight(1.55f).fillMaxHeight()) {
+            AndroidView(factory = { context ->
+                PlayerView(context).apply {
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    player = playback.player()
                 }
-                IconButton(playback::next) { Icon(Icons.Default.SkipNext,
-                    stringResource(R.string.next), Modifier.size(38.dp)) }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                IconButton(onClick = onFullscreen, modifier = Modifier
-                    .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
-                    Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
+            }, update = { it.player = playback.player() },
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
+            Box(Modifier.matchParentSize().pointerInput(Unit) {
+                detectTapGestures(onTap = { controls.toggle() })
+            })
+        }
+        Box(Modifier.weight(1f).fillMaxHeight()) {
+            Box(Modifier.matchParentSize().pointerInput(Unit) {
+                detectTapGestures(onTap = { controls.toggle() })
+            })
+            if (controls.visible) {
+                Column(Modifier.fillMaxSize().padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 2.dp),
+                    verticalArrangement = Arrangement.SpaceBetween) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = back) { Icon(Icons.Default.KeyboardArrowDown,
+                            stringResource(R.string.close_player), Modifier.size(30.dp)) }
+                        Text(stringResource(R.string.videos), Modifier.weight(1f), textAlign = TextAlign.Center,
+                            color = StonePalette.Muted, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = onOptions) { Icon(Icons.Default.MoreVert,
+                            stringResource(R.string.more_options)) }
+                    }
+                    Column(Modifier.fillMaxWidth()) {
+                        Text(state.title, fontSize = 21.sp, fontWeight = FontWeight.Black,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(song.folder, color = StonePalette.Muted, maxLines = 1,
+                            overflow = TextOverflow.Ellipsis)
+                    }
+                    PlayerProgress(progress, playback)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious,
+                            stringResource(R.string.previous), Modifier.size(38.dp)) }
+                        FilledIconButton(playback::toggle, Modifier.size(54.dp)) {
+                            Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(34.dp))
+                        }
+                        IconButton(playback::next) { Icon(Icons.Default.SkipNext,
+                            stringResource(R.string.next), Modifier.size(38.dp)) }
                 }
-                IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
-                IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        IconButton(onClick = onFullscreen, modifier = Modifier
+                            .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
+                            Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
+                        }
+                        IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+                        IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
+                    }
+                }
             }
         }
     }
