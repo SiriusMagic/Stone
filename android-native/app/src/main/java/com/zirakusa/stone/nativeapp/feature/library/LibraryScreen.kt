@@ -36,7 +36,7 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     playbackViewModel: PlaybackViewModel? = null, onOpenSettings: () -> Unit = {},
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
-    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}) {
+    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -90,7 +90,7 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
             color = MaterialTheme.colorScheme.error)
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
             canPlay, currentId, onPlay, onFolder, scan, Modifier.weight(1f), onCreatePlaylist,
-            onRemoveFromPlaylist, onDelete, onHide)
+            onRemoveFromPlaylist, onDelete, onHide, onAudioOnly)
     }
     LibrarySheets(sheet,
         sort, descending, { sort = it; sheet = null }, { descending = !descending },

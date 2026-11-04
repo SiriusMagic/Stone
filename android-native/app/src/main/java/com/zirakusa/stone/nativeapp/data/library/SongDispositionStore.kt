@@ -8,8 +8,10 @@ class SongDispositionStore(context: Context) {
     private val database = StoneDatabase.get(context)
     fun hiddenIds(): Set<String> = ids("hidden")
     fun deletedIds(): Set<String> = ids("deleted")
+    fun audioOnlyIds(): Set<String> = ids("audioOnly")
     fun hide(id: String) = add("hidden", id)
     fun delete(id: String) = add("deleted", id)
+    fun audioOnly(id: String) = add("audioOnly", id)
     fun restoreHidden(id: String) = remove("hidden", id)
     fun restoreDeleted(id: String) = remove("deleted", id)
 

@@ -61,12 +61,16 @@ class LibraryRepository(context: Context) {
 
     fun hide(song: Song) = disposition.hide(song.id)
     fun delete(song: Song) = disposition.delete(song.id)
+    fun audioOnly(song: Song) = disposition.audioOnly(song.id)
     fun restoreHidden(song: Song) = disposition.restoreHidden(song.id)
     fun restoreDeleted(song: Song) = disposition.restoreDeleted(song.id)
     fun hidden(songs: List<Song>) = songs.filter { it.id in disposition.hiddenIds() }
     fun deleted(songs: List<Song>) = songs.filter { it.id in disposition.deletedIds() }
     private fun visible(songs: List<Song>): List<Song> {
         val excluded = disposition.hiddenIds() + disposition.deletedIds()
-        return songs.filterNot { it.id in excluded }
+        val audioOnly = disposition.audioOnlyIds()
+        return songs.filterNot { it.id in excluded }.map { song ->
+            if (song.id in audioOnly) song.copy(isVideo = false) else song
+        }
     }
 }

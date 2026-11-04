@@ -135,6 +135,7 @@ import kotlinx.coroutines.delay
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
                 onHide = library::hide,
+                onAudioOnly = library::audioOnly,
                 transferState = transferState,
                 onHostTransfer = {
                     scope.launch {

@@ -38,7 +38,7 @@
     <string name="videos">Videos</string>
     <string name="video_count">%1$d videos</string>
     <string name="video_details">%1$s | %2$s</string>
-    <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string>
+    <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string><string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
     <string name="playlists">Playlists</string>
     <string name="downloads">Descargas</string>
