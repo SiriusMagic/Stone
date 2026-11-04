@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.components.*
 import kotlinx.coroutines.launch
 
@@ -35,7 +37,8 @@ import kotlinx.coroutines.launch
     onPenguinClick: () -> Unit = {},
     showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
     showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
-    showSleep: Boolean = true) {
+    showSleep: Boolean = true, quickActions: List<QuickActionDefinition> = emptyList(),
+    onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {}) {
     Box(Modifier.fillMaxWidth()) {
     val penguinMotion = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -56,16 +59,27 @@ import kotlinx.coroutines.launch
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (showSearch) StoneIconButton(StoneGlyph.Search, stringResource(R.string.search_toggle), onSearch)
-            if (showFolder) StoneIconButton(StoneGlyph.Folder, stringResource(R.string.choose_folder), onFolder, enabled = !scanning)
-            if (showScan) StoneIconButton(StoneGlyph.Scan, stringResource(R.string.scan_folders), onScan, enabled = !scanning)
-            if (showDownloads) StoneIconButton(StoneGlyph.Download, stringResource(R.string.downloads), onDownload)
-            if (showSort) StoneIconButton(StoneGlyph.Sort, stringResource(R.string.sort), onSort)
-            if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
-                Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))
-            }
-            if (showSleep) IconButton(onClick = onSleep, modifier = Modifier.size(44.dp)) {
-                Icon(Icons.Default.Timer, stringResource(R.string.sleep_timer), tint = Color(0xFFF5C518))
+            if (quickActions.isNotEmpty()) {
+                quickActions.take(8).forEach { action ->
+                    IconButton(onClick = { onQuickAction(action.id) }, modifier = Modifier.size(44.dp)) {
+                        Icon(action.icon, action.label, tint = Color(0xFFF5C518))
+                    }
+                }
+                if (quickActions.size > 8) IconButton(onClick = onMoreQuickActions, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.MoreHoriz, stringResource(R.string.more_options), tint = Color(0xFFF5C518))
+                }
+            } else {
+                if (showSearch) StoneIconButton(StoneGlyph.Search, stringResource(R.string.search_toggle), onSearch)
+                if (showFolder) StoneIconButton(StoneGlyph.Folder, stringResource(R.string.choose_folder), onFolder, enabled = !scanning)
+                if (showScan) StoneIconButton(StoneGlyph.Scan, stringResource(R.string.scan_folders), onScan, enabled = !scanning)
+                if (showDownloads) StoneIconButton(StoneGlyph.Download, stringResource(R.string.downloads), onDownload)
+                if (showSort) StoneIconButton(StoneGlyph.Sort, stringResource(R.string.sort), onSort)
+                if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))
+                }
+                if (showSleep) IconButton(onClick = onSleep, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Timer, stringResource(R.string.sleep_timer), tint = Color(0xFFF5C518))
+                }
             }
         }
         StoneIconButton(StoneGlyph.Settings, stringResource(R.string.settings), onSettings)

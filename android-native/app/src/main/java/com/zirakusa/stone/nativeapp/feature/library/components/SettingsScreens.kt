@@ -32,6 +32,8 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
+import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
+import com.zirakusa.stone.nativeapp.feature.library.QuickActionRegistry
 import kotlinx.coroutines.launch
 
 private data class Language(val code: String, val label: String)
@@ -193,25 +195,57 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
 
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
     onChange: (String, Boolean) -> Unit) {
-    val items = listOf(
-        "search" to R.string.search_toggle,
-        "folder" to R.string.settings_stone_folder,
-        "scan" to R.string.settings_scan_library,
-        "downloads" to R.string.downloads,
-        "sort" to R.string.sort,
-        "equalizer" to R.string.equalizer,
-        "sleep" to R.string.sleep_timer,
-    )
-    var visible by remember(store) { mutableStateOf(items.associate { (key, _) ->
-        key to (store?.shortcutVisible(key) ?: true)
-    }) }
+    val legacy = listOf(
+        QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
+        QuickActionDefinition("folder", "Agregar carpeta", "Elegir carpeta multimedia", Icons.Default.Folder, true),
+        QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
+        QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
+        QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
+        QuickActionDefinition("equalizer", "Ecualizador", "Ajustar sonido", Icons.Default.GraphicEq, true),
+        QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true))
+    val items = remember { legacy + QuickActionRegistry.definitions }
+    var order by remember(store) { mutableStateOf(store?.shortcutOrder(items.map { it.id }) ?: items.map { it.id }) }
+    var visible by remember(store) { mutableStateOf(items.associate { it.id to (store?.shortcutVisible(it.id, it.id in legacy.map { item -> item.id }) ?: (it.id in legacy.map { item -> item.id })) }) }
     Text(stringResource(R.string.home_shortcut_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 10.dp))
-    items.forEach { (key, label) ->
-        ToggleSetting(label, R.string.home_shortcut_toggle_hint, visible[key] == true) { enabled ->
-            store?.setShortcutVisible(key, enabled)
-            visible = visible + (key to enabled)
-            onChange(key, enabled)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("basic" to "Básico", "audiophile" to "Audiófilo", "custom" to "Personalizado").forEach { (id, label) ->
+            FilterChip(selected = store?.shortcutProfile() == id, onClick = {
+                store?.setShortcutProfile(id)
+                val enabled = when (id) {
+                    "basic" -> setOf("search", "folder", "scan", "sort", "playlists", "albums", "artists")
+                    "audiophile" -> setOf("equalizer", "diagnostics", "audio_info", "appearance")
+                    else -> visible.filterValues { it }.keys
+                }
+                visible = visible.mapValues { it.key in enabled }
+                visible.forEach { (key, value) -> store?.setShortcutVisible(key, value); onChange(key, value) }
+            }, label = { Text(label) })
+        }
+    }
+    OutlinedButton(onClick = {
+        order = items.map { it.id }; store?.setShortcutOrder(order)
+        visible = items.associate { it.id to (it.id in legacy.map { item -> item.id }) }
+        visible.forEach { (key, value) -> store?.setShortcutVisible(key, value); onChange(key, value) }
+    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restore_defaults)) }
+    order.forEachIndexed { index, key ->
+        val item = items.find { it.id == key } ?: return@forEachIndexed
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(item.icon, item.label, tint = StonePalette.Yellow)
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(item.label, fontWeight = FontWeight.SemiBold)
+                Text(if (item.available) item.description else "No disponible en esta versión", color = StonePalette.Muted, fontSize = 12.sp)
+            }
+            IconButton(enabled = index > 0, onClick = {
+                order = order.toMutableList().also { it.add(index - 1, it.removeAt(index)) }
+                store?.setShortcutOrder(order)
+            }) { Icon(Icons.Default.KeyboardArrowUp, "Subir") }
+            IconButton(enabled = index < order.lastIndex, onClick = {
+                order = order.toMutableList().also { it.add(index + 1, it.removeAt(index)) }
+                store?.setShortcutOrder(order)
+            }) { Icon(Icons.Default.KeyboardArrowDown, "Bajar") }
+            Switch(checked = visible[key] == true, enabled = item.available, onCheckedChange = { enabled ->
+                store?.setShortcutVisible(key, enabled); visible = visible + (key to enabled); onChange(key, enabled)
+            })
         }
     }
 }

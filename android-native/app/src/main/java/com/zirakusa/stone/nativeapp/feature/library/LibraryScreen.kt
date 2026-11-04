@@ -3,6 +3,8 @@ package com.zirakusa.stone.nativeapp.feature.library
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -19,7 +21,18 @@ import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
 
 private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "equalizer", "sleep")
+private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.operational.map { it.id }
+private val legacyDefinitions = listOf(
+    QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
+    QuickActionDefinition("folder", "Agregar carpeta", "Elegir carpeta multimedia", Icons.Default.Folder, true),
+    QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
+    QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
+    QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
+    QuickActionDefinition("equalizer", "Ecualizador", "Ajustar sonido", Icons.Default.GraphicEq, true),
+    QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true)
+)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryScreen(state: LibraryState, canPlay: Boolean, onFolder: () -> Unit,
     onRefresh: () -> Unit, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier = Modifier,
     currentId: String = "", onCreatePlaylist: (String) -> Unit = {},
@@ -44,9 +57,15 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
     var sort by rememberSaveable { mutableStateOf(LibrarySort.Title) }
     var descending by rememberSaveable { mutableStateOf(false) }
-    var shortcuts by remember(settingsStore) { mutableStateOf(homeShortcutKeys.associateWith {
-        settingsStore?.shortcutVisible(it) ?: true
+    var moreQuickActions by rememberSaveable { mutableStateOf(false) }
+    var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
+        settingsStore?.shortcutVisible(it, it in homeShortcutKeys) ?: (it in homeShortcutKeys)
     }) }
+    val quickActions = remember(shortcuts, settingsStore) {
+        val definitions = legacyDefinitions + QuickActionRegistry.operational
+        val ordered = settingsStore?.shortcutOrder(allQuickActionIds) ?: allQuickActionIds
+        ordered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
+    }
     var homeTool by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(artistDestination) {
         artistDestination?.takeIf { it.isNotBlank() }?.let { artist ->
@@ -57,6 +76,23 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     }
     val playbackState = playbackViewModel?.state?.collectAsState()?.value
     val scan = { if (state.hasFolder) onRefresh() else onFolder() }
+    val dispatchQuickAction: (String) -> Unit = { id ->
+        when (id) {
+            "search" -> { searchVisible = true }
+            "folder" -> onFolder()
+            "scan" -> scan()
+            "downloads" -> sheet = "downloads"
+            "sort" -> sheet = "sort"
+            "equalizer" -> homeTool = "equalizer"
+            "sleep" -> homeTool = "sleep"
+            "albums" -> { tab = LibraryTab.Albums; collection = null }
+            "artists" -> { tab = LibraryTab.Artists; collection = null }
+            "playlists" -> { tab = LibraryTab.Playlists; collection = null }
+            "favorites", "history", "lyrics" -> { tab = LibraryTab.Playlists; collection = id }
+            "appearance" -> onOpenSettings()
+        }
+        moreQuickActions = false
+    }
     val songs = remember(state.songs, query, sort, descending) {
         val collator = Collator.getInstance()
         val filtered = state.songs.filter { it.matches(query) }
@@ -82,7 +118,8 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
             showSearch = shortcuts["search"] != false, showFolder = shortcuts["folder"] != false,
             showScan = shortcuts["scan"] != false, showDownloads = shortcuts["downloads"] != false,
             showSort = shortcuts["sort"] != false, showEqualizer = shortcuts["equalizer"] != false,
-            showSleep = shortcuts["sleep"] != false)
+            showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
+            onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true })
         if (searchVisible) LibrarySearch(query) { query = it }
         LibraryTabs(tab) { tab = it; collection = null }
         if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -110,4 +147,14 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
             song = state.songs.find { it.id == playbackState.currentId }) { homeTool = null }
     if (homeTool == "sleep" && playbackViewModel != null && playbackState != null)
         SleepSheet(playbackState, playbackViewModel) { homeTool = null }
+    if (moreQuickActions) ModalBottomSheet(onDismissRequest = { moreQuickActions = false }) {
+        Column(Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(stringResource(R.string.more_options), style = MaterialTheme.typography.titleLarge)
+            quickActions.drop(8).forEach { action ->
+                TextButton(onClick = { dispatchQuickAction(action.id) }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(action.icon, action.label); Spacer(Modifier.width(14.dp)); Text(action.label, Modifier.weight(1f))
+                }
+            }
+        }
+    }
 }
