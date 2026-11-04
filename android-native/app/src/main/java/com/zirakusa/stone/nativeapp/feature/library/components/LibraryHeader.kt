@@ -1,10 +1,12 @@
 package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Timer
@@ -38,7 +40,8 @@ import kotlinx.coroutines.launch
     showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
     showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
     showSleep: Boolean = true, quickActions: List<QuickActionDefinition> = emptyList(),
-    onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {}) {
+    onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {},
+    activeQuickActionIds: Set<String> = emptySet()) {
     Box(Modifier.fillMaxWidth()) {
     val penguinMotion = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -61,8 +64,16 @@ import kotlinx.coroutines.launch
             horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             if (quickActions.isNotEmpty()) {
                 quickActions.take(8).forEach { action ->
-                    IconButton(onClick = { onQuickAction(action.id) }, modifier = Modifier.size(44.dp)) {
-                        Icon(action.icon, action.label, tint = Color(0xFFF5C518))
+                    val active = action.id in activeQuickActionIds
+                    IconButton(
+                        onClick = { onQuickAction(action.id) },
+                        modifier = Modifier.size(44.dp).then(
+                            if (active) Modifier.background(Color(0xFFF5C518), CircleShape)
+                            else Modifier
+                        )
+                    ) {
+                        Icon(action.icon, if (active) "${action.label} (Activado)" else action.label,
+                            tint = if (active) Color(0xFF0A0A0E) else Color(0xFFF5C518))
                     }
                 }
                 if (quickActions.size > 8) IconButton(onClick = onMoreQuickActions, modifier = Modifier.size(44.dp)) {

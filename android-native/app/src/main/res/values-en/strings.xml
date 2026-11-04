@@ -103,6 +103,7 @@
     <string name="audio_mode_battery_info">Savings/offload depend on the device; policy is experimental.</string>
     <string name="audio_mode_balanced_info">Standard Media3 playback path.</string>
     <string name="audio_mode_hifi_info">USB/DAC: capability detection does not guarantee bit-perfect output.</string>
+    <string name="quick_action_activated">%1$s activated</string>
     <string name="theme_gray">Gray</string><string name="theme_light">Light</string>
     <string name="play_with_others">Play alongside other apps</string><string name="play_with_others_hint">Let Stone audio mix with audio from other apps.</string>
     <string name="gapless">Gapless playback</string><string name="gapless_hint">Media3 handles gapless transitions automatically.</string>

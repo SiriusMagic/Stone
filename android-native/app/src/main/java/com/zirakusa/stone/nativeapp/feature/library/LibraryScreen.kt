@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.library
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -8,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.core.Song
@@ -63,6 +65,7 @@ private val legacyDefinitions = listOf(
     var sort by rememberSaveable { mutableStateOf(LibrarySort.Title) }
     var descending by rememberSaveable { mutableStateOf(false) }
     var moreQuickActions by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
         settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys) ?: (it in homeShortcutKeys)
     }) }
@@ -81,6 +84,27 @@ private val legacyDefinitions = listOf(
         }
     }
     val playbackState = playbackViewModel?.state?.collectAsState()?.value
+    val activeQuickActionIds = setOfNotNull(
+        when (playbackState?.audioMode) {
+            AudioMode.BATTERY -> "audio_mode_battery"
+            AudioMode.BALANCED -> "audio_mode_balanced"
+            AudioMode.HIFI -> "audio_mode_hifi"
+            null -> null
+        },
+        when (playbackState?.hardwareAcceleration) {
+            HardwareAcceleration.AUTOMATIC -> "hardware_accel_automatic"
+            HardwareAcceleration.DISABLED -> "hardware_accel_disabled"
+            HardwareAcceleration.DECODING -> "hardware_accel_decoding"
+            HardwareAcceleration.FULL -> "hardware_accel_full"
+            HardwareAcceleration.ADAPTIVE -> "hardware_accel_adaptive"
+            null -> null
+        }
+    )
+    fun showQuickActionActivated(labelRes: Int) {
+        Toast.makeText(context,
+            context.getString(R.string.quick_action_activated, context.getString(labelRes)),
+            Toast.LENGTH_SHORT).show()
+    }
     val scan = { if (state.hasFolder) onRefresh() else onFolder() }
     val dispatchQuickAction: (String) -> Unit = { id ->
         when (id) {
@@ -96,14 +120,38 @@ private val legacyDefinitions = listOf(
             "audio_mode" -> {
                 onOpenSettings(); onSettingsPage("audio-mode"); onSettingsSheetVisible(true)
             }
-            "audio_mode_battery" -> playbackViewModel?.setAudioMode(AudioMode.BATTERY)
-            "audio_mode_balanced" -> playbackViewModel?.setAudioMode(AudioMode.BALANCED)
-            "audio_mode_hifi" -> playbackViewModel?.setAudioMode(AudioMode.HIFI)
-            "hardware_accel_automatic" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
-            "hardware_accel_disabled" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DISABLED)
-            "hardware_accel_decoding" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DECODING)
-            "hardware_accel_full" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.FULL)
-            "hardware_accel_adaptive" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.ADAPTIVE)
+            "audio_mode_battery" -> {
+                playbackViewModel?.setAudioMode(AudioMode.BATTERY)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_battery)
+            }
+            "audio_mode_balanced" -> {
+                playbackViewModel?.setAudioMode(AudioMode.BALANCED)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_balanced)
+            }
+            "audio_mode_hifi" -> {
+                playbackViewModel?.setAudioMode(AudioMode.HIFI)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_hifi)
+            }
+            "hardware_accel_automatic" -> {
+                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_automatic)
+            }
+            "hardware_accel_disabled" -> {
+                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DISABLED)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_disabled)
+            }
+            "hardware_accel_decoding" -> {
+                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DECODING)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_decoding)
+            }
+            "hardware_accel_full" -> {
+                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.FULL)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_full)
+            }
+            "hardware_accel_adaptive" -> {
+                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.ADAPTIVE)
+                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_adaptive)
+            }
             "playback_settings" -> {
                 onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
             }
@@ -144,7 +192,8 @@ private val legacyDefinitions = listOf(
             showScan = shortcuts["scan"] != false, showDownloads = shortcuts["downloads"] != false,
             showSort = shortcuts["sort"] != false, showEqualizer = shortcuts["equalizer"] != false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
-            onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true })
+            onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
+            activeQuickActionIds = activeQuickActionIds)
         if (searchVisible) LibrarySearch(query) { query = it }
         LibraryTabs(tab) { tab = it; collection = null }
         if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())

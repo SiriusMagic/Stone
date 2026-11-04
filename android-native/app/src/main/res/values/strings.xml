@@ -239,6 +239,7 @@
     <string name="audio_mode_battery_info">Ahorro/offload: depende del dispositivo; política aún experimental.</string>
     <string name="audio_mode_balanced_info">Ruta de reproducción normal de Media3.</string>
     <string name="audio_mode_hifi_info">USB/DAC: detectar compatibilidad no garantiza salida bit-perfect.</string>
+    <string name="quick_action_activated">%1$s activado</string>
     <string name="settings_notifications">Configuración de notificaciones</string>
     <string name="settings_feedback_about">Opinión     Sobre</string>
     <string name="feedback">Opinión</string><string name="about_stone">Sobre Stone</string>
