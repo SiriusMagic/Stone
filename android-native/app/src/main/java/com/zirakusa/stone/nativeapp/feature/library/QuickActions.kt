@@ -13,13 +13,17 @@ object QuickActionRegistry {
     private val available = setOf(
         "playlists", "favorites", "history", "shuffle", "repeat", "lyrics", "albums", "artists",
         "audio_mode", "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
+        "hardware_accel_automatic", "hardware_accel_disabled", "hardware_accel_decoding",
+        "hardware_accel_full", "hardware_accel_adaptive",
         "playback_settings", "appearance", "battery_saver"
     )
 
     /** New playback shortcuts shown by default without changing existing user choices. */
     val preferredIds = listOf(
         "battery_saver", "playback_settings", "shuffle", "repeat",
-        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi"
+        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
+        "hardware_accel_automatic", "hardware_accel_disabled", "hardware_accel_decoding",
+        "hardware_accel_full", "hardware_accel_adaptive"
     )
     val defaultVisibleIds = preferredIds.toSet()
 
@@ -39,6 +43,16 @@ object QuickActionRegistry {
             "Equilibrio entre calidad y autonomía", Icons.Default.Balance, true),
         QuickActionDefinition("audio_mode_hifi", "Alta fidelidad",
             "Priorizar calidad y procesamiento de audio", Icons.Default.GraphicEq, true),
+        QuickActionDefinition("hardware_accel_automatic", "Aceleración automática",
+            "Usar la mejor ruta disponible", Icons.Default.Settings, true),
+        QuickActionDefinition("hardware_accel_disabled", "Aceleración desactivada",
+            "No solicitar aceleración adicional", Icons.Default.Block, true),
+        QuickActionDefinition("hardware_accel_decoding", "Decodificación por hardware",
+            "Preferir decodificación compatible", Icons.Default.Memory, true),
+        QuickActionDefinition("hardware_accel_full", "Aceleración completa",
+            "Priorizar rendimiento y offload", Icons.Default.Speed, true),
+        QuickActionDefinition("hardware_accel_adaptive", "Aceleración adaptativa",
+            "Equilibrar autonomía y estabilidad", Icons.Default.Tune, true),
         QuickActionDefinition("playback_settings", "Ajustes de reproducción", "Modos, salida y diagnóstico", Icons.Default.Headphones, true),
         QuickActionDefinition("tag_editor", "Editor de etiquetas", "Editar metadatos", Icons.Default.Edit, true),
         QuickActionDefinition("cover_editor", "Editor de portadas", "Cambiar portadas", Icons.Default.Image, false),

@@ -16,6 +16,7 @@ import com.zirakusa.stone.nativeapp.feature.library.components.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.AudioMode
+import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.feature.player.EqualizerSheet
 import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
@@ -98,6 +99,11 @@ private val legacyDefinitions = listOf(
             "audio_mode_battery" -> playbackViewModel?.setAudioMode(AudioMode.BATTERY)
             "audio_mode_balanced" -> playbackViewModel?.setAudioMode(AudioMode.BALANCED)
             "audio_mode_hifi" -> playbackViewModel?.setAudioMode(AudioMode.HIFI)
+            "hardware_accel_automatic" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
+            "hardware_accel_disabled" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DISABLED)
+            "hardware_accel_decoding" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DECODING)
+            "hardware_accel_full" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.FULL)
+            "hardware_accel_adaptive" -> playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.ADAPTIVE)
             "playback_settings" -> {
                 onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
             }
