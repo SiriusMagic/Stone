@@ -49,7 +49,7 @@ object PerformanceDiagnostics {
             PowerManager.THERMAL_STATUS_CRITICAL -> "Crítico"; PowerManager.THERMAL_STATUS_EMERGENCY -> "Emergencia"
             PowerManager.THERMAL_STATUS_SHUTDOWN -> "Apagado"; else -> "No disponible"
         } else "No disponible"
-        val temperature = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_TEMPERATURE)?.takeIf { it >= 0 }?.let { it / 10.0 }
+        val temperature: Double? = null
         val audio = context.getSystemService(AudioManager::class.java)
         val device = audio?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull()
         val route = device?.productName?.toString()?.takeIf { it.isNotBlank() } ?: when (device?.type) {
