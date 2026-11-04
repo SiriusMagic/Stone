@@ -66,9 +66,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     SettingsRow(Icons.Default.Headphones, R.string.settings_playback, "") { onPage("playback") }
                     SettingsRow(Icons.Default.Notifications, R.string.settings_notifications, "") { onPage("notifications") }
                     SettingsRow(Icons.Default.Timer, R.string.sleep_timer, "") { onPage("sleep") }
-                    SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") { onClose(); onShare() }
-                    SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") { onPage("wifi-transfer") }
-                    SettingsRow(Icons.Default.Memory, R.string.audio_diagnostics, "") { onPage("audio-diagnostics") }
+                    SettingsRow(Icons.Default.SwapHoriz, R.string.transfer_library, "") { onPage("library-transfer") }
                 }
                 SettingsGroup {
                     SettingsRow(Icons.Default.VisibilityOff, R.string.hidden_files, "") { onClose(); onLibrarySheet("hidden") }
@@ -108,6 +106,8 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     "about" -> AboutDetail()
                     "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
+                    "library-transfer" -> LibraryTransferDetail(onShare, transferState, onHostTransfer,
+                        onReceiveTransfer, onStopTransfer)
                     "wifi-transfer" -> TransferDetail(transferState, onHostTransfer,
                         onReceiveTransfer, onStopTransfer)
                     "audio-diagnostics" -> AudioDiagnosticsDetail(playback)
@@ -139,6 +139,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
     "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
+    "library-transfer" -> R.string.transfer_library
     "audio-diagnostics" -> R.string.audio_diagnostics; else -> R.string.settings
 })
 
@@ -176,6 +177,18 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     }
     if (state.message.isNotBlank()) Text(state.message, color = StonePalette.Muted,
         modifier = Modifier.padding(top = 12.dp, bottom = 24.dp))
+}
+
+@Composable private fun LibraryTransferDetail(bluetooth: () -> Unit, state: LocalTransferUiState,
+    host: () -> Unit, receive: (String, String) -> Unit, stop: () -> Unit) {
+    var wifiSelected by remember { mutableStateOf(false) }
+    SettingsGroup {
+        SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") { bluetooth() }
+        SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") {
+            wifiSelected = true
+        }
+    }
+    if (wifiSelected) TransferDetail(state, host, receive, stop)
 }
 
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
