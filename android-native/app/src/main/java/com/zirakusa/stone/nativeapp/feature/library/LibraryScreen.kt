@@ -15,6 +15,7 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.components.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.feature.player.EqualizerSheet
 import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
@@ -94,6 +95,9 @@ private val legacyDefinitions = listOf(
             "audio_mode" -> {
                 onOpenSettings(); onSettingsPage("audio-mode"); onSettingsSheetVisible(true)
             }
+            "audio_mode_battery" -> playbackViewModel?.setAudioMode(AudioMode.BATTERY)
+            "audio_mode_balanced" -> playbackViewModel?.setAudioMode(AudioMode.BALANCED)
+            "audio_mode_hifi" -> playbackViewModel?.setAudioMode(AudioMode.HIFI)
             "playback_settings" -> {
                 onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
             }

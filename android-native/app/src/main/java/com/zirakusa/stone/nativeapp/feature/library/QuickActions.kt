@@ -12,11 +12,15 @@ object QuickActionRegistry {
     /** Actions that have a real destination or operation in the current app. */
     private val available = setOf(
         "playlists", "favorites", "history", "shuffle", "repeat", "lyrics", "albums", "artists",
-        "audio_mode", "playback_settings", "appearance", "battery_saver"
+        "audio_mode", "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
+        "playback_settings", "appearance", "battery_saver"
     )
 
     /** New playback shortcuts shown by default without changing existing user choices. */
-    val preferredIds = listOf("battery_saver", "playback_settings", "shuffle", "repeat")
+    val preferredIds = listOf(
+        "battery_saver", "playback_settings", "shuffle", "repeat",
+        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi"
+    )
     val defaultVisibleIds = preferredIds.toSet()
 
     val definitions = listOf(
@@ -29,6 +33,12 @@ object QuickActionRegistry {
         QuickActionDefinition("albums", "Álbumes", "Explorar álbumes", Icons.Default.Album, true),
         QuickActionDefinition("artists", "Artistas", "Explorar artistas", Icons.Default.Person, true),
         QuickActionDefinition("audio_mode", "Modo de reproducción", "Batería, equilibrado o alta fidelidad", Icons.Default.Tune, true),
+        QuickActionDefinition("audio_mode_battery", "Larga duración de batería",
+            "Usar la ruta de audio de menor consumo", Icons.Default.BatteryFull, true),
+        QuickActionDefinition("audio_mode_balanced", "Equilibrado",
+            "Equilibrio entre calidad y autonomía", Icons.Default.Balance, true),
+        QuickActionDefinition("audio_mode_hifi", "Alta fidelidad",
+            "Priorizar calidad y procesamiento de audio", Icons.Default.GraphicEq, true),
         QuickActionDefinition("playback_settings", "Ajustes de reproducción", "Modos, salida y diagnóstico", Icons.Default.Headphones, true),
         QuickActionDefinition("tag_editor", "Editor de etiquetas", "Editar metadatos", Icons.Default.Edit, true),
         QuickActionDefinition("cover_editor", "Editor de portadas", "Cambiar portadas", Icons.Default.Image, false),
