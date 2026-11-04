@@ -130,7 +130,7 @@
     <string name="refresh_metrics">Refresh metrics</string><string name="ram_used">RAM used</string>
     <string name="ram_available">RAM available</string><string name="process_heap">Stone memory</string><string name="battery_level">Battery</string>
     <string name="share_stone_backup">Share Stone backup</string><string name="share_app">Share app</string><string name="share_app_unavailable">This section is not available in this version.</string><string name="export_musp">Export .musp package</string>
-    <string name="import_musp">Import .musp package</string><string name="wifi_transfer">Local Wi‑Fi transfer</string>
+    <string name="import_musp">Import .musp package</string><string name="bluetooth_transfer">Bluetooth transfer</string><string name="wifi_transfer">Local Wi‑Fi transfer</string>
     <string name="wifi_transfer_intro">Send a Stone library directly between phones on the same Wi‑Fi network. No external server is used.</string>
     <string name="start_transfer">Open transfer</string><string name="transfer_share_address">Send address: %1$s</string>
     <string name="transfer_share_code">Code: %1$s</string><string name="transfer_waiting">Keep this screen open until the other phone finishes.</string>

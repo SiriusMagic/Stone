@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.ui
 
 import android.app.Activity
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.content.FileProvider
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.*
 import com.zirakusa.stone.nativeapp.feature.player.*
@@ -123,7 +125,7 @@ import kotlinx.coroutines.delay
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
-                { shareStoneBackup(context) },
+                { shareStoneLibrary(context, state.songs + state.hiddenSongs + state.deletedSongs, scope) },
                 { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
@@ -196,4 +198,25 @@ private fun shareStoneBackup(context: android.content.Context) {
             putExtra(android.content.Intent.EXTRA_SUBJECT, "Stone - respaldo de playlists")
             putExtra(android.content.Intent.EXTRA_TEXT, text)
         }, "Compartir respaldo de Stone"))
+}
+
+private fun shareStoneLibrary(context: android.content.Context,
+    songs: List<com.zirakusa.stone.core.Song>, scope: kotlinx.coroutines.CoroutineScope) {
+    scope.launch {
+        val packageFile = File(context.cacheDir, "stone-bluetooth.musp")
+        val result = withContext(Dispatchers.IO) { runCatching {
+            StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id })
+        } }
+        result.onSuccess {
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", packageFile)
+            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = StonePackage.MIME
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }, context.getString(R.string.bluetooth_transfer)))
+        }.onFailure {
+            android.widget.Toast.makeText(context, it.message ?: context.getString(R.string.musp_failed),
+                android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 }

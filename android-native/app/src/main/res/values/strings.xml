@@ -245,6 +245,7 @@
     <string name="export_musp">Exportar paquete .musp</string>
     <string name="import_musp">Importar paquete .musp</string>
     <string name="wifi_transfer">Transferencia Wi‑Fi local</string>
+    <string name="bluetooth_transfer">Transferencia por Bluetooth</string>
     <string name="wifi_transfer_intro">Envía una biblioteca Stone directamente entre teléfonos conectados a la misma red Wi‑Fi. No se usa un servidor externo.</string>
     <string name="start_transfer">Abrir transferencia</string>
     <string name="transfer_share_address">Dirección para enviar: %1$s</string>

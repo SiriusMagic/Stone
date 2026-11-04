@@ -65,6 +65,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     SettingsRow(Icons.Default.Headphones, R.string.settings_playback, "") { onPage("playback") }
                     SettingsRow(Icons.Default.Notifications, R.string.settings_notifications, "") { onPage("notifications") }
                     SettingsRow(Icons.Default.Timer, R.string.sleep_timer, "") { onPage("sleep") }
+                    SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") { onClose(); onShare() }
                     SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") { onPage("wifi-transfer") }
                     SettingsRow(Icons.Default.Memory, R.string.audio_diagnostics, "") { onPage("audio-diagnostics") }
                 }
