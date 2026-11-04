@@ -109,16 +109,23 @@ private val legacyDefinitions = listOf(
     }
     val highlightedQuickActionIds = if (feedbackQuickActionId == null) activeQuickActionIds
     else activeQuickActionIds + feedbackQuickActionId!!
-    fun showQuickActionActivated(labelRes: Int) {
-        Toast.makeText(context,
-            context.getString(R.string.quick_action_activated, context.getString(labelRes)),
-            Toast.LENGTH_SHORT).show()
+    fun showQuickActionConfirmation(id: String) {
+        val label = (legacyDefinitions + QuickActionRegistry.definitions)
+            .firstOrNull { it.id == id }?.label ?: id
+        val modeAction = id.startsWith("audio_mode_") || id.startsWith("hardware_accel_")
+        val message = if (modeAction) {
+            context.getString(R.string.quick_action_activated, label)
+        } else {
+            context.getString(R.string.quick_action_confirmed, label)
+        }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
     val scan = { if (state.hasFolder) onRefresh() else onFolder() }
     val dispatchQuickAction: (String) -> Unit = { id ->
         // Every shortcut gets immediate visual feedback, including one-shot actions such as
         // scanning or opening a collection. Stateful modes remain highlighted by their real state.
         feedbackQuickActionId = id
+        showQuickActionConfirmation(id)
         when (id) {
             "search" -> { searchVisible = true }
             "folder" -> onFolder()
@@ -134,35 +141,27 @@ private val legacyDefinitions = listOf(
             }
             "audio_mode_battery" -> {
                 playbackViewModel?.setAudioMode(AudioMode.BATTERY)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_battery)
             }
             "audio_mode_balanced" -> {
                 playbackViewModel?.setAudioMode(AudioMode.BALANCED)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_balanced)
             }
             "audio_mode_hifi" -> {
                 playbackViewModel?.setAudioMode(AudioMode.HIFI)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.audio_mode_hifi)
             }
             "hardware_accel_automatic" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_automatic)
             }
             "hardware_accel_disabled" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DISABLED)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_disabled)
             }
             "hardware_accel_decoding" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DECODING)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_decoding)
             }
             "hardware_accel_full" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.FULL)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_full)
             }
             "hardware_accel_adaptive" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.ADAPTIVE)
-                if (playbackViewModel != null) showQuickActionActivated(R.string.accel_adaptive)
             }
             "playback_settings" -> {
                 onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
