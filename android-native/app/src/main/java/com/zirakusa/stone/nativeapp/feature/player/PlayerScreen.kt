@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.zirakusa.stone.nativeapp.feature.player
 
 import androidx.activity.compose.BackHandler
@@ -131,7 +133,7 @@ import kotlinx.coroutines.withContext
                 Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
             }
         }
-        else if (song != null) StoneArtwork(song.uri, song.modifiedMs,
+        else if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs,
             Modifier.weight(1f).aspectRatio(1f).fillMaxWidth().clip(RoundedCornerShape(28.dp)))
         else Box(Modifier.weight(1f).aspectRatio(1f).fillMaxWidth())
         Row(Modifier.fillMaxWidth().padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -393,7 +395,7 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
             Box(Modifier.fillMaxSize().padding((index * 9 + 4).dp)
                 .border(1.dp, Color(0x337FA8A1), CircleShape))
         }
-        StoneArtwork(song.uri, song.modifiedMs, Modifier.fillMaxSize(.54f).clip(CircleShape))
+        StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxSize(.54f).clip(CircleShape))
         Box(Modifier.fillMaxSize(.045f).clip(CircleShape).background(Color(0xFF101719)))
     }
 }

@@ -14,17 +14,22 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import androidx.core.content.FileProvider
 import java.io.File
 import java.nio.ByteBuffer
 
 object SongActions {
     fun share(context: Context, uri: String, title: String) {
         val source = Uri.parse(uri)
-        require(source.scheme == "content") { "La canción debe estar disponible en el dispositivo." }
+        val shareUri = if (source.scheme == "content") source else {
+            val file = source.path?.let(::File) ?: error("La canción no tiene una ruta válida")
+            require(file.exists()) { "La canción ya no está disponible." }
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        }
         val send = Intent(Intent.ACTION_SEND).apply {
-            type = context.contentResolver.getType(source) ?: audioMime(uri)
-            putExtra(Intent.EXTRA_STREAM, source)
-            clipData = ClipData.newUri(context.contentResolver, title, source)
+            type = context.contentResolver.getType(shareUri) ?: audioMime(uri)
+            putExtra(Intent.EXTRA_STREAM, shareUri)
+            clipData = ClipData.newUri(context.contentResolver, title, shareUri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(send, "Compartir canción"))

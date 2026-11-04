@@ -41,7 +41,7 @@ private val StoneIconFont = FontFamily(Font(R.font.stone_icons))
 @Composable fun StoneIconButton(glyph: StoneGlyph, label: String, onClick: () -> Unit,
     modifier: Modifier = Modifier, enabled: Boolean = true) {
     Box(modifier.size(44.dp).clickable(enabled = enabled, role = Role.Button, onClickLabel = label,
-        onClick = onClick).then(Modifier.semantics {
+        onClick = onClick).then(Modifier.semantics(mergeDescendants = true) {
             contentDescription = label
         }), contentAlignment = Alignment.Center) {
         StoneIcon(glyph, color = if (enabled) StonePalette.Yellow else StonePalette.Muted)

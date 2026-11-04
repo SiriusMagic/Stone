@@ -9,6 +9,10 @@ class LibraryTest {
         assertEquals(listOf(1350L, 2600L), parsed.synced.map { it.timeMs })
         assertEquals(0, LyricsParser.activeIndex(parsed.synced, 2000))
     }
+    @Test fun `lrc export keeps sorted millisecond timestamps`() {
+        val value = LyricsParser.toLrc(listOf(LyricLine(2_500, "Dos"), LyricLine(1_250, "Uno")))
+        assertEquals("[00:01.250]Uno\n[00:02.500]Dos", value)
+    }
     @Test fun `rapid resumes and manual requests cannot overlap`() {
         val policy = RefreshPolicy(100)
         assertTrue(policy.tryStart(false, 1000))

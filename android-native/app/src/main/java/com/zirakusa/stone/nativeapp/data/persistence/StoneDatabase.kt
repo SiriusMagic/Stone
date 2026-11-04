@@ -35,6 +35,11 @@ class StoneDatabase private constructor(private val context: Context) :
     }
 
     @Synchronized fun remove(key: String) { writableDatabase.delete("data_key_value", "data_key=?", arrayOf(key)) }
+    @Synchronized fun keys(prefix: String = ""): List<String> = readableDatabase.query(
+        "data_key_value", arrayOf("data_key"), "data_key LIKE ?", arrayOf("$prefix%"),
+        null, null, "data_key").use { cursor ->
+        buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+    }
     @Synchronized fun clearAll() { writableDatabase.delete("data_key_value", null, null) }
     @Synchronized fun setting(key: String, fallback: String): String = getString("setting.$key") ?: fallback
     @Synchronized fun setSetting(key: String, value: String) = putString("setting.$key", value)

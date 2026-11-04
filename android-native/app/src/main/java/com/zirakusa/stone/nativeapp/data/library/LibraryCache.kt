@@ -37,6 +37,7 @@ class LibraryCache(context: Context) {
                 item.optJSONArray("syncedLyrics")?.let { values -> List(values.length()) {
                     values.getJSONObject(it).let { line -> LyricLine(line.getLong("timeMs"), line.getString("text")) }
                 } } ?: emptyList(), item.optBoolean("isVideo", false))
+                .copy(artworkUri = item.optString("artworkUri", ""))
         }
     }.getOrDefault(emptyList())
 
@@ -47,6 +48,7 @@ class LibraryCache(context: Context) {
                 .put("artist", song.artist).put("album", song.album).put("folder", song.folder)
                 .put("duration", song.durationMs).put("size", song.size).put("modified", song.modifiedMs)
                 .put("isVideo", song.isVideo)
+                .put("artworkUri", song.artworkUri)
                 .put("lyrics", JSONArray(song.lyrics)).put("syncedLyrics", JSONArray().apply {
                     song.syncedLyrics.forEach { line -> put(JSONObject().put("timeMs", line.timeMs).put("text", line.text)) }
                 }))

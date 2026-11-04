@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
 enum class AudioMode(val key: String) { BATTERY("battery"), BALANCED("balanced"), HIFI("hifi") }
@@ -38,7 +39,8 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val equalizerPreset: String = "Personalizado", val sleepMinutes: Int = 0,
     val sleepFinishTrack: Boolean = false, val volumePercent: Int = 100,
     val audioMode: AudioMode = AudioMode.BALANCED,
-    val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC)
+    val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC,
+    val equalizerProfiles: Map<String, List<Int>> = emptyMap())
 
 class PlaybackViewModel(application: Application) : AndroidViewModel(application) {
     private val mutable = MutableStateFlow(PlaybackState())
@@ -47,10 +49,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val data = PlaybackDataStore(application)
     private val settings = StoneSettingsStore(application)
     private val equalizer = PlaybackEqualizer()
+    private val analyzer = AudioGenreAnalyzer(application)
     private var speed = data.float("speed", 1f)
     private var equalizerEnabled = data.boolean("equalizer-enabled", false)
     private var equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
     private var equalizerPreset = data.string("equalizer-preset", "Personalizado")
+    private var equalizerProfiles = loadEqualizerProfiles()
     private var volumePercent = data.int("volume-percent", 100).coerceIn(0, 300)
     private var audioMode = runCatching { AudioMode.valueOf(settings.read().audioMode.uppercase()) }
         .getOrDefault(AudioMode.BALANCED)
@@ -89,7 +93,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 equalizer.attach(StonePlaybackService.playbackAudioSessionId)
-                equalizer.configure(audioMode != AudioMode.BATTERY && equalizerEnabled, equalizerValues)
+                equalizer.configure(audioMode != AudioMode.BATTERY && equalizerEnabled, equalizerValues, audioMode)
                 publish()
             }.onFailure { mutable.value = PlaybackState(failed = true) }
         }, ContextCompat.getMainExecutor(application))
@@ -109,11 +113,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             }, index = player.currentMediaItemIndex, failed = player.playerError != null,
             currentId = player.currentMediaItem?.mediaId.orEmpty(),
             favorite = data.isFavorite(player.currentMediaItem?.mediaId.orEmpty()),
-            speed = speed, equalizerEnabled = equalizerEnabled,
+            speed = speed, equalizerEnabled = equalizerEnabled && audioMode != AudioMode.BATTERY,
             equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset,
             sleepMinutes = sleepMinutes, sleepFinishTrack = sleepFinishTrack,
             volumePercent = volumePercent, audioMode = audioMode,
             hardwareAcceleration = hardwareAcceleration)
+            .copy(equalizerProfiles = equalizerProfiles)
     }
 
     fun play(song: Song, songs: List<Song>) {
@@ -136,8 +141,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         audioMode = mode
         settings.setAudioMode(mode.key)
         when (mode) {
-            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues)
-            AudioMode.BALANCED, AudioMode.HIFI -> equalizer.configure(equalizerEnabled, equalizerValues)
+            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues, mode)
+            AudioMode.BALANCED, AudioMode.HIFI -> equalizer.configure(equalizerEnabled, equalizerValues, mode)
         }
         StonePlaybackService.instance?.applyAudioMode(mode)
         publish()
@@ -235,7 +240,34 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setEqualizerEnabled(value: Boolean) {
         equalizerEnabled = value
         data.put("equalizer-enabled", value)
-        equalizer.configure(value, equalizerValues); publish()
+        equalizer.configure(value && audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
+    }
+    fun saveEqualizerProfile(name: String) {
+        val clean = name.trim().take(40)
+        if (clean.isBlank()) return
+        equalizerProfiles = equalizerProfiles + (clean to equalizerValues.toList())
+        saveEqualizerProfiles()
+        publish()
+    }
+    fun deleteEqualizerProfile(name: String) {
+        equalizerProfiles = equalizerProfiles - name
+        saveEqualizerProfiles()
+        publish()
+    }
+    fun applyEqualizerProfile(name: String) {
+        equalizerProfiles[name]?.let { setEqualizerPreset(name, it) }
+    }
+    fun analyzeAndApply(song: Song, result: (AudioAnalysis) -> Unit = {}) {
+        viewModelScope.launch {
+            val analysis = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                analyzer.analyze(song.uri)
+            }
+            analysis.genre?.let { genre ->
+                val values = genrePreset(genre)
+                if (values != null) setEqualizerPreset(genre, values)
+            }
+            result(analysis)
+        }
     }
     fun setEqualizerBand(index: Int, value: Int) {
         if (index !in equalizerValues.indices) return
@@ -243,7 +275,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true; equalizerPreset = "Personalizado"
         data.put("equalizer-$index", equalizerValues[index]); data.put("equalizer-enabled", true)
         data.put("equalizer-preset", equalizerPreset)
-        equalizer.configure(true, equalizerValues); publish()
+        equalizer.configure(audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
     }
     fun setEqualizerPreset(name: String, values: List<Int>) {
         equalizerPreset = name
@@ -251,7 +283,34 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true
         data.put("equalizer-enabled", true); data.put("equalizer-preset", name)
         equalizerValues.forEachIndexed { index, value -> data.put("equalizer-$index", value) }
-        equalizer.configure(true, equalizerValues); publish()
+        equalizer.configure(audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
+    }
+    private fun loadEqualizerProfiles(): Map<String, List<Int>> = runCatching {
+        val root = org.json.JSONObject(data.string("equalizer-profiles", "{}"))
+        buildMap {
+            root.keys().forEach { name ->
+                val values = root.optJSONArray(name) ?: return@forEach
+                put(name, List(values.length()) { values.optInt(it).coerceIn(-10, 10) })
+            }
+        }
+    }.getOrDefault(emptyMap())
+    private fun saveEqualizerProfiles() {
+        val root = org.json.JSONObject()
+        equalizerProfiles.forEach { (name, values) -> root.put(name, JSONArray(values)) }
+        data.put("equalizer-profiles", root.toString())
+    }
+    private fun genrePreset(genre: String): List<Int>? = when (genre) {
+        "Electrónica" -> listOf(4,7,6,-1,-2,0,5,8,3,5)
+        "Rock" -> listOf(5,3,2,0,0,1,0,2,2,4)
+        "HipHop" -> listOf(5,5,3,0,-2,-2,2,3,4,4)
+        "R&B" -> listOf(5,5,4,0,-2,-1,2,2,2,3)
+        "Jazz" -> listOf(3,3,2,0,-1,-1,0,2,3,4)
+        "Clásico" -> listOf(0,1,-2,0,-1,0,2,-2,-2,3)
+        "Folk" -> listOf(0,2,3,0,0,0,6,3,2,-1)
+        "Latín" -> listOf(1,3,2,0,0,-1,0,-1,0,3)
+        "Pop" -> listOf(-1,-1,0,1,1,2,2,1,0,-1)
+        "Baile" -> listOf(5,5,4,2,1,3,4,3,2,0)
+        else -> null
     }
     fun setSleepTimer(minutes: Int, finishTrack: Boolean = sleepFinishTrack) {
         sleepJob?.cancel()

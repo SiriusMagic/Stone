@@ -30,6 +30,8 @@ import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
+import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
 
 private data class Language(val code: String, val label: String)
 private val languages = listOf(Language("es", "Español"), Language("en", "English"))
@@ -40,6 +42,10 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     onPage: (String?) -> Unit, onClose: () -> Unit, onFolder: () -> Unit,
     onScan: () -> Unit, onLibrarySheet: (String) -> Unit, playback: PlaybackViewModel?,
     onExport: () -> Unit, onImport: () -> Unit, onShare: () -> Unit,
+    onExportPackage: () -> Unit = {}, onImportPackage: () -> Unit = {}, onTransfer: () -> Unit = {},
+    transferState: LocalTransferUiState = LocalTransferUiState(),
+    onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
+    onStopTransfer: () -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
@@ -69,6 +75,11 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     SettingsRow(Icons.Default.FileDownload, R.string.import_stone_backup, "") { onClose(); onImport() }
                 }
                 SettingsGroup {
+                    SettingsRow(Icons.Default.Archive, R.string.export_musp, "") { onClose(); onExportPackage() }
+                    SettingsRow(Icons.Default.Unarchive, R.string.import_musp, "") { onClose(); onImportPackage() }
+                    SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") { onPage("wifi-transfer") }
+                }
+                SettingsGroup {
                     SettingsRow(Icons.Default.ThumbUp, R.string.feedback, "") { onPage("feedback") }
                     SettingsRow(Icons.Default.Info, R.string.about_stone, "") { onPage("about") }
                 }
@@ -86,7 +97,8 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
-                    "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") }, { onPage("hardware-acceleration") })
+                    "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
+                        { onPage("hardware-acceleration") }, { onPage("audio-diagnostics") })
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "scan-mode" -> ScanModeDetail(store)
@@ -94,6 +106,9 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     "about" -> AboutDetail()
                     "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
+                    "wifi-transfer" -> TransferDetail(transferState, onHostTransfer,
+                        onReceiveTransfer, onStopTransfer)
+                    "audio-diagnostics" -> AudioDiagnosticsDetail(playback)
                 }
             }
         }
@@ -112,8 +127,45 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     "scan-mode" -> R.string.settings_scan_mode
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
-    "sleep" -> R.string.sleep_timer; else -> R.string.settings
+    "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
+    "audio-diagnostics" -> R.string.audio_diagnostics; else -> R.string.settings
 })
+
+@Composable private fun TransferDetail(state: LocalTransferUiState, host: () -> Unit,
+    receive: (String, String) -> Unit, stop: () -> Unit) {
+    var address by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    Text(stringResource(R.string.wifi_transfer_intro), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 18.dp))
+    Button(enabled = !state.busy, onClick = host, modifier = Modifier.fillMaxWidth()) {
+        Icon(Icons.Default.Wifi, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.start_transfer))
+    }
+    if (state.address.isNotBlank()) {
+        Text(stringResource(R.string.transfer_share_address, state.address), fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 18.dp))
+        Text(stringResource(R.string.transfer_share_code, state.code), fontSize = 22.sp,
+            fontWeight = FontWeight.Black, color = StonePalette.Yellow)
+        Text(stringResource(R.string.transfer_waiting), color = StonePalette.Muted)
+        TextButton(onClick = stop) { Text(stringResource(R.string.cancel)) }
+    }
+    HorizontalDivider(Modifier.padding(vertical = 18.dp))
+    Text(stringResource(R.string.transfer_receive_title), fontWeight = FontWeight.Bold)
+    OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
+        label = { Text(stringResource(R.string.transfer_address)) }, singleLine = true,
+        placeholder = { Text("192.168.1.20:43210") })
+    OutlinedTextField(code, { code = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth().padding(top = 8.dp),
+        label = { Text(stringResource(R.string.transfer_code)) }, singleLine = true)
+    Button(enabled = !state.busy && address.isNotBlank() && code.length == 6,
+        onClick = { receive(address, code) }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Text(stringResource(R.string.transfer_receive))
+    }
+    if (state.busy) {
+        LinearProgressIndicator(progress = { state.progress }, Modifier.fillMaxWidth().padding(top = 16.dp))
+        Text(stringResource(R.string.transfer_working), color = StonePalette.Muted)
+    }
+    if (state.message.isNotBlank()) Text(state.message, color = StonePalette.Muted,
+        modifier = Modifier.padding(top = 12.dp, bottom = 24.dp))
+}
 
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
     onChange: (String, Boolean) -> Unit) {
@@ -192,7 +244,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
             Modifier.size(112.dp), contentScale = ContentScale.Fit)
         Text(stringResource(R.string.stone), fontSize = 24.sp, fontWeight = FontWeight.Black,
             modifier = Modifier.padding(top = 14.dp))
-        Text(stringResource(R.string.version_label, "1.4.2"), color = StonePalette.Muted,
+        Text(stringResource(R.string.version_label, "1.5.0 experimental"), color = StonePalette.Muted,
             modifier = Modifier.padding(top = 10.dp))
         SettingsGroup {
             SettingsRow(Icons.Default.ThumbUp, R.string.rate_stone, "") { }
@@ -237,12 +289,21 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
 }
 
 @Composable private fun PlaybackDetail(store: StoneSettingsStore?, playback: PlaybackViewModel?,
-    openAudioMode: () -> Unit, openHardwareAcceleration: () -> Unit) {
+    openAudioMode: () -> Unit, openHardwareAcceleration: () -> Unit, openDiagnostics: () -> Unit) {
     var config by remember { mutableStateOf(store?.read()) }
     val playbackState = playback?.state?.collectAsState()?.value
     PlaybackModeRow(playbackState?.audioMode ?: AudioMode.BALANCED, openAudioMode)
     HardwareAccelerationRow(playbackState?.hardwareAcceleration ?: HardwareAcceleration.AUTOMATIC,
         openHardwareAcceleration)
+    Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(onClick = openDiagnostics),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Memory, null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
+        Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
+            Text(stringResource(R.string.audio_diagnostics), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.audio_diagnostics_hint), color = StonePalette.Muted, fontSize = 13.sp)
+        }
+        Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
+    }
     ToggleSetting(R.string.play_with_others, R.string.play_with_others_hint, config?.playWithOthers == true) {
         playback?.setPlayWithOthers(it); config = store?.read()
     }
@@ -252,6 +313,29 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     Text(stringResource(R.string.crossfade), fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(top = 14.dp))
     Text(stringResource(R.string.crossfade_hint), color = StonePalette.Muted)
+}
+
+@Composable private fun AudioDiagnosticsDetail(playback: PlaybackViewModel?) {
+    val context = LocalContext.current
+    val mode = playback?.state?.collectAsState()?.value?.audioMode ?: AudioMode.BALANCED
+    var snapshot by remember { mutableStateOf(PerformanceDiagnostics.read(context)) }
+    Text(stringResource(R.string.audio_diagnostics_intro), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 16.dp))
+    Button(onClick = { snapshot = PerformanceDiagnostics.read(context) },
+        modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.refresh_metrics)) }
+    DiagnosticValue(stringResource(R.string.audio_mode), mode.name)
+    DiagnosticValue(stringResource(R.string.ram_used), "${snapshot.usedRamMb} MB")
+    DiagnosticValue(stringResource(R.string.ram_available), "${snapshot.availableRamMb} MB")
+    DiagnosticValue(stringResource(R.string.process_heap), "${snapshot.processHeapMb} MB")
+    DiagnosticValue(stringResource(R.string.battery_level),
+        if (snapshot.batteryPercent >= 0) "${snapshot.batteryPercent}%" else "—")
+}
+
+@Composable private fun DiagnosticValue(label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+        Text(value, color = StonePalette.Muted)
+    }
 }
 
 @Composable private fun HardwareAccelerationRow(mode: HardwareAcceleration, open: () -> Unit) {

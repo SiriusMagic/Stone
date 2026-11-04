@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
     showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
     showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
     showSleep: Boolean = true) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
+    Box(Modifier.fillMaxWidth()) {
     val penguinMotion = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),

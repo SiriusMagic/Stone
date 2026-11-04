@@ -15,6 +15,7 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.feature.player.EqualizerSheet
 import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
+import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
 
 private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "equalizer", "sleep")
@@ -25,6 +26,10 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onRestoreHidden: (Song) -> Unit = {}, onRestoreDeleted: (Song) -> Unit = {},
     onExport: () -> Unit = {}, onImport: () -> Unit = {}, onShare: () -> Unit = {},
+    onExportPackage: () -> Unit = {}, onImportPackage: () -> Unit = {}, onTransfer: () -> Unit = {},
+    transferState: LocalTransferUiState = LocalTransferUiState(),
+    onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
+    onStopTransfer: () -> Unit = {},
     theme: String = "dark", onThemeChange: (String) -> Unit = {}, language: String = "es",
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
@@ -86,7 +91,9 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
         null, onSettingsPage)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,
-        scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare) { key, visible ->
+        scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare,
+        onExportPackage, onImportPackage, onTransfer, transferState, onHostTransfer,
+        onReceiveTransfer, onStopTransfer) { key, visible ->
         shortcuts = shortcuts + (key to visible)
     }
     if (homeTool == "equalizer" && playbackViewModel != null && playbackState != null)

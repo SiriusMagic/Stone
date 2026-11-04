@@ -24,6 +24,10 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.data.persistence.StoneBackup
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
+import com.zirakusa.stone.nativeapp.data.transfer.StonePackage
+import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferManager
+import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
+import java.io.File
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +48,9 @@ import kotlinx.coroutines.delay
     val player by playback.state.collectAsStateWithLifecycle()
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val transferManager = remember(context) { LocalTransferManager(context.applicationContext) }
+    var transferState by remember { mutableStateOf(LocalTransferUiState()) }
+    DisposableEffect(transferManager) { onDispose { transferManager.stop() } }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -68,6 +75,27 @@ import kotlinx.coroutines.delay
             if (success) library.reloadUserData()
             android.widget.Toast.makeText(context, if (success) R.string.backup_imported else R.string.backup_failed,
                 android.widget.Toast.LENGTH_LONG).show() } }
+    }
+    val packageExportPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(StonePackage.MIME)) { uri ->
+        uri?.let { target -> scope.launch {
+            val songs = (state.songs + state.hiddenSongs + state.deletedSongs).distinctBy { it.id }
+            val success = withContext(Dispatchers.IO) { runCatching {
+                StonePackage.export(context, target, songs)
+            }.isSuccess }
+            android.widget.Toast.makeText(context,
+                if (success) R.string.musp_exported else R.string.musp_failed,
+                android.widget.Toast.LENGTH_LONG).show()
+        } }
+    }
+    val packageImportPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { source -> scope.launch {
+            val result = withContext(Dispatchers.IO) { runCatching { StonePackage.import(context, source) } }
+            library.reloadUserData()
+            android.widget.Toast.makeText(context,
+                result.getOrNull()?.message ?: context.getString(R.string.musp_failed),
+                android.widget.Toast.LENGTH_LONG).show()
+        } }
     }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, library) {
@@ -96,6 +124,49 @@ import kotlinx.coroutines.delay
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
                 { shareStoneBackup(context) },
+                { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
+                { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
+                { settingsPage = "wifi-transfer" },
+                transferState = transferState,
+                onHostTransfer = {
+                    scope.launch {
+                        transferState = LocalTransferUiState(busy = true, message = "Preparando paquete…")
+                        val packageFile = File(context.cacheDir, "stone-transfer.musp")
+                        val songs = (state.songs + state.hiddenSongs + state.deletedSongs).distinctBy { it.id }
+                        val result = withContext(Dispatchers.IO) { runCatching {
+                            StonePackage.exportToFile(context, packageFile, songs)
+                            transferManager.startHost(packageFile)
+                        } }
+                        result.onSuccess { host ->
+                            transferState = LocalTransferUiState(address = host.address, code = host.code,
+                                message = "Paquete listo: ${packageFile.length() / 1024 / 1024} MB")
+                        }.onFailure { error ->
+                            transferState = LocalTransferUiState(message = error.message ?: "No se pudo preparar la transferencia")
+                        }
+                    }
+                },
+                onReceiveTransfer = { address, code ->
+                    scope.launch {
+                        transferState = LocalTransferUiState(busy = true, message = "Descargando paquete…")
+                        val packageFile = File(context.cacheDir, "stone-received.musp")
+                        val result = withContext(Dispatchers.IO) { runCatching {
+                            transferManager.download(address, code, packageFile) { done, total ->
+                                if (total > 0) scope.launch {
+                                    transferState = transferState.copy(progress = done.toFloat() / total)
+                                }
+                            }
+                            StonePackage.importFile(context, packageFile)
+                        } }
+                        packageFile.delete()
+                        library.reloadUserData()
+                        transferState = LocalTransferUiState(message = result.getOrNull()?.message
+                            ?: result.exceptionOrNull()?.message ?: "No se pudo recibir el paquete")
+                    }
+                },
+                onStopTransfer = {
+                    transferManager.stop()
+                    transferState = LocalTransferUiState(message = "Transferencia cancelada")
+                },
                 onOpenSettings = { settingsPage = null }, theme = theme,
                 onThemeChange = { theme = it; settingsStore.setTheme(it); (context as? Activity)?.recreate() }, language = language,
                 onLanguageChange = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() },

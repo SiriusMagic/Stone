@@ -12,8 +12,11 @@ data class Song(
     val lyrics: List<String> = emptyList(),
     val syncedLyrics: List<LyricLine> = emptyList(),
     val isVideo: Boolean = false,
+    /** Optional artwork extracted from a Stone package. Normal files use embedded artwork. */
+    val artworkUri: String = "",
 ) {
     val id: String get() = "local:$uri"
+    val artworkSource: String get() = artworkUri.ifBlank { uri }
     fun matches(query: String) = listOf(title, artist, album, folder).any {
         it.contains(query.trim(), ignoreCase = true)
     }
@@ -57,5 +60,13 @@ object LyricsParser {
         if (lines.isEmpty()) return -1
         val index = lines.binarySearchBy(positionMs) { it.timeMs }
         return if (index >= 0) index else (-index - 2).coerceAtLeast(-1)
+    }
+
+    fun toLrc(lines: List<LyricLine>): String = lines.sortedBy(LyricLine::timeMs).joinToString("\n") { line ->
+        val safeTime = line.timeMs.coerceAtLeast(0)
+        val minutes = safeTime / 60_000
+        val seconds = (safeTime % 60_000) / 1_000
+        val millis = safeTime % 1_000
+        "[%02d:%02d.%03d]%s".format(minutes, seconds, millis, line.text)
     }
 }

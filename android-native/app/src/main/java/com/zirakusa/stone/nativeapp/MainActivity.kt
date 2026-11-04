@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
@@ -10,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.util.Locale
 
+@SuppressLint("RestrictedApi")
 class MainActivity : ComponentActivity() {
     private fun isVolumeKey(keyCode: Int): Boolean =
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN

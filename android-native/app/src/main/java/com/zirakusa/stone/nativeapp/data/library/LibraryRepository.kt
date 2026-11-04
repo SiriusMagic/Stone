@@ -15,6 +15,7 @@ class LibraryRepository(context: Context) {
     private val cache = LibraryCache(context)
     private val scanner = FolderScanner(context)
     private val disposition = SongDispositionStore(context)
+    private val imported = ImportedLibraryStore(context)
     private val policy = RefreshPolicy()
     val folders: List<String> get() = preferences.getStringSet("folders", null)
         ?.toList().orEmpty().ifEmpty { listOfNotNull(preferences.getString("folder", null)) }
@@ -26,10 +27,10 @@ class LibraryRepository(context: Context) {
             .putString("folder", selected.firstOrNull()).apply()
     }
     suspend fun cached(): List<Song> = withContext(Dispatchers.IO) {
-        folders.flatMap(cache::read).distinctBy { it.id }.let(::visible)
+        (folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id }.let(::visible)
     }
     suspend fun allCached(): List<Song> = withContext(Dispatchers.IO) {
-        folders.flatMap(cache::read).distinctBy { it.id }
+        (folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id }
     }
 
     suspend fun refresh(manual: Boolean): List<Song>? {
@@ -51,7 +52,7 @@ class LibraryRepository(context: Context) {
                     }
                 }.distinctBy { it.id }.sortedBy { it.title.lowercase() }
                 if (scannedTrees == 0) throw IllegalStateException("No se pudo actualizar ninguna carpeta")
-                merged
+                (merged + imported.songs()).distinctBy { it.id }
             }
             success = true
             visible(songs)

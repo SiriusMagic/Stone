@@ -33,7 +33,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(96.dp).clip(RoundedCornerShape(20.dp)).background(frameColor),
             contentAlignment = Alignment.Center) {
-            if (artwork != null) StoneArtwork(artwork.uri, artwork.modifiedMs,
+            if (artwork != null) StoneArtwork(artwork.artworkSource, artwork.modifiedMs,
                 Modifier.size(76.dp).clip(CircleShape))
         }
         Column(Modifier.weight(1f).padding(start = 16.dp, end = 8.dp),

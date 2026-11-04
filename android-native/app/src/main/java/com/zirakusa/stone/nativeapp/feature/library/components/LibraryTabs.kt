@@ -13,6 +13,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected as selectedSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,11 +36,16 @@ enum class LibraryTab(val label: Int) {
             val color = if (active) StonePalette.Blue else StonePalette.Chip
             Row(Modifier.height(36.dp).widthIn(min = 78.dp).clip(CircleShape).background(color)
                 .border(1.dp, if (active) color else StonePalette.Border, CircleShape)
-                .selectable(active, role = Role.Tab, onClick = { onSelect(tab) }).padding(horizontal = 14.dp),
+                .selectable(active, role = Role.Tab, onClick = { onSelect(tab) })
+                .semantics(mergeDescendants = true) { selectedSemantics = active }
+                .padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (tab == LibraryTab.Videos) StoneIcon(StoneGlyph.Video,
                     color = if (active) Color.White else StonePalette.Muted, size = 16)
-                Text(stringResource(tab.label), color = if (active) Color.White else StonePalette.Secondary,
+                Text(stringResource(tab.label), modifier = Modifier
+                    .selectable(active, role = Role.Tab, onClick = { onSelect(tab) })
+                    .semantics { selectedSemantics = active },
+                    color = if (active) Color.White else StonePalette.Secondary,
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp)
             }
         }

@@ -1,25 +1,38 @@
 package com.zirakusa.stone.nativeapp.playback
 
 import android.media.audiofx.Equalizer
+import android.media.audiofx.DynamicsProcessing
+import android.os.Build
 import kotlin.math.roundToInt
 
 class PlaybackEqualizer {
     private var effect: Equalizer? = null
+    private var dynamics: DynamicsProcessing? = null
     private var sessionId = 0
     private var enabled = false
     private var values = IntArray(10)
+    private var mode = AudioMode.BALANCED
 
     fun attach(nextSessionId: Int) {
         if (nextSessionId <= 0 || nextSessionId == sessionId) return
         release()
         sessionId = nextSessionId
         effect = runCatching { Equalizer(0, nextSessionId) }.getOrNull()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            dynamics = runCatching {
+                val config = DynamicsProcessing.Config.Builder(
+                    DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, 2,
+                    false, 0, false, 0, false, 0, true).build()
+                DynamicsProcessing(0, nextSessionId, config)
+            }.getOrNull()
+        }
         apply()
     }
 
-    fun configure(nextEnabled: Boolean, nextValues: IntArray) {
+    fun configure(nextEnabled: Boolean, nextValues: IntArray, nextMode: AudioMode = AudioMode.BALANCED) {
         enabled = nextEnabled
         values = IntArray(10) { nextValues.getOrElse(it) { 0 }.coerceIn(-10, 10) }
+        mode = nextMode
         apply()
     }
 
@@ -34,11 +47,19 @@ class PlaybackEqualizer {
             equalizer.setBandLevel(band.toShort(), level.roundToInt().toShort())
         }
         equalizer.enabled = enabled
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) dynamics?.let { processor ->
+            val active = enabled && mode != AudioMode.BATTERY
+            processor.setLimiterAllChannelsTo(DynamicsProcessing.Limiter(
+                active, true, 0, 10f, 80f, 1f, -1f, 0f))
+            processor.enabled = active
+        }
     }
 
     fun release() {
         runCatching { effect?.release() }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) runCatching { dynamics?.release() }
         effect = null
+        dynamics = null
         sessionId = 0
     }
 }

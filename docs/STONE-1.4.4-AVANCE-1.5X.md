@@ -24,6 +24,19 @@ Las siguientes mejoras se implementarán progresivamente sin añadir complejidad
 5. Registrar mediciones locales de rendimiento solo durante las pruebas.
 6. Comparar RAM, CPU, APK y estabilidad antes de publicar cada salto grande.
 
+## 1.5.0 experimental — bloque local completo
+
+La rama `stone-1.5.0-local-complete` añade el primer bloque integrado y reversible:
+
+- Editor LRC, exportación, desfase por canción e incrustación segura en copias MP3.
+- Perfiles de ecualizador guardados, análisis de género por metadatos bajo demanda y limitador DSP en Android 9+.
+- Paquetes `.musp` con audio, letras, portadas, metadatos, favoritos y playlists.
+- Importación a almacenamiento privado de Stone sin modificar los archivos originales.
+- Transferencia Wi-Fi local de un solo uso con código y checksum de tamaño.
+- Diagnóstico manual de RAM, memoria de proceso y batería.
+
+La sincronización/restauración mediante IA y los enlaces remotos permanecen fuera de esta versión para no añadir modelos residentes ni servicios externos.
+
 ## Regla de versiones
 
 - **1.4.4:** estabilización y primer bloque de optimización adelantada.

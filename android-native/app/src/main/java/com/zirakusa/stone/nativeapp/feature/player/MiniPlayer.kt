@@ -31,7 +31,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         border = BorderStroke(1.dp, StonePalette.MiniBorder), shadowElevation = 10.dp) {
         Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            StoneArtwork(song?.uri, song?.modifiedMs ?: 0, Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)))
+            StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)))
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(state.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, letterSpacing = 0.sp)

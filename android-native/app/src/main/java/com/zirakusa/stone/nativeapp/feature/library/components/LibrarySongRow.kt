@@ -40,7 +40,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     Box(Modifier.size(72.dp).clip(RoundedCornerShape(22.dp))
         .background(if (current) StonePalette.PlayingCover else StonePalette.Cover)
         .padding(if (current) 4.dp else 0.dp), contentAlignment = Alignment.Center) {
-        if (song != null) StoneArtwork(song.uri, song.modifiedMs, Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
+        if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
         else StoneIcon(glyph, color = StonePalette.Muted, size = 24)
     }
 }

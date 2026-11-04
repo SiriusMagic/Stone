@@ -41,7 +41,7 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
         verticalArrangement = Arrangement.SpaceBetween) {
         Spacer(Modifier.height(24.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (song != null) StoneArtwork(song.uri, song.modifiedMs,
+            if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs,
                 Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(28.dp)))
             else Icon(Icons.Default.BatterySaver, null, Modifier.size(80.dp))
             Text(state.title, fontSize = 25.sp, fontWeight = FontWeight.Black, color = Color.White)
