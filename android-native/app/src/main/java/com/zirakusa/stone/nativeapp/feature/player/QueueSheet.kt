@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -18,6 +19,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
@@ -30,6 +34,7 @@ import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
+import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.R
 import kotlinx.coroutines.launch
 
@@ -75,7 +80,7 @@ private val QueueDark = Color(0xFF4A292B)
                             RoundedCornerShape(14.dp))
                         .clickable { playback.playAt(index) }.padding(horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically) {
-                        StoneArtwork(item.uri, 0L, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
+                        QueueArtwork(item.uri, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(item.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.Bold)
@@ -138,6 +143,17 @@ private val QueueDark = Color(0xFF4A292B)
             }
         }
     }
+}
+
+@Composable private fun QueueArtwork(uri: String?, modifier: Modifier) {
+    val context = LocalContext.current.applicationContext
+    val isVideo = uri?.substringBefore('?')?.substringAfterLast('.')?.lowercase() in setOf("mp4", "mkv", "mov", "webm")
+    var frame by remember(uri) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
+    LaunchedEffect(uri, isVideo) {
+        frame = if (isVideo && uri != null) ArtworkLoader.loadVideoFrame(context, uri, 0L) else null
+    }
+    if (frame?.bitmap != null) Image(frame!!.bitmap!!.asImageBitmap(), null, modifier, contentScale = ContentScale.Crop)
+    else StoneArtwork(uri, 0L, modifier)
 }
 
 @Composable private fun QueueModeButton(active: Boolean, modifier: Modifier, onClick: () -> Unit,
