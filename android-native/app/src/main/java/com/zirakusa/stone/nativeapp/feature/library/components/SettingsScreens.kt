@@ -65,6 +65,8 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     SettingsRow(Icons.Default.Headphones, R.string.settings_playback, "") { onPage("playback") }
                     SettingsRow(Icons.Default.Notifications, R.string.settings_notifications, "") { onPage("notifications") }
                     SettingsRow(Icons.Default.Timer, R.string.sleep_timer, "") { onPage("sleep") }
+                    SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") { onPage("wifi-transfer") }
+                    SettingsRow(Icons.Default.Memory, R.string.audio_diagnostics, "") { onPage("audio-diagnostics") }
                 }
                 SettingsGroup {
                     SettingsRow(Icons.Default.VisibilityOff, R.string.hidden_files, "") { onClose(); onLibrarySheet("hidden") }
@@ -76,7 +78,6 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                 SettingsGroup {
                     SettingsRow(Icons.Default.Archive, R.string.export_musp, "") { onClose(); onExportPackage() }
                     SettingsRow(Icons.Default.Unarchive, R.string.import_musp, "") { onClose(); onImportPackage() }
-                    SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") { onPage("wifi-transfer") }
                 }
                 SettingsGroup {
                     SettingsRow(Icons.Default.ThumbUp, R.string.feedback, "") { onPage("feedback") }
