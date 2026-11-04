@@ -239,6 +239,8 @@
     <string name="export_stone_backup">Exportar copia de Stone Kotlin</string>
     <string name="import_stone_backup">Importar copia de Stone Kotlin</string>
     <string name="share_stone_backup">Compartir respaldo de Stone</string>
+    <string name="share_app">Compartir app</string>
+    <string name="share_app_unavailable">Esta versión no tiene disponible este apartado.</string>
     <string name="export_musp">Exportar paquete .musp</string>
     <string name="import_musp">Importar paquete .musp</string>
     <string name="wifi_transfer">Transferencia Wi‑Fi local</string>

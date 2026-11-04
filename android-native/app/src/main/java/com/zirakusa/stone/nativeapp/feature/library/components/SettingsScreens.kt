@@ -47,6 +47,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
     onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
     onStopTransfer: () -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
+    var shareAppUnavailable by remember { mutableStateOf(false) }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -70,9 +71,7 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
                     SettingsRow(Icons.Default.Delete, R.string.recently_deleted, "") { onClose(); onLibrarySheet("deleted") }
                 }
                 SettingsGroup {
-                    SettingsRow(Icons.Default.FileUpload, R.string.export_stone_backup, "") { onClose(); onExport() }
-                    SettingsRow(Icons.Default.Share, R.string.share_stone_backup, "") { onClose(); onShare() }
-                    SettingsRow(Icons.Default.FileDownload, R.string.import_stone_backup, "") { onClose(); onImport() }
+                    SettingsRow(Icons.Default.Share, R.string.share_app, "") { shareAppUnavailable = true }
                 }
                 SettingsGroup {
                     SettingsRow(Icons.Default.Archive, R.string.export_musp, "") { onClose(); onExportPackage() }
@@ -113,6 +112,15 @@ private val languages = listOf(Language("es", "Español"), Language("en", "Engli
             }
         }
     }
+    if (shareAppUnavailable) AlertDialog(
+        onDismissRequest = { shareAppUnavailable = false },
+        title = { Text(stringResource(R.string.share_app)) },
+        text = { Text(stringResource(R.string.share_app_unavailable)) },
+        confirmButton = {
+            TextButton(onClick = { shareAppUnavailable = false }) {
+                Text(stringResource(R.string.dismiss))
+            }
+        })
 }
 
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
