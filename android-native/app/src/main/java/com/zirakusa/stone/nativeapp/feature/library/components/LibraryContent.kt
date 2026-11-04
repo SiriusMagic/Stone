@@ -164,6 +164,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
     var selectedVideo by remember { mutableStateOf<Song?>(null) }
     var deleteConfirmVisible by remember { mutableStateOf(false) }
+    var infoVideo by remember { mutableStateOf<Song?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
@@ -236,6 +237,19 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     Icon(Icons.Default.GraphicEq, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.audio_track))
                 }
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.ClosedCaption, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.subtitles_cc))
+                }
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.PlaylistAdd, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.add_to_playlist))
+                }
+                TextButton(onClick = { selectedVideo = null }) {
+                    Icon(Icons.Default.Lock, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.private_folder))
+                }
+                TextButton(onClick = { infoVideo = selectedVideo; selectedVideo = null }) {
+                    Icon(Icons.Default.Info, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.information))
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 TextButton(onClick = { val item = selectedVideo; selectedVideo = null; item?.let(onHide) }) {
                     Icon(Icons.Default.VisibilityOff, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.hide))
                 }
@@ -252,6 +266,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             selectedVideo?.let(onDelete); selectedVideo = null; deleteConfirmVisible = false
         }) { Text(stringResource(R.string.delete)) } },
         dismissButton = { TextButton(onClick = { deleteConfirmVisible = false }) { Text(stringResource(R.string.cancel)) } })
+    infoVideo?.let { video -> AlertDialog(onDismissRequest = { infoVideo = null },
+        title = { Text(stringResource(R.string.information)) },
+        text = { Column { Text(video.title); Text(video.folder, color = StonePalette.Muted); Text(video.uri, color = StonePalette.Muted, fontSize = 12.sp) } },
+        confirmButton = { TextButton(onClick = { infoVideo = null }) { Text(stringResource(R.string.dismiss)) } }) }
 }
 
 @Composable private fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,
