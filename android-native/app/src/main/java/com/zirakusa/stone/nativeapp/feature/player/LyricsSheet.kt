@@ -26,9 +26,12 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.LyricLine
+import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
@@ -42,6 +45,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
+    LyricsParser.toLrc(synced)
+} else {
+    plain.joinToString("\n")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LyricsSheet(song: Song, state: PlaybackState, playback: PlaybackViewModel,
     progress: Pair<Long, Long>, onClose: () -> Unit) {
@@ -52,10 +61,13 @@ import kotlinx.coroutines.withContext
     var editor by remember { mutableStateOf(false) }
     var autoScroll by remember { mutableStateOf(true) }
     var offset by remember(song.id) { mutableLongStateOf(overrides.offset(song.id)) }
-    var draft by remember(song.id) { mutableStateOf(overrides.get(song.id).orEmpty()) }
     var document by remember(song.id) {
         mutableStateOf(overrides.get(song.id)?.let(LyricsParser::parse)
-            ?: com.zirakusa.stone.core.LyricsDocument(song.lyrics, song.syncedLyrics))
+            ?: LyricsDocument(song.lyrics, song.syncedLyrics))
+    }
+    var draft by remember(song.id) {
+        val text = document.editableText()
+        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
     }
     val lines = if (document.synced.isNotEmpty()) document.synced else
         document.plain.mapIndexed { index, value -> LyricLine(index.toLong(), value) }
@@ -96,10 +108,22 @@ import kotlinx.coroutines.withContext
             Column(Modifier.fillMaxSize().padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { editor = false }) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) }
-                    Text(stringResource(R.string.lyrics_add), Modifier.weight(1f), fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = { clipboard.getText()?.text?.let { draft = it } }) { Text(stringResource(R.string.lyrics_paste)) }
-                    Button(enabled = draft.isNotBlank(), onClick = {
-                        overrides.put(song.id, draft); document = LyricsParser.parse(draft); editor = false
+                    Text(stringResource(
+                        if (document.synced.isNotEmpty() || document.plain.isNotEmpty()) R.string.lyrics_edit
+                        else R.string.lyrics_add
+                    ), Modifier.weight(1f), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = {
+                        clipboard.getText()?.text?.takeIf { it.isNotBlank() }?.let { pasted ->
+                            val start = draft.selection.min.coerceIn(0, draft.text.length)
+                            val end = draft.selection.max.coerceIn(start, draft.text.length)
+                            val updated = draft.text.replaceRange(start, end, pasted)
+                            draft = TextFieldValue(updated, TextRange(start + pasted.length))
+                        }
+                    }) { Text(stringResource(R.string.lyrics_paste)) }
+                    Button(enabled = draft.text.isNotBlank(), onClick = {
+                        overrides.put(song.id, draft.text)
+                        document = LyricsParser.parse(draft.text)
+                        editor = false
                     }) { Text(stringResource(R.string.save)) }
                 }
                 OutlinedTextField(draft, { draft = it }, Modifier.fillMaxSize().padding(top = 20.dp),
@@ -131,7 +155,8 @@ import kotlinx.coroutines.withContext
                         tint = if (autoScroll) StonePalette.Yellow else Color(0xFF8A848F))
                 }
                 IconButton(onClick = {
-                    draft = overrides.get(song.id).orEmpty()
+                    val text = document.editableText()
+                    draft = TextFieldValue(text, TextRange(text.length))
                     editor = true
                 }) { Icon(Icons.Default.Edit, "Editar letras") }
                 IconButton(onClick = {
@@ -146,8 +171,9 @@ import kotlinx.coroutines.withContext
                     overrides.delete(song.id)
                     overrides.deleteOffset(song.id)
                     offset = 0L
-                    document = com.zirakusa.stone.core.LyricsDocument(song.lyrics, song.syncedLyrics)
-                    draft = ""
+                    document = LyricsDocument(song.lyrics, song.syncedLyrics)
+                    val text = document.editableText()
+                    draft = TextFieldValue(text, TextRange(text.length))
                 }) { Icon(Icons.Default.Delete, "Borrar letras") }
             }
             if (document.synced.isNotEmpty()) {
