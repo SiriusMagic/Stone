@@ -149,7 +149,6 @@ import kotlinx.coroutines.withContext
                     document = com.zirakusa.stone.core.LyricsDocument(song.lyrics, song.syncedLyrics)
                     draft = ""
                 }) { Icon(Icons.Default.Delete, "Borrar letras") }
-                IconButton(onClick = onClose) { Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.dismiss)) }
             }
             if (document.synced.isNotEmpty()) {
                 Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
