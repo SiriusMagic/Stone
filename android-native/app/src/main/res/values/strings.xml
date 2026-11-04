@@ -59,6 +59,7 @@
     <string name="favorite">Favorito</string>
     <string name="more_options">Más opciones</string>
     <string name="equalizer">Ecualizador</string>
+    <string name="music_visualizer">Visualizador de música</string>
     <string name="analyze_audio">Analizar audio</string>
     <string name="save_eq_profile">Guardar perfil</string>
     <string name="profile_name">Nombre del perfil</string>

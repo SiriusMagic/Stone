@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp.feature.player
 
 import android.widget.Toast
 import android.widget.NumberPicker
+import android.media.audiofx.Visualizer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -9,6 +10,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,9 +50,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep, Energy, Hide, Delete }
+enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep, Energy, Visualizer, Hide, Delete }
 
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
     val tool: PlayerTool)
@@ -64,6 +68,7 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
         ToolRow(Icons.Default.Speed, R.string.speed, PlayerTool.Speed),
         ToolRow(Icons.Default.Notifications, R.string.set_ringtone, PlayerTool.Ringtone),
         ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep),
+        ToolRow(Icons.Default.GraphicEq, R.string.music_visualizer, PlayerTool.Visualizer),
         ToolRow(Icons.Default.BatterySaver, R.string.energy_saver, PlayerTool.Energy),
         ToolRow(Icons.Default.VisibilityOff, R.string.hide, PlayerTool.Hide),
         ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
@@ -90,6 +95,80 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
                         fontWeight = FontWeight.SemiBold)
                 }
             }
+        }
+    }
+}
+
+private enum class VisualizerStyle(val label: String) { Harmony("Armonía"), Flow("Flujo"), Bounce("Rebote"), Ascent("Ascenso") }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable fun MusicVisualizerSheet(audioSessionId: Int, close: () -> Unit) {
+    var enabled by remember { mutableStateOf(true) }
+    var style by remember { mutableStateOf(VisualizerStyle.Harmony) }
+    var values by remember { mutableStateOf(FloatArray(32) { 0f }) }
+    var tick by remember { mutableIntStateOf(0) }
+    val visualizer = remember(audioSessionId) {
+        if (audioSessionId > 0) runCatching { Visualizer(audioSessionId) }.getOrNull() else null
+    }
+    DisposableEffect(visualizer) {
+        visualizer?.let { effect ->
+            runCatching {
+                effect.captureSize = Visualizer.getCaptureSizeRange()[1]
+                effect.enabled = true
+            }
+        }
+        onDispose { runCatching { visualizer?.enabled = false; visualizer?.release() } }
+    }
+    LaunchedEffect(visualizer, enabled) {
+        while (true) {
+            if (enabled) {
+                val wave = ByteArray(128)
+                val fft = ByteArray(128)
+                val captured = runCatching {
+                    visualizer?.getWaveForm(wave); visualizer?.getFft(fft); true
+                }.getOrDefault(false)
+                values = FloatArray(32) { index ->
+                    if (captured && visualizer != null) {
+                        val offset = index * 4
+                        ((kotlin.math.abs(wave[offset].toInt()) + kotlin.math.abs(fft[offset].toInt())) / 255f).coerceIn(.04f, 1f)
+                    } else (.12f + ((kotlin.math.sin((index + tick) * .45) + 1.0) * .22)).toFloat()
+                }
+                tick++
+            }
+            delay(70)
+        }
+    }
+    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF203C3D),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.GraphicEq, null, tint = StonePalette.Yellow, modifier = Modifier.size(32.dp))
+                Text(stringResource(R.string.music_visualizer), Modifier.weight(1f).padding(start = 14.dp),
+                    fontSize = 24.sp, fontWeight = FontWeight.Black)
+                Switch(enabled, { enabled = it })
+            }
+            Canvas(Modifier.fillMaxWidth().height(130.dp).padding(vertical = 18.dp)) {
+                val gap = size.width / values.size
+                values.forEachIndexed { index, value ->
+                    val x = index * gap + gap / 2
+                    val height = value * size.height
+                    when (style) {
+                        VisualizerStyle.Harmony, VisualizerStyle.Bounce, VisualizerStyle.Ascent -> drawRoundRect(
+                            StonePalette.Yellow, Offset(x - gap * .28f, size.height - height),
+                            androidx.compose.ui.geometry.Size(gap * .56f, height.coerceAtLeast(4f)), cornerRadius = androidx.compose.ui.geometry.CornerRadius(gap * .25f))
+                        VisualizerStyle.Flow -> {
+                            val y = size.height / 2 + kotlin.math.sin(index * .38 + tick * .08).toFloat() * height / 2
+                            drawCircle(StonePalette.Yellow, gap * .22f, Offset(x, y))
+                        }
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                VisualizerStyle.entries.forEach { item ->
+                    FilterChip(selected = style == item, onClick = { style = item }, label = { Text(item.label) })
+                }
+            }
+            Spacer(Modifier.height(18.dp))
         }
     }
 }

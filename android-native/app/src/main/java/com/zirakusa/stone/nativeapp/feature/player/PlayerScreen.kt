@@ -47,6 +47,7 @@ import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.data.library.SongActions
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
@@ -188,6 +189,7 @@ import kotlinx.coroutines.withContext
     when (tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback) { tool = null }
         PlayerTool.Equalizer -> EqualizerSheet(state, playback, song = song) { tool = null }
+        PlayerTool.Visualizer -> MusicVisualizerSheet(StonePlaybackService.playbackAudioSessionId) { tool = null }
         PlayerTool.Sleep -> SleepSheet(state, playback) { tool = null }
         PlayerTool.Tags -> song?.let { TagEditorSheet(it, { tool = null }) {
             tool = null; onMetadataChanged(); back()
