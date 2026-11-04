@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
@@ -59,7 +60,7 @@ import kotlinx.coroutines.withContext
     back: () -> Unit, onHide: (Song) -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, onArtist: () -> Unit = {}) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var queueVisible by remember { mutableStateOf(false) }
@@ -141,7 +142,8 @@ import kotlinx.coroutines.withContext
                 Text(state.title, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 1,
                     overflow = TextOverflow.Ellipsis)
                 Text(state.artist.uppercase(), color = Color(0xFF8A848F), fontSize = 15.sp,
-                    modifier = Modifier.padding(top = 5.dp), maxLines = 1)
+                    modifier = Modifier.padding(top = 5.dp).clickable(
+                        enabled = state.artist.isNotBlank(), onClick = onArtist), maxLines = 1)
             }
             IconToggleButton(state.favorite, { playback.toggleFavorite() }) {
                 Icon(if (state.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,

@@ -54,6 +54,7 @@ import kotlinx.coroutines.delay
     var transferState by remember { mutableStateOf(LocalTransferUiState()) }
     DisposableEffect(transferManager) { onDispose { transferManager.stop() } }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
+    var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
     LaunchedEffect(player.currentId, state.songs) {
@@ -119,7 +120,11 @@ import kotlinx.coroutines.delay
             if (energySaver) EnergySaverScreen(player, state.songs.find { it.id == player.currentId }, playback) { energySaver = false }
             else if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
                 { playerOpen = false }, library::hide, library::delete, { library.refresh() },
-                state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f))
+                state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f),
+                onArtist = {
+                    artistDestination = player.artist
+                    playerOpen = false
+                })
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
@@ -177,7 +182,8 @@ import kotlinx.coroutines.delay
                 settingsSheetVisible = settingsVisible, onSettingsSheetVisible = {
                     settingsVisible = it
                     if (!it) settingsPage = null
-                })
+                }, artistDestination = artistDestination,
+                onArtistDestinationConsumed = { artistDestination = null })
         }
     }
         if (volumeUi.visible) {

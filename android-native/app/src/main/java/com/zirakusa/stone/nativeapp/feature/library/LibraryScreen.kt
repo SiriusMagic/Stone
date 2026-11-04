@@ -34,7 +34,8 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
     playbackViewModel: PlaybackViewModel? = null, onOpenSettings: () -> Unit = {},
-    settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {}) {
+    settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
+    artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -46,6 +47,13 @@ private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "
         settingsStore?.shortcutVisible(it) ?: true
     }) }
     var homeTool by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(artistDestination) {
+        artistDestination?.takeIf { it.isNotBlank() }?.let { artist ->
+            tab = LibraryTab.Artists
+            collection = artist
+            onArtistDestinationConsumed()
+        }
+    }
     val playbackState = playbackViewModel?.state?.collectAsState()?.value
     val scan = { if (state.hasFolder) onRefresh() else onFolder() }
     val songs = remember(state.songs, query, sort, descending) {
