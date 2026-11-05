@@ -140,4 +140,7 @@
     <string name="transfer_receive_title">Receive from another phone</string><string name="transfer_address">Sender local address</string>
     <string name="transfer_code">One-time code</string><string name="transfer_receive">Download and import</string>
     <string name="transfer_working">Transfer in progress…</string>
+    <string name="transfer_packaging_indeterminate">Packaging library…</string>
+    <string name="transfer_packaging">Packaging library… %1$d%%</string>
+    <string name="transfer_package_ready">Package ready to share (%1$d MB)</string>
 </resources>

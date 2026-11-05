@@ -299,6 +299,9 @@
     <string name="transfer_code">Código de un solo uso</string>
     <string name="transfer_receive">Descargar e importar</string>
     <string name="transfer_working">Transferencia en curso…</string>
+    <string name="transfer_packaging_indeterminate">Empaquetando biblioteca…</string>
+    <string name="transfer_packaging">Empaquetando biblioteca… %1$d%%</string>
+    <string name="transfer_package_ready">Paquete listo para compartir (%1$d MB)</string>
     <string name="settings_home_shortcuts">Iconos de inicio</string>
     <string name="home_shortcut_hint">Elige qué accesos rápidos aparecen en la barra principal.</string>
     <string name="home_shortcut_toggle_hint">Mostrar este icono en inicio.</string>

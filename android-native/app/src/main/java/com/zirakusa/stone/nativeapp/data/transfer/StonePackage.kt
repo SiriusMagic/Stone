@@ -39,12 +39,22 @@ object StonePackage {
         } ?: error("No se pudo crear el paquete Stone")
     }
 
-    fun exportToFile(context: Context, target: File, songs: List<Song>) {
+    fun exportToFile(context: Context, target: File, songs: List<Song>,
+        progress: (doneBytes: Long, totalBytes: Long) -> Unit = { _, _ -> }) {
+        val uniqueSongs = songs.distinctBy { it.id }
+        val totalBytes = sourceBytes(context, uniqueSongs)
         target.parentFile?.mkdirs()
-        FileOutputStream(target).use { exportStream(context, it, songs) }
+        FileOutputStream(target).use {
+            exportStream(context, it, uniqueSongs, progress, totalBytes)
+        }
     }
 
-    private fun exportStream(context: Context, output: OutputStream, songs: List<Song>) {
+    private fun exportStream(context: Context, output: OutputStream, songs: List<Song>,
+        progress: (doneBytes: Long, totalBytes: Long) -> Unit = { _, _ -> },
+        totalBytes: Long = 0L) {
+        var copiedBytes = 0L
+        var completedSongs = 0L
+        val progressTotal = if (totalBytes > 0L) totalBytes else songs.size.toLong()
         ZipOutputStream(output.buffered()).use { zip ->
             val entries = JSONArray()
             songs.distinctBy { it.id }.forEachIndexed { index, song ->
@@ -54,10 +64,15 @@ object StonePackage {
                 val source = openInput(context, song.uri) ?: error("No se pudo leer ${song.title}")
                 val checksum = source.use { input ->
                     zip.putNextEntry(ZipEntry(audioEntry))
-                    val value = copyDigest(input, zip)
+                    val value = copyDigest(input, zip) { copied ->
+                        copiedBytes += copied
+                        if (totalBytes > 0L) progress(copiedBytes, totalBytes)
+                    }
                     zip.closeEntry()
                     value
                 }
+                completedSongs++
+                if (totalBytes <= 0L) progress(completedSongs, progressTotal)
                 var artworkEntry: String? = null
                 embeddedArtwork(context, song.uri)?.let { bytes ->
                     artworkEntry = "artwork/%05d.jpg".format(index)
@@ -80,6 +95,12 @@ object StonePackage {
             writeText(zip, "library.json", library.toString())
             writeText(zip, "user.json", StoneDatabase.get(context).exportJson().toString())
             writeText(zip, "README.txt", "Stone portable music package v$VERSION\n")
+        }
+        if (progressTotal > 0L) {
+            progress(
+                if (totalBytes > 0L) totalBytes.coerceAtLeast(copiedBytes) else progressTotal,
+                progressTotal
+            )
         }
     }
 
@@ -187,6 +208,25 @@ object StonePackage {
         else context.contentResolver.openInputStream(uri)
     }
 
+    /** Returns zero when a provider cannot expose its size; the UI then uses an indeterminate bar. */
+    private fun sourceBytes(context: Context, songs: List<Song>): Long {
+        var total = 0L
+        for (song in songs) {
+            val size = runCatching {
+                val uri = Uri.parse(song.uri)
+                if (uri.scheme == "file") {
+                    uri.path?.let(::File)?.takeIf(File::isFile)?.length()
+                } else {
+                    context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
+                        descriptor.length.takeIf { it >= 0L }
+                    }
+                }
+            }.getOrNull() ?: return 0L
+            total += size
+        }
+        return total
+    }
+
     private fun embeddedArtwork(context: Context, value: String): ByteArray? = runCatching {
         val retriever = MediaMetadataRetriever()
         try { retriever.setDataSource(context, Uri.parse(value)); retriever.embeddedPicture }
@@ -202,7 +242,8 @@ object StonePackage {
         return sha.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun copyDigest(input: InputStream, output: OutputStream): String {
+    private fun copyDigest(input: InputStream, output: OutputStream,
+        onBytes: (Long) -> Unit = {}): String {
         val sha = MessageDigest.getInstance("SHA-256")
         val buffer = ByteArray(32 * 1024)
         while (true) {
@@ -210,6 +251,7 @@ object StonePackage {
             if (count <= 0) break
             sha.update(buffer, 0, count)
             output.write(buffer, 0, count)
+            onBytes(count.toLong())
         }
         return sha.digest().joinToString("") { "%02x".format(it) }
     }

@@ -131,7 +131,9 @@ import kotlinx.coroutines.delay
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
-                { shareStoneLibrary(context, state.songs + state.hiddenSongs + state.deletedSongs, scope) },
+                { shareStoneLibrary(context, state.songs + state.hiddenSongs + state.deletedSongs, scope) {
+                    transferState = it
+                } },
                 { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
@@ -147,16 +149,37 @@ import kotlinx.coroutines.delay
                 transferState = transferState,
                 onHostTransfer = {
                     scope.launch {
-                        transferState = LocalTransferUiState(busy = true, message = "Preparando paquete…")
+                        transferState = LocalTransferUiState(busy = true,
+                            message = context.getString(R.string.transfer_packaging_indeterminate))
                         val packageFile = File(context.cacheDir, "stone-transfer.musp")
                         val songs = (state.songs + state.hiddenSongs + state.deletedSongs).distinctBy { it.id }
+                        var lastProgressAt = 0L
                         val result = withContext(Dispatchers.IO) { runCatching {
-                            StonePackage.exportToFile(context, packageFile, songs)
+                            StonePackage.exportToFile(context, packageFile, songs) { done, total ->
+                                if (total > 0L) {
+                                    val now = System.currentTimeMillis()
+                                    if (now - lastProgressAt >= 100L || done >= total) {
+                                        lastProgressAt = now
+                                        val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
+                                        scope.launch {
+                                            if (transferState.busy) transferState = LocalTransferUiState(
+                                                busy = true,
+                                                progress = progress,
+                                                message = context.getString(
+                                                    R.string.transfer_packaging,
+                                                    (progress * 100).toInt()
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             transferManager.startHost(packageFile)
                         } }
                         result.onSuccess { host ->
                             transferState = LocalTransferUiState(address = host.address, code = host.code,
-                                message = "Paquete listo: ${packageFile.length() / 1024 / 1024} MB")
+                                message = context.getString(R.string.transfer_package_ready,
+                                    packageFile.length() / 1024 / 1024))
                         }.onFailure { error ->
                             transferState = LocalTransferUiState(message = error.message ?: "No se pudo preparar la transferencia")
                         }
@@ -219,13 +242,40 @@ private fun shareStoneBackup(context: android.content.Context) {
 }
 
 private fun shareStoneLibrary(context: android.content.Context,
-    songs: List<com.zirakusa.stone.core.Song>, scope: kotlinx.coroutines.CoroutineScope) {
+    songs: List<com.zirakusa.stone.core.Song>, scope: kotlinx.coroutines.CoroutineScope,
+    onState: (LocalTransferUiState) -> Unit) {
     scope.launch {
         val packageFile = File(context.cacheDir, "stone-bluetooth.musp")
+        onState(LocalTransferUiState(busy = true,
+            message = context.getString(R.string.transfer_packaging_indeterminate)))
+        var lastProgressAt = 0L
         val result = withContext(Dispatchers.IO) { runCatching {
-            StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id })
+            StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id }) { done, total ->
+                if (total > 0L) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastProgressAt >= 100L || done >= total) {
+                        lastProgressAt = now
+                        val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
+                        scope.launch {
+                            onState(LocalTransferUiState(
+                                busy = true,
+                                progress = progress,
+                                message = context.getString(
+                                    R.string.transfer_packaging,
+                                    (progress * 100).toInt()
+                                )
+                            ))
+                        }
+                    }
+                }
+            }
         } }
         result.onSuccess {
+            onState(LocalTransferUiState(
+                progress = 1f,
+                message = context.getString(R.string.transfer_package_ready,
+                    packageFile.length() / 1024 / 1024)
+            ))
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", packageFile)
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                 type = StonePackage.MIME
@@ -233,6 +283,7 @@ private fun shareStoneLibrary(context: android.content.Context,
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }, context.getString(R.string.bluetooth_transfer)))
         }.onFailure {
+            onState(LocalTransferUiState(message = it.message ?: context.getString(R.string.musp_failed)))
             android.widget.Toast.makeText(context, it.message ?: context.getString(R.string.musp_failed),
                 android.widget.Toast.LENGTH_LONG).show()
         }

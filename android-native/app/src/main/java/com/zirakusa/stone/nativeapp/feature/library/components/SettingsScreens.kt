@@ -233,12 +233,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         onClick = { receive(address, code) }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
         Text(stringResource(R.string.transfer_receive))
     }
-    if (state.busy) {
-        LinearProgressIndicator(progress = { state.progress }, Modifier.fillMaxWidth().padding(top = 16.dp))
-        Text(stringResource(R.string.transfer_working), color = StonePalette.Muted)
-    }
-    if (state.message.isNotBlank()) Text(state.message, color = StonePalette.Muted,
-        modifier = Modifier.padding(top = 12.dp, bottom = 24.dp))
+    TransferProgress(state)
 }
 
 @Composable private fun LibraryTransferDetail(bluetooth: () -> Unit, state: LocalTransferUiState,
@@ -251,6 +246,26 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         }
     }
     if (wifiSelected) TransferDetail(state, host, receive, stop)
+    else TransferProgress(state)
+}
+
+@Composable private fun TransferProgress(state: LocalTransferUiState) {
+    if (state.busy) {
+        if (state.progress > 0f) {
+            LinearProgressIndicator(
+                progress = { state.progress.coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            )
+        } else {
+            LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 16.dp))
+        }
+        Text(state.message.ifBlank { stringResource(R.string.transfer_working) },
+            color = StonePalette.Muted)
+    }
+    if (!state.busy && state.message.isNotBlank()) {
+        Text(state.message, color = StonePalette.Muted,
+            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp))
+    }
 }
 
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
