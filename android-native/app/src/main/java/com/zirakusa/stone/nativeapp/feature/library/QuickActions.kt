@@ -13,6 +13,7 @@ object QuickActionRegistry {
     private val available = setOf(
         "playlists", "favorites", "history", "shuffle", "repeat", "lyrics", "albums", "artists",
         "audio_mode", "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
+        "hardware_acceleration",
         "hardware_accel_automatic", "hardware_accel_disabled", "hardware_accel_decoding",
         "hardware_accel_full", "hardware_accel_adaptive",
         "playback_settings", "appearance", "battery_saver"
@@ -22,8 +23,7 @@ object QuickActionRegistry {
     val preferredIds = listOf(
         "battery_saver", "playback_settings", "shuffle", "repeat",
         "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
-        "hardware_accel_automatic", "hardware_accel_disabled", "hardware_accel_decoding",
-        "hardware_accel_full", "hardware_accel_adaptive"
+        "hardware_acceleration"
     )
     val defaultVisibleIds = preferredIds.toSet()
 
@@ -43,6 +43,8 @@ object QuickActionRegistry {
             "Equilibrio entre calidad y autonomía", Icons.Default.Balance, true),
         QuickActionDefinition("audio_mode_hifi", "Alta fidelidad",
             "Priorizar calidad y procesamiento de audio", Icons.Default.GraphicEq, true),
+        QuickActionDefinition("hardware_acceleration", "Aceleración de hardware",
+            "Elegir un modo compatible con el dispositivo", Icons.Default.Memory, true),
         QuickActionDefinition("hardware_accel_automatic", "Aceleración automática",
             "Usar la mejor ruta disponible", Icons.Default.Settings, true),
         QuickActionDefinition("hardware_accel_disabled", "Aceleración desactivada",

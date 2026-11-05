@@ -148,6 +148,9 @@ private val legacyDefinitions = listOf(
             "audio_mode_hifi" -> {
                 playbackViewModel?.setAudioMode(AudioMode.HIFI)
             }
+            "hardware_acceleration" -> {
+                onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
+            }
             "hardware_accel_automatic" -> {
                 playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
             }
