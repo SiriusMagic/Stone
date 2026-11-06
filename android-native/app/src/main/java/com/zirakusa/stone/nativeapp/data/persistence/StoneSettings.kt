@@ -53,8 +53,9 @@ class StoneSettingsStore(context: Context) {
     }
     fun setShortcutOrder(order: List<String>) = db.setSetting("home.shortcut.order", JSONArray(order.distinct()).toString())
     fun shortcutProfile() = db.setting("home.shortcut.profile", "custom")
-        .takeIf { it in setOf("basic", "audiophile", "custom") } ?: "custom"
-    fun setShortcutProfile(profile: String) = db.setSetting("home.shortcut.profile", profile)
+        .takeIf { it in setOf("minimal", "basic", "audiophile", "custom") } ?: "custom"
+    fun setShortcutProfile(profile: String) = db.setSetting("home.shortcut.profile",
+        profile.takeIf { it in setOf("minimal", "basic", "audiophile", "custom") } ?: "custom")
     fun setCrossfadeSeconds(value: Int) = db.setSetting("crossfadeSeconds", value.coerceIn(0, 12).toString())
     fun setSleepMinutes(value: Int) = db.setSetting("sleepMinutes", value.coerceAtLeast(0).toString())
     fun setAudioMode(value: String) = db.setSetting("audioMode",

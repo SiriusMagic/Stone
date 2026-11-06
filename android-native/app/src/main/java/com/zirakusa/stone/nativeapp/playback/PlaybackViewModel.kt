@@ -94,6 +94,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 applyAudioMixing(it, settings.read().playWithOthers)
                 StonePlaybackService.setVolumePercent(volumePercent, showOverlay = false)
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
+                StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 equalizer.attach(StonePlaybackService.playbackAudioSessionId)
                 equalizer.configure(audioMode != AudioMode.BATTERY && equalizerEnabled, equalizerValues, audioMode)
@@ -148,6 +149,21 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             AudioMode.BALANCED, AudioMode.HIFI -> equalizer.configure(equalizerEnabled, equalizerValues, mode)
         }
         StonePlaybackService.instance?.applyAudioMode(mode)
+        publish()
+    }
+    /** Applies a user-facing playback profile, including its hardware acceleration policy. */
+    fun setPlaybackProfile(mode: AudioMode, acceleration: HardwareAcceleration) {
+        audioMode = mode
+        hardwareAcceleration = acceleration
+        settings.setAudioMode(mode.key)
+        settings.setHardwareAcceleration(acceleration.key)
+        when (mode) {
+            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues, mode)
+            AudioMode.BALANCED, AudioMode.HIFI ->
+                equalizer.configure(equalizerEnabled, equalizerValues, mode)
+        }
+        StonePlaybackService.instance?.applyAudioMode(mode)
+        StonePlaybackService.instance?.applyHardwareAcceleration(acceleration)
         publish()
     }
     fun setHardwareAcceleration(mode: HardwareAcceleration) {

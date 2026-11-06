@@ -69,13 +69,20 @@ private val legacyDefinitions = listOf(
     var feedbackQuickActionId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
-        settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys) ?: (it in homeShortcutKeys)
+        val profile = settingsStore?.shortcutProfile() ?: "custom"
+        if (it == "search" && profile != "custom") true
+        else settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys)
+            ?: (it in homeShortcutKeys)
     }) }
     val quickActions = remember(shortcuts, settingsStore) {
         if (settingsStore == null) return@remember emptyList()
         val definitions = legacyDefinitions + QuickActionRegistry.operational
-        val ordered = settingsStore?.shortcutOrder(allQuickActionIds) ?: allQuickActionIds
-        ordered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
+        val ordered = settingsStore.shortcutOrder(allQuickActionIds)
+        val profile = settingsStore.shortcutProfile()
+        val profileOrdered = if (profile != "custom") {
+            listOf("search") + ordered.filterNot { it == "search" }
+        } else ordered
+        profileOrdered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
     }
     var homeTool by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(artistDestination) {
@@ -91,14 +98,6 @@ private val legacyDefinitions = listOf(
             AudioMode.BATTERY -> "audio_mode_battery"
             AudioMode.BALANCED -> "audio_mode_balanced"
             AudioMode.HIFI -> "audio_mode_hifi"
-            null -> null
-        },
-        when (playbackState?.hardwareAcceleration) {
-            HardwareAcceleration.AUTOMATIC -> "hardware_accel_automatic"
-            HardwareAcceleration.DISABLED -> "hardware_accel_disabled"
-            HardwareAcceleration.DECODING -> "hardware_accel_decoding"
-            HardwareAcceleration.FULL -> "hardware_accel_full"
-            HardwareAcceleration.ADAPTIVE -> "hardware_accel_adaptive"
             null -> null
         }
     )
@@ -136,61 +135,44 @@ private val legacyDefinitions = listOf(
             "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
             "repeat" -> playbackViewModel?.repeat()
-            "audio_mode" -> {
-                onOpenSettings(); onSettingsPage("audio-mode"); onSettingsSheetVisible(true)
-            }
             "audio_mode_battery" -> {
-                playbackViewModel?.setAudioMode(AudioMode.BATTERY)
+                playbackViewModel?.setPlaybackProfile(AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
             }
             "audio_mode_balanced" -> {
-                playbackViewModel?.setAudioMode(AudioMode.BALANCED)
+                playbackViewModel?.setPlaybackProfile(AudioMode.BALANCED, HardwareAcceleration.AUTOMATIC)
             }
             "audio_mode_hifi" -> {
-                playbackViewModel?.setAudioMode(AudioMode.HIFI)
+                playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.DECODING)
             }
             "hardware_acceleration" -> {
                 onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
             }
-            "hardware_accel_automatic" -> {
-                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.AUTOMATIC)
+            "audio_output" -> {
+                onOpenSettings(); onSettingsPage("audio-output"); onSettingsSheetVisible(true)
             }
-            "hardware_accel_disabled" -> {
-                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DISABLED)
+            "diagnostics" -> {
+                onOpenSettings(); onSettingsPage("system-diagnostics"); onSettingsSheetVisible(true)
             }
-            "hardware_accel_decoding" -> {
-                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.DECODING)
-            }
-            "hardware_accel_full" -> {
-                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.FULL)
-            }
-            "hardware_accel_adaptive" -> {
-                playbackViewModel?.setHardwareAcceleration(HardwareAcceleration.ADAPTIVE)
-            }
-            "playback_settings" -> {
-                onOpenSettings(); onSettingsPage("playback"); onSettingsSheetVisible(true)
-            }
-            "battery_saver" -> onEnergySaver()
-            "albums" -> { tab = LibraryTab.Albums; collection = null }
-            "artists" -> { tab = LibraryTab.Artists; collection = null }
             "playlists" -> { tab = LibraryTab.Playlists; collection = null }
-            "favorites", "history", "lyrics" -> { tab = LibraryTab.Playlists; collection = id }
-            "appearance" -> {
-                onOpenSettings(); onSettingsPage(null); onSettingsSheetVisible(true)
-            }
+            "favorites", "history" -> { tab = LibraryTab.Playlists; collection = id }
         }
         moreQuickActions = false
     }
     val songs = remember(state.songs, query, sort, descending) {
         val collator = Collator.getInstance()
         val filtered = state.songs.filter { it.matches(query) }
-        val ordered = if (sort == LibrarySort.Duration) filtered.sortedBy { it.durationMs }
-        else filtered.sortedWith { a, b ->
-            fun key(song: Song) = when (sort) {
-                LibrarySort.Artist -> song.artist
-                LibrarySort.Album -> song.album
-                else -> song.title
+        val ordered = when (sort) {
+            LibrarySort.Duration -> filtered.sortedBy { it.durationMs }
+            LibrarySort.Size -> filtered.sortedBy { it.size }
+            LibrarySort.Modified -> filtered.sortedBy { it.modifiedMs }
+            else -> filtered.sortedWith { a, b ->
+                fun key(song: Song) = when (sort) {
+                    LibrarySort.Artist -> song.artist
+                    LibrarySort.Album -> song.album
+                    else -> song.title
+                }
+                collator.compare(key(a), key(b))
             }
-            collator.compare(key(a), key(b))
         }
         if (descending) ordered.reversed() else ordered
     }

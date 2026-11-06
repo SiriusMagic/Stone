@@ -16,7 +16,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.core.Song
 
 enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.string.artists),
-    Album(R.string.albums), Duration(R.string.sort_duration) }
+    Album(R.string.albums), Duration(R.string.sort_duration), Size(R.string.sort_size),
+    Modified(R.string.sort_modified) }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibrarySheets(sheet: String?, sort: LibrarySort, descending: Boolean,

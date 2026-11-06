@@ -87,11 +87,15 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.VisibilityOff, stringResource(R.string.hidden_files), "",
                             "biblioteca ocultos", { onClose(); onLibrarySheet("hidden") }),
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
-                            "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
+                            "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") }),
+                        SettingsMenuItem(Icons.Default.Storage, stringResource(R.string.storage_manager), "",
+                            "biblioteca almacenamiento espacio duplicados", { onPage("storage") })
                     )),
                     SettingsMenuSection(R.string.settings_section_playback, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
                             "reproducción audio sonido modos salida diagnóstico", { onPage("playback") }),
+                        SettingsMenuItem(Icons.Default.Speaker, stringResource(R.string.audio_output), "",
+                            "reproducción audio salida altavoz bluetooth usb", { onPage("audio-output") }),
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
                         SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
@@ -163,6 +167,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         { onPage("hardware-acceleration") })
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
+                    "audio-output" -> AudioOutputDetail()
+                    "storage" -> StorageDetail()
                     "scan-mode" -> ScanModeDetail(store)
                     "feedback" -> FeedbackDetail()
                     "about" -> AboutDetail()
@@ -197,6 +203,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "shortcuts" -> R.string.settings_home_shortcuts
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "hardware-acceleration" -> R.string.hardware_acceleration
+    "audio-output" -> R.string.audio_output; "storage" -> R.string.storage_manager
     "scan-mode" -> R.string.settings_scan_mode
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
@@ -291,12 +298,16 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     Text(stringResource(R.string.home_shortcut_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 10.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("basic" to "Básico", "audiophile" to "Audiófilo", "custom" to "Personalizado").forEach { (id, label) ->
+        listOf("minimal" to "Minimalista", "basic" to "Común",
+            "audiophile" to "Audiófilo", "custom" to "Personalizado").forEach { (id, label) ->
             FilterChip(selected = store?.shortcutProfile() == id, onClick = {
                 store?.setShortcutProfile(id)
                 val enabled = when (id) {
-                    "basic" -> setOf("search", "folder", "scan", "sort", "playlists", "albums", "artists")
-                    "audiophile" -> setOf("equalizer", "diagnostics", "audio_info", "appearance")
+                    "minimal" -> setOf("search")
+                    "basic" -> setOf("search", "folder", "scan", "sort", "playlists", "favorites")
+                    "audiophile" -> setOf("search", "equalizer", "audio_mode_battery",
+                        "audio_mode_balanced", "audio_mode_hifi", "hardware_acceleration",
+                        "audio_output", "diagnostics")
                     else -> visible.filterValues { it }.keys
                 }
                 visible = visible.mapValues { it.key in enabled }
@@ -415,6 +426,45 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
     Text(stringResource(R.string.manual_scan_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(top = 18.dp, bottom = 20.dp))
+}
+
+@Composable private fun AudioOutputDetail() {
+    val context = LocalContext.current
+    val route = remember(context) {
+        val manager = context.getSystemService(android.media.AudioManager::class.java)
+        val device = manager?.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull()
+        device?.productName?.toString()?.takeIf { it.isNotBlank() } ?: when (device?.type) {
+            android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth"
+            android.media.AudioDeviceInfo.TYPE_USB_DEVICE,
+            android.media.AudioDeviceInfo.TYPE_USB_HEADSET -> "USB"
+            android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Altavoz del teléfono"
+            else -> context.getString(R.string.not_available)
+        }
+    }
+    Text(stringResource(R.string.audio_output_intro), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 10.dp))
+    SettingsGroup {
+        SettingsRow(Icons.Default.Speaker, R.string.audio_output_current, route) {}
+    }
+    Button(onClick = {
+        runCatching { context.startActivity(Intent(android.provider.Settings.ACTION_SOUND_SETTINGS)) }
+    }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Icon(Icons.Default.Settings, null)
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.audio_output_open_settings))
+    }
+}
+
+@Composable private fun StorageDetail() {
+    Text(stringResource(R.string.storage_manager_intro), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 10.dp))
+    SettingsGroup {
+        SettingsRow(Icons.Default.FileCopy, R.string.storage_duplicates,
+            stringResource(R.string.feature_future)) {}
+    }
+    Text(stringResource(R.string.storage_future_note), color = StonePalette.Muted,
+        fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 20.dp))
 }
 
 @Composable private fun SettingsChoice(label: Int, selected: Boolean, action: () -> Unit) =
