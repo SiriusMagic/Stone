@@ -53,6 +53,7 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
+import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
@@ -519,7 +520,8 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
     }
     val document = remember(song?.id, song?.lyrics, song?.syncedLyrics, custom) {
         custom?.let(LyricsParser::parse)
-            ?: LyricsDocument(song?.lyrics.orEmpty(), song?.syncedLyrics.orEmpty())
+            ?: song?.lyricsDocument()
+            ?: LyricsDocument(emptyList(), emptyList())
     }
     val active = LyricsParser.activeIndex(document.synced, positionMs)
     val index = if (document.synced.isEmpty()) 0 else active

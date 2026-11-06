@@ -38,6 +38,7 @@ import com.zirakusa.stone.core.LyricLine
 import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
 import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
 import com.zirakusa.stone.nativeapp.R
@@ -92,7 +93,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     var offset by remember(song.id) { mutableLongStateOf(overrides.offset(song.id)) }
     var document by remember(song.id) {
         mutableStateOf(overrides.get(song.id)?.let(LyricsParser::parse)
-            ?: LyricsDocument(song.lyrics, song.syncedLyrics))
+            ?: song.lyricsDocument())
     }
     var draft by remember(song.id) {
         val text = document.editableText()
@@ -205,7 +206,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                     overrides.delete(song.id)
                     overrides.deleteOffset(song.id)
                     offset = 0L
-                    document = LyricsDocument(song.lyrics, song.syncedLyrics)
+                    document = song.lyricsDocument()
                     val text = document.editableText()
                     draft = TextFieldValue(text, TextRange(text.length))
                 }) { Icon(Icons.Default.Delete, "Borrar letras") }

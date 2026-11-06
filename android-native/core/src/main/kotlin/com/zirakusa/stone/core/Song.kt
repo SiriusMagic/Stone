@@ -28,6 +28,16 @@ data class LyricLine(val timeMs: Long, val text: String)
 
 data class LyricsDocument(val plain: List<String>, val synced: List<LyricLine>)
 
+/**
+ * Returns the usable lyric document for a song, promoting LRC text stored in the
+ * plain field when a separate synchronized list is not available.
+ */
+fun Song.lyricsDocument(): LyricsDocument = if (syncedLyrics.isNotEmpty()) {
+    LyricsDocument(lyrics, syncedLyrics)
+} else {
+    LyricsParser.parse(lyrics.joinToString("\n"))
+}
+
 object LyricsParser {
     // Accept common LRC variants: [mm:ss], [mm:ss.5], [mm:ss,50],
     // [mm:ss:500] and the less common [hh:mm:ss].

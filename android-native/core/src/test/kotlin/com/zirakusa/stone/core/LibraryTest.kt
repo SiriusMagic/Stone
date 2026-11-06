@@ -13,6 +13,15 @@ class LibraryTest {
         val value = LyricsParser.toLrc(listOf(LyricLine(2_500, "Dos"), LyricLine(1_250, "Uno")))
         assertEquals("[00:01.250]Uno\n[00:02.500]Dos", value)
     }
+    @Test fun `lrc text stored as plain lyrics is promoted to synchronized lines`() {
+        val song = Song("content://track/lrc", "Sol", "Ana", "Mar", "Stone", 200_000, 500, 123,
+            lyrics = listOf("[03:06.26]Oh, necesito un amor, ahora mi corazón", "lo está pensando"))
+        val document = song.lyricsDocument()
+        assertEquals(2, document.plain.size)
+        assertEquals(1, document.synced.size)
+        assertEquals(186_260L, document.synced.single().timeMs)
+        assertEquals("Oh, necesito un amor, ahora mi corazón", document.synced.single().text)
+    }
     @Test fun `rapid resumes and manual requests cannot overlap`() {
         val policy = RefreshPolicy(100)
         assertTrue(policy.tryStart(false, 1000))
