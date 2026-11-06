@@ -2,7 +2,6 @@ package com.zirakusa.stone.nativeapp.feature.player
 
 import android.widget.Toast
 import android.widget.NumberPicker
-import android.media.audiofx.Visualizer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -10,8 +9,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -50,10 +47,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep, Energy, Visualizer,
+enum class PlayerTool { Tags, Cover, Equalizer, Playlist, Share, Speed, Ringtone, Sleep,
     FloatingWindow, Hide, Delete }
 
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
@@ -62,17 +58,15 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
     onSelect: (PlayerTool) -> Unit) {
-    val rows = listOf(ToolRow(Icons.Default.Sell, R.string.tag_editor, PlayerTool.Tags),
-        ToolRow(Icons.Default.Tune, R.string.equalizer, PlayerTool.Equalizer),
-        ToolRow(Icons.Default.PlaylistAdd, R.string.add_to_playlist, PlayerTool.Playlist),
-        ToolRow(Icons.Default.Share, R.string.share, PlayerTool.Share),
-        ToolRow(Icons.Default.Speed, R.string.speed, PlayerTool.Speed),
-        ToolRow(Icons.Default.Notifications, R.string.set_ringtone, PlayerTool.Ringtone),
-        ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep),
-        ToolRow(Icons.Default.GraphicEq, R.string.music_visualizer, PlayerTool.Visualizer),
-        ToolRow(Icons.Default.BatterySaver, R.string.energy_saver, PlayerTool.Energy),
-        ToolRow(Icons.Default.VisibilityOff, R.string.hide, PlayerTool.Hide),
-        ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
+    val rows = buildList {
+        add(ToolRow(Icons.Default.PlaylistAdd, R.string.add_to_playlist, PlayerTool.Playlist))
+        add(ToolRow(Icons.Default.Share, R.string.share, PlayerTool.Share))
+        add(ToolRow(Icons.Default.Speed, R.string.speed, PlayerTool.Speed))
+        add(ToolRow(Icons.Default.Notifications, R.string.set_ringtone, PlayerTool.Ringtone))
+        add(ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep))
+        add(ToolRow(Icons.Default.VisibilityOff, R.string.hide, PlayerTool.Hide))
+        add(ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
+    }
     val videoRows = if (song?.isVideo == true) listOf(
         ToolRow(Icons.Default.PictureInPictureAlt, R.string.floating_window, PlayerTool.FloatingWindow)
     ) else emptyList()
@@ -100,108 +94,6 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
                         fontWeight = FontWeight.SemiBold)
                 }
             }
-        }
-    }
-}
-
-internal enum class VisualizerStyle(val key: String, val label: String) {
-    Harmony("harmony", "Armonía"),
-    Flow("flow", "Flujo"),
-    Bounce("bounce", "Rebote"),
-    Ascent("ascent", "Ascenso");
-
-    companion object {
-        fun fromKey(key: String): VisualizerStyle = entries.firstOrNull { it.key == key } ?: Harmony
-    }
-}
-
-internal fun visualizerStyleForKey(key: String): VisualizerStyle = VisualizerStyle.fromKey(key)
-
-/**
- * Shared renderer for the visualizer. The player uses it inside a reserved slot while the
- * configuration sheet uses it as its live preview. Keeping the renderer here prevents the two
- * surfaces from drifting apart visually.
- */
-@Composable
-internal fun MusicVisualizerCanvas(audioSessionId: Int, style: VisualizerStyle, enabled: Boolean,
-    modifier: Modifier = Modifier, tint: Color = StonePalette.Yellow) {
-    var values by remember { mutableStateOf(FloatArray(32) { 0f }) }
-    var tick by remember { mutableIntStateOf(0) }
-    val visualizer = remember(audioSessionId) {
-        if (audioSessionId > 0) runCatching { Visualizer(audioSessionId) }.getOrNull() else null
-    }
-    DisposableEffect(visualizer) {
-        visualizer?.let { effect ->
-            runCatching { effect.captureSize = Visualizer.getCaptureSizeRange()[1] }
-        }
-        onDispose { runCatching { visualizer?.enabled = false; visualizer?.release() } }
-    }
-    LaunchedEffect(visualizer, enabled) {
-        runCatching { visualizer?.enabled = enabled }
-        while (true) {
-            if (enabled) {
-                val wave = ByteArray(128)
-                val fft = ByteArray(128)
-                val captured = runCatching {
-                    visualizer?.getWaveForm(wave)
-                    visualizer?.getFft(fft)
-                    true
-                }.getOrDefault(false)
-                values = FloatArray(32) { index ->
-                    if (captured && visualizer != null) {
-                        val offset = index * 4
-                        ((kotlin.math.abs(wave[offset].toInt()) +
-                            kotlin.math.abs(fft[offset].toInt())) / 255f).coerceIn(.04f, 1f)
-                    } else {
-                        (.12f + ((kotlin.math.sin((index + tick) * .45) + 1.0) * .22)).toFloat()
-                    }
-                }
-                tick++
-            }
-            delay(70)
-        }
-    }
-    Canvas(modifier) {
-        val gap = size.width / values.size
-        values.forEachIndexed { index, value ->
-            val x = index * gap + gap / 2
-            val height = value * size.height
-            when (style) {
-                VisualizerStyle.Harmony, VisualizerStyle.Bounce, VisualizerStyle.Ascent -> drawRoundRect(
-                    tint, Offset(x - gap * .28f, size.height - height),
-                    androidx.compose.ui.geometry.Size(gap * .56f, height.coerceAtLeast(4f)),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(gap * .25f))
-                VisualizerStyle.Flow -> {
-                    val y = size.height / 2 +
-                        kotlin.math.sin(index * .38 + tick * .08).toFloat() * height / 2
-                    drawCircle(tint, gap * .22f, Offset(x, y))
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable internal fun MusicVisualizerSheet(audioSessionId: Int, enabled: Boolean, style: VisualizerStyle,
-    onEnabledChange: (Boolean) -> Unit, onStyleChange: (VisualizerStyle) -> Unit, close: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF203C3D),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.GraphicEq, null, tint = StonePalette.Yellow, modifier = Modifier.size(32.dp))
-                Text(stringResource(R.string.music_visualizer), Modifier.weight(1f).padding(start = 14.dp),
-                    fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Switch(enabled, onEnabledChange)
-            }
-            MusicVisualizerCanvas(audioSessionId, style, enabled,
-                Modifier.fillMaxWidth().height(130.dp).padding(vertical = 18.dp))
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                VisualizerStyle.entries.forEach { item ->
-                    FilterChip(selected = style == item, onClick = { onStyleChange(item) },
-                        label = { Text(item.label) })
-                }
-            }
-            Spacer(Modifier.height(18.dp))
         }
     }
 }
@@ -496,10 +388,10 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun TagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
+@Composable fun TagEditorSheet(song: Song, initialTab: Int = 1, close: () -> Unit, saved: () -> Unit) {
     val context = LocalContext.current; val scope = rememberCoroutineScope(); val editor = remember { AudioTagEditor(context) }
     var tags by remember { mutableStateOf(AudioTags(song.title, song.artist, song.album)) }
-    var tab by remember { mutableIntStateOf(1) }
+    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 3)) }
     var technical by remember { mutableStateOf<com.zirakusa.stone.nativeapp.data.library.AudioTechnicalInfo?>(null) }
     var busy by remember { mutableStateOf(true) }; var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(song.id) { tags = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrDefault(tags) }; busy = false }

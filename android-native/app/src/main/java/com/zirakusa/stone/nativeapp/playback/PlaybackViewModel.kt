@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
-enum class AudioMode(val key: String) { BATTERY("battery"), BALANCED("balanced"), HIFI("hifi") }
+enum class AudioMode(val key: String) { BALANCED("balanced"), HIFI("hifi") }
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
 }
@@ -37,6 +37,7 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val currentId: String = "", val favorite: Boolean = false, val speed: Float = 1f,
     val equalizerEnabled: Boolean = false, val equalizerValues: List<Int> = List(10) { 0 },
     val equalizerPreset: String = "Personalizado", val sleepMinutes: Int = 0,
+    val sleepEndAtMs: Long = 0L,
     val sleepFinishTrack: Boolean = false, val volumePercent: Int = 100,
     val audioMode: AudioMode = AudioMode.BALANCED,
     val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC,
@@ -62,6 +63,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         HardwareAcceleration.valueOf(settings.read().hardwareAcceleration.uppercase())
     }.getOrDefault(HardwareAcceleration.AUTOMATIC)
     private var sleepMinutes = 0
+    private var sleepEndAtMs = 0L
     private var sleepFinishTrack = false
     private var sleepJob: Job? = null
     private var manualShuffle = false
@@ -96,7 +98,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
                 if (it.mediaItemCount == 0) restoreQueue(it)
-                configureEqualizer(audioMode != AudioMode.BATTERY && equalizerEnabled)
+                configureEqualizer(equalizerEnabled)
                 publish()
             }.onFailure { mutable.value = PlaybackState(failed = true) }
         }, ContextCompat.getMainExecutor(application))
@@ -116,9 +118,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             }, index = player.currentMediaItemIndex, failed = player.playerError != null,
             currentId = player.currentMediaItem?.mediaId.orEmpty(),
             favorite = data.isFavorite(player.currentMediaItem?.mediaId.orEmpty()),
-            speed = speed, equalizerEnabled = equalizerEnabled && audioMode != AudioMode.BATTERY,
+            speed = speed, equalizerEnabled = equalizerEnabled,
             equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset,
-            sleepMinutes = sleepMinutes, sleepFinishTrack = sleepFinishTrack,
+            sleepMinutes = sleepMinutes, sleepEndAtMs = sleepEndAtMs,
+            sleepFinishTrack = sleepFinishTrack,
             volumePercent = volumePercent, audioMode = audioMode,
             hardwareAcceleration = hardwareAcceleration)
             .copy(equalizerProfiles = equalizerProfiles)
@@ -143,7 +146,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         settings.setAudioMode(mode.key)
-        configureEqualizer(mode != AudioMode.BATTERY && equalizerEnabled)
+        configureEqualizer(equalizerEnabled)
         StonePlaybackService.instance?.applyAudioMode(mode)
         publish()
     }
@@ -153,7 +156,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         hardwareAcceleration = acceleration
         settings.setAudioMode(mode.key)
         settings.setHardwareAcceleration(acceleration.key)
-        configureEqualizer(mode != AudioMode.BATTERY && equalizerEnabled)
+        configureEqualizer(equalizerEnabled)
         StonePlaybackService.instance?.applyAudioMode(mode)
         StonePlaybackService.instance?.applyHardwareAcceleration(acceleration)
         publish()
@@ -223,6 +226,16 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun clearQueue() {
+        controller?.let {
+            it.clearMediaItems()
+            originalQueueIds = emptyList()
+            manualShuffle = false
+            data.saveQueue(SavedPlayback(emptyList(), 0, 0L, false, Player.REPEAT_MODE_OFF))
+            publish()
+        }
+    }
+
     private fun queueIds(player: Player): List<String> = List(player.mediaItemCount) {
         player.getMediaItemAt(it).mediaId
     }
@@ -251,7 +264,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setEqualizerEnabled(value: Boolean) {
         equalizerEnabled = value
         data.put("equalizer-enabled", value)
-        configureEqualizer(value && audioMode != AudioMode.BATTERY); publish()
+        configureEqualizer(value); publish()
     }
     fun saveEqualizerProfile(name: String) {
         val clean = name.trim().take(40)
@@ -286,7 +299,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true; equalizerPreset = "Personalizado"
         data.put("equalizer-$index", equalizerValues[index]); data.put("equalizer-enabled", true)
         data.put("equalizer-preset", equalizerPreset)
-        configureEqualizer(audioMode != AudioMode.BATTERY); publish()
+        configureEqualizer(true); publish()
     }
     fun setEqualizerPreset(name: String, values: List<Int>) {
         equalizerPreset = name
@@ -294,13 +307,13 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true
         data.put("equalizer-enabled", true); data.put("equalizer-preset", name)
         equalizerValues.forEachIndexed { index, value -> data.put("equalizer-$index", value) }
-        configureEqualizer(audioMode != AudioMode.BATTERY); publish()
+        configureEqualizer(true); publish()
     }
 
     /** Reconnects lazily because Android may expose the audio session before its effects route. */
     private fun configureEqualizer(enabled: Boolean) {
         equalizer.attach(StonePlaybackService.playbackAudioSessionId)
-        equalizer.configure(enabled, equalizerValues, audioMode)
+        equalizer.configure(enabled, equalizerValues)
     }
     private fun loadEqualizerProfiles(): Map<String, List<Int>> = runCatching {
         val root = org.json.JSONObject(data.string("equalizer-profiles", "{}"))
@@ -331,7 +344,11 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     }
     fun setSleepTimer(minutes: Int, finishTrack: Boolean = sleepFinishTrack) {
         sleepJob?.cancel()
-        sleepMinutes = minutes.coerceAtLeast(0); sleepFinishTrack = finishTrack
+        sleepMinutes = minutes.coerceAtLeast(0)
+        sleepEndAtMs = if (sleepMinutes > 0) {
+            System.currentTimeMillis() + sleepMinutes * 60_000L
+        } else 0L
+        sleepFinishTrack = finishTrack
         if (sleepMinutes > 0) sleepJob = viewModelScope.launch {
             delay(sleepMinutes * 60_000L)
             if (sleepFinishTrack) {
@@ -348,7 +365,9 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                     previous = current
                 }
             } else controller?.pause()
-            sleepMinutes = 0; publish()
+            sleepMinutes = 0
+            sleepEndAtMs = 0L
+            publish()
         }
         publish()
     }
@@ -364,7 +383,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun player(): Player? = controller
     fun persist() {
         val player = controller ?: return
-        if (player.mediaItemCount == 0) return
+        if (player.mediaItemCount == 0) {
+            data.saveQueue(SavedPlayback(emptyList(), 0, 0L, false, Player.REPEAT_MODE_OFF))
+            return
+        }
         data.saveQueue(SavedPlayback(List(player.mediaItemCount) { index ->
             val item = player.getMediaItemAt(index); val metadata = item.mediaMetadata
             SavedQueueItem(item.mediaId, item.localConfiguration?.uri?.toString().orEmpty(),

@@ -333,7 +333,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "minimal" -> QuickActionRegistry.pinnedIds.toSet()
                     "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf("scan")
                     "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
-                        "audio_mode_battery",
                         "audio_mode_balanced", "audio_mode_hifi",
                         "diagnostics")
                     "custom" -> items.filter { item ->
@@ -567,7 +566,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         else -> Color(0xFF55D6BE)
     }
     val modeLabel = when (mode) {
-        AudioMode.BATTERY -> stringResource(R.string.audio_mode_battery)
         AudioMode.BALANCED -> stringResource(R.string.audio_mode_balanced)
         AudioMode.HIFI -> stringResource(R.string.audio_mode_hifi)
     }
@@ -626,8 +624,19 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     DiagnosticSection(stringResource(R.string.diagnostics_summary), initiallyOpen = true) {
         DiagnosticValue(stringResource(R.string.audio_mode), modeLabel)
         DiagnosticValue(stringResource(R.string.diagnostic_status), status)
-        DiagnosticValue(stringResource(R.string.ram_used), "${snapshot.usedRamMb} MB")
+        DiagnosticValue(stringResource(R.string.device_ram_used), "${snapshot.usedRamMb} MB")
         DiagnosticValue(stringResource(R.string.battery_level), if (snapshot.batteryPercent >= 0) "${snapshot.batteryPercent}%" else "No disponible")
+    }
+    DiagnosticSection(stringResource(R.string.stone_consumption), initiallyOpen = true) {
+        Text(stringResource(R.string.stone_consumption_hint), color = StonePalette.Muted,
+            fontSize = 12.sp, modifier = Modifier.padding(bottom = 6.dp))
+        DiagnosticValue(stringResource(R.string.cpu_stone), snapshot.cpuPercent?.let { "%.1f%%".format(it) } ?: "Calculando")
+        DiagnosticValue(stringResource(R.string.pss_total), snapshot.pssTotalMb.takeIf { it >= 0 }?.let { "$it MB" } ?: "No disponible")
+        DiagnosticValue(stringResource(R.string.pss_native), snapshot.pssNativeMb.takeIf { it >= 0 }?.let { "$it MB" } ?: "No disponible")
+        DiagnosticValue(stringResource(R.string.pss_dalvik), snapshot.pssDalvikMb.takeIf { it >= 0 }?.let { "$it MB" } ?: "No disponible")
+        DiagnosticValue(stringResource(R.string.process_heap), "${snapshot.processHeapMb} MB")
+        DiagnosticValue(stringResource(R.string.native_heap), snapshot.nativeHeapMb.takeIf { it >= 0 }?.let { "$it MB" } ?: "No disponible")
+        DiagnosticValue(stringResource(R.string.cpu_threads), snapshot.threadCount.takeIf { it >= 0 }?.toString() ?: "No disponible")
     }
     DiagnosticSection(stringResource(R.string.diagnostics_device)) {
         val model = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
@@ -635,18 +644,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         DiagnosticValue(stringResource(R.string.diagnostics_android), android.os.Build.VERSION.RELEASE)
         DiagnosticValue(stringResource(R.string.diagnostics_api_level), android.os.Build.VERSION.SDK_INT.toString())
     }
-    DiagnosticSection(stringResource(R.string.diagnostics_cpu)) {
-        DiagnosticValue(stringResource(R.string.cpu_stone), snapshot.cpuPercent?.let { "%.1f%%".format(it) } ?: "Calculando")
-        DiagnosticValue(stringResource(R.string.cpu_threads), snapshot.threadCount.toString())
-        DiagnosticValue(stringResource(R.string.cpu_cores), snapshot.cpuCount.toString())
-    }
-    DiagnosticSection(stringResource(R.string.diagnostics_memory)) {
-        DiagnosticValue(stringResource(R.string.pss_total), "${snapshot.pssTotalMb} MB")
-        DiagnosticValue(stringResource(R.string.pss_native), "${snapshot.pssNativeMb} MB")
-        DiagnosticValue(stringResource(R.string.pss_dalvik), "${snapshot.pssDalvikMb} MB")
-        DiagnosticValue(stringResource(R.string.process_heap), "${snapshot.processHeapMb} MB")
-        DiagnosticValue(stringResource(R.string.native_heap), "${snapshot.nativeHeapMb} MB")
+    DiagnosticSection(stringResource(R.string.device_memory)) {
+        DiagnosticValue(stringResource(R.string.device_ram_used), "${snapshot.usedRamMb} MB")
         DiagnosticValue(stringResource(R.string.ram_available), "${snapshot.availableRamMb} MB")
+        DiagnosticValue(stringResource(R.string.low_memory), snapshot.lowMemory.toString())
     }
     DiagnosticSection(stringResource(R.string.diagnostics_audio)) {
         DiagnosticValue(stringResource(R.string.audio_route), snapshot.audioRoute)
@@ -725,7 +726,6 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
 
 @Composable private fun PlaybackModeRow(mode: AudioMode, open: () -> Unit) {
     val label = stringResource(when (mode) {
-        AudioMode.BATTERY -> R.string.audio_mode_battery
         AudioMode.BALANCED -> R.string.audio_mode_balanced
         AudioMode.HIFI -> R.string.audio_mode_hifi
     })
@@ -746,8 +746,6 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         modifier = Modifier.padding(bottom = 10.dp))
     AudioMode.entries.forEach { mode ->
         val (title, detail, icon) = when (mode) {
-            AudioMode.BATTERY -> Triple(R.string.audio_mode_battery, R.string.audio_mode_battery_info,
-                Icons.Default.BatteryFull)
             AudioMode.BALANCED -> Triple(R.string.audio_mode_balanced, R.string.audio_mode_balanced_info,
                 Icons.Default.Balance)
             AudioMode.HIFI -> Triple(R.string.audio_mode_hifi, R.string.audio_mode_hifi_info,

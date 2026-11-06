@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -69,6 +68,7 @@ import com.zirakusa.stone.nativeapp.data.library.SongActions
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
+import com.zirakusa.stone.nativeapp.ui.components.SleepTimerIndicator
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -82,28 +82,26 @@ import kotlin.math.roundToInt
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
     modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
-    onAudioOnly: (Song) -> Unit = {}) {
+    onAudioOnly: (Song) -> Unit = {}, openCoverEditor: Boolean = false,
+    onCoverEditorConsumed: () -> Unit = {}) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var queueVisible by remember { mutableStateOf(false) }
     var lyricsVisible by remember { mutableStateOf(false) }
     var optionsVisible by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf<PlayerTool?>(null) }
-    var energySaver by remember { mutableStateOf(false) }
     var videoFullscreen by remember { mutableStateOf(false) }
-    var visualizerEnabled by rememberSaveable { mutableStateOf(false) }
-    var visualizerConfigured by rememberSaveable { mutableStateOf(false) }
-    var visualizerStyleKey by rememberSaveable { mutableStateOf(VisualizerStyle.Harmony.key) }
-    val visualizerStyle = visualizerStyleForKey(visualizerStyleKey)
     val dynamicBackground by produceState(Color(0xFF0D0C11), song?.uri, song?.modifiedMs) {
         value = withContext(Dispatchers.IO) {
             song?.uri?.let { uri -> ArtworkLoader.load(context.applicationContext, uri, song.modifiedMs) }
                 ?.let(::coverBackgroundColor) ?: Color(0xFF0D0C11)
         }
     }
-    if (energySaver) {
-        EnergySaverScreen(state, song, playback) { energySaver = false }
-        return
+    LaunchedEffect(openCoverEditor, song?.id) {
+        if (openCoverEditor && song != null) {
+            tool = PlayerTool.Cover
+            onCoverEditorConsumed()
+        }
     }
     if (isPictureInPicture && song?.isVideo == true) {
         PictureInPictureVideoPlayer(playback)
@@ -124,7 +122,7 @@ import kotlin.math.roundToInt
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
             onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
-            onFullscreen = { videoFullscreen = true }, onAudioOnly = {
+            onAudioOnly = {
                 videoFullscreen = false
                 onAudioOnly(it)
             })
@@ -135,7 +133,7 @@ import kotlin.math.roundToInt
             onQueue = { queueVisible = true })
     } else if (song?.isVideo == true) PortraitVideoPlayer(song, state, progress, playback, back,
         onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
-        onFullscreen = { videoFullscreen = true }, onAudioOnly = {
+        onAudioOnly = {
             videoFullscreen = false
             onAudioOnly(it)
         })
@@ -150,6 +148,10 @@ import kotlin.math.roundToInt
                     letterSpacing = 1.5.sp)
                 Text(state.artist.uppercase(), fontWeight = FontWeight.Bold, maxLines = 1,
                     overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
+            }
+            SleepTimerIndicator(state.sleepMinutes, Modifier.align(Alignment.CenterEnd),
+                endAtMillis = state.sleepEndAtMs) {
+                tool = PlayerTool.Sleep
             }
         }
         if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -181,14 +183,6 @@ import kotlin.math.roundToInt
             }
             IconButton(onClick = { optionsVisible = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more_options)) }
         }
-        // Keep this slot in the layout even when the visualizer is disabled. Its fixed height
-        // prevents the progress bar and transport controls from jumping when it is enabled.
-        VisualizerSlot(
-            enabled = visualizerEnabled && tool != PlayerTool.Visualizer,
-            audioSessionId = StonePlaybackService.playbackAudioSessionId,
-            style = visualizerStyle,
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
-        )
         PlayerProgress(progress, playback)
         Row(Modifier.fillMaxWidth().height(104.dp), horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically) {
@@ -217,19 +211,9 @@ import kotlin.math.roundToInt
         when (selected) {
             PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
                 .onFailure { error -> android.widget.Toast.makeText(context, error.message, android.widget.Toast.LENGTH_LONG).show() } }
-            PlayerTool.Energy -> energySaver = true
             PlayerTool.FloatingWindow -> {
                 enterVideoPictureInPicture(context, playback.player())
                 tool = null
-            }
-            PlayerTool.Visualizer -> {
-                // Preserve the old behavior: opening the visualizer the first time presents it
-                // enabled. If the user later turns it off, reopening respects that choice.
-                if (!visualizerConfigured) {
-                    visualizerEnabled = true
-                    visualizerConfigured = true
-                }
-                tool = selected
             }
             else -> tool = selected
         }
@@ -237,19 +221,11 @@ import kotlin.math.roundToInt
     when (tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback) { tool = null }
         PlayerTool.Equalizer -> EqualizerSheet(state, playback, song = song) { tool = null }
-        PlayerTool.Visualizer -> MusicVisualizerSheet(
-            audioSessionId = StonePlaybackService.playbackAudioSessionId,
-            enabled = visualizerEnabled,
-            style = visualizerStyle,
-            onEnabledChange = {
-                visualizerEnabled = it
-                visualizerConfigured = true
-            },
-            onStyleChange = { visualizerStyleKey = it.key },
-            close = { tool = null }
-        )
+        PlayerTool.Cover -> song?.let { TagEditorSheet(it, initialTab = 0, close = { tool = null }) {
+            tool = null; onMetadataChanged(); back()
+        } }
         PlayerTool.Sleep -> SleepSheet(state, playback) { tool = null }
-        PlayerTool.Tags -> song?.let { TagEditorSheet(it, { tool = null }) {
+        PlayerTool.Tags -> song?.let { TagEditorSheet(it, close = { tool = null }) {
             tool = null; onMetadataChanged(); back()
         } }
         PlayerTool.Ringtone -> song?.let { RingtoneSheet(it) { tool = null } }
@@ -326,6 +302,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                 IconButton(onClick = close) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White) }
                 Text(song.title, Modifier.weight(1f), color = Color.White, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
+                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
                 IconButton(onClick = { onAudioOnly(song) }) {
                     Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                 }
@@ -336,7 +313,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                 VideoTimeline(song, progress, playback)
                 VideoActionRow(
                     onAudioOnly = { onAudioOnly(song) },
-                    onFullscreen = close,
+                    onClearScreen = controls.toggle,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -346,7 +323,7 @@ private fun Context.findActivity(): Activity? = when (this) {
 
 @Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit,
     onAudioOnly: (Song) -> Unit) {
     val controls = rememberVideoControls(song.id, state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -369,6 +346,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                     Text("${song.folder} · ${duration(progress.second)}", color = Color(0xFFCCC8D2),
                         fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
+                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
                 IconButton(onClick = { onAudioOnly(song) }) {
                     Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                 }
@@ -384,7 +362,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onAudioOnly = { onAudioOnly(song) },
                     onOptions = onOptions,
                     onQueue = onQueue,
-                    onFullscreen = onFullscreen,
+                    onClearScreen = controls.toggle,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -435,14 +413,22 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
 }
 
 @Composable private fun VideoTimeline(song: Song, progress: Pair<Long, Long>, playback: PlaybackViewModel) {
+    var framesVisible by remember(song.id, progress.second) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
-        PlayerProgress(progress, playback)
-        VideoFrameStrip(song, progress, playback, Modifier.fillMaxWidth().padding(top = 2.dp))
+        if (framesVisible) {
+            VideoFrameStrip(song, progress, playback, Modifier.fillMaxWidth().padding(bottom = 4.dp))
+        }
+        PlayerProgress(progress, playback, onVerticalDrag = { dragAmount ->
+            when {
+                dragAmount < -8f -> framesVisible = true
+                dragAmount > 8f -> framesVisible = false
+            }
+        })
     }
 }
 
 @Composable private fun VideoActionRow(onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null, onClearScreen: (() -> Unit)? = null,
     modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically) {
@@ -459,9 +445,9 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
                 Icon(Icons.Default.QueueMusic, stringResource(R.string.queue), tint = Color.White)
             }
         }
-        onFullscreen?.let { action ->
+        onClearScreen?.let { action ->
             IconButton(onClick = action) {
-                Icon(Icons.Default.Fullscreen, "Pantalla completa", tint = Color.White)
+                Icon(Icons.Default.Fullscreen, "Limpiar pantalla", tint = Color.White)
             }
         }
     }
@@ -568,9 +554,9 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
     modifier: Modifier, onTap: () -> Unit) {
     val context = LocalContext.current
     var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
-    var volume by remember { mutableStateOf(state.volumePercent.toFloat()) }
+    var volume by remember { mutableStateOf(state.volumePercent.toFloat().coerceIn(0f, 100f)) }
     var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
-    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat() }
+    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat().coerceIn(0f, 100f) }
     LaunchedEffect(adjustment) {
         if (adjustment != null) {
             delay(850)
@@ -584,9 +570,9 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
             setWindowBrightness(context, brightness)
             adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness)
         } else {
-            volume = (volume + delta * 300f).coerceIn(0f, 300f)
+            volume = (volume + delta * 100f).coerceIn(0f, 100f)
             StonePlaybackService.setVolumePercent(volume.roundToInt(), showOverlay = false)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 300f)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 100f)
         }
     })
     Box(modifier.pointerInput(Unit) {
@@ -673,7 +659,7 @@ private fun setWindowBrightness(context: Context, value: Float) {
 
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit,
     onAudioOnly: (Song) -> Unit) {
     val controls = rememberVideoControls(song.id, state.playing)
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -700,6 +686,7 @@ private fun setWindowBrightness(context: Context, value: Float) {
                             stringResource(R.string.close_player), Modifier.size(30.dp)) }
                         Text(song.title, Modifier.weight(1f), textAlign = TextAlign.Center,
                             color = StonePalette.Muted, fontWeight = FontWeight.Bold)
+                        SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
                         IconButton(onClick = { onAudioOnly(song) }) {
                             Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                         }
@@ -719,7 +706,7 @@ private fun setWindowBrightness(context: Context, value: Float) {
                         onAudioOnly = { onAudioOnly(song) },
                         onOptions = onOptions,
                         onQueue = onQueue,
-                        onFullscreen = onFullscreen
+                        onClearScreen = controls.toggle
                     )
                 }
             }
@@ -812,25 +799,6 @@ private fun setWindowBrightness(context: Context, value: Float) {
     val line = if (document.synced.isNotEmpty()) document.synced.getOrNull(index)?.text.orEmpty()
         else document.plain.firstOrNull().orEmpty()
     return index to line
-}
-
-/**
- * A stable visualizer area for the portrait audio player. The box remains the same size when the
- * visualizer is switched on or off, so the progress bar and controls never need to be repositioned.
- */
-@Composable private fun VisualizerSlot(enabled: Boolean, audioSessionId: Int, style: VisualizerStyle,
-    modifier: Modifier = Modifier) {
-    Box(modifier.height(142.dp), contentAlignment = Alignment.Center) {
-        if (enabled) {
-            MusicVisualizerCanvas(
-                audioSessionId = audioSessionId,
-                style = style,
-                enabled = true,
-                tint = StonePalette.Secondary,
-                modifier = Modifier.fillMaxWidth().height(92.dp).padding(horizontal = 4.dp)
-            )
-        }
-    }
 }
 
 @Composable private fun CurrentLyricChip(song: Song?, positionMs: Long, onClick: () -> Unit,

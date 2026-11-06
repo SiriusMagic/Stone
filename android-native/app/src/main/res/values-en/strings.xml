@@ -33,8 +33,8 @@
     <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
     <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
-    <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string>
-    <string name="energy_saver">Energy saver</string><string name="hide">Hide</string><string name="delete">Delete</string>
+    <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string><string name="sleep_timer_until">Until %1$s</string>
+    <string name="hide">Hide</string><string name="delete">Delete</string>
     <string name="default_value">Default</string><string name="off">Off</string><string name="manage">Manage</string><string name="delete_album">Delete album</string><string name="select_all">Select all</string><string name="selected_count">%1$d selected</string><string name="delete_selected_message">Delete %1$d selected songs?</string><string name="floating_window_unavailable">Floating window (unavailable)</string><string name="playback_mode">Playback mode</string><string name="video_scale">Adjust scale</string><string name="audio_track">Audio track</string><string name="minutes_later">In %1$d minutes</string>
     <string name="finish_current_track">Finish current track</string><string name="title">Title</string><string name="artist">Artist</string>
     <string name="custom_sleep_time">Custom time</string><string name="hours">Hours</string>
@@ -46,7 +46,6 @@
     <string name="allow_and_continue">Allow and continue</string><string name="delete_song_title">Delete song?</string>
     <string name="hide_song_title">Hide song?</string><string name="delete_song_message">This song will move to “Recently deleted”. The physical file will not be deleted now.</string>
     <string name="hide_song_message">This song will move to “Hidden files”.</string><string name="cancel">Cancel</string>
-    <string name="energy_saver_hint">Minimal interface to reduce animations and visual updates.</string>
     <string name="playlist_next_batch">Playlists will be connected in Stone 1.3.6.</string>
     <string name="eq_normal">Normal</string><string name="eq_bass">Bass boost</string><string name="eq_voice">Voice boost</string>
     <string name="eq_treble">Treble boost</string><string name="eq_pop">Pop</string><string name="eq_custom">Custom</string>
@@ -98,9 +97,8 @@
     <string name="share_stone">Share Stone</string><string name="privacy_policy">Privacy policy</string>
     <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
     <string name="copyright_stone">© 2026 Stone.</string>
-    <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string><string name="audio_mode_battery">Ultra power saving</string>
+    <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string>
     <string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">Cinema</string>
-    <string name="audio_mode_battery_info">Low power and adaptive acceleration; depends on the device.</string>
     <string name="audio_mode_balanced_info">Balance between power, stability and quality.</string>
     <string name="audio_mode_hifi_info">Priority quality and full acceleration when supported by the device.</string>
     <string name="quick_action_activated">%1$s activated</string>

@@ -27,7 +27,6 @@ class StoneEcoEngine(context: Context) {
         // We only express the policy; we never claim offload or bit-perfect output here.
         val output = inspectOutput()
         val strategy = when (mode) {
-            AudioMode.BATTERY -> "Offload prioritario cuando Media3 lo permita"
             AudioMode.BALANCED -> "Ruta normal de Media3"
             AudioMode.HIFI -> "Fidelidad prioritaria; offload automático si no altera la salida"
         }

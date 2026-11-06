@@ -11,7 +11,6 @@ class PlaybackEqualizer {
     private var sessionId = 0
     private var enabled = false
     private var values = IntArray(10)
-    private var mode = AudioMode.BALANCED
 
     fun attach(nextSessionId: Int) {
         if (nextSessionId <= 0) return
@@ -32,10 +31,9 @@ class PlaybackEqualizer {
         apply()
     }
 
-    fun configure(nextEnabled: Boolean, nextValues: IntArray, nextMode: AudioMode = AudioMode.BALANCED) {
+    fun configure(nextEnabled: Boolean, nextValues: IntArray) {
         enabled = nextEnabled
         values = IntArray(10) { nextValues.getOrElse(it) { 0 }.coerceIn(-10, 10) }
-        mode = nextMode
         apply()
     }
 
@@ -51,7 +49,7 @@ class PlaybackEqualizer {
         }
         equalizer.enabled = enabled
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) dynamics?.let { processor ->
-            val active = enabled && mode != AudioMode.BATTERY
+            val active = enabled
             processor.setLimiterAllChannelsTo(DynamicsProcessing.Limiter(
                 active, true, 0, 10f, 80f, 1f, -1f, 0f))
             processor.enabled = active

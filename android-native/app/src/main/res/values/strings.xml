@@ -62,7 +62,6 @@
     <string name="favorite">Favorito</string>
     <string name="more_options">Más opciones</string>
     <string name="equalizer">Ecualizador</string>
-    <string name="music_visualizer">Visualizador de música</string>
     <string name="analyze_audio">Analizar audio</string>
     <string name="save_eq_profile">Guardar perfil</string>
     <string name="profile_name">Nombre del perfil</string>
@@ -90,6 +89,9 @@
     <string name="reset">Restablecer</string>
     <string name="go_to_current_song">Ir a la canción actual</string>
     <string name="edit_queue">Editar fila</string>
+    <string name="clear_queue">Limpiar cola</string>
+    <string name="clear_queue_title">Limpiar cola de reproducción</string>
+    <string name="clear_queue_message">¿Quieres borrar la cola de reproducción actual?</string>
     <string name="done">Listo</string>
     <string name="hold_to_reorder">Mantén pulsado para reordenar</string>
     <string name="repeat_one">Repetir una</string>
@@ -106,7 +108,9 @@
     <string name="speed">Velocidad</string>
     <string name="set_ringtone">Establecer como tono de llamada</string>
     <string name="sleep_timer">Temporizador para dormir</string>
-    <string name="energy_saver">Modo de ahorro de energía</string>
+    <string name="sleep_timer_active">Temporizador activo</string>
+    <string name="sleep_timer_until">Hasta las %1$s</string>
+    <string name="cover_editor">Editor de portadas</string>
     <string name="floating_window">Ventana flotante</string>
     <string name="hide">Ocultar</string>
     <string name="delete">Borrar</string>
@@ -144,7 +148,7 @@
     <string name="delete_song_message">Esta canción se moverá a “Eliminado recientemente”. El archivo físico no se borrará ahora.</string>
     <string name="hide_song_message">Esta canción se moverá a “Archivos ocultos”.</string>
     <string name="cancel">Cancelar</string>
-    <string name="energy_saver_hint">Interfaz mínima para reducir animaciones y actualizaciones visuales.</string>
+    <string name="cover_editor_requires_song">Reproduce una canción o vídeo para abrir su portada.</string>
     <string name="playlist_next_batch">Las playlists se conectarán en Stone 1.3.6.</string>
     <string name="eq_normal">Normal</string>
     <string name="eq_bass">Aumento de graves</string>
@@ -233,18 +237,19 @@
     <string name="audio_diagnostics_intro">Estas métricas solo se leen cuando abres esta pantalla. Stone no mantiene un monitor en segundo plano.</string>
     <string name="refresh_metrics">Actualizar métricas</string>
     <string name="ram_used">RAM utilizada</string>
+    <string name="device_ram_used">RAM utilizada del dispositivo</string>
     <string name="ram_available">RAM disponible</string>
     <string name="process_heap">Memoria de Stone</string>
     <string name="battery_level">Batería</string>
-    <string name="diagnostics_running">Analizando…</string><string name="start_diagnostics">Iniciar diagnóstico</string><string name="diagnostics_summary">Resumen</string><string name="diagnostics_cpu">CPU</string><string name="diagnostics_memory">Memoria</string><string name="diagnostics_audio">Audio</string><string name="diagnostics_energy">Energía</string><string name="diagnostics_advanced">Diagnóstico avanzado</string>
+    <string name="diagnostics_running">Analizando…</string><string name="start_diagnostics">Iniciar diagnóstico</string><string name="diagnostics_summary">Resumen</string><string name="diagnostics_cpu">CPU</string><string name="diagnostics_memory">Memoria</string><string name="device_memory">Memoria del dispositivo</string><string name="diagnostics_audio">Audio</string><string name="diagnostics_energy">Energía</string><string name="diagnostics_advanced">Diagnóstico avanzado</string>
     <string name="diagnostic_status">Estado</string><string name="cpu_stone">CPU de Stone</string><string name="cpu_threads">Hilos activos</string><string name="cpu_cores">Núcleos disponibles</string><string name="pss_total">PSS total</string><string name="pss_native">PSS nativa</string><string name="pss_dalvik">PSS administrada</string><string name="native_heap">Heap nativo</string><string name="audio_route">Ruta de audio</string><string name="audio_errors">Errores de reproducción</string><string name="audio_latency">Latencia</string><string name="battery_temperature">Temperatura de batería</string><string name="charging_state">Carga</string><string name="charging">Cargando</string><string name="not_charging">No cargando</string><string name="thermal_status">Estado térmico</string><string name="low_memory">Memoria baja</string><string name="low_memory_threshold">Umbral de memoria baja</string><string name="session_samples">Muestras de sesión</string><string name="not_available">No disponible</string>
+    <string name="stone_consumption">Consumo de Stone</string>
+    <string name="stone_consumption_hint">Solo métricas del proceso de Stone; no representan el consumo total del teléfono.</string>
     <string name="diagnostics_limitations">La latencia física, el consumo exacto en mAh y algunas propiedades del dispositivo no están disponibles mediante APIs universales de Android. No se interpretan como mediciones reales.</string>
     <string name="export_diagnostics">Compartir informe JSON</string>
     <string name="audio_mode_intro">Elige cómo quieres escuchar tu música.</string>
-    <string name="audio_mode_battery">Ultra ahorro de energía</string>
     <string name="audio_mode_balanced">Balanceado</string>
     <string name="audio_mode_hifi">Cine</string>
-    <string name="audio_mode_battery_info">Bajo consumo y aceleración adaptativa; depende del dispositivo.</string>
     <string name="audio_mode_balanced_info">Equilibrio entre consumo, estabilidad y calidad.</string>
     <string name="audio_mode_hifi_info">Calidad prioritaria y aceleración completa cuando el dispositivo lo permite.</string>
     <string name="quick_action_activated">%1$s activado</string>

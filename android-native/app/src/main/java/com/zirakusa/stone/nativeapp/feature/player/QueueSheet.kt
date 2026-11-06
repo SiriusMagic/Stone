@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.IntOffset
 import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
@@ -37,6 +39,7 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.R
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private val QueueBrown = Color(0xFF5A3436)
 private val QueueDark = Color(0xFF4A292B)
@@ -45,7 +48,8 @@ private val QueueDark = Color(0xFF4A292B)
 @Composable fun QueueSheet(state: PlaybackState, playback: PlaybackViewModel, onClose: () -> Unit) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    var editing by remember { mutableStateOf(false) }
+    var clearDialog by remember { mutableStateOf(false) }
+    val swipeState = remember { mutableStateMapOf<String, Float>() }
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     ModalBottomSheet(onDismissRequest = onClose, containerColor = QueueBrown,
@@ -57,16 +61,14 @@ private val QueueDark = Color(0xFF4A292B)
                 IconButton(onClick = { if (state.index >= 0) scope.launch { listState.animateScrollToItem(state.index) } }) {
                     Icon(Icons.Default.MyLocation, stringResource(R.string.go_to_current_song))
                 }
-                IconButton(onClick = { editing = !editing }) {
-                    Icon(if (editing) Icons.Default.Check else Icons.Default.Brush,
-                        stringResource(if (editing) R.string.done else R.string.edit_queue))
+                IconButton(onClick = { clearDialog = true }) {
+                    Icon(Icons.Default.Delete, stringResource(R.string.clear_queue))
                 }
-                IconButton(onClick = onClose) { Icon(Icons.Default.Close, stringResource(R.string.dismiss)) }
             }
             LazyColumn(Modifier.weight(1f), state = listState) {
                 itemsIndexed(state.queue, key = { _, item -> item.id }) { index, item ->
                     val isDragging = draggingId == item.id
-                    Row(Modifier.fillMaxWidth().height(66.dp)
+                    Box(Modifier.fillMaxWidth().height(66.dp)
                         .animateItem(placementSpec = spring(stiffness = Spring.StiffnessMediumLow))
                         .graphicsLayer {
                             if (isDragging) {
@@ -76,10 +78,34 @@ private val QueueDark = Color(0xFF4A292B)
                                 shadowElevation = 8.dp.toPx()
                             }
                         }
-                        .background(if (index == state.index) Color(0x1FFFFFFF) else Color.Transparent,
+                        .clip(RoundedCornerShape(14.dp))
+                        .pointerInput(item.id, state.queue.size) {
+                            var swipeOffset = 0f
+                            detectHorizontalDragGestures(onHorizontalDrag = { change, amount ->
+                                if (amount < 0f || swipeOffset < 0f) {
+                                    change.consume()
+                                    swipeOffset = (swipeOffset + amount).coerceIn(-size.width.toFloat(), 0f)
+                                    swipeState[item.id] = swipeOffset
+                                }
+                            }, onDragEnd = {
+                                val offset = swipeState[item.id] ?: 0f
+                                if (offset <= -size.width * .5f) {
+                                    playback.removeAt(index)
+                                }
+                                swipeState.remove(item.id)
+                            }, onDragCancel = {
+                                swipeState.remove(item.id)
+                            })
+                        }
+                        .background(Color(0xFFE94B43))) {
+                        Icon(Icons.Default.RemoveCircleOutline, stringResource(R.string.delete),
+                            tint = Color.White, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 26.dp))
+                    val swipeOffset = swipeState[item.id] ?: 0f
+                    Row(Modifier.fillMaxSize().offset { IntOffset(swipeOffset.roundToInt(), 0) }
+                        .background(if (index == state.index) Color(0xFF684041) else QueueBrown,
                             RoundedCornerShape(14.dp))
-                        .clickable { playback.playAt(index) }.padding(horizontal = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
+                        .clickable { if (swipeOffset != 0f) swipeState.remove(item.id) else playback.playAt(index) }
+                        .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         QueueArtwork(item.uri, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(item.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -87,12 +113,8 @@ private val QueueDark = Color(0xFF4A292B)
                             Text(item.artist, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 color = Color(0xFFD0BFC0), fontSize = 13.sp)
                         }
-                        if (editing) {
-                            IconButton(onClick = { playback.removeAt(index) }) {
-                                Icon(Icons.Default.Delete, stringResource(R.string.delete))
-                            }
-                            Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
-                            Modifier.size(38.dp).pointerInput(item.id, state.queue.size, editing) {
+                        Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
+                            Modifier.size(38.dp).pointerInput(item.id, state.queue.size) {
                                 var movingIndex = index
                                 val step = 66.dp.toPx()
                                 detectDragGestures(onDragStart = {
@@ -119,7 +141,7 @@ private val QueueDark = Color(0xFF4A292B)
                                     }
                                 }
                             })
-                        }
+                    }
                     }
                 }
             }
@@ -141,6 +163,20 @@ private val QueueDark = Color(0xFF4A292B)
                     Icon(Icons.Default.Shuffle, stringResource(R.string.shuffle))
                 }
             }
+            if (clearDialog) AlertDialog(
+                onDismissRequest = { clearDialog = false },
+                title = { Text(stringResource(R.string.clear_queue_title)) },
+                text = { Text(stringResource(R.string.clear_queue_message)) },
+                confirmButton = {
+                    TextButton(onClick = { playback.clearQueue(); clearDialog = false }) {
+                        Text(stringResource(R.string.clear_queue))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { clearDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                })
         }
     }
 }

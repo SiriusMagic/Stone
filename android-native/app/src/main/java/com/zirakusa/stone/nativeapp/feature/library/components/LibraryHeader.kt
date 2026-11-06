@@ -41,7 +41,8 @@ import kotlinx.coroutines.launch
     showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
     showSleep: Boolean = true, quickActions: List<QuickActionDefinition> = emptyList(),
     onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {},
-    activeQuickActionIds: Set<String> = emptySet()) {
+    activeQuickActionIds: Set<String> = emptySet(), sleepMinutes: Int = 0,
+    sleepEndAtMs: Long = 0L) {
     Box(Modifier.fillMaxWidth()) {
     val penguinMotion = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -65,7 +66,10 @@ import kotlinx.coroutines.launch
             if (quickActions.isNotEmpty()) {
                 quickActions.take(8).forEach { action ->
                     val active = action.id in activeQuickActionIds
-                    IconButton(
+                    if (action.id == "sleep" && sleepMinutes > 0) {
+                        SleepTimerIndicator(sleepMinutes, Modifier.size(44.dp),
+                            endAtMillis = sleepEndAtMs, showLabel = false) { onQuickAction(action.id) }
+                    } else IconButton(
                         onClick = { onQuickAction(action.id) },
                         modifier = Modifier.size(44.dp).then(
                             if (active) Modifier.background(Color(0xFFF5C518), CircleShape)
@@ -88,7 +92,10 @@ import kotlinx.coroutines.launch
                 if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))
                 }
-                if (showSleep) IconButton(onClick = onSleep, modifier = Modifier.size(44.dp)) {
+                if (showSleep && sleepMinutes > 0) SleepTimerIndicator(sleepMinutes,
+                    Modifier.size(44.dp), endAtMillis = sleepEndAtMs, showLabel = false,
+                    onClick = onSleep)
+                else if (showSleep) IconButton(onClick = onSleep, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.Timer, stringResource(R.string.sleep_timer), tint = Color(0xFFF5C518))
                 }
             }

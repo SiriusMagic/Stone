@@ -1,9 +1,11 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -33,16 +35,23 @@ import kotlinx.coroutines.isActive
     return progress
 }
 
-@Composable fun PlayerProgress(progress: Pair<Long, Long>, playback: PlaybackViewModel) {
+@Composable fun PlayerProgress(progress: Pair<Long, Long>, playback: PlaybackViewModel,
+    onVerticalDrag: ((Float) -> Unit)? = null) {
     var dragging by remember { mutableStateOf<Float?>(null) }
     val label = stringResource(R.string.seek)
+    val verticalGesture = if (onVerticalDrag == null) Modifier else Modifier.pointerInput(onVerticalDrag) {
+        detectVerticalDragGestures { change, dragAmount ->
+            change.consume()
+            onVerticalDrag(dragAmount)
+        }
+    }
     Slider(value = dragging ?: progress.first.toFloat().coerceAtMost(progress.second.toFloat()),
         onValueChange = { dragging = it }, valueRange = 0f..progress.second.toFloat().coerceAtLeast(1f),
         enabled = progress.second > 0,
         onValueChangeFinished = {
             dragging?.let { playback.seek(it.toLong()) }
             dragging = null
-        }, modifier = Modifier.semantics { contentDescription = label })
+        }, modifier = verticalGesture.semantics { contentDescription = label })
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(duration(progress.first)); Text(duration(progress.second))
     }

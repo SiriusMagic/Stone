@@ -46,7 +46,6 @@ import kotlinx.coroutines.delay
     var language by rememberSaveable { mutableStateOf(settingsStore.read().language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
-    var energySaver by rememberSaveable { mutableStateOf(false) }
     val state by library.state.collectAsStateWithLifecycle()
     val player by playback.state.collectAsStateWithLifecycle()
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
@@ -61,6 +60,7 @@ import kotlinx.coroutines.delay
         }
     }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
+    var openCoverEditor by rememberSaveable { mutableStateOf(false) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -118,14 +118,13 @@ import kotlinx.coroutines.delay
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
-        if (!isPictureInPicture && !playerOpen && !energySaver) MiniPlayer(player, { playerOpen = true }, playback::toggle,
+        if (!isPictureInPicture && !playerOpen) MiniPlayer(player, { playerOpen = true }, playback::toggle,
             state.songs.find { it.id == player.currentId })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
-            if (energySaver) EnergySaverScreen(player, state.songs.find { it.id == player.currentId }, playback) { energySaver = false }
-            else if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
+            if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
                 { playerOpen = false }, library::hide, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f),
                 onArtist = {
@@ -138,7 +137,7 @@ import kotlinx.coroutines.delay
                     }
                     playback.play(song.copy(isVideo = false), audioQueue)
                     playerOpen = true
-                })
+                }, openCoverEditor = openCoverEditor, onCoverEditorConsumed = { openCoverEditor = false })
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
@@ -236,7 +235,15 @@ import kotlinx.coroutines.delay
                 }, artistDestination = artistDestination,
                 onArtistDestinationConsumed = { artistDestination = null },
                 onDelete = library::delete,
-                onEnergySaver = { energySaver = true })
+                onOpenCoverEditor = {
+                    if (player.currentId.isNotBlank()) {
+                        openCoverEditor = true
+                        playerOpen = true
+                    } else {
+                        android.widget.Toast.makeText(context, R.string.cover_editor_requires_song,
+                            android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                })
         }
     }
         if (volumeUi.visible) {

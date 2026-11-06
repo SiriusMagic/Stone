@@ -56,7 +56,7 @@ private fun Song.hasUsableLyrics(): Boolean =
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
     onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
-    onEnergySaver: () -> Unit = {}) {
+    onOpenCoverEditor: () -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -94,7 +94,6 @@ private fun Song.hasUsableLyrics(): Boolean =
     val playbackState = playbackViewModel?.state?.collectAsState()?.value
     val activeQuickActionIds = setOfNotNull(
         when (playbackState?.audioMode) {
-            AudioMode.BATTERY -> "audio_mode_battery"
             AudioMode.BALANCED -> "audio_mode_balanced"
             AudioMode.HIFI -> "audio_mode_hifi"
             null -> null
@@ -133,15 +132,13 @@ private fun Song.hasUsableLyrics(): Boolean =
             "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
             "repeat" -> playbackViewModel?.repeat()
-            "audio_mode_battery" -> {
-                playbackViewModel?.setPlaybackProfile(AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
-            }
             "audio_mode_balanced" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.BALANCED, HardwareAcceleration.AUTOMATIC)
             }
             "audio_mode_hifi" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.FULL)
             }
+            "cover_editor" -> onOpenCoverEditor()
             "hardware_acceleration" -> {
                 onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
             }
@@ -190,7 +187,9 @@ private fun Song.hasUsableLyrics(): Boolean =
             showSort = shortcuts["sort"] != false, showEqualizer = false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
-            activeQuickActionIds = highlightedQuickActionIds)
+            activeQuickActionIds = highlightedQuickActionIds,
+            sleepMinutes = playbackState?.sleepMinutes ?: 0,
+            sleepEndAtMs = playbackState?.sleepEndAtMs ?: 0L)
         if (searchVisible) LibrarySearch(query) { query = it }
         LibraryTabs(tab) { tab = it; collection = null }
         if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())
