@@ -53,7 +53,13 @@ import kotlinx.coroutines.delay
     val scope = rememberCoroutineScope()
     val transferManager = remember(context) { LocalTransferManager(context.applicationContext) }
     var transferState by remember { mutableStateOf(LocalTransferUiState()) }
-    DisposableEffect(transferManager) { onDispose { transferManager.stop() } }
+    var bluetoothTransferJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    DisposableEffect(transferManager) {
+        onDispose {
+            transferManager.stop()
+            bluetoothTransferJob?.cancel()
+        }
+    }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
@@ -138,9 +144,12 @@ import kotlinx.coroutines.delay
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
-                { shareStoneLibrary(context, state.songs + state.hiddenSongs + state.deletedSongs, scope) {
-                    transferState = it
-                } },
+                {
+                    bluetoothTransferJob?.cancel()
+                    bluetoothTransferJob = shareStoneLibrary(
+                        context, state.songs + state.hiddenSongs + state.deletedSongs, scope
+                    ) { transferState = it }
+                },
                 { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
@@ -211,6 +220,8 @@ import kotlinx.coroutines.delay
                     }
                 },
                 onStopTransfer = {
+                    bluetoothTransferJob?.cancel()
+                    bluetoothTransferJob = null
                     transferManager.stop()
                     transferState = LocalTransferUiState(message = "Transferencia cancelada")
                 },
@@ -250,33 +261,40 @@ private fun shareStoneBackup(context: android.content.Context) {
 
 private fun shareStoneLibrary(context: android.content.Context,
     songs: List<com.zirakusa.stone.core.Song>, scope: kotlinx.coroutines.CoroutineScope,
-    onState: (LocalTransferUiState) -> Unit) {
-    scope.launch {
+    onState: (LocalTransferUiState) -> Unit): kotlinx.coroutines.Job {
+    return scope.launch {
         val packageFile = File(context.cacheDir, "stone-bluetooth.musp")
         onState(LocalTransferUiState(busy = true,
             message = context.getString(R.string.transfer_packaging_indeterminate)))
         var lastProgressAt = 0L
-        val result = withContext(Dispatchers.IO) { runCatching {
-            StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id }) { done, total ->
-                if (total > 0L) {
-                    val now = System.currentTimeMillis()
-                    if (now - lastProgressAt >= 100L || done >= total) {
-                        lastProgressAt = now
-                        val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
-                        scope.launch {
-                            onState(LocalTransferUiState(
-                                busy = true,
-                                progress = progress,
-                                message = context.getString(
-                                    R.string.transfer_packaging,
-                                    (progress * 100).toInt()
-                                )
-                            ))
+        val result = try {
+            Result.success(withContext(Dispatchers.IO) {
+                StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id }) { done, total ->
+                    if (total > 0L) {
+                        val now = System.currentTimeMillis()
+                        if (now - lastProgressAt >= 100L || done >= total) {
+                            lastProgressAt = now
+                            val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
+                            scope.launch {
+                                onState(LocalTransferUiState(
+                                    busy = true,
+                                    progress = progress,
+                                    message = context.getString(
+                                        R.string.transfer_packaging,
+                                        (progress * 100).toInt()
+                                    )
+                                ))
+                            }
                         }
                     }
                 }
-            }
-        } }
+            })
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            packageFile.delete()
+            throw cancelled
+        } catch (error: Throwable) {
+            Result.failure(error)
+        }
         result.onSuccess {
             onState(LocalTransferUiState(
                 progress = 1f,

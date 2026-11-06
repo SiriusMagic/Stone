@@ -175,7 +175,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
                     "library-transfer" -> LibraryTransferDetail(onShare, transferState, onHostTransfer,
-                        onReceiveTransfer, onStopTransfer)
+                        onReceiveTransfer, onStopTransfer, onExportPackage, onImportPackage)
                     "wifi-transfer" -> TransferDetail(transferState, onHostTransfer,
                         onReceiveTransfer, onStopTransfer)
                     "system-diagnostics", "audio-diagnostics" -> SystemDiagnosticsDetail(playback)
@@ -226,6 +226,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             modifier = Modifier.padding(top = 18.dp))
         Text(stringResource(R.string.transfer_share_code, state.code), fontSize = 22.sp,
             fontWeight = FontWeight.Black, color = StonePalette.Yellow)
+        Text(stringResource(R.string.transfer_share_url,
+            "http://${state.address}/stone/${state.code}"), color = StonePalette.Yellow,
+            fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
         Text(stringResource(R.string.transfer_waiting), color = StonePalette.Muted)
         TextButton(onClick = stop) { Text(stringResource(R.string.cancel)) }
     }
@@ -240,23 +243,37 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         onClick = { receive(address, code) }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
         Text(stringResource(R.string.transfer_receive))
     }
-    TransferProgress(state)
+    TransferProgress(state, stop)
 }
 
 @Composable private fun LibraryTransferDetail(bluetooth: () -> Unit, state: LocalTransferUiState,
-    host: () -> Unit, receive: (String, String) -> Unit, stop: () -> Unit) {
-    var wifiSelected by remember { mutableStateOf(false) }
+    host: () -> Unit, receive: (String, String) -> Unit, stop: () -> Unit,
+    exportPackage: () -> Unit, importPackage: () -> Unit) {
+    var wifiSelected by remember { mutableStateOf(true) }
     SettingsGroup {
-        SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") { bluetooth() }
+        SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") {
+            wifiSelected = false
+            bluetooth()
+        }
         SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") {
             wifiSelected = true
         }
     }
     if (wifiSelected) TransferDetail(state, host, receive, stop)
-    else TransferProgress(state)
+    else {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = exportPackage, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.Archive, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.export_musp))
+            }
+            OutlinedButton(onClick = importPackage, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.Unarchive, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.import_musp))
+            }
+        }
+        TransferProgress(state, stop)
+    }
 }
 
-@Composable private fun TransferProgress(state: LocalTransferUiState) {
+@Composable private fun TransferProgress(state: LocalTransferUiState, cancel: (() -> Unit)? = null) {
     if (state.busy) {
         if (state.progress > 0f) {
             LinearProgressIndicator(
@@ -268,6 +285,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         }
         Text(state.message.ifBlank { stringResource(R.string.transfer_working) },
             color = StonePalette.Muted)
+        if (cancel != null) TextButton(onClick = cancel) { Text(stringResource(R.string.cancel)) }
     }
     if (!state.busy && state.message.isNotBlank()) {
         Text(state.message, color = StonePalette.Muted,

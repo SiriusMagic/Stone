@@ -7,8 +7,11 @@ import org.json.JSONObject
 /** User-entered lyrics are durable data and intentionally live outside the disposable library cache. */
 class LyricsOverrides(context: Context) {
     private val database = StoneDatabase.get(context)
-    fun get(songId: String): String? = runCatching { JSONObject(database.getString("lyrics") ?: "{}").optString(songId)
-        .takeIf(String::isNotEmpty) }.getOrNull()
+    fun get(songId: String): String? = runCatching {
+        JSONObject(database.getString("lyrics") ?: "{}").let { values ->
+            if (values.has(songId)) values.optString(songId) else null
+        }
+    }.getOrNull()
     fun put(songId: String, value: String) {
         val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
         database.putString("lyrics", lyrics.put(songId, value).toString())
@@ -17,6 +20,9 @@ class LyricsOverrides(context: Context) {
         val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
         database.putString("lyrics", lyrics.apply { remove(songId) }.toString())
     }
+
+    /** Keeps a durable empty override so embedded lyrics do not reappear after deletion. */
+    fun clear(songId: String) = put(songId, "")
 
     fun offset(songId: String): Long = runCatching {
         JSONObject(database.getString("lyrics-offsets") ?: "{}").optLong(songId, 0L)

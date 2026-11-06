@@ -5,8 +5,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -40,15 +38,11 @@ import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
-import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONTokener
 
 private const val copySelectionScript = """
@@ -86,11 +80,9 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val overrides = remember { LyricsOverrides(context.applicationContext) }
-    val scope = rememberCoroutineScope()
     var editor by remember { mutableStateOf(false) }
     var browserVisible by remember { mutableStateOf(false) }
     var autoScroll by remember { mutableStateOf(true) }
-    var offset by remember(song.id) { mutableLongStateOf(overrides.offset(song.id)) }
     var document by remember(song.id) {
         mutableStateOf(overrides.get(song.id)?.let(LyricsParser::parse)
             ?: song.lyricsDocument())
@@ -102,30 +94,8 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     val lines = if (document.synced.isNotEmpty()) document.synced else
         document.plain.mapIndexed { index, value -> LyricLine(index.toLong(), value) }
     val active = if (document.synced.isNotEmpty()) LyricsParser.activeIndex(document.synced,
-        progress.first + offset) else -1
+        progress.first) else -1
     val listState = rememberLazyListState()
-    val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        if (uri != null) scope.launch {
-            val text = if (document.synced.isNotEmpty()) LyricsParser.toLrc(document.synced.map {
-                it.copy(timeMs = it.timeMs - offset)
-            }) else document.plain.joinToString("\n")
-            withContext(Dispatchers.IO) {
-                context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray(Charsets.UTF_8)) }
-            }
-        }
-    }
-    val embedPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("audio/mpeg")) { uri ->
-        if (uri != null) scope.launch {
-            val text = if (document.synced.isNotEmpty()) LyricsParser.toLrc(document.synced.map {
-                it.copy(timeMs = it.timeMs - offset)
-            }) else document.plain.joinToString("\n")
-            val error = withContext(Dispatchers.IO) { runCatching {
-                AudioTagEditor(context).writeLyricsCopy(song.uri, uri, text)
-            }.exceptionOrNull() }
-            Toast.makeText(context, if (error == null) context.getString(R.string.lrc_embedded)
-                else error.message ?: context.getString(R.string.lrc_embed_failed), Toast.LENGTH_LONG).show()
-        }
-    }
     LaunchedEffect(active, lines.size, autoScroll) {
         if (autoScroll && active in lines.indices && active != listState.firstVisibleItemIndex) {
             listState.animateScrollToItem(active, -180)
@@ -195,38 +165,12 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                     editor = true
                 }) { Icon(Icons.Default.Edit, "Editar letras") }
                 IconButton(onClick = {
-                    exportPicker.launch("${song.title.replace(Regex("[^A-Za-z0-9 _-]"), "").ifBlank { "stone" }}.lrc")
-                }) { Icon(Icons.Default.FileDownload, stringResource(R.string.export_lrc)) }
-                if (song.uri.substringBefore('?').substringAfterLast('.', "").equals("mp3", true)) {
-                    IconButton(onClick = {
-                        embedPicker.launch("${song.title.replace(Regex("[^A-Za-z0-9 _-]"), "").ifBlank { "stone" }}-lyrics.mp3")
-                    }) { Icon(Icons.Default.LibraryMusic, stringResource(R.string.embed_lrc)) }
-                }
-                IconButton(onClick = {
-                    overrides.delete(song.id)
+                    overrides.clear(song.id)
                     overrides.deleteOffset(song.id)
-                    offset = 0L
-                    document = song.lyricsDocument()
+                    document = LyricsDocument(emptyList(), emptyList())
                     val text = document.editableText()
                     draft = TextFieldValue(text, TextRange(text.length))
                 }) { Icon(Icons.Default.Delete, "Borrar letras") }
-            }
-            if (document.synced.isNotEmpty()) {
-                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.lyrics_offset, offset), Modifier.weight(1f),
-                        color = StonePalette.Muted, fontSize = 13.sp)
-                    TextButton(onClick = {
-                        offset = (offset - 250L).coerceIn(-120_000L, 120_000L)
-                        overrides.putOffset(song.id, offset)
-                    }) { Text("−250") }
-                    TextButton(onClick = {
-                        offset = (offset + 250L).coerceIn(-120_000L, 120_000L)
-                        overrides.putOffset(song.id, offset)
-                    }) { Text("+250") }
-                    TextButton(onClick = {
-                        offset = 0L; overrides.deleteOffset(song.id)
-                    }) { Text(stringResource(R.string.reset)) }
-                }
             }
             if (lines.isNotEmpty()) LazyColumn(Modifier.weight(1f), state = listState,
                 contentPadding = PaddingValues(bottom = 220.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {

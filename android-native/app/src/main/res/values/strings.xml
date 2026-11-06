@@ -301,6 +301,7 @@
     <string name="start_transfer">Abrir transferencia</string>
     <string name="transfer_share_address">Dirección para enviar: %1$s</string>
     <string name="transfer_share_code">Código: %1$s</string>
+    <string name="transfer_share_url">URL para entregar: %1$s</string>
     <string name="transfer_waiting">Mantén esta pantalla abierta hasta que el otro teléfono termine.</string>
     <string name="transfer_receive_title">Recibir desde otro teléfono</string>
     <string name="transfer_address">Dirección local del emisor</string>

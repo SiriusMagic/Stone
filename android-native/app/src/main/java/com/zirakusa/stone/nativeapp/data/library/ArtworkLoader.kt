@@ -68,15 +68,11 @@ object ArtworkLoader {
             cache.get(key)?.let { return@withPermit it }
             val retriever = MediaMetadataRetriever()
             val bitmap = try {
-                retriever.setDataSource(context, Uri.parse(uri))
-                retriever.embeddedPicture?.let { bytes ->
-                    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-                    val options = BitmapFactory.Options().apply { inSampleSize = 1 }
-                    while (maxOf(bounds.outWidth, bounds.outHeight) / options.inSampleSize > 256) {
-                        options.inSampleSize *= 2
-                    }
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+                val source = Uri.parse(uri)
+                if (source.scheme == "file") decodeArtworkFile(source.path)
+                else {
+                    retriever.setDataSource(context, source)
+                    retriever.embeddedPicture?.let(::decodeArtworkBytes)
                 }
             } catch (_: RuntimeException) { null }
             finally { retriever.release() }
@@ -84,6 +80,29 @@ object ArtworkLoader {
             if (bitmap != null) cache.put(key, bitmap) else missing.put(key, true)
             bitmap
         }
+    }
+
+    private fun decodeArtworkBytes(bytes: ByteArray): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        val options = BitmapFactory.Options().apply { inSampleSize = 1 }
+        while (maxOf(bounds.outWidth, bounds.outHeight) / options.inSampleSize > 512) {
+            options.inSampleSize *= 2
+        }
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+    }
+
+    private fun decodeArtworkFile(path: String?): Bitmap? {
+        if (path.isNullOrBlank()) return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        val options = BitmapFactory.Options().apply { inSampleSize = 1 }
+        while (maxOf(bounds.outWidth, bounds.outHeight) / options.inSampleSize > 512) {
+            options.inSampleSize *= 2
+        }
+        return BitmapFactory.decodeFile(path, options)
     }
 
     suspend fun loadVideoFrame(context: Context, uri: String, modified: Long): VideoFrame =
