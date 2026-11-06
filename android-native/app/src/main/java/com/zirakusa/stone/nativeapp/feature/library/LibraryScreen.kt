@@ -24,18 +24,19 @@ import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
 import kotlinx.coroutines.delay
 
-private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "sleep")
+private val homeShortcutKeys = listOf("search", "scan", "sort", "sleep")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
 private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
     QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
 private val legacyDefinitions = listOf(
     QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
-    QuickActionDefinition("folder", "Agregar carpeta", "Elegir carpeta multimedia", Icons.Default.Folder, true),
     QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
-    QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
     QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
     QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true)
 )
+
+private fun Song.hasUsableLyrics(): Boolean =
+    lyrics.any { it.isNotBlank() } || syncedLyrics.any { it.text.isNotBlank() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryScreen(state: LibraryState, canPlay: Boolean, onFolder: () -> Unit,
@@ -159,6 +160,12 @@ private val legacyDefinitions = listOf(
             LibrarySort.Duration -> filtered.sortedBy { it.durationMs }
             LibrarySort.Size -> filtered.sortedBy { it.size }
             LibrarySort.Modified -> filtered.sortedBy { it.modifiedMs }
+            LibrarySort.Lyrics -> filtered.sortedWith { first, second ->
+                // Ascending means lyrics available first; reversing the complete result below
+                // gives the user the inverse grouping (songs without lyrics first).
+                val lyricsOrder = second.hasUsableLyrics().compareTo(first.hasUsableLyrics())
+                if (lyricsOrder != 0) lyricsOrder else collator.compare(first.title, second.title)
+            }
             else -> filtered.sortedWith { a, b ->
                 fun key(song: Song) = when (sort) {
                     LibrarySort.Artist -> song.artist
@@ -178,8 +185,8 @@ private val legacyDefinitions = listOf(
             onFolder, scan, { sheet = "downloads" }, { sheet = "sort" }, {
                 onOpenSettings(); onSettingsSheetVisible(true)
             }, onSleep = { homeTool = "sleep" },
-            showSearch = shortcuts["search"] != false, showFolder = shortcuts["folder"] != false,
-            showScan = shortcuts["scan"] != false, showDownloads = shortcuts["downloads"] != false,
+            showSearch = shortcuts["search"] != false, showFolder = false,
+            showScan = shortcuts["scan"] != false, showDownloads = false,
             showSort = shortcuts["sort"] != false, showEqualizer = false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },

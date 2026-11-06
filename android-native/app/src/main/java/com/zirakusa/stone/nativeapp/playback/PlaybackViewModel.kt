@@ -96,8 +96,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
                 if (it.mediaItemCount == 0) restoreQueue(it)
-                equalizer.attach(StonePlaybackService.playbackAudioSessionId)
-                equalizer.configure(audioMode != AudioMode.BATTERY && equalizerEnabled, equalizerValues, audioMode)
+                configureEqualizer(audioMode != AudioMode.BATTERY && equalizerEnabled)
                 publish()
             }.onFailure { mutable.value = PlaybackState(failed = true) }
         }, ContextCompat.getMainExecutor(application))
@@ -144,10 +143,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         settings.setAudioMode(mode.key)
-        when (mode) {
-            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues, mode)
-            AudioMode.BALANCED, AudioMode.HIFI -> equalizer.configure(equalizerEnabled, equalizerValues, mode)
-        }
+        configureEqualizer(mode != AudioMode.BATTERY && equalizerEnabled)
         StonePlaybackService.instance?.applyAudioMode(mode)
         publish()
     }
@@ -157,11 +153,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         hardwareAcceleration = acceleration
         settings.setAudioMode(mode.key)
         settings.setHardwareAcceleration(acceleration.key)
-        when (mode) {
-            AudioMode.BATTERY -> equalizer.configure(false, equalizerValues, mode)
-            AudioMode.BALANCED, AudioMode.HIFI ->
-                equalizer.configure(equalizerEnabled, equalizerValues, mode)
-        }
+        configureEqualizer(mode != AudioMode.BATTERY && equalizerEnabled)
         StonePlaybackService.instance?.applyAudioMode(mode)
         StonePlaybackService.instance?.applyHardwareAcceleration(acceleration)
         publish()
@@ -259,7 +251,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setEqualizerEnabled(value: Boolean) {
         equalizerEnabled = value
         data.put("equalizer-enabled", value)
-        equalizer.configure(value && audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
+        configureEqualizer(value && audioMode != AudioMode.BATTERY); publish()
     }
     fun saveEqualizerProfile(name: String) {
         val clean = name.trim().take(40)
@@ -294,7 +286,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true; equalizerPreset = "Personalizado"
         data.put("equalizer-$index", equalizerValues[index]); data.put("equalizer-enabled", true)
         data.put("equalizer-preset", equalizerPreset)
-        equalizer.configure(audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
+        configureEqualizer(audioMode != AudioMode.BATTERY); publish()
     }
     fun setEqualizerPreset(name: String, values: List<Int>) {
         equalizerPreset = name
@@ -302,7 +294,13 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = true
         data.put("equalizer-enabled", true); data.put("equalizer-preset", name)
         equalizerValues.forEachIndexed { index, value -> data.put("equalizer-$index", value) }
-        equalizer.configure(audioMode != AudioMode.BATTERY, equalizerValues, audioMode); publish()
+        configureEqualizer(audioMode != AudioMode.BATTERY); publish()
+    }
+
+    /** Reconnects lazily because Android may expose the audio session before its effects route. */
+    private fun configureEqualizer(enabled: Boolean) {
+        equalizer.attach(StonePlaybackService.playbackAudioSessionId)
+        equalizer.configure(enabled, equalizerValues, audioMode)
     }
     private fun loadEqualizerProfiles(): Map<String, List<Int>> = runCatching {
         val root = org.json.JSONObject(data.string("equalizer-profiles", "{}"))

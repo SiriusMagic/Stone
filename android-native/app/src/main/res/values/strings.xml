@@ -48,6 +48,7 @@
     <string name="sort_duration">Duración</string>
     <string name="sort_size">Tamaño</string>
     <string name="sort_modified">Modificado</string>
+    <string name="sort_lyrics">Letras</string>
     <string name="ascending">Ascendente</string>
     <string name="descending">Descendente</string>
     <string name="song_count">%1$d canciones</string>

@@ -280,9 +280,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onChange: (String, Boolean) -> Unit) {
     val legacy = listOf(
         QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
-        QuickActionDefinition("folder", "Agregar carpeta", "Elegir carpeta multimedia", Icons.Default.Folder, true),
         QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
-        QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
         QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
         QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true))
     val legacyIds = remember { legacy.map { it.id } }
@@ -315,11 +313,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 store?.setShortcutProfile(id)
                 val enabled = when (id) {
                     "minimal" -> QuickActionRegistry.pinnedIds.toSet()
-                    "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
-                        "folder", "scan", "playlists", "favorites", "history", "shuffle", "repeat")
+                    "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf("scan")
                     "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
                         "audio_mode_battery",
-                        "audio_mode_balanced", "audio_mode_hifi", "hardware_acceleration",
+                        "audio_mode_balanced", "audio_mode_hifi",
                         "diagnostics")
                     "custom" -> items.filter { item ->
                         store?.customShortcutVisible(item.id, visible[item.id] == true)

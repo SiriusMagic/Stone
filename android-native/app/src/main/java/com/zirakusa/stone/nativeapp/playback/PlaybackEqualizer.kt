@@ -14,8 +14,11 @@ class PlaybackEqualizer {
     private var mode = AudioMode.BALANCED
 
     fun attach(nextSessionId: Int) {
-        if (nextSessionId <= 0 || nextSessionId == sessionId) return
-        release()
+        if (nextSessionId <= 0) return
+        // A failed effect construction must remain retryable. Some Android audio routes expose
+        // the session before the effect can be attached (especially after Bluetooth changes).
+        if (nextSessionId == sessionId && effect != null) return
+        if (nextSessionId != sessionId) release()
         sessionId = nextSessionId
         effect = runCatching { Equalizer(0, nextSessionId) }.getOrNull()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
