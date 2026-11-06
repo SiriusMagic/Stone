@@ -275,6 +275,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
     onChange: (String, Boolean) -> Unit) {
     val legacy = listOf(
@@ -283,7 +284,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
         QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
         QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
-        QuickActionDefinition("equalizer", "Ecualizador", "Ajustar sonido", Icons.Default.GraphicEq, true),
         QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true))
     val legacyIds = remember { legacy.map { it.id } }
     val defaultVisibleIds = legacyIds.toSet() + QuickActionRegistry.defaultVisibleIds
@@ -295,30 +295,56 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     var order by remember(store) { mutableStateOf(store?.shortcutOrder(items.map { it.id }) ?: items.map { it.id }) }
     var visible by remember(store) { mutableStateOf(items.associate { it.id to
         (store?.shortcutVisible(it.id, it.id in defaultVisibleIds) ?: (it.id in defaultVisibleIds)) }) }
+    fun preserveCustomVisibility() {
+        visible.forEach { (key, value) -> store?.setCustomShortcutVisible(key, value) }
+    }
+    fun enterCustomProfile() {
+        if (store?.shortcutProfile() != "custom") {
+            preserveCustomVisibility()
+            store?.setShortcutProfile("custom")
+        }
+    }
     Text(stringResource(R.string.home_shortcut_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 10.dp))
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf("minimal" to "Minimalista", "basic" to "Común",
             "audiophile" to "Audiófilo", "custom" to "Personalizado").forEach { (id, label) ->
             FilterChip(selected = store?.shortcutProfile() == id, onClick = {
+                if (id != "custom" && store?.shortcutProfile() == "custom") preserveCustomVisibility()
                 store?.setShortcutProfile(id)
                 val enabled = when (id) {
-                    "minimal" -> setOf("search")
-                    "basic" -> setOf("search", "folder", "scan", "sort", "playlists", "favorites")
-                    "audiophile" -> setOf("search", "equalizer", "audio_mode_battery",
+                    "minimal" -> QuickActionRegistry.pinnedIds.toSet()
+                    "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
+                        "folder", "scan", "playlists", "favorites", "history", "shuffle", "repeat")
+                    "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
+                        "audio_mode_battery",
                         "audio_mode_balanced", "audio_mode_hifi", "hardware_acceleration",
-                        "audio_output", "diagnostics")
-                    else -> visible.filterValues { it }.keys
+                        "diagnostics")
+                    "custom" -> items.filter { item ->
+                        store?.customShortcutVisible(item.id, visible[item.id] == true)
+                            ?: (visible[item.id] == true)
+                    }.map { it.id }.toSet()
+                    else -> emptySet()
                 }
                 visible = visible.mapValues { it.key in enabled }
-                visible.forEach { (key, value) -> store?.setShortcutVisible(key, value); onChange(key, value) }
+                visible.forEach { (key, value) ->
+                    store?.setShortcutVisible(key, value)
+                    if (id == "custom") store?.setCustomShortcutVisible(key, value)
+                    onChange(key, value)
+                }
             }, label = { Text(label) })
         }
     }
     OutlinedButton(onClick = {
+        store?.setShortcutProfile("custom")
         order = items.map { it.id }; store?.setShortcutOrder(order)
         visible = items.associate { it.id to (it.id in defaultVisibleIds) }
-        visible.forEach { (key, value) -> store?.setShortcutVisible(key, value); onChange(key, value) }
+        visible.forEach { (key, value) ->
+            store?.setShortcutVisible(key, value)
+            store?.setCustomShortcutVisible(key, value)
+            onChange(key, value)
+        }
     }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.restore_defaults)) }
     order.forEachIndexed { index, key ->
         val item = items.find { it.id == key } ?: return@forEachIndexed
@@ -329,15 +355,21 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 Text(if (item.available) item.description else "No disponible en esta versión", color = StonePalette.Muted, fontSize = 12.sp)
             }
             IconButton(enabled = index > 0, onClick = {
+                enterCustomProfile()
                 order = order.toMutableList().also { it.add(index - 1, it.removeAt(index)) }
                 store?.setShortcutOrder(order)
             }) { Icon(Icons.Default.KeyboardArrowUp, "Subir") }
             IconButton(enabled = index < order.lastIndex, onClick = {
+                enterCustomProfile()
                 order = order.toMutableList().also { it.add(index + 1, it.removeAt(index)) }
                 store?.setShortcutOrder(order)
             }) { Icon(Icons.Default.KeyboardArrowDown, "Bajar") }
             Switch(checked = visible[key] == true, enabled = item.available, onCheckedChange = { enabled ->
-                store?.setShortcutVisible(key, enabled); visible = visible + (key to enabled); onChange(key, enabled)
+                enterCustomProfile()
+                store?.setCustomShortcutVisible(key, enabled)
+                store?.setShortcutVisible(key, enabled)
+                visible = visible + (key to enabled)
+                onChange(key, enabled)
             })
         }
     }

@@ -98,11 +98,11 @@
     <string name="share_stone">Share Stone</string><string name="privacy_policy">Privacy policy</string>
     <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
     <string name="copyright_stone">© 2026 Stone.</string>
-    <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string><string name="audio_mode_battery">Long battery life</string>
-    <string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">High fidelity</string>
-    <string name="audio_mode_battery_info">Savings/offload depend on the device; policy is experimental.</string>
-    <string name="audio_mode_balanced_info">Standard Media3 playback path.</string>
-    <string name="audio_mode_hifi_info">USB/DAC: capability detection does not guarantee bit-perfect output.</string>
+    <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string><string name="audio_mode_battery">Ultra power saving</string>
+    <string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">Cinema</string>
+    <string name="audio_mode_battery_info">Low power and adaptive acceleration; depends on the device.</string>
+    <string name="audio_mode_balanced_info">Balance between power, stability and quality.</string>
+    <string name="audio_mode_hifi_info">Priority quality and full acceleration when supported by the device.</string>
     <string name="quick_action_activated">%1$s activated</string>
     <string name="quick_action_confirmed">Shortcut executed: %1$s</string>
     <string name="theme_gray">Gray</string><string name="theme_light">Light</string>

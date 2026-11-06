@@ -19,13 +19,12 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
-import com.zirakusa.stone.nativeapp.feature.player.EqualizerSheet
 import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import java.text.Collator
 import kotlinx.coroutines.delay
 
-private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "equalizer", "sleep")
+private val homeShortcutKeys = listOf("search", "folder", "scan", "downloads", "sort", "sleep")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
 private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
     QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
@@ -35,7 +34,6 @@ private val legacyDefinitions = listOf(
     QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
     QuickActionDefinition("downloads", "Descargas", "Abrir descargas", Icons.Default.Download, true),
     QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
-    QuickActionDefinition("equalizer", "Ecualizador", "Ajustar sonido", Icons.Default.GraphicEq, true),
     QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true)
 )
 
@@ -70,7 +68,7 @@ private val legacyDefinitions = listOf(
     val context = LocalContext.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
         val profile = settingsStore?.shortcutProfile() ?: "custom"
-        if (it == "search" && profile != "custom") true
+        if (it in QuickActionRegistry.pinnedIds && profile != "custom") true
         else settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys)
             ?: (it in homeShortcutKeys)
     }) }
@@ -80,7 +78,7 @@ private val legacyDefinitions = listOf(
         val ordered = settingsStore.shortcutOrder(allQuickActionIds)
         val profile = settingsStore.shortcutProfile()
         val profileOrdered = if (profile != "custom") {
-            listOf("search") + ordered.filterNot { it == "search" }
+            QuickActionRegistry.pinnedIds + ordered.filterNot { it in QuickActionRegistry.pinnedIds }
         } else ordered
         profileOrdered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
     }
@@ -131,7 +129,6 @@ private val legacyDefinitions = listOf(
             "scan" -> scan()
             "downloads" -> sheet = "downloads"
             "sort" -> sheet = "sort"
-            "equalizer" -> homeTool = "equalizer"
             "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
             "repeat" -> playbackViewModel?.repeat()
@@ -142,13 +139,10 @@ private val legacyDefinitions = listOf(
                 playbackViewModel?.setPlaybackProfile(AudioMode.BALANCED, HardwareAcceleration.AUTOMATIC)
             }
             "audio_mode_hifi" -> {
-                playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.DECODING)
+                playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.FULL)
             }
             "hardware_acceleration" -> {
                 onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
-            }
-            "audio_output" -> {
-                onOpenSettings(); onSettingsPage("audio-output"); onSettingsSheetVisible(true)
             }
             "diagnostics" -> {
                 onOpenSettings(); onSettingsPage("system-diagnostics"); onSettingsSheetVisible(true)
@@ -183,10 +177,10 @@ private val legacyDefinitions = listOf(
         LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
             onFolder, scan, { sheet = "downloads" }, { sheet = "sort" }, {
                 onOpenSettings(); onSettingsSheetVisible(true)
-            }, onEqualizer = { homeTool = "equalizer" }, onSleep = { homeTool = "sleep" },
+            }, onSleep = { homeTool = "sleep" },
             showSearch = shortcuts["search"] != false, showFolder = shortcuts["folder"] != false,
             showScan = shortcuts["scan"] != false, showDownloads = shortcuts["downloads"] != false,
-            showSort = shortcuts["sort"] != false, showEqualizer = shortcuts["equalizer"] != false,
+            showSort = shortcuts["sort"] != false, showEqualizer = false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
             activeQuickActionIds = highlightedQuickActionIds)
@@ -212,9 +206,6 @@ private val legacyDefinitions = listOf(
         onReceiveTransfer, onStopTransfer) { key, visible ->
         shortcuts = shortcuts + (key to visible)
     }
-    if (homeTool == "equalizer" && playbackViewModel != null && playbackState != null)
-        EqualizerSheet(playbackState, playbackViewModel,
-            song = state.songs.find { it.id == playbackState.currentId }) { homeTool = null }
     if (homeTool == "sleep" && playbackViewModel != null && playbackState != null)
         SleepSheet(playbackState, playbackViewModel) { homeTool = null }
     if (moreQuickActions) ModalBottomSheet(onDismissRequest = { moreQuickActions = false }) {

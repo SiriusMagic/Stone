@@ -45,6 +45,10 @@ class StoneSettingsStore(context: Context) {
         db.setting("home.shortcut.$key", fallback.toString()).toBoolean()
     fun setShortcutVisible(key: String, value: Boolean) =
         db.setSetting("home.shortcut.$key", value.toString())
+    fun customShortcutVisible(key: String, fallback: Boolean = true) =
+        db.setting("home.shortcut.custom.$key", fallback.toString()).toBoolean()
+    fun setCustomShortcutVisible(key: String, value: Boolean) =
+        db.setSetting("home.shortcut.custom.$key", value.toString())
     fun shortcutOrder(defaults: List<String>): List<String> {
         val saved = runCatching { JSONArray(db.setting("home.shortcut.order", "[]")).let { array ->
             List(array.length()) { array.getString(it) }
