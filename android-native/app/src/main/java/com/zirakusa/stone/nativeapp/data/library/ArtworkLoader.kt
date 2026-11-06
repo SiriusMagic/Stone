@@ -87,8 +87,15 @@ object ArtworkLoader {
     }
 
     suspend fun loadVideoFrame(context: Context, uri: String, modified: Long): VideoFrame =
+        loadVideoFrameAt(context, uri, modified, 0L)
+
+    /** Loads a bounded thumbnail at a video position for the seek preview strip. */
+    suspend fun loadVideoFrameAt(context: Context, uri: String, modified: Long,
+        positionMs: Long, maxDimension: Int = 640): VideoFrame =
         withContext(Dispatchers.IO) {
-            val key = "$uri:$modified"
+            val safePosition = positionMs.coerceAtLeast(0L)
+            val safeDimension = maxDimension.coerceIn(96, 640)
+            val key = "$uri:$modified:$safePosition:$safeDimension"
             videoCache.get(key)?.let { return@withContext it }
             slots.withPermit {
                 currentCoroutineContext().ensureActive()
@@ -100,11 +107,12 @@ object ArtworkLoader {
                         ?.toIntOrNull() ?: 0
                     val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
                         ?.toIntOrNull() ?: 0
-                    val bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    val bitmap = retriever.getFrameAtTime(safePosition * 1_000L,
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                         ?.let { source ->
                             val longest = maxOf(source.width, source.height)
-                            if (longest <= 640) source else {
-                                val scale = 640f / longest
+                            if (longest <= safeDimension) source else {
+                                val scale = safeDimension.toFloat() / longest
                                 Bitmap.createScaledBitmap(source, (source.width * scale).toInt(),
                                     (source.height * scale).toInt(), true)
                             }

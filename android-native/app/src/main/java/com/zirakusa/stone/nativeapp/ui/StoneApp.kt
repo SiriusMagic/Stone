@@ -125,7 +125,14 @@ import kotlinx.coroutines.delay
                 onArtist = {
                     artistDestination = player.artist
                     playerOpen = false
-                }, isPictureInPicture = isPictureInPicture)
+                }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
+                    library.audioOnly(song)
+                    val audioQueue = state.songs.map { item ->
+                        if (item.id == song.id) item.copy(isVideo = false) else item
+                    }
+                    playback.play(song.copy(isVideo = false), audioQueue)
+                    playerOpen = true
+                })
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,

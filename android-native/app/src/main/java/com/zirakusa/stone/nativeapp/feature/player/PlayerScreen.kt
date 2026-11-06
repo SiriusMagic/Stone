@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,7 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
@@ -66,6 +73,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +81,8 @@ import kotlin.math.roundToInt
     back: () -> Unit, onHide: (Song) -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
-    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false) {
+    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
+    onAudioOnly: (Song) -> Unit = {}) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var queueVisible by remember { mutableStateOf(false) }
@@ -102,26 +111,11 @@ import kotlin.math.roundToInt
     }
     if (videoFullscreen && song?.isVideo == true) {
         BackHandler { videoFullscreen = false }
-        val controls = rememberVideoControls(state.playing)
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            AndroidView(factory = { context ->
-                PlayerView(context).apply {
-                    useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    player = playback.player()
-                }
-            }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-            Box(Modifier.matchParentSize().pointerInput(Unit) {
-                detectTapGestures(onTap = { controls.toggle() })
+        FullscreenVideoPlayer(song, state, rememberPlayerProgress(state, playback), playback,
+            close = { videoFullscreen = false }, onAudioOnly = {
+                videoFullscreen = false
+                onAudioOnly(it)
             })
-            if (controls.visible) {
-                IconButton(onClick = { videoFullscreen = false }, modifier = Modifier
-                    .align(Alignment.BottomStart).padding(18.dp)
-                    .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
-                    Icon(Icons.Default.FullscreenExit, "Salir de pantalla completa", tint = Color.White)
-                }
-            }
-        }
         return
     }
     val progress = rememberPlayerProgress(state, playback)
@@ -129,15 +123,22 @@ import kotlin.math.roundToInt
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
-            onOptions = { optionsVisible = true }, onEqualizer = { tool = PlayerTool.Equalizer },
-            onQueue = { queueVisible = true }, onFullscreen = { videoFullscreen = true })
+            onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
+            onFullscreen = { videoFullscreen = true }, onAudioOnly = {
+                videoFullscreen = false
+                onAudioOnly(it)
+            })
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             onOptions = { optionsVisible = true }, onLyrics = { lyricsVisible = true },
             onEqualizer = { tool = PlayerTool.Equalizer },
             onQueue = { queueVisible = true })
-    } else if (song?.isVideo == true) PortraitVideoPlayer(state, progress, playback, back,
-        onOptions = { optionsVisible = true }, onFullscreen = { videoFullscreen = true })
+    } else if (song?.isVideo == true) PortraitVideoPlayer(song, state, progress, playback, back,
+        onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
+        onFullscreen = { videoFullscreen = true }, onAudioOnly = {
+            videoFullscreen = false
+            onAudioOnly(it)
+        })
     else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)) {
@@ -305,9 +306,10 @@ private fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
-@Composable private fun PortraitVideoPlayer(state: PlaybackState, progress: Pair<Long, Long>,
-    playback: PlaybackViewModel, back: () -> Unit, onOptions: () -> Unit, onFullscreen: () -> Unit) {
-    val controls = rememberVideoControls(state.playing)
+@Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
+    progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
+    onAudioOnly: (Song) -> Unit) {
+    val controls = rememberVideoControls(song.id, state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
@@ -316,31 +318,75 @@ private fun Context.findActivity(): Activity? = when (this) {
                 player = playback.player()
             }
         }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-        Box(Modifier.matchParentSize().pointerInput(Unit) {
-            detectTapGestures(onTap = { controls.toggle() })
-        })
+        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
         if (controls.visible) {
-            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(onClick = onOptions) { Icon(Icons.Default.Settings, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(34.dp)) }
-                IconButton(onClick = back) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White, modifier = Modifier.size(38.dp)) }
-            }
-            IconButton(onClick = onFullscreen, modifier = Modifier.align(Alignment.Center)) {
-                Icon(Icons.Default.Fullscreen, stringResource(R.string.more_options), tint = Color.White, modifier = Modifier.size(64.dp))
-            }
-            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 28.dp, vertical = 22.dp)) {
-                Text(state.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = close) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White) }
+                Text(song.title, Modifier.weight(1f), color = Color.White, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                PlayerProgress(progress, playback)
-                Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), tint = Color.White, modifier = Modifier.size(52.dp)) }
-                    IconButton(playback::toggle, Modifier.size(72.dp)) {
-                        Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            stringResource(if (state.playing) R.string.pause else R.string.play), tint = Color.White, modifier = Modifier.size(64.dp))
-                    }
-                    IconButton(playback::next) { Icon(Icons.Default.SkipNext, stringResource(R.string.next), tint = Color.White, modifier = Modifier.size(52.dp)) }
+                IconButton(onClick = { onAudioOnly(song) }) {
+                    Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                 }
+            }
+            VideoTransportControls(state, progress, playback, Modifier.align(Alignment.Center))
+            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                .background(Color(0x990D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
+                VideoTimeline(song, progress, playback)
+                VideoActionRow(
+                    onAudioOnly = { onAudioOnly(song) },
+                    onFullscreen = close,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
+    progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
+    onAudioOnly: (Song) -> Unit) {
+    val controls = rememberVideoControls(song.id, state.playing)
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        AndroidView(factory = { context ->
+            PlayerView(context).apply {
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                player = playback.player()
+            }
+        }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
+        if (controls.visible) {
+            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = back) { Icon(Icons.Default.ArrowBack, stringResource(R.string.close_player), tint = Color.White) }
+                Column(Modifier.weight(1f)) {
+                    Text(song.title, color = Color.White, fontWeight = FontWeight.Bold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${song.folder} · ${duration(progress.second)}", color = Color(0xFFCCC8D2),
+                        fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                IconButton(onClick = { onAudioOnly(song) }) {
+                    Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
+                }
+                IconButton(onClick = onOptions) {
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
+                }
+            }
+            VideoTransportControls(state, progress, playback, Modifier.align(Alignment.Center))
+            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                .background(Color(0xAA0D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
+                VideoTimeline(song, progress, playback)
+                VideoActionRow(
+                    onAudioOnly = { onAudioOnly(song) },
+                    onOptions = onOptions,
+                    onQueue = onQueue,
+                    onFullscreen = onFullscreen,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
     }
@@ -348,11 +394,8 @@ private fun Context.findActivity(): Activity? = when (this) {
 
 private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit)
 
-@Composable private fun rememberVideoControls(playing: Boolean): VideoControlsState {
-    var visible by remember { mutableStateOf(true) }
-    LaunchedEffect(playing) {
-        if (!playing) visible = true
-    }
+@Composable private fun rememberVideoControls(songId: String, playing: Boolean): VideoControlsState {
+    var visible by remember(songId) { mutableStateOf(false) }
     LaunchedEffect(visible, playing) {
         if (visible && playing) {
             delay(3_500)
@@ -360,6 +403,68 @@ private data class VideoControlsState(val visible: Boolean, val toggle: () -> Un
         }
     }
     return VideoControlsState(visible) { visible = !visible }
+}
+
+@Composable private fun VideoTransportControls(state: PlaybackState, progress: Pair<Long, Long>,
+    playback: PlaybackViewModel, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        IconButton(onClick = { seekVideoBy(playback, progress, -10_000L) }) {
+            Icon(Icons.Default.Replay10, "Retroceder 10 segundos", tint = Color.White, modifier = Modifier.size(32.dp))
+        }
+        IconButton(onClick = playback::previous) {
+            Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), tint = Color.White, modifier = Modifier.size(34.dp))
+        }
+        FilledIconButton(onClick = playback::toggle, modifier = Modifier.size(68.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = StonePalette.Yellow, contentColor = StonePalette.Background)) {
+            Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                stringResource(if (state.playing) R.string.pause else R.string.play), modifier = Modifier.size(38.dp))
+        }
+        IconButton(onClick = { seekVideoBy(playback, progress, 10_000L) }) {
+            Icon(Icons.Default.Forward10, "Avanzar 10 segundos", tint = Color.White, modifier = Modifier.size(32.dp))
+        }
+        IconButton(onClick = playback::next) {
+            Icon(Icons.Default.SkipNext, stringResource(R.string.next), tint = Color.White, modifier = Modifier.size(34.dp))
+        }
+    }
+}
+
+private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>, deltaMs: Long) {
+    if (progress.second > 0) playback.seek((progress.first + deltaMs).coerceIn(0L, progress.second))
+}
+
+@Composable private fun VideoTimeline(song: Song, progress: Pair<Long, Long>, playback: PlaybackViewModel) {
+    Column(Modifier.fillMaxWidth()) {
+        PlayerProgress(progress, playback)
+        VideoFrameStrip(song, progress, playback, Modifier.fillMaxWidth().padding(top = 2.dp))
+    }
+}
+
+@Composable private fun VideoActionRow(onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
+    modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onAudioOnly) {
+            Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = Color.White)
+        }
+        onOptions?.let { action ->
+            IconButton(onClick = action) {
+                Icon(Icons.Default.Tune, stringResource(R.string.more_options), tint = Color.White)
+            }
+        }
+        onQueue?.let { action ->
+            IconButton(onClick = action) {
+                Icon(Icons.Default.QueueMusic, stringResource(R.string.queue), tint = Color.White)
+            }
+        }
+        onFullscreen?.let { action ->
+            IconButton(onClick = action) {
+                Icon(Icons.Default.Fullscreen, "Pantalla completa", tint = Color.White)
+            }
+        }
+    }
 }
 
 private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
@@ -377,11 +482,200 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
         (blue / count / 255f * darken).toFloat().coerceIn(.035f, .25f))
 }
 
+/**
+ * A bounded, YouTube-like preview strip. Frames are loaded lazily and only while the video
+ * controls are visible; dragging the strip seeks the same player instead of creating a second
+ * player or decoder.
+ */
+@Composable private fun VideoFrameStrip(song: Song, progress: Pair<Long, Long>,
+    playback: PlaybackViewModel, modifier: Modifier) {
+    val durationMs = progress.second
+    if (durationMs <= 0L) return
+    val context = LocalContext.current
+    val framePositions = remember(song.id, song.modifiedMs, durationMs) {
+        List(8) { index -> durationMs * index / 7L }
+    }
+    var frames by remember(song.id, song.modifiedMs, durationMs) {
+        mutableStateOf(List(framePositions.size) { ArtworkLoader.VideoFrame(null, 0, 0) })
+    }
+    LaunchedEffect(song.id, song.modifiedMs, durationMs) {
+        framePositions.forEachIndexed { index, positionMs ->
+            val frame = ArtworkLoader.loadVideoFrameAt(
+                context.applicationContext, song.uri, song.modifiedMs, positionMs, maxDimension = 180
+            )
+            frames = frames.toMutableList().also { it[index] = frame }
+        }
+    }
+    val currentFraction = (progress.first.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+    Box(
+        modifier.height(54.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, StonePalette.Yellow.copy(alpha = .65f), RoundedCornerShape(8.dp))
+            .pointerInput(song.id, durationMs) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var moved = false
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull() ?: break
+                        if (!change.pressed) break
+                        val horizontal = change.position.x - down.position.x
+                        if (!moved && abs(horizontal) > viewConfiguration.touchSlop) moved = true
+                        if (moved) {
+                            val fraction = (change.position.x / size.width.toFloat().coerceAtLeast(1f))
+                                .coerceIn(0f, 1f)
+                            // The thumbnail strip is deliberately a light-weight seek affordance;
+                            // the actual seek is still performed by the shared PlaybackViewModel.
+                            // The gesture is consumed only after it becomes a drag.
+                            change.consume()
+                            playback.seek((durationMs * fraction).toLong().coerceIn(0L, durationMs))
+                        }
+                    }
+                }
+            }
+    ) {
+        Row(Modifier.fillMaxSize()) {
+            frames.forEachIndexed { index, frame ->
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    frame.bitmap?.let { bitmap ->
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } ?: Box(Modifier.fillMaxSize().background(Color(0x4417171B)))
+                    val start = index.toFloat() / framePositions.size
+                    val end = (index + 1).toFloat() / framePositions.size
+                    if (currentFraction in start..end ||
+                        (index == framePositions.lastIndex && currentFraction == 1f)) {
+                        Box(Modifier.fillMaxHeight().width(2.dp)
+                            .background(StonePalette.Yellow).align(Alignment.CenterStart))
+                    }
+                    Box(Modifier.fillMaxHeight().width(.5.dp)
+                        .background(Color(0x553A353D)).align(Alignment.CenterEnd))
+                }
+            }
+        }
+    }
+}
+
+private enum class VideoAdjustmentSide { Brightness, Volume }
+private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Float)
+
+/** Handles vertical swipe adjustments without changing system brightness or requiring a sensor. */
+@Composable private fun VideoGestureOverlay(state: PlaybackState, playback: PlaybackViewModel,
+    modifier: Modifier, onTap: () -> Unit) {
+    val context = LocalContext.current
+    var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
+    var volume by remember { mutableStateOf(state.volumePercent.toFloat()) }
+    var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
+    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat() }
+    LaunchedEffect(adjustment) {
+        if (adjustment != null) {
+            delay(850)
+            adjustment = null
+        }
+    }
+    val currentTap = rememberUpdatedState(onTap)
+    val currentAdjustment = rememberUpdatedState(newValue = { leftSide: Boolean, delta: Float ->
+        if (leftSide) {
+            brightness = (brightness + delta).coerceIn(.02f, 1f)
+            setWindowBrightness(context, brightness)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness)
+        } else {
+            volume = (volume + delta * 300f).coerceIn(0f, 300f)
+            StonePlaybackService.setVolumePercent(volume.roundToInt(), showOverlay = false)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 300f)
+        }
+    })
+    Box(modifier.pointerInput(Unit) {
+        detectVideoGestures(
+            onTap = { currentTap.value() },
+            onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) }
+        )
+    }) {
+        adjustment?.let { VideoAdjustmentIndicator(it, Modifier.fillMaxSize()) }
+    }
+}
+
+@Composable private fun VideoAdjustmentIndicator(adjustment: VideoAdjustment, modifier: Modifier) {
+    val left = adjustment.side == VideoAdjustmentSide.Brightness
+    Box(
+        modifier = modifier.padding(horizontal = 18.dp),
+        contentAlignment = if (left) Alignment.CenterStart else Alignment.CenterEnd
+    ) {
+        Column(
+            modifier = Modifier.width(52.dp).height(176.dp)
+                .background(Color(0xCC17151B), RoundedCornerShape(26.dp))
+                .border(1.dp, StonePalette.Yellow.copy(alpha = .55f), RoundedCornerShape(26.dp))
+                .padding(vertical = 14.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                if (left) Icons.Default.WbSunny else Icons.Default.VolumeUp,
+                contentDescription = if (left) "Brillo" else "Volumen",
+                tint = StonePalette.Yellow,
+                modifier = Modifier.size(20.dp)
+            )
+            Box(Modifier.weight(1f).width(7.dp).clip(RoundedCornerShape(4.dp))
+                .background(Color(0x663A353D))) {
+                Box(Modifier.fillMaxWidth().fillMaxHeight(adjustment.value.coerceIn(0f, 1f))
+                    .align(Alignment.BottomCenter).background(StonePalette.Yellow))
+            }
+            Text("${(adjustment.value * 100).roundToInt()}%", color = Color.White,
+                fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
+    onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var totalX = 0f
+        var totalY = 0f
+        var moved = false
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull() ?: break
+            if (!change.pressed) break
+            val delta = change.positionChange()
+            totalX += delta.x
+            totalY += delta.y
+            if (!moved && maxOf(abs(totalX), abs(totalY)) > viewConfiguration.touchSlop) moved = true
+            if (moved) {
+                if (abs(totalY) >= abs(totalX)) {
+                    val normalized = (-delta.y / size.height.toFloat().coerceAtLeast(1f))
+                        .coerceIn(-.12f, .12f)
+                    onVerticalChange(down.position.x < size.width / 2f, normalized)
+                }
+                change.consume()
+            }
+        }
+        if (!moved) onTap()
+    }
+}
+
+private fun currentWindowBrightness(context: Context): Float {
+    val value = context.findActivity()?.window?.attributes?.screenBrightness ?: -1f
+    return if (value in .02f..1f) value else .5f
+}
+
+private fun setWindowBrightness(context: Context, value: Float) {
+    context.findActivity()?.let { activity ->
+        val attributes = activity.window.attributes
+        attributes.screenBrightness = value.coerceIn(.02f, 1f)
+        activity.window.attributes = attributes
+    }
+}
+
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit,
-    onFullscreen: () -> Unit) {
-    val controls = rememberVideoControls(state.playing)
+    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
+    onAudioOnly: (Song) -> Unit) {
+    val controls = rememberVideoControls(song.id, state.playing)
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1.55f).fillMaxHeight()) {
             AndroidView(factory = { context ->
@@ -392,9 +686,7 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
                 }
             }, update = { it.player = playback.player() },
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
-            Box(Modifier.matchParentSize().pointerInput(Unit) {
-                detectTapGestures(onTap = { controls.toggle() })
-            })
+            VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Box(Modifier.matchParentSize().pointerInput(Unit) {
@@ -406,8 +698,11 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = back) { Icon(Icons.Default.KeyboardArrowDown,
                             stringResource(R.string.close_player), Modifier.size(30.dp)) }
-                        Text(stringResource(R.string.videos), Modifier.weight(1f), textAlign = TextAlign.Center,
+                        Text(song.title, Modifier.weight(1f), textAlign = TextAlign.Center,
                             color = StonePalette.Muted, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = { onAudioOnly(song) }) {
+                            Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
+                        }
                         IconButton(onClick = onOptions) { Icon(Icons.Default.MoreVert,
                             stringResource(R.string.more_options)) }
                     }
@@ -417,26 +712,15 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
                         Text(song.folder, color = StonePalette.Muted, maxLines = 1,
                             overflow = TextOverflow.Ellipsis)
                     }
-                    PlayerProgress(progress, playback)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious,
-                            stringResource(R.string.previous), Modifier.size(38.dp)) }
-                        FilledIconButton(playback::toggle, Modifier.size(54.dp)) {
-                            Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(34.dp))
-                        }
-                        IconButton(playback::next) { Icon(Icons.Default.SkipNext,
-                            stringResource(R.string.next), Modifier.size(38.dp)) }
-                }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = onFullscreen, modifier = Modifier
-                            .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
-                            Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
-                        }
-                        IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
-                        IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
-                    }
+                    VideoTimeline(song, progress, playback)
+                    VideoTransportControls(state, progress, playback,
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                    VideoActionRow(
+                        onAudioOnly = { onAudioOnly(song) },
+                        onOptions = onOptions,
+                        onQueue = onQueue,
+                        onFullscreen = onFullscreen
+                    )
                 }
             }
         }
