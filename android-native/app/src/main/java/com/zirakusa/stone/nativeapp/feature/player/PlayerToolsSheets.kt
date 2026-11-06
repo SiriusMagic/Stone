@@ -391,8 +391,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 @Composable fun TagEditorSheet(song: Song, initialTab: Int = 1, close: () -> Unit, saved: () -> Unit) {
     val context = LocalContext.current; val scope = rememberCoroutineScope(); val editor = remember { AudioTagEditor(context) }
     var tags by remember { mutableStateOf(AudioTags(song.title, song.artist, song.album)) }
-    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 3)) }
-    var technical by remember { mutableStateOf<com.zirakusa.stone.nativeapp.data.library.AudioTechnicalInfo?>(null) }
+    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 1)) }
     var busy by remember { mutableStateOf(true) }; var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(song.id) { tags = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrDefault(tags) }; busy = false }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
@@ -408,7 +407,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             TabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
-                listOf(R.string.cover, R.string.tags, R.string.information, R.string.extras).forEachIndexed { index, label ->
+                listOf(R.string.cover, R.string.tags).forEachIndexed { index, label ->
                     Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(label)) })
                 }
             }
@@ -420,26 +419,8 @@ private fun verticalBandValue(y: Float, height: Float): Int =
                         item { TagField(R.string.artist, tags.artist) { tags = tags.copy(artist = it) } }
                         item { TagField(R.string.album, tags.album) { tags = tags.copy(album = it) } }
                         item { TagField(R.string.genre, tags.genre) { tags = tags.copy(genre = it) } }
-                        item { TagField(R.string.year, tags.year) { tags = tags.copy(year = it) } }
-                        item { TagField(R.string.track_number, tags.trackNumber) { tags = tags.copy(trackNumber = it) } }
-                        item { TagField(R.string.album_artist, tags.albumArtist) { tags = tags.copy(albumArtist = it) } }
-                        item { TagField(R.string.composer, tags.composer) { tags = tags.copy(composer = it) } }
-                        item { TagField(R.string.comment, tags.comment, false) { tags = tags.copy(comment = it) } }
-                        item { TagField(R.string.description, tags.description, false) { tags = tags.copy(description = it) } }
-                        item { TagField(R.string.disc_number, tags.discNumber) { tags = tags.copy(discNumber = it) } }
                         item { Text(stringResource(R.string.mp3_tags_only), color = StonePalette.Muted, fontSize = 12.sp) }
                     }
-                    2 -> item {
-                        LaunchedEffect(song.uri) { technical = withContext(Dispatchers.IO) { runCatching { com.zirakusa.stone.nativeapp.data.library.AudioTechnicalReader.read(context, song.uri) }.getOrNull() } }
-                        technical?.let { info -> listOf(
-                            R.string.file_name to info.name, R.string.format to info.format, R.string.file_size to info.size,
-                            R.string.file_bytes to info.bytes, R.string.duration to info.duration, R.string.bitrate to info.bitrate,
-                            R.string.sample_rate to info.sampleRate, R.string.channels to info.channels, R.string.mime to info.mime,
-                            R.string.location to info.location).forEach { (label, value) ->
-                            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) { Text(stringResource(label), Modifier.weight(1f), fontWeight = FontWeight.Bold); Text(value, color = StonePalette.Muted) }
-                        } } ?: LinearProgressIndicator(Modifier.fillMaxWidth())
-                    }
-                    else -> item { Text(stringResource(R.string.extras_unavailable), color = StonePalette.Muted) }
                 }
             }
         }

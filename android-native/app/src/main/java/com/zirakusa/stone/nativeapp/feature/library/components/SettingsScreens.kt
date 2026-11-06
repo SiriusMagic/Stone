@@ -59,7 +59,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
     onStopTransfer: () -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
-    var shareAppUnavailable by remember { mutableStateOf(false) }
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
@@ -78,18 +77,12 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     })
                 val menuSections = listOf(
                     SettingsMenuSection(R.string.settings_section_library, listOf(
-                        SettingsMenuItem(Icons.Default.Folder, stringResource(R.string.settings_stone_folder), "",
-                            "biblioteca carpeta multimedia almacenamiento", { onClose(); onFolder() }),
                         SettingsMenuItem(Icons.Default.Refresh, stringResource(R.string.settings_scan_library), "",
                             "biblioteca escanear actualizar archivos", { onClose(); onScan() }),
-                        SettingsMenuItem(Icons.Default.Search, stringResource(R.string.settings_scan_mode), "",
-                            "biblioteca escaneo automático manual", { onPage("scan-mode") }),
                         SettingsMenuItem(Icons.Default.VisibilityOff, stringResource(R.string.hidden_files), "",
                             "biblioteca ocultos", { onClose(); onLibrarySheet("hidden") }),
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
-                            "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") }),
-                        SettingsMenuItem(Icons.Default.Storage, stringResource(R.string.storage_manager), "",
-                            "biblioteca almacenamiento espacio duplicados", { onPage("storage") })
+                            "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
                     )),
                     SettingsMenuSection(R.string.settings_section_playback, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
@@ -112,16 +105,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             languages.find { it.code == language }?.label.orEmpty(), "personalización idioma lenguaje", { onPage("language") }),
                         SettingsMenuItem(Icons.Default.Apps, stringResource(R.string.settings_home_shortcuts), "",
                             "personalización inicio iconos accesos rápidos barra", { onPage("shortcuts") })
-                    )),
-                    SettingsMenuSection(R.string.settings_section_transfer, listOf(
-                        SettingsMenuItem(Icons.Default.SwapHoriz, stringResource(R.string.transfer_library), "",
-                            "transferencia biblioteca bluetooth wifi local código", { onPage("library-transfer") }),
-                        SettingsMenuItem(Icons.Default.Share, stringResource(R.string.share_app), "",
-                            "transferencia compartir aplicación app", { shareAppUnavailable = true }),
-                        SettingsMenuItem(Icons.Default.Archive, stringResource(R.string.export_musp), "",
-                            "respaldo exportar paquete musp", { onClose(); onExportPackage() }),
-                        SettingsMenuItem(Icons.Default.Unarchive, stringResource(R.string.import_musp), "",
-                            "respaldo importar paquete musp", { onClose(); onImportPackage() })
                     )),
                     SettingsMenuSection(R.string.settings_section_about, listOf(
                         SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback), "",
@@ -183,15 +166,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             }
         }
     }
-    if (shareAppUnavailable) AlertDialog(
-        onDismissRequest = { shareAppUnavailable = false },
-        title = { Text(stringResource(R.string.share_app)) },
-        text = { Text(stringResource(R.string.share_app_unavailable)) },
-        confirmButton = {
-            TextButton(onClick = { shareAppUnavailable = false }) {
-                Text(stringResource(R.string.dismiss))
-            }
-        })
 }
 
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
@@ -333,7 +307,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "minimal" -> QuickActionRegistry.pinnedIds.toSet()
                     "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf("scan")
                     "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
-                        "audio_mode_balanced", "audio_mode_hifi",
+                        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
                         "diagnostics")
                     "custom" -> items.filter { item ->
                         store?.customShortcutVisible(item.id, visible[item.id] == true)
@@ -445,11 +419,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             modifier = Modifier.padding(top = 10.dp))
         SettingsGroup {
             SettingsRow(Icons.Default.ThumbUp, R.string.rate_stone, "") { }
-            SettingsRow(Icons.Default.Share, R.string.share_stone, "") {
-                context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Stone — reproductor de música local")
-                }, context.getString(R.string.share_stone)))
-            }
         }
         SettingsGroup {
             SettingsRow(Icons.Default.Policy, R.string.privacy_policy, "") { }
@@ -566,6 +535,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         else -> Color(0xFF55D6BE)
     }
     val modeLabel = when (mode) {
+        AudioMode.BATTERY -> stringResource(R.string.audio_mode_battery)
         AudioMode.BALANCED -> stringResource(R.string.audio_mode_balanced)
         AudioMode.HIFI -> stringResource(R.string.audio_mode_hifi)
     }
@@ -726,12 +696,14 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
 
 @Composable private fun PlaybackModeRow(mode: AudioMode, open: () -> Unit) {
     val label = stringResource(when (mode) {
+        AudioMode.BATTERY -> R.string.audio_mode_battery
         AudioMode.BALANCED -> R.string.audio_mode_balanced
         AudioMode.HIFI -> R.string.audio_mode_hifi
     })
     Row(Modifier.fillMaxWidth().heightIn(min = 82.dp).clickable(onClick = open),
         verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Tune, null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
+        Icon(if (mode == AudioMode.BATTERY) Icons.Default.BatteryFull else Icons.Default.Tune,
+            null, tint = StonePalette.Yellow, modifier = Modifier.size(26.dp))
         Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
             Text(stringResource(R.string.audio_mode), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Text(label, color = StonePalette.Muted, fontSize = 14.sp)
@@ -746,12 +718,18 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         modifier = Modifier.padding(bottom = 10.dp))
     AudioMode.entries.forEach { mode ->
         val (title, detail, icon) = when (mode) {
+            AudioMode.BATTERY -> Triple(R.string.audio_mode_battery, R.string.audio_mode_battery_info,
+                Icons.Default.BatteryFull)
             AudioMode.BALANCED -> Triple(R.string.audio_mode_balanced, R.string.audio_mode_balanced_info,
                 Icons.Default.Balance)
             AudioMode.HIFI -> Triple(R.string.audio_mode_hifi, R.string.audio_mode_hifi_info,
                 Icons.Default.GraphicEq)
         }
-        Row(Modifier.fillMaxWidth().clickable { playback?.setAudioMode(mode) }
+            Row(Modifier.fillMaxWidth().clickable {
+                if (mode == AudioMode.BATTERY) playback?.setPlaybackProfile(
+                    AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
+                else playback?.setAudioMode(mode)
+            }
             .padding(vertical = 14.dp), verticalAlignment = Alignment.Top) {
             Icon(icon, null, tint = StonePalette.Yellow, modifier = Modifier.size(25.dp))
             Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
@@ -775,7 +753,7 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
             HardwareAcceleration.DISABLED -> Triple(R.string.accel_disabled, R.string.accel_disabled_info, Icons.Default.Block)
             HardwareAcceleration.DECODING -> Triple(R.string.accel_decoding, R.string.accel_decoding_info, Icons.Default.Memory)
             HardwareAcceleration.FULL -> Triple(R.string.accel_full, R.string.accel_full_info, Icons.Default.Speed)
-            HardwareAcceleration.ADAPTIVE -> Triple(R.string.accel_adaptive, R.string.accel_adaptive_info, Icons.Default.Tune)
+            HardwareAcceleration.ADAPTIVE -> Triple(R.string.accel_adaptive, R.string.accel_adaptive_info, Icons.Default.BatteryFull)
         }
         Row(Modifier.fillMaxWidth().clickable { playback?.setHardwareAcceleration(mode) }
             .padding(vertical = 13.dp), verticalAlignment = Alignment.Top) {

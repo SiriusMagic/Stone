@@ -5,6 +5,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -27,6 +28,7 @@ class StoneEcoEngine(context: Context) {
         // We only express the policy; we never claim offload or bit-perfect output here.
         val output = inspectOutput()
         val strategy = when (mode) {
+            AudioMode.BATTERY -> "Ahorro máximo: sin CPU despierta y sin efectos de audio"
             AudioMode.BALANCED -> "Ruta normal de Media3"
             AudioMode.HIFI -> "Fidelidad prioritaria; offload automático si no altera la salida"
         }
@@ -35,6 +37,7 @@ class StoneEcoEngine(context: Context) {
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
             true
         )
+        applyWakePolicy(mode == AudioMode.BATTERY, player)
         mutableDiagnostics.value = Diagnostics(mode, output.first, output.second,
             offloadAvailable = false, strategy = strategy)
     }
@@ -46,10 +49,17 @@ class StoneEcoEngine(context: Context) {
             HardwareAcceleration.DISABLED -> "Ruta convencional solicitada"
             HardwareAcceleration.DECODING -> "Decodificación por hardware preferida cuando existe"
             HardwareAcceleration.FULL -> "Offload solicitado; fallback seguro si no es compatible"
-            HardwareAcceleration.ADAPTIVE -> "Eco Engine prioriza la ruta de menor consumo estable"
+            HardwareAcceleration.ADAPTIVE -> "Ultra ahorro: libera la CPU cuando la salida lo permite"
         }
         // Media3 still decides the real decoder/offload path for each format and output.
+        applyWakePolicy(mode == HardwareAcceleration.ADAPTIVE || current.mode == AudioMode.BATTERY, player)
         mutableDiagnostics.value = current.copy(strategy = strategy)
+    }
+
+    private fun applyWakePolicy(minimizeWakeLock: Boolean, player: Player) {
+        (player as? ExoPlayer)?.let { exo ->
+            runCatching { exo.setWakeMode(if (minimizeWakeLock) C.WAKE_MODE_NONE else C.WAKE_MODE_LOCAL) }
+        }
     }
 
     /** Reads the current route only when a mode is applied or diagnostics are requested. */

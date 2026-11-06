@@ -60,6 +60,7 @@ import kotlinx.coroutines.delay
         }
     }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
+    var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var openCoverEditor by rememberSaveable { mutableStateOf(false) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
@@ -70,7 +71,11 @@ import kotlinx.coroutines.delay
         }
     }
     val playSong: (com.zirakusa.stone.core.Song, List<com.zirakusa.stone.core.Song>) -> Unit = { song, songs ->
+        audioOnlyId = null
         playback.play(song, songs)
+    }
+    val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
+        if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
@@ -119,23 +124,20 @@ import kotlinx.coroutines.delay
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
         if (!isPictureInPicture && !playerOpen) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            state.songs.find { it.id == player.currentId })
+            currentSong)
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
-            if (playerOpen) PlayerScreen(player, state.songs.find { it.id == player.currentId }, playback,
+            if (playerOpen) PlayerScreen(player, currentSong, playback,
                 { playerOpen = false }, library::hide, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f),
                 onArtist = {
                     artistDestination = player.artist
                     playerOpen = false
                 }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
-                    library.audioOnly(song)
-                    val audioQueue = state.songs.map { item ->
-                        if (item.id == song.id) item.copy(isVideo = false) else item
-                    }
-                    playback.play(song.copy(isVideo = false), audioQueue)
+                    audioOnlyId = song.id
+                    playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
                 }, openCoverEditor = openCoverEditor, onCoverEditorConsumed = { openCoverEditor = false })
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
@@ -154,11 +156,8 @@ import kotlinx.coroutines.delay
                 { settingsPage = "wifi-transfer" },
                 onHide = library::hide,
                 onAudioOnly = { song ->
-                    library.audioOnly(song)
-                    val audioQueue = state.songs.map { item ->
-                        if (item.id == song.id) item.copy(isVideo = false) else item
-                    }
-                    playback.play(song.copy(isVideo = false), audioQueue)
+                    audioOnlyId = song.id
+                    playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
                 },
                 transferState = transferState,

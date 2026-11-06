@@ -94,6 +94,7 @@ private fun Song.hasUsableLyrics(): Boolean =
     val playbackState = playbackViewModel?.state?.collectAsState()?.value
     val activeQuickActionIds = setOfNotNull(
         when (playbackState?.audioMode) {
+            AudioMode.BATTERY -> "audio_mode_battery"
             AudioMode.BALANCED -> "audio_mode_balanced"
             AudioMode.HIFI -> "audio_mode_hifi"
             null -> null
@@ -132,13 +133,15 @@ private fun Song.hasUsableLyrics(): Boolean =
             "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
             "repeat" -> playbackViewModel?.repeat()
+            "audio_mode_battery" -> {
+                playbackViewModel?.setPlaybackProfile(AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
+            }
             "audio_mode_balanced" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.BALANCED, HardwareAcceleration.AUTOMATIC)
             }
             "audio_mode_hifi" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.FULL)
             }
-            "cover_editor" -> onOpenCoverEditor()
             "hardware_acceleration" -> {
                 onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
             }
@@ -150,13 +153,15 @@ private fun Song.hasUsableLyrics(): Boolean =
         }
         moreQuickActions = false
     }
-    val songs = remember(state.songs, query, sort, descending) {
+    val songs = remember(state.songs, state.playCounts, query, sort, descending) {
         val collator = Collator.getInstance()
         val filtered = state.songs.filter { it.matches(query) }
         val ordered = when (sort) {
             LibrarySort.Duration -> filtered.sortedBy { it.durationMs }
             LibrarySort.Size -> filtered.sortedBy { it.size }
-            LibrarySort.Modified -> filtered.sortedBy { it.modifiedMs }
+            LibrarySort.MostPlayed -> filtered.sortedWith(
+                compareByDescending<Song> { state.playCounts[it.id] ?: 0 }
+                    .thenBy { it.title.lowercase() })
             LibrarySort.Lyrics -> filtered.sortedWith { first, second ->
                 // Ascending means lyrics available first; reversing the complete result below
                 // gives the user the inverse grouping (songs without lyrics first).

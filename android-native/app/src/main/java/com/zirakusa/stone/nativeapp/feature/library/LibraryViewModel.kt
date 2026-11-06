@@ -79,11 +79,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             deletedSongs = listOf(song) + it.deletedSongs) }
     }
 
-    fun audioOnly(song: Song) {
-        repository.audioOnly(song)
-        mutable.update { it.copy(songs = it.songs.map { item -> if (item.id == song.id) item.copy(isVideo = false) else item }) }
-    }
-
     fun restoreHidden(song: Song) { repository.restoreHidden(song); mutable.update {
         it.copy(songs = (it.songs + song).distinctBy { item -> item.id }, hiddenSongs = it.hiddenSongs - song) } }
     fun restoreDeleted(song: Song) { repository.restoreDeleted(song); mutable.update {

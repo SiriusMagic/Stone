@@ -17,7 +17,7 @@ import com.zirakusa.stone.core.Song
 
 enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.string.artists),
     Album(R.string.albums), Duration(R.string.sort_duration), Size(R.string.sort_size),
-    Modified(R.string.sort_modified), Lyrics(R.string.sort_lyrics) }
+    MostPlayed(R.string.sort_most_played), Lyrics(R.string.sort_lyrics) }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibrarySheets(sheet: String?, sort: LibrarySort, descending: Boolean,

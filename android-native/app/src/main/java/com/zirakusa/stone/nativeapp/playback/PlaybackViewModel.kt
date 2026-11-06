@@ -26,7 +26,9 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
-enum class AudioMode(val key: String) { BALANCED("balanced"), HIFI("hifi") }
+enum class AudioMode(val key: String) {
+    BATTERY("battery"), BALANCED("balanced"), HIFI("hifi")
+}
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
 }
@@ -146,8 +148,15 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         settings.setAudioMode(mode.key)
+        if (mode == AudioMode.BATTERY) {
+            hardwareAcceleration = HardwareAcceleration.ADAPTIVE
+            settings.setHardwareAcceleration(hardwareAcceleration.key)
+        }
         configureEqualizer(equalizerEnabled)
         StonePlaybackService.instance?.applyAudioMode(mode)
+        if (mode == AudioMode.BATTERY) {
+            StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
+        }
         publish()
     }
     /** Applies a user-facing playback profile, including its hardware acceleration policy. */
@@ -313,7 +322,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     /** Reconnects lazily because Android may expose the audio session before its effects route. */
     private fun configureEqualizer(enabled: Boolean) {
         equalizer.attach(StonePlaybackService.playbackAudioSessionId)
-        equalizer.configure(enabled, equalizerValues)
+        // The battery profile keeps the user's EQ values, but suspends the effect while active.
+        equalizer.configure(enabled && audioMode != AudioMode.BATTERY, equalizerValues)
     }
     private fun loadEqualizerProfiles(): Map<String, List<Int>> = runCatching {
         val root = org.json.JSONObject(data.string("equalizer-profiles", "{}"))

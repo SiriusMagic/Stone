@@ -14,22 +14,22 @@ object QuickActionRegistry {
 
     /** Actions that have a real destination or operation in the current app. */
     private val available = setOf(
-        "audio_mode_balanced", "audio_mode_hifi", "cover_editor", "diagnostics"
+        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi", "diagnostics"
     )
 
     /** Default playback shortcuts; search and legacy actions are added by LibraryScreen. */
     val preferredIds = listOf(
-        "audio_mode_balanced", "audio_mode_hifi", "cover_editor"
+        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi"
     )
     val defaultVisibleIds = preferredIds.toSet()
 
     val definitions = listOf(
+        QuickActionDefinition("audio_mode_battery", "Ahorro de batería",
+            "Menor consumo y efectos reducidos", Icons.Default.BatteryFull, true),
         QuickActionDefinition("audio_mode_balanced", "Balanceado",
             "Ruta automática y equilibrio de calidad", Icons.Default.Balance, true),
         QuickActionDefinition("audio_mode_hifi", "Cine",
             "Calidad prioritaria y aceleración completa", Icons.Default.GraphicEq, true),
-        QuickActionDefinition("cover_editor", "Editor de portadas",
-            "Ver la portada de la canción actual", Icons.Default.Image, true),
         QuickActionDefinition("diagnostics", "Diagnóstico de rendimiento", "CPU, RAM y audio", Icons.Default.Memory, true),
     )
     val operational = definitions.filter { it.available && it.id in available }

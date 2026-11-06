@@ -21,7 +21,7 @@
     <string name="no_songs">No songs yet</string><string name="songs_not_found">Can’t find your songs?</string>
     <string name="videos">Videos</string><string name="playlists">Playlists</string><string name="downloads">Downloads</string>
     <string name="sort">Sort</string><string name="settings">Settings</string><string name="sort_title">Title (A-Z)</string>
-    <string name="sort_duration">Duration</string><string name="sort_size">Size</string><string name="sort_modified">Modified</string><string name="ascending">Ascending</string><string name="descending">Descending</string>
+    <string name="sort_duration">Duration</string><string name="sort_size">Size</string><string name="sort_most_played">Most played</string><string name="ascending">Ascending</string><string name="descending">Descending</string>
     <string name="song_count">%1$d songs</string><string name="downloads_pending">Downloads are not available in this preview yet.</string>
     <string name="videos_pending">Videos are not available in this preview yet.</string><string name="playlists_pending">Playlists are not available in this preview yet.</string>
     <string name="settings_pending">Other Stone settings are still pending in this preview.</string><string name="tap_to_play">Tap to play</string>
@@ -68,10 +68,10 @@
     <string name="hardware_acceleration">Hardware acceleration</string><string name="hardware_acceleration_intro">Availability depends on the device, audio output and file format.</string>
     <string name="accel_automatic">Automatic</string><string name="accel_disabled">Disabled</string>
     <string name="accel_decoding">Decoding acceleration</string><string name="accel_full">Full acceleration</string>
-    <string name="accel_adaptive">Adaptive (Eco Engine)</string>
+    <string name="accel_adaptive">Ultra battery saver</string>
     <string name="accel_automatic_info">Android selects the compatible path.</string><string name="accel_disabled_info">Does not request additional acceleration.</string>
     <string name="accel_decoding_info">Prefers hardware decoding when available.</string><string name="accel_full_info">Prioritizes audio offload when hardware supports it.</string>
-    <string name="accel_adaptive_info">Prioritizes battery life and stability for the format and device.</string>
+    <string name="accel_adaptive_info">Minimizes sustained work and releases the CPU when the audio route allows it, with a safe fallback.</string>
     <string name="hardware_acceleration_note">Hardware decoding and audio offload are not equivalent. Android may use a conventional fallback path.</string>
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
@@ -98,8 +98,8 @@
     <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
     <string name="copyright_stone">© 2026 Stone.</string>
     <string name="audio_mode">Playback mode</string><string name="audio_mode_intro">Choose how you want to listen to your music.</string>
-    <string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">Cinema</string>
-    <string name="audio_mode_balanced_info">Balance between power, stability and quality.</string>
+    <string name="audio_mode_battery">Battery saver</string><string name="audio_mode_balanced">Balanced</string><string name="audio_mode_hifi">Cinema</string>
+    <string name="audio_mode_battery_info">Reduces processor work and suspends audio effects while active to prioritize battery life.</string><string name="audio_mode_balanced_info">Balance between power, stability and quality.</string>
     <string name="audio_mode_hifi_info">Priority quality and full acceleration when supported by the device.</string>
     <string name="quick_action_activated">%1$s activated</string>
     <string name="quick_action_confirmed">Shortcut executed: %1$s</string>

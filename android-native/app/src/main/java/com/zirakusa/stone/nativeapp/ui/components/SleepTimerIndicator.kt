@@ -56,7 +56,7 @@ fun SleepTimerIndicator(
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(if (showLabel) 30.dp else 44.dp), contentAlignment = Alignment.Center) {
             AnimatedContent(
                 targetState = daylight,
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
@@ -66,7 +66,7 @@ fun SleepTimerIndicator(
                     if (isDay) Icons.Default.WbSunny else Icons.Default.NightlightRound,
                     stringResource(R.string.sleep_timer_active),
                     tint = StonePalette.Yellow,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(if (showLabel) 20.dp else 24.dp)
                 )
             }
         }

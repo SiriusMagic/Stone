@@ -143,15 +143,15 @@ import kotlin.math.roundToInt
             IconButton(onClick = back, Modifier.align(Alignment.CenterStart)) {
                 Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.close_player), Modifier.size(36.dp))
             }
-            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 52.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.player_now), color = Color(0xFF8A848F), fontSize = 12.sp,
                     letterSpacing = 1.5.sp)
                 Text(state.artist.uppercase(), fontWeight = FontWeight.Bold, maxLines = 1,
                     overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
-            }
-            SleepTimerIndicator(state.sleepMinutes, Modifier.align(Alignment.CenterEnd),
-                endAtMillis = state.sleepEndAtMs) {
-                tool = PlayerTool.Sleep
+                if (state.sleepMinutes > 0) SleepTimerIndicator(state.sleepMinutes,
+                    Modifier.height(30.dp), endAtMillis = state.sleepEndAtMs,
+                    onClick = { tool = PlayerTool.Sleep })
             }
         }
         if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -302,7 +302,8 @@ private fun Context.findActivity(): Activity? = when (this) {
                 IconButton(onClick = close) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White) }
                 Text(song.title, Modifier.weight(1f), color = Color.White, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
+                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
+                    showLabel = false)
                 IconButton(onClick = { onAudioOnly(song) }) {
                     Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                 }
@@ -346,7 +347,8 @@ private fun Context.findActivity(): Activity? = when (this) {
                     Text("${song.folder} · ${duration(progress.second)}", color = Color(0xFFCCC8D2),
                         fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
+                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
+                    showLabel = false)
                 IconButton(onClick = { onAudioOnly(song) }) {
                     Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                 }
@@ -554,9 +556,9 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
     modifier: Modifier, onTap: () -> Unit) {
     val context = LocalContext.current
     var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
-    var volume by remember { mutableStateOf(state.volumePercent.toFloat().coerceIn(0f, 100f)) }
+    var volume by remember { mutableStateOf(state.volumePercent.toFloat().coerceIn(0f, 300f)) }
     var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
-    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat().coerceIn(0f, 100f) }
+    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat().coerceIn(0f, 300f) }
     LaunchedEffect(adjustment) {
         if (adjustment != null) {
             delay(850)
@@ -570,9 +572,9 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
             setWindowBrightness(context, brightness)
             adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness)
         } else {
-            volume = (volume + delta * 100f).coerceIn(0f, 100f)
+            volume = (volume + delta * 300f).coerceIn(0f, 300f)
             StonePlaybackService.setVolumePercent(volume.roundToInt(), showOverlay = false)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 100f)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 300f)
         }
     })
     Box(modifier.pointerInput(Unit) {
@@ -610,7 +612,8 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
                 Box(Modifier.fillMaxWidth().fillMaxHeight(adjustment.value.coerceIn(0f, 1f))
                     .align(Alignment.BottomCenter).background(StonePalette.Yellow))
             }
-            Text("${(adjustment.value * 100).roundToInt()}%", color = Color.White,
+            val percentage = if (left) adjustment.value * 100f else adjustment.value * 300f
+            Text("${percentage.roundToInt()}%", color = Color.White,
                 fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
     }
@@ -686,7 +689,8 @@ private fun setWindowBrightness(context: Context, value: Float) {
                             stringResource(R.string.close_player), Modifier.size(30.dp)) }
                         Text(song.title, Modifier.weight(1f), textAlign = TextAlign.Center,
                             color = StonePalette.Muted, fontWeight = FontWeight.Bold)
-                        SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs)
+                        SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
+                            showLabel = false)
                         IconButton(onClick = { onAudioOnly(song) }) {
                             Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
                         }

@@ -33,9 +33,11 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
-    val hasVideoSource = song?.isVideo == true || song?.uri?.substringBefore('?')?.substringAfterLast('.')?.lowercase() in setOf("mp4", "mkv", "mov", "webm")
+    // The transient "solo audio" action must not make a video look like a video again
+    // merely because its file extension is still .mp4/.mkv.
+    val hasVideoSource = song?.isVideo == true
     LaunchedEffect(song?.uri, song?.modifiedMs, hasVideoSource) {
-        videoFrame = if (hasVideoSource && song != null) ArtworkLoader.loadVideoFrame(context, song.uri, song.modifiedMs) else null
+        videoFrame = if (hasVideoSource) ArtworkLoader.loadVideoFrame(context, song!!.uri, song.modifiedMs) else null
     }
     Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp).clickable(onClick = open),
         shape = RoundedCornerShape(24.dp), color = StonePalette.MiniBackground,

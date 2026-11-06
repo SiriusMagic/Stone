@@ -47,7 +47,7 @@
     <string name="sort_title">Título (A-Z)</string>
     <string name="sort_duration">Duración</string>
     <string name="sort_size">Tamaño</string>
-    <string name="sort_modified">Modificado</string>
+    <string name="sort_most_played">Más escuchado</string>
     <string name="sort_lyrics">Letras</string>
     <string name="ascending">Ascendente</string>
     <string name="descending">Descendente</string>
@@ -203,12 +203,12 @@
     <string name="hardware_acceleration_intro">La disponibilidad depende del dispositivo, la salida de audio y el formato.</string>
     <string name="accel_automatic">Automático</string><string name="accel_disabled">Deshabilitado</string>
     <string name="accel_decoding">Aceleración de decodificación</string><string name="accel_full">Aceleración completa</string>
-    <string name="accel_adaptive">Adaptativo (Eco Engine)</string>
+    <string name="accel_adaptive">Ultra ahorro de batería</string>
     <string name="accel_automatic_info">Android selecciona la ruta compatible.</string>
     <string name="accel_disabled_info">No solicita aceleración adicional.</string>
     <string name="accel_decoding_info">Prefiere decodificación por hardware cuando está disponible.</string>
     <string name="accel_full_info">Prioriza el offload de audio cuando el hardware es compatible.</string>
-    <string name="accel_adaptive_info">Prioriza autonomía y estabilidad según el formato y el dispositivo.</string>
+    <string name="accel_adaptive_info">Reduce al máximo el trabajo sostenido: libera la CPU cuando la salida de audio lo permite y mantiene un fallback seguro.</string>
     <string name="hardware_acceleration_note">La aceleración de decodificación y el audio offload no son equivalentes. Android puede usar una ruta convencional como fallback.</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_language">Idioma</string>
@@ -248,8 +248,10 @@
     <string name="diagnostics_limitations">La latencia física, el consumo exacto en mAh y algunas propiedades del dispositivo no están disponibles mediante APIs universales de Android. No se interpretan como mediciones reales.</string>
     <string name="export_diagnostics">Compartir informe JSON</string>
     <string name="audio_mode_intro">Elige cómo quieres escuchar tu música.</string>
+    <string name="audio_mode_battery">Ahorro de batería</string>
     <string name="audio_mode_balanced">Balanceado</string>
     <string name="audio_mode_hifi">Cine</string>
+    <string name="audio_mode_battery_info">Reduce el trabajo del procesador y suspende los efectos de audio mientras este modo está activo para priorizar la autonomía.</string>
     <string name="audio_mode_balanced_info">Equilibrio entre consumo, estabilidad y calidad.</string>
     <string name="audio_mode_hifi_info">Calidad prioritaria y aceleración completa cuando el dispositivo lo permite.</string>
     <string name="quick_action_activated">%1$s activado</string>
