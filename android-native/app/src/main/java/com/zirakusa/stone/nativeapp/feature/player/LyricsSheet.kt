@@ -1,8 +1,10 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
-import android.content.Intent
 import android.net.Uri
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -24,12 +26,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.zirakusa.stone.core.LyricLine
 import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
@@ -44,6 +48,30 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONTokener
+
+private const val copySelectionScript = """
+    (function() {
+        var selected = window.getSelection ? window.getSelection().toString().trim() : '';
+        if (selected) return selected;
+        var candidates = Array.from(document.querySelectorAll('[data-attrid], [aria-label]'))
+            .filter(function(element) {
+                var key = ((element.getAttribute('data-attrid') || '') + ' ' +
+                    (element.getAttribute('aria-label') || '')).toLowerCase();
+                var text = (element.innerText || '').trim();
+                return (key.indexOf('lyrics') >= 0 || key.indexOf('letra') >= 0) &&
+                    text.split('\n').length > 3;
+            })
+            .sort(function(a, b) {
+                return (b.innerText || '').length - (a.innerText || '').length;
+            });
+        return candidates.length ? candidates[0].innerText.trim() : '';
+    })();
+"""
+
+private fun decodeJavascriptText(raw: String): String = runCatching {
+    JSONTokener(raw).nextValue()?.toString().orEmpty()
+}.getOrDefault("")
 
 private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     LyricsParser.toLrc(synced)
@@ -59,6 +87,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     val overrides = remember { LyricsOverrides(context.applicationContext) }
     val scope = rememberCoroutineScope()
     var editor by remember { mutableStateOf(false) }
+    var browserVisible by remember { mutableStateOf(false) }
     var autoScroll by remember { mutableStateOf(true) }
     var offset by remember(song.id) { mutableLongStateOf(overrides.offset(song.id)) }
     var document by remember(song.id) {
@@ -101,9 +130,14 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
             listState.animateScrollToItem(active, -180)
         }
     }
+    BackHandler(enabled = browserVisible) { browserVisible = false }
 
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF17151B),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF3A353D)) }) {
+        if (browserVisible) {
+            LyricsSearchBrowser(song, onClose = { browserVisible = false })
+            return@ModalBottomSheet
+        }
         if (editor) {
             Column(Modifier.fillMaxSize().padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -221,14 +255,82 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedIconButton(onClick = { editor = true }, Modifier.size(62.dp)) { Icon(Icons.Default.Add, stringResource(R.string.lyrics_add)) }
                     FilledIconButton(onClick = {
-                        val query = Uri.encode("${song.title} ${song.artist} lyrics")
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=$query")))
+                        browserVisible = true
                     }, Modifier.size(62.dp), colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = StonePalette.Yellow, contentColor = StonePalette.Background)) {
                         Icon(Icons.Default.Search, stringResource(R.string.search_lyrics))
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable private fun LyricsSearchBrowser(song: Song, onClose: () -> Unit) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+    val searchUrl = remember(song.id, song.title, song.artist) {
+        val query = Uri.encode("Letras ${song.title} - ${song.artist}")
+        "https://www.google.com/search?q=$query"
+    }
+    var browserView by remember { mutableStateOf<WebView?>(null) }
+    BackHandler {
+        val view = browserView
+        if (view?.canGoBack() == true) {
+            view.goBack()
+        } else {
+            onClose()
+        }
+    }
+    DisposableEffect(browserView) {
+        val view = browserView
+        onDispose {
+            view?.stopLoading()
+            view?.destroy()
+        }
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = {
+                val view = browserView
+                if (view?.canGoBack() == true) view.goBack() else onClose()
+            }) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) }
+            Text(stringResource(R.string.lyrics_browser_title), fontSize = 24.sp,
+                fontWeight = FontWeight.Black)
+        }
+        AndroidView(
+            factory = { webContext ->
+                WebView(webContext).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.loadsImagesAutomatically = true
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+                    webViewClient = WebViewClient()
+                    loadUrl(searchUrl)
+                }.also { browserView = it }
+            },
+            modifier = Modifier.weight(1f).fillMaxWidth()
+        )
+        Text(stringResource(R.string.lyrics_browser_select_hint), color = StonePalette.Muted,
+            fontSize = 12.sp, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
+        Button(enabled = browserView != null, onClick = {
+            browserView?.evaluateJavascript(copySelectionScript) { raw ->
+                val selected = decodeJavascriptText(raw).trim()
+                if (selected.isBlank()) {
+                    Toast.makeText(context, context.getString(R.string.lyrics_select_to_copy),
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    clipboard.setText(AnnotatedString(selected))
+                    Toast.makeText(context, context.getString(R.string.lyrics_copied),
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
+        }, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)) {
+            Icon(Icons.Default.ContentCopy, null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.lyrics_browser_copy))
         }
     }
 }

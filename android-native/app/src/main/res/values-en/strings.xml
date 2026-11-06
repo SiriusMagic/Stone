@@ -29,7 +29,7 @@
     <string name="more_options">More options</string><string name="equalizer">Equalizer</string><string name="lyrics">Lyrics</string><string name="lyrics_badge">LYRICS</string>
     <string name="lyrics_add">Add lyrics</string><string name="lyrics_edit">Edit lyrics</string><string name="lyrics_paste">Paste</string><string name="save">Save</string>
     <string name="lyrics_placeholder">Paste lyrics or LRC content…</string><string name="no_lyrics">No lyrics</string>
-    <string name="search_lyrics">Search lyrics</string><string name="go_to_current_song">Go to current song</string>
+    <string name="search_lyrics">Search lyrics</string><string name="lyrics_browser_title">Search lyrics</string><string name="lyrics_browser_copy">Copy</string><string name="lyrics_browser_select_hint">If they are not detected automatically, select the lyrics on the page, then tap Copy.</string><string name="lyrics_copied">Lyrics copied</string><string name="lyrics_select_to_copy">Select the lyric text first.</string><string name="go_to_current_song">Go to current song</string>
     <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
     <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>

@@ -76,6 +76,11 @@
     <string name="lyrics_placeholder">Pega letras o contenido LRC…</string>
     <string name="no_lyrics">Sin letras</string>
     <string name="search_lyrics">Buscar letras</string>
+    <string name="lyrics_browser_title">Buscar letras</string>
+    <string name="lyrics_browser_copy">Copiar</string>
+    <string name="lyrics_browser_select_hint">Si no se detectan automáticamente, selecciona las letras en la página y pulsa Copiar.</string>
+    <string name="lyrics_copied">Letras copiadas</string>
+    <string name="lyrics_select_to_copy">Selecciona primero el texto de la letra.</string>
     <string name="export_lrc">Exportar LRC</string>
     <string name="embed_lrc">Crear MP3 con letras</string>
     <string name="lrc_embedded">Copia MP3 creada con letras incrustadas</string>
