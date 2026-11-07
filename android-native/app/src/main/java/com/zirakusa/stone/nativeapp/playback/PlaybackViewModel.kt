@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
-enum class AudioMode(val key: String) {
-    BATTERY("battery"), BALANCED("balanced"), HIFI("hifi")
+enum class AudioMode(val key: String, val maxVolumePercent: Int) {
+    BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300)
 }
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
@@ -96,9 +96,9 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 it.addListener(listener)
                 it.setPlaybackSpeed(speed)
                 applyAudioMixing(it, settings.read().playWithOthers)
-                StonePlaybackService.setVolumePercent(volumePercent, showOverlay = false)
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
+                StonePlaybackService.setVolumePercent(volumePercent, showOverlay = false)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 configureEqualizer(equalizerEnabled)
                 publish()
@@ -147,6 +147,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setVolumePercent(value: Int) { StonePlaybackService.setVolumePercent(value) }
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
+        volumePercent = volumePercent.coerceAtMost(mode.maxVolumePercent)
+        data.put("volume-percent", volumePercent)
         settings.setAudioMode(mode.key)
         if (mode == AudioMode.BATTERY) {
             hardwareAcceleration = HardwareAcceleration.ADAPTIVE
@@ -163,6 +165,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setPlaybackProfile(mode: AudioMode, acceleration: HardwareAcceleration) {
         audioMode = mode
         hardwareAcceleration = acceleration
+        volumePercent = volumePercent.coerceAtMost(mode.maxVolumePercent)
+        data.put("volume-percent", volumePercent)
         settings.setAudioMode(mode.key)
         settings.setHardwareAcceleration(acceleration.key)
         configureEqualizer(equalizerEnabled)

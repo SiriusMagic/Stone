@@ -42,7 +42,7 @@ import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
             }
             Slider(value = state.percent.toFloat(), onValueChange = {
                 StonePlaybackService.setVolumePercent(it.toInt())
-            }, valueRange = 0f..300f, modifier = Modifier.fillMaxWidth().height(34.dp),
+            }, valueRange = 0f..state.maxPercent.toFloat(), modifier = Modifier.fillMaxWidth().height(34.dp),
                 colors = SliderDefaults.colors(thumbColor = Color.White,
                     activeTrackColor = Color(0xFFF5C518), inactiveTrackColor = Color(0xFF302C36)))
         }

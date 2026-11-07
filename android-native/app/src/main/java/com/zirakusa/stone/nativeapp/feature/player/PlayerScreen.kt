@@ -19,6 +19,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -91,12 +92,21 @@ import kotlin.math.roundToInt
     var optionsVisible by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf<PlayerTool?>(null) }
     var videoFullscreen by remember { mutableStateOf(false) }
-    val dynamicBackground by produceState(Color(0xFF0D0C11), song?.uri, song?.modifiedMs) {
+    val dynamicBackground by produceState(
+        Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
+    ) {
         value = withContext(Dispatchers.IO) {
-            song?.uri?.let { uri -> ArtworkLoader.load(context.applicationContext, uri, song.modifiedMs) }
-                ?.let(::coverBackgroundColor) ?: Color(0xFF0D0C11)
+            val current = song ?: return@withContext Color(0xFF0D0C11)
+            val artwork = ArtworkLoader.load(context.applicationContext,
+                current.artworkSource, current.modifiedMs)
+                ?: if (current.isVideo) ArtworkLoader.loadVideoFrame(
+                    context.applicationContext, current.uri, current.modifiedMs
+                ).bitmap else null
+            artwork?.let(::coverBackgroundColor) ?: Color(0xFF0D0C11)
         }
     }
+    val animatedBackground by animateColorAsState(dynamicBackground, animationSpec = tween(350),
+        label = "player-background")
     LaunchedEffect(openCoverEditor, song?.id) {
         if (openCoverEditor && song != null) {
             tool = PlayerTool.Cover
@@ -120,7 +130,7 @@ import kotlin.math.roundToInt
     val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
         detectTrackSwipe(playback::previous, playback::next)
     } else Modifier
-    BoxWithConstraints(modifier.fillMaxSize().background(dynamicBackground).then(audioSwipeModifier)) {
+    BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
@@ -554,16 +564,22 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
 }
 
 private enum class VideoAdjustmentSide { Brightness, Volume }
-private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Float)
+private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Float,
+    val maxPercent: Int)
 
 /** Handles vertical brightness/volume adjustments and horizontal track changes. */
 @Composable private fun VideoGestureOverlay(state: PlaybackState, playback: PlaybackViewModel,
     modifier: Modifier, onTap: () -> Unit, onPrevious: () -> Unit, onNext: () -> Unit) {
     val context = LocalContext.current
     var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
-    var volume by remember { mutableStateOf(state.volumePercent.toFloat().coerceIn(0f, 300f)) }
+    val maxVolumePercent = state.audioMode.maxVolumePercent
+    var volume by remember { mutableStateOf(
+        state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
+    ) }
     var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
-    LaunchedEffect(state.volumePercent) { volume = state.volumePercent.toFloat().coerceIn(0f, 300f) }
+    LaunchedEffect(state.volumePercent, maxVolumePercent) {
+        volume = state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
+    }
     LaunchedEffect(adjustment) {
         if (adjustment != null) {
             delay(850)
@@ -575,11 +591,12 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
         if (leftSide) {
             brightness = (brightness + delta).coerceIn(.02f, 1f)
             setWindowBrightness(context, brightness)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness, 100)
         } else {
-            volume = (volume + delta * 300f).coerceIn(0f, 300f)
+            volume = (volume + delta * maxVolumePercent).coerceIn(0f, maxVolumePercent.toFloat())
             StonePlaybackService.setVolumePercent(volume.roundToInt(), showOverlay = false)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume, volume / 300f)
+            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume,
+                volume / maxVolumePercent.toFloat(), maxVolumePercent)
         }
     })
     Box(modifier.pointerInput(Unit) {
@@ -620,7 +637,7 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
                 Box(Modifier.fillMaxWidth().fillMaxHeight(adjustment.value.coerceIn(0f, 1f))
                     .align(Alignment.BottomCenter).background(StonePalette.Yellow))
             }
-            val percentage = if (left) adjustment.value * 100f else adjustment.value * 300f
+            val percentage = adjustment.value * adjustment.maxPercent
             Text("${percentage.roundToInt()}%", color = Color.White,
                 fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }

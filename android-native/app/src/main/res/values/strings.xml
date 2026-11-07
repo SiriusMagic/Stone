@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Stone Kotlin · Prueba</string>
+    <string name="app_name">Stone</string>
     <string name="stone">Stone</string>
     <string name="choose_folder">Agregar carpeta</string>
     <string name="refresh">Actualizar</string>

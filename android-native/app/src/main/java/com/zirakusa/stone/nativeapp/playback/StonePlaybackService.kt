@@ -17,19 +17,21 @@ import kotlin.math.roundToInt
 
 /** Sole owner of playback; the UI only connects with a MediaController. */
 class StonePlaybackService : MediaSessionService() {
-    data class VolumeUiState(val percent: Int = 100, val revision: Long = 0, val visible: Boolean = false)
+    data class VolumeUiState(val percent: Int = 100, val revision: Long = 0,
+        val visible: Boolean = false, val maxPercent: Int = AudioMode.BALANCED.maxVolumePercent)
     companion object {
         @Volatile var instance: StonePlaybackService? = null
         @Volatile var playbackAudioSessionId: Int = 0; private set
         @Volatile private var activePlayer: ExoPlayer? = null
         @Volatile private var volumePercent: Int = 100
+        @Volatile private var maxVolumePercent: Int = AudioMode.BALANCED.maxVolumePercent
         @Volatile private var revision: Long = 0
         private var volumeBoost: PlaybackVolumeBoost? = null
         private val mutableVolumeUi = MutableStateFlow(VolumeUiState())
         val volumeUi = mutableVolumeUi.asStateFlow()
 
         fun setVolumePercent(percent: Int, showOverlay: Boolean = true) {
-            volumePercent = percent.coerceIn(0, 300)
+            volumePercent = percent.coerceIn(0, maxVolumePercent)
             instance?.let { service ->
                 val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
@@ -43,7 +45,16 @@ class StonePlaybackService : MediaSessionService() {
             activePlayer?.volume = 1f
             volumeBoost?.setPercent(volumePercent)
             revision++
-            mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay)
+            mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
+        }
+
+        fun setMaxVolumePercent(maxPercent: Int) {
+            maxVolumePercent = maxPercent.coerceIn(100, 300)
+            if (volumePercent > maxVolumePercent) {
+                setVolumePercent(maxVolumePercent, showOverlay = false)
+            } else {
+                mutableVolumeUi.value = mutableVolumeUi.value.copy(maxPercent = maxVolumePercent)
+            }
         }
 
         fun handleVolumeKey(delta: Int): Boolean {
@@ -107,6 +118,7 @@ class StonePlaybackService : MediaSessionService() {
     }
 
     fun applyAudioMode(mode: AudioMode) {
+        setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }
     }
 

@@ -124,7 +124,7 @@ import kotlinx.coroutines.delay
     }
     StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
         if (!isPictureInPicture && !playerOpen) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            currentSong)
+            currentSong, playback::previous, playback::next)
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed

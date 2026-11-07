@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Stone Kotlin · Preview</string><string name="stone">Stone</string>
+    <string name="app_name">Stone</string><string name="stone">Stone</string>
     <string name="choose_folder">Add folder</string><string name="refresh">Refresh</string>
     <string name="search">Search songs, artists, albums…</string><string name="songs">Songs</string>
     <string name="folders">Folders</string><string name="artists">Artists</string><string name="albums">Albums</string>

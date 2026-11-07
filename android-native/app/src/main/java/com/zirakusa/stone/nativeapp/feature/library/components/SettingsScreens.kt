@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.alpha
 import android.content.Intent
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.SleepTimerContent
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.AudioMode
@@ -93,8 +94,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     SettingsMenuSection(R.string.settings_section_library, listOf(
                         SettingsMenuItem(Icons.Default.Refresh, stringResource(R.string.settings_scan_library), "",
                             "biblioteca escanear actualizar archivos", { onClose(); onScan() }),
-                        SettingsMenuItem(Icons.Default.VisibilityOff, stringResource(R.string.hidden_files), "",
-                            "biblioteca ocultos", { onClose(); onLibrarySheet("hidden") }),
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
                             "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
                     )),
@@ -479,7 +478,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             Modifier.size(112.dp), contentScale = ContentScale.Fit)
         Text(stringResource(R.string.stone), fontSize = 24.sp, fontWeight = FontWeight.Black,
             modifier = Modifier.padding(top = 14.dp))
-        Text(stringResource(R.string.version_label, "1.5.0 experimental"), color = StonePalette.Muted,
+        Text(stringResource(R.string.version_label, BuildConfig.VERSION_NAME), color = StonePalette.Muted,
             modifier = Modifier.padding(top = 10.dp))
         SettingsGroup {
             SettingsRow(Icons.Default.ThumbUp, R.string.rate_stone, "") { }

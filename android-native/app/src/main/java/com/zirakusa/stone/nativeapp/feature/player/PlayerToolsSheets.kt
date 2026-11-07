@@ -64,7 +64,6 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
         add(ToolRow(Icons.Default.Speed, R.string.speed, PlayerTool.Speed))
         add(ToolRow(Icons.Default.Notifications, R.string.set_ringtone, PlayerTool.Ringtone))
         add(ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep))
-        add(ToolRow(Icons.Default.VisibilityOff, R.string.hide, PlayerTool.Hide))
         add(ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
     }
     val videoRows = if (song?.isVideo == true) listOf(

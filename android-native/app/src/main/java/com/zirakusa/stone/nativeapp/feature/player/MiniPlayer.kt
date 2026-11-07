@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,6 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,9 +32,10 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import kotlin.math.abs
 
 @Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
-    song: Song? = null) {
+    song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {}) {
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
@@ -39,7 +45,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     LaunchedEffect(song?.uri, song?.modifiedMs, hasVideoSource) {
         videoFrame = if (hasVideoSource) ArtworkLoader.loadVideoFrame(context, song!!.uri, song.modifiedMs) else null
     }
-    Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp).clickable(onClick = open),
+    Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
+        .pointerInput(state.currentId) { detectMiniPlayerSwipe(previous, next) }
+        .clickable(onClick = open),
         shape = RoundedCornerShape(24.dp), color = StonePalette.MiniBackground,
         border = BorderStroke(1.dp, StonePalette.MiniBorder), shadowElevation = 10.dp) {
         Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(10.dp),
@@ -59,6 +67,31 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             StoneIconButton(if (state.playing) StoneGlyph.Pause else StoneGlyph.Play,
                 stringResource(if (state.playing) R.string.pause else R.string.play), toggle,
                 Modifier.clip(CircleShape).border(2.dp, StonePalette.Yellow, CircleShape))
+        }
+    }
+}
+
+private suspend fun PointerInputScope.detectMiniPlayerSwipe(onPrevious: () -> Unit,
+    onNext: () -> Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false)
+        var totalX = 0f
+        var totalY = 0f
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull() ?: break
+            if (!change.pressed || change.isConsumed) break
+            val delta = change.positionChange()
+            totalX += delta.x
+            totalY += delta.y
+            if (maxOf(abs(totalX), abs(totalY)) > viewConfiguration.touchSlop) {
+                if (abs(totalY) > abs(totalX)) break
+                if (abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 48f)) {
+                    change.consume()
+                    if (totalX < 0f) onNext() else onPrevious()
+                    break
+                }
+            }
         }
     }
 }
