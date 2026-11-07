@@ -26,18 +26,19 @@ class StoneEcoEngine(context: Context) {
     fun apply(mode: AudioMode, player: Player) {
         // Media3/Android decide offload support for the actual format and output.
         // We only express the policy; we never claim offload or bit-perfect output here.
-        val output = inspectOutput()
         val strategy = when (mode) {
-            AudioMode.BATTERY -> "Ahorro máximo: sin CPU despierta y sin efectos de audio"
-            AudioMode.BALANCED -> "Ruta normal de Media3"
-            AudioMode.HIFI -> "Fidelidad prioritaria; offload automático si no altera la salida"
+            AudioMode.BATTERY -> "Ahorro máximo: solo altavoz integrado, sin CPU despierta y sin efectos"
+            AudioMode.BALANCED -> "Equilibrado: solo altavoz integrado y ruta eficiente"
+            AudioMode.HIFI -> "Cine: salida del sistema sin forzar; máxima ganancia segura en la ruta activa"
         }
         player.setAudioAttributes(
             androidx.media3.common.AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
             true
         )
+        applyOutputRoute(mode, player)
         applyWakePolicy(mode == AudioMode.BATTERY, player)
+        val output = inspectOutput()
         mutableDiagnostics.value = Diagnostics(mode, output.first, output.second,
             offloadAvailable = false, strategy = strategy)
     }
@@ -60,6 +61,21 @@ class StoneEcoEngine(context: Context) {
         (player as? ExoPlayer)?.let { exo ->
             runCatching { exo.setWakeMode(if (minimizeWakeLock) C.WAKE_MODE_NONE else C.WAKE_MODE_LOCAL) }
         }
+    }
+
+    /**
+     * Android's public API can select one preferred device, but cannot mix the
+     * speaker, earpiece and Bluetooth outputs into one stream. Low-power modes
+     * therefore pin playback to the built-in speaker. Cine releases that pin so
+     * Android can use the active system route without pretending to mix outputs.
+     */
+    private fun applyOutputRoute(mode: AudioMode, player: Player) {
+        val exo = player as? ExoPlayer ?: return
+        val preferred = if (mode == AudioMode.BATTERY || mode == AudioMode.BALANCED) {
+            audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+        } else null
+        runCatching { exo.setPreferredAudioDevice(preferred) }
     }
 
     /** Reads the current route only when a mode is applied or diagnostics are requested. */

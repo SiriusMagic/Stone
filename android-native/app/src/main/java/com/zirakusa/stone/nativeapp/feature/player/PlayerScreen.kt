@@ -117,7 +117,10 @@ import kotlin.math.roundToInt
         return
     }
     val progress = rememberPlayerProgress(state, playback)
-    BoxWithConstraints(modifier.fillMaxSize().background(dynamicBackground)) {
+    val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
+        detectTrackSwipe(playback::previous, playback::next)
+    } else Modifier
+    BoxWithConstraints(modifier.fillMaxSize().background(dynamicBackground).then(audioSwipeModifier)) {
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
@@ -294,7 +297,8 @@ private fun Context.findActivity(): Activity? = when (this) {
                 player = playback.player()
             }
         }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
+        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
+            onPrevious = playback::previous, onNext = playback::next)
         if (controls.visible) {
             Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -335,7 +339,8 @@ private fun Context.findActivity(): Activity? = when (this) {
                 player = playback.player()
             }
         }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
-        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
+        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
+            onPrevious = playback::previous, onNext = playback::next)
         if (controls.visible) {
             Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -551,9 +556,9 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
 private enum class VideoAdjustmentSide { Brightness, Volume }
 private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Float)
 
-/** Handles vertical swipe adjustments without changing system brightness or requiring a sensor. */
+/** Handles vertical brightness/volume adjustments and horizontal track changes. */
 @Composable private fun VideoGestureOverlay(state: PlaybackState, playback: PlaybackViewModel,
-    modifier: Modifier, onTap: () -> Unit) {
+    modifier: Modifier, onTap: () -> Unit, onPrevious: () -> Unit, onNext: () -> Unit) {
     val context = LocalContext.current
     var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
     var volume by remember { mutableStateOf(state.volumePercent.toFloat().coerceIn(0f, 300f)) }
@@ -580,7 +585,10 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
     Box(modifier.pointerInput(Unit) {
         detectVideoGestures(
             onTap = { currentTap.value() },
-            onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) }
+            onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) },
+            onHorizontalSwipe = { deltaX ->
+                if (deltaX < 0f) onNext() else onPrevious()
+            }
         )
     }) {
         adjustment?.let { VideoAdjustmentIndicator(it, Modifier.fillMaxSize()) }
@@ -620,12 +628,14 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
 }
 
 private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
-    onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit) {
+    onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit,
+    onHorizontalSwipe: (Float) -> Unit) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
         var totalY = 0f
         var moved = false
+        var horizontalTriggered = false
         while (true) {
             val event = awaitPointerEvent()
             val change = event.changes.firstOrNull() ?: break
@@ -639,11 +649,41 @@ private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
                     val normalized = (-delta.y / size.height.toFloat().coerceAtLeast(1f))
                         .coerceIn(-.12f, .12f)
                     onVerticalChange(down.position.x < size.width / 2f, normalized)
+                } else if (!horizontalTriggered &&
+                    abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {
+                    horizontalTriggered = true
+                    onHorizontalSwipe(totalX)
                 }
                 change.consume()
             }
         }
         if (!moved) onTap()
+    }
+}
+
+/** Changes tracks only after a deliberate horizontal swipe; vertical gestures are ignored. */
+private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var totalX = 0f
+        var totalY = 0f
+        while (true) {
+            val event = awaitPointerEvent()
+            val change = event.changes.firstOrNull() ?: break
+            if (!change.pressed || change.isConsumed) break
+            val delta = change.positionChange()
+            totalX += delta.x
+            totalY += delta.y
+            val distance = maxOf(abs(totalX), abs(totalY))
+            if (distance > viewConfiguration.touchSlop) {
+                if (abs(totalY) > abs(totalX)) break
+                if (abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {
+                    change.consume()
+                    if (totalX < 0f) onNext() else onPrevious()
+                    break
+                }
+            }
+        }
     }
 }
 
@@ -675,7 +715,8 @@ private fun setWindowBrightness(context: Context, value: Float) {
                 }
             }, update = { it.player = playback.player() },
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
-            VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle)
+            VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
+                onPrevious = playback::previous, onNext = playback::next)
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Box(Modifier.matchParentSize().pointerInput(Unit) {

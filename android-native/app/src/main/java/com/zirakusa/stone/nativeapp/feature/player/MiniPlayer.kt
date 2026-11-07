@@ -56,7 +56,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     Modifier.padding(top = 4.dp), color = StonePalette.MiniSubtitle, fontSize = 12.sp,
                     maxLines = 1, letterSpacing = 0.sp)
             }
-            StoneIconButton(StoneGlyph.Options, stringResource(R.string.queue), open)
             StoneIconButton(if (state.playing) StoneGlyph.Pause else StoneGlyph.Play,
                 stringResource(if (state.playing) R.string.pause else R.string.play), toggle,
                 Modifier.clip(CircleShape).border(2.dp, StonePalette.Yellow, CircleShape))
