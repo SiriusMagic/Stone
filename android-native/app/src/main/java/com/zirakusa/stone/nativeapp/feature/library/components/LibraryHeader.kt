@@ -34,11 +34,11 @@ import com.zirakusa.stone.nativeapp.ui.components.*
 import kotlinx.coroutines.launch
 
 @Composable fun LibraryHeader(scanning: Boolean, onSearch: () -> Unit, onFolder: () -> Unit,
-    onScan: () -> Unit, onDownload: () -> Unit, onSort: () -> Unit, onSettings: () -> Unit,
+    onScan: () -> Unit, onSort: () -> Unit, onSettings: () -> Unit,
     onEqualizer: () -> Unit = {}, onSleep: () -> Unit = {},
     onPenguinClick: () -> Unit = {},
     showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
-    showDownloads: Boolean = true, showSort: Boolean = true, showEqualizer: Boolean = true,
+    showSort: Boolean = true, showEqualizer: Boolean = true,
     showSleep: Boolean = true, quickActions: List<QuickActionDefinition> = emptyList(),
     onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {},
     activeQuickActionIds: Set<String> = emptySet(), sleepMinutes: Int = 0,
@@ -87,7 +87,6 @@ import kotlinx.coroutines.launch
                 if (showSearch) StoneIconButton(StoneGlyph.Search, stringResource(R.string.search_toggle), onSearch)
                 if (showFolder) StoneIconButton(StoneGlyph.Folder, stringResource(R.string.choose_folder), onFolder, enabled = !scanning)
                 if (showScan) StoneIconButton(StoneGlyph.Scan, stringResource(R.string.scan_folders), onScan, enabled = !scanning)
-                if (showDownloads) StoneIconButton(StoneGlyph.Download, stringResource(R.string.downloads), onDownload)
                 if (showSort) StoneIconButton(StoneGlyph.Sort, stringResource(R.string.sort), onSort)
                 if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))

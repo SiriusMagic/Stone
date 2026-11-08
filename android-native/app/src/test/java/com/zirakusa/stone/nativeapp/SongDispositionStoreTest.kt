@@ -22,19 +22,14 @@ class SongDispositionStoreTest {
         StoneDatabase.get(context).clearAll()
     }
 
-    @Test fun `hide and delete are logical and durable`() {
+    @Test fun `retired hidden entries are restored without changing the deleted list`() {
+        val database = StoneDatabase.get(context)
+        database.putString("disposition.hidden", "[\"123|local:one\"]")
         val store = SongDispositionStore(context)
-        store.hide("local:content://stone/one.mp3")
-        store.delete("local:content://stone/two.mp3")
-        assertEquals(setOf("local:content://stone/one.mp3"), SongDispositionStore(context).hiddenIds())
-        assertTrue(SongDispositionStore(context).deletedIds().contains("local:content://stone/two.mp3"))
-    }
-
-    @Test fun `hidden song can be restored without touching file`() {
-        val store = SongDispositionStore(context)
-        store.hide("local:one")
-        store.restoreHidden("local:one")
-        assertTrue(store.hiddenIds().isEmpty())
+        store.delete("local:two")
+        store.restoreRetiredHidden()
+        assertEquals(null, database.getString("disposition.hidden"))
+        assertEquals(setOf("local:two"), SongDispositionStore(context).deletedIds())
     }
 
     @Test fun `playlists history and counts survive reopening`() {

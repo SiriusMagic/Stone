@@ -41,7 +41,6 @@
     <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string><string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
     <string name="playlists">Playlists</string>
-    <string name="downloads">Descargas</string>
     <string name="sort">Ordenar</string>
     <string name="settings">Ajustes</string>
     <string name="sort_title">Título (A-Z)</string>
@@ -52,7 +51,6 @@
     <string name="ascending">Ascendente</string>
     <string name="descending">Descendente</string>
     <string name="song_count">%1$d canciones</string>
-    <string name="downloads_pending">Las descargas todavía no están disponibles en esta versión de prueba.</string>
     <string name="videos_pending">Los videos todavía no están disponibles en esta versión de prueba.</string>
     <string name="playlists_pending">Las playlists todavía no están disponibles en esta versión de prueba.</string>
     <string name="settings_pending">Los demás ajustes de Stone aún están pendientes en esta versión de prueba.</string>
@@ -112,7 +110,6 @@
     <string name="sleep_timer_until">Hasta las %1$s</string>
     <string name="cover_editor">Editor de portadas</string>
     <string name="floating_window">Ventana flotante</string>
-    <string name="hide">Ocultar</string>
     <string name="delete">Borrar</string>
     <string name="manage">Administrar</string>
     <string name="delete_album">Eliminar álbum</string>
@@ -144,9 +141,7 @@
     <string name="ringtone_failed">No se pudo establecer el tono de llamada</string>
     <string name="allow_and_continue">Permitir y continuar</string>
     <string name="delete_song_title">¿Borrar canción?</string>
-    <string name="hide_song_title">¿Ocultar canción?</string>
     <string name="delete_song_message">Esta canción se moverá a “Eliminado recientemente”. El archivo físico no se borrará ahora.</string>
-    <string name="hide_song_message">Esta canción se moverá a “Archivos ocultos”.</string>
     <string name="cancel">Cancelar</string>
     <string name="cover_editor_requires_song">Reproduce una canción o vídeo para abrir su portada.</string>
     <string name="playlist_next_batch">Las playlists se conectarán en Stone 1.3.6.</string>
@@ -177,7 +172,6 @@
     <string name="add_to_playlist_title">Agregar a playlist</string>
     <string name="no_playlists">Crea una playlist primero</string>
     <string name="restored">Archivo restaurado</string>
-    <string name="hidden_files">Archivos ocultos</string>
     <string name="recently_deleted">Eliminado recientemente</string>
     <string name="restore">Restaurar</string>
     <string name="export_backup">Exportar copia de seguridad</string>

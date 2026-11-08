@@ -29,7 +29,7 @@ class StoneEcoEngine(context: Context) {
         val strategy = when (mode) {
             AudioMode.BATTERY -> "Ahorro máximo: solo altavoz integrado, sin CPU despierta y sin efectos"
             AudioMode.BALANCED -> "Equilibrado: solo altavoz integrado y ruta eficiente"
-            AudioMode.HIFI -> "Cine: salida del sistema sin forzar; máxima ganancia segura en la ruta activa"
+            AudioMode.HIFI -> "Cine: ruta estéreo del sistema; ganancia adicional según el dispositivo"
         }
         player.setAudioAttributes(
             androidx.media3.common.AudioAttributes.Builder()
@@ -69,6 +69,7 @@ class StoneEcoEngine(context: Context) {
      * therefore pin playback to the built-in speaker. Cine releases that pin so
      * Android can use the active system route without pretending to mix outputs.
      */
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun applyOutputRoute(mode: AudioMode, player: Player) {
         val exo = player as? ExoPlayer ?: return
         val preferred = if (mode == AudioMode.BATTERY || mode == AudioMode.BALANCED) {

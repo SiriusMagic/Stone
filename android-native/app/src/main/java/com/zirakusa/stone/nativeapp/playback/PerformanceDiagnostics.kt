@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
+import java.io.File
 
 data class PerformanceSnapshot(
     val usedRamMb: Long, val availableRamMb: Long, val batteryPercent: Int,
@@ -62,10 +63,17 @@ object PerformanceDiagnostics {
             ((memory.totalMem - memory.availMem).coerceAtLeast(0)) / 1_048_576,
             memory.availMem / 1_048_576, battery, (runtime.totalMemory() - runtime.freeMemory()) / 1_048_576,
             debug.totalPss / 1024, debug.nativePss / 1024, debug.dalvikPss / 1024,
-            Debug.getNativeHeapAllocatedSize() / 1_048_576, cpu, Thread.getAllStackTraces().size,
+            Debug.getNativeHeapAllocatedSize() / 1_048_576, cpu, processThreadCount(),
             runtime.availableProcessors(), temperature, batteryManager?.isCharging == true,
             memory.lowMemory, memory.threshold / 1_048_576, route, thermal, playbackErrors.get())
     }
+
+    /** /proc exposes this count without allocating a stack trace for every thread. */
+    private fun processThreadCount(): Int = runCatching {
+        File("/proc/self/status").useLines { lines ->
+            lines.first { it.startsWith("Threads:") }.substringAfter(':').trim().toInt()
+        }
+    }.getOrDefault(-1)
 
     suspend fun session(context: Context, durationMs: Long, intervalMs: Long = 1000L,
         onSample: (PerformanceSnapshot) -> Unit): DiagnosticSessionSummary = withContext(Dispatchers.Default) {

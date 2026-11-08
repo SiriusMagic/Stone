@@ -50,7 +50,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 enum class PlayerTool { Tags, Cover, Equalizer, Playlist, Share, Speed, Ringtone, Sleep,
-    FloatingWindow, Hide, Delete }
+    FloatingWindow, Delete }
 
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
     val tool: PlayerTool)
@@ -452,10 +452,10 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     }
 }
 
-@Composable fun ConfirmSongAction(delete: Boolean, confirm: () -> Unit, close: () -> Unit) {
-    AlertDialog(onDismissRequest = close, title = { Text(stringResource(if (delete) R.string.delete_song_title else R.string.hide_song_title)) },
-        text = { Text(stringResource(if (delete) R.string.delete_song_message else R.string.hide_song_message)) },
-        confirmButton = { TextButton(onClick = confirm) { Text(stringResource(if (delete) R.string.delete else R.string.hide)) } },
+@Composable fun ConfirmSongAction(confirm: () -> Unit, close: () -> Unit) {
+    AlertDialog(onDismissRequest = close, title = { Text(stringResource(R.string.delete_song_title)) },
+        text = { Text(stringResource(R.string.delete_song_message)) },
+        confirmButton = { TextButton(onClick = confirm) { Text(stringResource(R.string.delete)) } },
         dismissButton = { TextButton(onClick = close) { Text(stringResource(R.string.cancel)) } })
 }
 

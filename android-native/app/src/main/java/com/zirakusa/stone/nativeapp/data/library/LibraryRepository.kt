@@ -10,6 +10,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
+data class CachedLibrary(val songs: List<Song>, val deletedSongs: List<Song>)
+
 class LibraryRepository(context: Context) {
     private val preferences = context.getSharedPreferences("stone-native-library", Context.MODE_PRIVATE)
     private val cache = LibraryCache(context)
@@ -17,7 +19,7 @@ class LibraryRepository(context: Context) {
     private val disposition = SongDispositionStore(context)
     private val imported = ImportedLibraryStore(context)
     private val policy = RefreshPolicy()
-    init { disposition.clearAudioOnly() }
+    init { disposition.clearAudioOnly(); disposition.restoreRetiredHidden() }
     val folders: List<String> get() = preferences.getStringSet("folders", null)
         ?.toList().orEmpty().ifEmpty { listOfNotNull(preferences.getString("folder", null)) }
     val folder: String? get() = folders.firstOrNull()
@@ -27,14 +29,11 @@ class LibraryRepository(context: Context) {
         preferences.edit().putStringSet("folders", selected.toSet())
             .putString("folder", selected.firstOrNull()).apply()
     }
-    suspend fun cached(): List<Song> = withContext(Dispatchers.IO) {
-        (folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id }.let(::visible)
-    }
-    suspend fun allCached(): List<Song> = withContext(Dispatchers.IO) {
-        (folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id }
+    suspend fun cached(): CachedLibrary = withContext(Dispatchers.IO) {
+        entries((folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id })
     }
 
-    suspend fun refresh(manual: Boolean): List<Song>? {
+    suspend fun refresh(manual: Boolean): CachedLibrary? {
         val trees = folders
         if (trees.isEmpty()) return null
         if (!policy.tryStart(manual, SystemClock.elapsedRealtime())) return null
@@ -56,18 +55,17 @@ class LibraryRepository(context: Context) {
                 (merged + imported.songs()).distinctBy { it.id }
             }
             success = true
-            visible(songs)
+            entries(songs)
         } finally { policy.finish(success, SystemClock.elapsedRealtime()) }
     }
 
-    fun hide(song: Song) = disposition.hide(song.id)
     fun delete(song: Song) = disposition.delete(song.id)
-    fun restoreHidden(song: Song) = disposition.restoreHidden(song.id)
     fun restoreDeleted(song: Song) = disposition.restoreDeleted(song.id)
-    fun hidden(songs: List<Song>) = songs.filter { it.id in disposition.hiddenIds() }
-    fun deleted(songs: List<Song>) = songs.filter { it.id in disposition.deletedIds() }
-    private fun visible(songs: List<Song>): List<Song> {
-        val excluded = disposition.hiddenIds() + disposition.deletedIds()
-        return songs.filterNot { it.id in excluded }
+    private fun entries(songs: List<Song>): CachedLibrary {
+        // Backups from older versions can reintroduce hidden IDs. Restore their
+        // visibility before building the library and keep the deleted list intact.
+        disposition.restoreRetiredHidden()
+        val deleted = disposition.deletedIds()
+        return CachedLibrary(songs.filterNot { it.id in deleted }, songs.filter { it.id in deleted })
     }
 }

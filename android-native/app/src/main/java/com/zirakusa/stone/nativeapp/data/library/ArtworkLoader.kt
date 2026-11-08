@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Build
 import android.util.LruCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -18,10 +19,10 @@ import kotlinx.coroutines.withContext
 /** Only visible artwork is loaded. Memory is bounded; no full-library artwork scan. */
 object ArtworkLoader {
     data class VideoFrame(val bitmap: Bitmap?, val width: Int, val height: Int)
-    private val cache = object : LruCache<String, Bitmap>(4 * 1024 * 1024) {
+    private val cache = object : LruCache<String, Bitmap>(3 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.allocationByteCount
     }
-    private val videoCache = object : LruCache<String, VideoFrame>(8 * 1024 * 1024) {
+    private val videoCache = object : LruCache<String, VideoFrame>(3 * 1024 * 1024) {
         override fun sizeOf(key: String, value: VideoFrame) = value.bitmap?.allocationByteCount ?: 1
     }
     private val missing = LruCache<String, Boolean>(256)
@@ -37,8 +38,8 @@ object ArtworkLoader {
                 ?.memoryClass ?: 128
             val totalCacheMb = when {
                 memoryClassMb <= 64 -> 4
-                memoryClassMb <= 128 -> 8
-                else -> 12
+                memoryClassMb <= 128 -> 6
+                else -> 8
             }
             cache.resize(totalCacheMb * 1024 * 1024 / 2)
             videoCache.resize(totalCacheMb * 1024 * 1024 / 2)
@@ -106,14 +107,14 @@ object ArtworkLoader {
     }
 
     suspend fun loadVideoFrame(context: Context, uri: String, modified: Long): VideoFrame =
-        loadVideoFrameAt(context, uri, modified, 0L)
+        loadVideoFrameAt(context, uri, modified, 0L, maxDimension = 384)
 
     /** Loads a bounded thumbnail at a video position for the seek preview strip. */
     suspend fun loadVideoFrameAt(context: Context, uri: String, modified: Long,
-        positionMs: Long, maxDimension: Int = 640): VideoFrame =
+        positionMs: Long, maxDimension: Int = 512): VideoFrame =
         withContext(Dispatchers.IO) {
             val safePosition = positionMs.coerceAtLeast(0L)
-            val safeDimension = maxDimension.coerceIn(96, 640)
+            val safeDimension = maxDimension.coerceIn(96, 512)
             val key = "$uri:$modified:$safePosition:$safeDimension"
             videoCache.get(key)?.let { return@withContext it }
             slots.withPermit {
@@ -126,16 +127,28 @@ object ArtworkLoader {
                         ?.toIntOrNull() ?: 0
                     val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
                         ?.toIntOrNull() ?: 0
-                    val bitmap = retriever.getFrameAtTime(safePosition * 1_000L,
-                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                        ?.let { source ->
-                            val longest = maxOf(source.width, source.height)
-                            if (longest <= safeDimension) source else {
-                                val scale = safeDimension.toFloat() / longest
-                                Bitmap.createScaledBitmap(source, (source.width * scale).toInt(),
-                                    (source.height * scale).toInt(), true)
-                            }
+                    val timestampUs = safePosition * 1_000L
+                    val longest = maxOf(width, height)
+                    val scale = if (longest > safeDimension) safeDimension.toFloat() / longest else 1f
+                    // API 27+ can decode a scaled frame directly. This avoids a full-sized
+                    // 4K bitmap being held in native memory just to draw a small thumbnail.
+                    val scaled = if (Build.VERSION.SDK_INT >= 27 && width > 0 && height > 0) {
+                        runCatching { retriever.getScaledFrameAtTime(timestampUs,
+                            MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                            (width * scale).toInt().coerceAtLeast(1),
+                            (height * scale).toInt().coerceAtLeast(1)) }.getOrNull()
+                    } else null
+                    val bitmap = scaled ?: retriever.getFrameAtTime(timestampUs,
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let { source ->
+                        val sourceLongest = maxOf(source.width, source.height)
+                        if (sourceLongest <= safeDimension) source else {
+                            val fallbackScale = safeDimension.toFloat() / sourceLongest
+                            Bitmap.createScaledBitmap(source,
+                                (source.width * fallbackScale).toInt().coerceAtLeast(1),
+                                (source.height * fallbackScale).toInt().coerceAtLeast(1), true)
+                                .also { if (it !== source) source.recycle() }
                         }
+                    }
                     VideoFrame(bitmap, width, height)
                 } catch (_: RuntimeException) { VideoFrame(null, 0, 0) }
                 finally { retriever.release() }

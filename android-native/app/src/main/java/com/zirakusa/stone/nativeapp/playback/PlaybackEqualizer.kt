@@ -19,15 +19,6 @@ class PlaybackEqualizer {
         if (nextSessionId == sessionId && effect != null) return
         if (nextSessionId != sessionId) release()
         sessionId = nextSessionId
-        effect = runCatching { Equalizer(0, nextSessionId) }.getOrNull()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            dynamics = runCatching {
-                val config = DynamicsProcessing.Config.Builder(
-                    DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, 2,
-                    false, 0, false, 0, false, 0, true).build()
-                DynamicsProcessing(0, nextSessionId, config)
-            }.getOrNull()
-        }
         apply()
     }
 
@@ -38,7 +29,21 @@ class PlaybackEqualizer {
     }
 
     private fun apply() = runCatching {
+        if (!enabled) {
+            releaseEffects()
+            return@runCatching
+        }
+        if (sessionId <= 0) return@runCatching
+        if (effect == null) effect = runCatching { Equalizer(0, sessionId) }.getOrNull()
         val equalizer = effect ?: return@runCatching
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && dynamics == null) {
+            dynamics = runCatching {
+                val config = DynamicsProcessing.Config.Builder(
+                    DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, 2,
+                    false, 0, false, 0, false, 0, true).build()
+                DynamicsProcessing(0, sessionId, config)
+            }.getOrNull()
+        }
         val bands = equalizer.numberOfBands.toInt().coerceAtLeast(1)
         val range = equalizer.bandLevelRange
         repeat(bands) { band ->
@@ -57,10 +62,14 @@ class PlaybackEqualizer {
     }
 
     fun release() {
+        releaseEffects()
+        sessionId = 0
+    }
+
+    private fun releaseEffects() {
         runCatching { effect?.release() }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) runCatching { dynamics?.release() }
         effect = null
         dynamics = null
-        sessionId = 0
     }
 }

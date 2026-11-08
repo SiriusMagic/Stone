@@ -43,7 +43,7 @@ private fun Song.hasUsableLyrics(): Boolean =
     onRefresh: () -> Unit, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier = Modifier,
     currentId: String = "", onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
-    onRestoreHidden: (Song) -> Unit = {}, onRestoreDeleted: (Song) -> Unit = {},
+    onRestoreDeleted: (Song) -> Unit = {},
     onExport: () -> Unit = {}, onImport: () -> Unit = {}, onShare: () -> Unit = {},
     onExportPackage: () -> Unit = {}, onImportPackage: () -> Unit = {}, onTransfer: () -> Unit = {},
     transferState: LocalTransferUiState = LocalTransferUiState(),
@@ -55,7 +55,7 @@ private fun Song.hasUsableLyrics(): Boolean =
     playbackViewModel: PlaybackViewModel? = null, onOpenSettings: () -> Unit = {},
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
-    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
+    onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
     onOpenCoverEditor: () -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
@@ -128,7 +128,6 @@ private fun Song.hasUsableLyrics(): Boolean =
             "search" -> { searchVisible = true }
             "folder" -> onFolder()
             "scan" -> scan()
-            "downloads" -> sheet = "downloads"
             "sort" -> sheet = "sort"
             "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
@@ -184,11 +183,11 @@ private fun Song.hasUsableLyrics(): Boolean =
     }
     Column(modifier) {
         LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
-            onFolder, scan, { sheet = "downloads" }, { sheet = "sort" }, {
+            onFolder, scan, { sheet = "sort" }, {
                 onOpenSettings(); onSettingsSheetVisible(true)
             }, onSleep = { homeTool = "sleep" },
             showSearch = shortcuts["search"] != false, showFolder = false,
-            showScan = shortcuts["scan"] != false, showDownloads = false,
+            showScan = shortcuts["scan"] != false,
             showSort = shortcuts["sort"] != false, showEqualizer = false,
             showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
@@ -202,14 +201,11 @@ private fun Song.hasUsableLyrics(): Boolean =
             color = MaterialTheme.colorScheme.error)
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
             canPlay, currentId, onPlay, onFolder, scan, Modifier.weight(1f), onCreatePlaylist,
-            onRemoveFromPlaylist, onDelete, onHide, onAudioOnly)
+            onRemoveFromPlaylist, onDelete, onAudioOnly)
     }
     LibrarySheets(sheet,
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
-        onFolder, scan, { sheet = null }, state.hiddenSongs, state.deletedSongs,
-        { sheet = "hidden" }, { sheet = "deleted" }, onRestoreHidden, onRestoreDeleted,
-        onExport, onImport, { onOpenSettings(); onSettingsSheetVisible(true) }, theme, onThemeChange, language, onLanguageChange,
-        null, onSettingsPage)
+        { sheet = null }, state.deletedSongs, onRestoreDeleted)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,
         scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare,

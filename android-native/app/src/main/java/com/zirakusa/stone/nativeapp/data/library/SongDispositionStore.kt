@@ -6,14 +6,13 @@ import org.json.JSONArray
 
 class SongDispositionStore(context: Context) {
     private val database = StoneDatabase.get(context)
-    fun hiddenIds(): Set<String> = ids("hidden")
     fun deletedIds(): Set<String> = ids("deleted")
-    fun hide(id: String) = add("hidden", id)
     fun delete(id: String) = add("deleted", id)
-    fun restoreHidden(id: String) = remove("hidden", id)
     fun restoreDeleted(id: String) = remove("deleted", id)
     /** Removes the old persistent video-to-audio override; audio-only is now session-only. */
     fun clearAudioOnly() = database.remove("disposition.audioOnly")
+    /** The retired Hide feature must never leave songs inaccessible after an update or import. */
+    fun restoreRetiredHidden() = database.remove("disposition.hidden")
 
     private fun values(key: String): MutableList<String> = runCatching {
         JSONArray(database.getString("disposition.$key") ?: "[]").let { array ->

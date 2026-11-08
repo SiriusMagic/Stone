@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.data.library
 
 import android.content.Context
+import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.persistence.StoneDatabase
 import org.json.JSONArray
 import org.json.JSONObject
@@ -30,6 +31,18 @@ class LibraryUserStore(context: Context) {
     fun recentIds(): List<String> = runCatching { JSONArray(database.getString("library.recent") ?: "[]").let {
         array -> List(array.length()) { array.getString(it) } } }.getOrDefault(emptyList())
     fun playCount(id: String) = database.getString("library.count:$id")?.toIntOrNull() ?: 0
+    /** One database read, with no zero-count entries retained in the UI state. */
+    fun playCounts(songs: List<Song>): Map<String, Int> {
+        if (songs.isEmpty()) return emptyMap()
+        val visibleIds = songs.mapTo(HashSet(songs.size)) { it.id }
+        return buildMap {
+            database.forEachValueStartingWith("library.count:") { key, value ->
+                val id = key.removePrefix("library.count:")
+                val count = value.toIntOrNull() ?: 0
+                if (id in visibleIds && count > 0) put(id, count)
+            }
+        }
+    }
     fun favoriteIds(): Set<String> = runCatching { JSONArray(database.getString("favorites") ?: "[]").let {
         array -> List(array.length()) { array.getString(it) }.toSet() } }.getOrDefault(emptySet())
 

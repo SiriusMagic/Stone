@@ -79,7 +79,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerScreen(state: PlaybackState, song: Song?, playback: PlaybackViewModel,
-    back: () -> Unit, onHide: (Song) -> Unit, onDelete: (Song) -> Unit,
+    back: () -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
     modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
@@ -244,10 +244,7 @@ import kotlin.math.roundToInt
         PlayerTool.Ringtone -> song?.let { RingtoneSheet(it) { tool = null } }
         PlayerTool.Playlist -> song?.let { PlaylistPickerSheet(it, playlists, onCreatePlaylist,
             onAddToPlaylist) { tool = null } }
-        PlayerTool.Hide -> ConfirmSongAction(false, {
-            song?.let { playback.remove(it.id); onHide(it) }; tool = null; back()
-        }, { tool = null })
-        PlayerTool.Delete -> ConfirmSongAction(true, {
+        PlayerTool.Delete -> ConfirmSongAction({
             song?.let { playback.remove(it.id); onDelete(it) }; tool = null; back()
         }, { tool = null })
         else -> Unit

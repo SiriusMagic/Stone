@@ -164,8 +164,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "audio-output" -> AudioOutputDetail()
-                    "storage" -> StorageDetail()
-                    "scan-mode" -> ScanModeDetail(store)
                     "feedback" -> FeedbackDetail()
                     "about" -> AboutDetail()
                     "notifications" -> NotificationDetail(store)
@@ -190,8 +188,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "shortcuts" -> R.string.settings_home_shortcuts
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "hardware-acceleration" -> R.string.hardware_acceleration
-    "audio-output" -> R.string.audio_output; "storage" -> R.string.storage_manager
-    "scan-mode" -> R.string.settings_scan_mode
+    "audio-output" -> R.string.audio_output
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
     "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
@@ -493,19 +490,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
-@Composable private fun ScanModeDetail(store: StoneSettingsStore?) {
-    val initial = store?.read()?.autoRescan ?: true
-    var autoRescan by remember(store) { mutableStateOf(initial) }
-    Text(stringResource(R.string.scan_mode_intro), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 12.dp))
-    ToggleSetting(R.string.auto_rescan, R.string.auto_rescan_hint, autoRescan) { enabled ->
-        store?.setBoolean("autoRescan", enabled)
-        autoRescan = enabled
-    }
-    Text(stringResource(R.string.manual_scan_hint), color = StonePalette.Muted,
-        modifier = Modifier.padding(top = 18.dp, bottom = 20.dp))
-}
-
 @Composable private fun AudioOutputDetail() {
     val context = LocalContext.current
     val route = remember(context) {
@@ -532,17 +516,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         Spacer(Modifier.width(8.dp))
         Text(stringResource(R.string.audio_output_open_settings))
     }
-}
-
-@Composable private fun StorageDetail() {
-    Text(stringResource(R.string.storage_manager_intro), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 10.dp))
-    SettingsGroup {
-        SettingsRow(Icons.Default.FileCopy, R.string.storage_duplicates,
-            stringResource(R.string.feature_future)) {}
-    }
-    Text(stringResource(R.string.storage_future_note), color = StonePalette.Muted,
-        fontSize = 13.sp, modifier = Modifier.padding(top = 18.dp, bottom = 20.dp))
 }
 
 @Composable private fun SettingsChoice(label: Int, selected: Boolean, action: () -> Unit) =

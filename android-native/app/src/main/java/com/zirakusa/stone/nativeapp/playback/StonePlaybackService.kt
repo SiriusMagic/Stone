@@ -43,7 +43,7 @@ class StonePlaybackService : MediaSessionService() {
                     AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
             }
             activePlayer?.volume = 1f
-            volumeBoost?.setPercent(volumePercent)
+            volumeBoost?.setPercent(volumePercent, maxVolumePercent > 100)
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
         }
@@ -53,6 +53,8 @@ class StonePlaybackService : MediaSessionService() {
             if (volumePercent > maxVolumePercent) {
                 setVolumePercent(maxVolumePercent, showOverlay = false)
             } else {
+                // A mode change can cross the boost policy without changing the volume.
+                volumeBoost?.setPercent(volumePercent, maxVolumePercent > 100)
                 mutableVolumeUi.value = mutableVolumeUi.value.copy(maxPercent = maxVolumePercent)
             }
         }

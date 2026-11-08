@@ -94,7 +94,7 @@ import kotlinx.coroutines.delay
     val packageExportPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(StonePackage.MIME)) { uri ->
         uri?.let { target -> scope.launch {
-            val songs = (state.songs + state.hiddenSongs + state.deletedSongs).distinctBy { it.id }
+            val songs = (state.songs + state.deletedSongs).distinctBy { it.id }
             val success = withContext(Dispatchers.IO) { runCatching {
                 StonePackage.export(context, target, songs)
             }.isSuccess }
@@ -130,7 +130,7 @@ import kotlinx.coroutines.delay
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
             if (playerOpen) PlayerScreen(player, currentSong, playback,
-                { playerOpen = false }, library::hide, library::delete, { library.refresh() },
+                { playerOpen = false }, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f),
                 onArtist = {
                     artistDestination = player.artist
@@ -142,19 +142,18 @@ import kotlinx.coroutines.delay
                 }, openCoverEditor = openCoverEditor, onCoverEditorConsumed = { openCoverEditor = false })
             else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
-                library::removeFromPlaylist, library::restoreHidden, library::restoreDeleted,
+                library::removeFromPlaylist, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
                 { importPicker.launch(arrayOf("application/json", "text/plain")) },
                 {
                     bluetoothTransferJob?.cancel()
                     bluetoothTransferJob = shareStoneLibrary(
-                        context, state.songs + state.hiddenSongs + state.deletedSongs, scope
+                        context, state.songs + state.deletedSongs, scope
                     ) { transferState = it }
                 },
                 { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
                 { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
                 { settingsPage = "wifi-transfer" },
-                onHide = library::hide,
                 onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
@@ -166,7 +165,7 @@ import kotlinx.coroutines.delay
                         transferState = LocalTransferUiState(busy = true,
                             message = context.getString(R.string.transfer_packaging_indeterminate))
                         val packageFile = File(context.cacheDir, "stone-transfer.musp")
-                        val songs = (state.songs + state.hiddenSongs + state.deletedSongs).distinctBy { it.id }
+                        val songs = (state.songs + state.deletedSongs).distinctBy { it.id }
                         var lastProgressAt = 0L
                         val result = withContext(Dispatchers.IO) { runCatching {
                             StonePackage.exportToFile(context, packageFile, songs) { done, total ->

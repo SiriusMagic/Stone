@@ -21,7 +21,7 @@ data class LibraryState(val songs: List<Song> = emptyList(), val scanning: Boole
     val hasFolder: Boolean = false, val failed: Boolean = false,
     val playlists: List<StonePlaylist> = emptyList(), val favoriteIds: Set<String> = emptySet(),
     val recentIds: List<String> = emptyList(), val playCounts: Map<String, Int> = emptyMap(),
-    val hiddenSongs: List<Song> = emptyList(), val deletedSongs: List<Song> = emptyList())
+    val deletedSongs: List<Song> = emptyList())
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = LibraryRepository(application)
@@ -32,12 +32,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private var active = false
     private var scanJob: Job? = null
     private val loadJob = viewModelScope.launch {
-        val all = repository.allCached()
-        val songs = repository.cached()
+        val cached = repository.cached()
+        val songs = cached.songs
         mutable.update { it.copy(songs = songs, playlists = userStore.playlists(),
             favoriteIds = userStore.favoriteIds(), recentIds = userStore.recentIds(),
-            playCounts = songs.associate { song -> song.id to userStore.playCount(song.id) },
-            hiddenSongs = repository.hidden(all), deletedSongs = repository.deleted(all)) }
+            playCounts = userStore.playCounts(songs),
+            deletedSongs = cached.deletedSongs) }
     }
 
     fun onForeground() { active = true; if (settings.read().autoRescan) refresh(false) }
@@ -67,31 +67,23 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         scanJob = viewModelScope.launch { previous?.join(); loadJob.join(); scan(manual) }
     }
 
-    fun hide(song: Song) {
-        repository.hide(song)
-        mutable.update { it.copy(songs = it.songs.filterNot { item -> item.id == song.id },
-            hiddenSongs = listOf(song) + it.hiddenSongs) }
-    }
-
     fun delete(song: Song) {
         repository.delete(song)
         mutable.update { it.copy(songs = it.songs.filterNot { item -> item.id == song.id },
             deletedSongs = listOf(song) + it.deletedSongs) }
     }
 
-    fun restoreHidden(song: Song) { repository.restoreHidden(song); mutable.update {
-        it.copy(songs = (it.songs + song).distinctBy { item -> item.id }, hiddenSongs = it.hiddenSongs - song) } }
     fun restoreDeleted(song: Song) { repository.restoreDeleted(song); mutable.update {
         it.copy(songs = (it.songs + song).distinctBy { item -> item.id }, deletedSongs = it.deletedSongs - song) } }
     fun recordPlay(song: Song) { userStore.recordPlay(song.id); mutable.update { it.copy(
         recentIds = userStore.recentIds(), playCounts = it.playCounts + (song.id to userStore.playCount(song.id))) } }
     fun syncFavorites() { mutable.update { it.copy(favoriteIds = userStore.favoriteIds()) } }
     fun reloadUserData() { viewModelScope.launch {
-        val all = repository.allCached(); val songs = repository.cached()
+        val cached = repository.cached(); val songs = cached.songs
         mutable.update { it.copy(songs = songs, playlists = userStore.playlists(),
             favoriteIds = userStore.favoriteIds(), recentIds = userStore.recentIds(),
-            playCounts = songs.associate { song -> song.id to userStore.playCount(song.id) },
-            hiddenSongs = repository.hidden(all), deletedSongs = repository.deleted(all)) }
+            playCounts = userStore.playCounts(songs),
+            deletedSongs = cached.deletedSongs) }
     } }
     fun createPlaylist(name: String) { if (name.isNotBlank()) { userStore.createPlaylist(name)
         mutable.update { it.copy(playlists = userStore.playlists()) } } }
@@ -103,8 +95,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun scan(manual: Boolean) {
         mutable.update { it.copy(scanning = true, failed = false) }
         try {
-            repository.refresh(manual)?.let { songs -> mutable.update { it.copy(songs = songs,
-                favoriteIds = userStore.favoriteIds(), playCounts = songs.associate { song -> song.id to userStore.playCount(song.id) }) } }
+            repository.refresh(manual)?.let { refreshed ->
+                val songs = refreshed.songs
+                mutable.update { it.copy(songs = songs, deletedSongs = refreshed.deletedSongs,
+                    favoriteIds = userStore.favoriteIds(),
+                    playCounts = userStore.playCounts(songs)) }
+            }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.update { it.copy(failed = true) } }
         finally { mutable.update { it.copy(scanning = false) } }

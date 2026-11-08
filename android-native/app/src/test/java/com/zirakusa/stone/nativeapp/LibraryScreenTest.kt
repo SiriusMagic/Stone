@@ -69,14 +69,13 @@ class LibraryScreenTest {
         compose.onNodeWithText("Courtesy Call").assertIsDisplayed()
     }
 
-    @Test fun pendingDownloadDoesNotPretendToDownload() {
+    @Test fun sortOffersMostPlayedAndLyrics() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize())
         } } }
-        compose.onNodeWithContentDescription(text(R.string.downloads)).performClick()
-        compose.onNodeWithText(text(R.string.downloads_pending)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.dismiss)).performClick()
-        compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.sort)).performClick()
+        compose.onNodeWithText(text(R.string.sort_most_played)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.sort_lyrics)).assertExists()
     }
 
     @Test fun miniPlayerToggleDoesNotOpenPlayer() {
@@ -95,7 +94,7 @@ class LibraryScreenTest {
         compose.onNodeWithContentDescription(text(R.string.play)).performClick()
         assertEquals(1, toggles)
         assertEquals(0, opens)
-        compose.onNodeWithContentDescription(text(R.string.queue)).performClick()
+        compose.onAllNodesWithText("After Dark")[1].performClick()
         assertEquals(1, opens)
     }
 

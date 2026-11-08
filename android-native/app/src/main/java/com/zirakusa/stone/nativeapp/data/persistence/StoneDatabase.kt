@@ -28,6 +28,14 @@ class StoneDatabase private constructor(private val context: Context) :
         if (it.moveToFirst()) it.getString(0) else null
     }
 
+    @Synchronized fun forEachValueStartingWith(prefix: String, visitor: (String, String) -> Unit) {
+        readableDatabase.query(
+            "data_key_value", arrayOf("data_key", "value"), "data_key LIKE ?",
+            arrayOf("$prefix%"), null, null, null).use { cursor ->
+            while (cursor.moveToNext()) visitor(cursor.getString(0), cursor.getString(1))
+        }
+    }
+
     @Synchronized fun putString(key: String, value: String) {
         writableDatabase.insertWithOnConflict("data_key_value", null, ContentValues().apply {
             put("data_key", key); put("value", value); put("updated_at", System.currentTimeMillis())
@@ -74,8 +82,8 @@ class StoneDatabase private constructor(private val context: Context) :
                 .filterValues { it == true }.keys
             putDirect(db, "favorites", JSONArray(favorites).toString())
             val disposition = context.getSharedPreferences("stone-song-disposition", 0)
-            listOf("hidden", "deleted").forEach { key -> putDirect(db, "disposition.$key",
-                JSONArray(disposition.getStringSet(key, emptySet()).orEmpty()).toString()) }
+            putDirect(db, "disposition.deleted",
+                JSONArray(disposition.getStringSet("deleted", emptySet()).orEmpty()).toString())
             val lyrics = JSONObject()
             context.getSharedPreferences("stone-lyrics", 0).all.forEach { (key, value) -> if (value is String) lyrics.put(key, value) }
             putDirect(db, "lyrics", lyrics.toString())

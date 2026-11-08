@@ -31,7 +31,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     currentId: String, onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     onScan: () -> Unit, modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
-    onDelete: (Song) -> Unit = {}, onHide: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
+    onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist)
@@ -46,7 +46,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onScan, onDelete, onHide, onAudioOnly)
+        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onScan, onDelete, onAudioOnly)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -158,7 +158,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, modifier: Modifier,
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit, onScan: () -> Unit,
-    onDelete: (Song) -> Unit, onHide: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
+    onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
     var folderBrowser by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
@@ -250,9 +250,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     Icon(Icons.Default.Info, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.information))
                 }
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                TextButton(onClick = { val item = selectedVideo; selectedVideo = null; item?.let(onHide) }) {
-                    Icon(Icons.Default.VisibilityOff, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.hide))
-                }
                 TextButton(onClick = { deleteConfirmVisible = true }) {
                     Icon(Icons.Default.Delete, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.delete))
                 }
