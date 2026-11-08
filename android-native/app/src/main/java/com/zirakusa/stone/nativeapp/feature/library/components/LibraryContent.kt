@@ -31,7 +31,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     currentId: String, onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
-    onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
+    onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
+    onOpenFolders: () -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist)
@@ -57,6 +58,19 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     Column(modifier.fillMaxWidth()) {
     LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
         run {
+            if (tab == LibraryTab.Songs && collection == null) item {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.song_count, visible.size), Modifier.weight(1f),
+                        color = StonePalette.SongSubtitle, fontSize = 15.sp)
+                    IconButton(onClick = onFolder) {
+                        Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_folder))
+                    }
+                    IconButton(onClick = onOpenFolders) {
+                        Icon(Icons.Default.Folder, stringResource(R.string.folders))
+                    }
+                }
+            }
             if (collection != null) item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (managing) {
@@ -115,9 +129,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         LibrarySongRow(song, song.id == currentId, false) { }
                     }
                 } else LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, visible) }
-            }
-            if (!searching && !state.hasFolder) item {
-                LibraryFolderAction(state.scanning, state.songs.isEmpty(), onFolder)
             }
         }
     }
@@ -209,7 +220,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {
                 item {
                     if (!state.scanning) LibraryEmptyState(videos = true)
-                    LibraryFolderAction(state.scanning, !state.hasFolder, onFolder, videos = true)
                 }
             }
         }

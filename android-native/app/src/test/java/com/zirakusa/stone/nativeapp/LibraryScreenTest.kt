@@ -45,8 +45,9 @@ class LibraryScreenTest {
         compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
         compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.choose_stone_folder)).assertDoesNotExist()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
-        compose.onNodeWithText(text(R.string.choose_stone_folder)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.choose_folder)).performClick()
         compose.onNodeWithText(text(R.string.scan_folders)).assertDoesNotExist()
         assertEquals(1, folderRequests)
     }
@@ -58,10 +59,10 @@ class LibraryScreenTest {
                 Modifier.fillMaxSize())
         } } }
         compose.onNodeWithText(text(R.string.videos)).performClick()
-        compose.onNodeWithText(text(R.string.choose_video_folder)).performClick()
         compose.onNodeWithContentDescription(text(R.string.choose_video_folder)).performClick()
+        compose.onNodeWithText(text(R.string.choose_video_folder)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.scan_video_folders)).assertDoesNotExist()
-        assertEquals(2, folderRequests)
+        assertEquals(1, folderRequests)
     }
 
     @Test fun searchPreservesPlaybackQueueAndCanBeClosed() {

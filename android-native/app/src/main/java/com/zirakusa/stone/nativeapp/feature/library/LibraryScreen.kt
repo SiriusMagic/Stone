@@ -201,7 +201,10 @@ private fun Song.hasUsableLyrics(): Boolean =
             color = MaterialTheme.colorScheme.error)
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
             canPlay, currentId, onPlay, onFolder, Modifier.weight(1f), onCreatePlaylist,
-            onRemoveFromPlaylist, onDelete, onAudioOnly)
+            onRemoveFromPlaylist, onDelete, onAudioOnly, onOpenFolders = {
+                tab = LibraryTab.Folders
+                collection = null
+            })
     }
     LibrarySheets(sheet,
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
