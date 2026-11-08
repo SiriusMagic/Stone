@@ -76,11 +76,12 @@ object PerformanceDiagnostics {
     }.getOrDefault(-1)
 
     suspend fun session(context: Context, durationMs: Long, intervalMs: Long = 1000L,
-        onSample: (PerformanceSnapshot) -> Unit): DiagnosticSessionSummary = withContext(Dispatchers.Default) {
+        onSample: (PerformanceSnapshot) -> Unit): DiagnosticSessionSummary {
         val started = System.currentTimeMillis(); val samples = mutableListOf<PerformanceSnapshot>()
         while (System.currentTimeMillis() - started < durationMs) {
-            val sample = read(context); samples += sample; onSample(sample); delay(intervalMs)
+            val sample = withContext(Dispatchers.Default) { read(context) }
+            samples += sample; onSample(sample); delay(intervalMs)
         }
-        DiagnosticSessionSummary(samples, System.currentTimeMillis() - started, started, playbackErrors.get())
+        return DiagnosticSessionSummary(samples, System.currentTimeMillis() - started, started, playbackErrors.get())
     }
 }

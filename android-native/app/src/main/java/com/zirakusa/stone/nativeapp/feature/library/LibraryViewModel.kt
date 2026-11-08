@@ -11,11 +11,13 @@ import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class LibraryState(val songs: List<Song> = emptyList(), val scanning: Boolean = false,
     val hasFolder: Boolean = false, val failed: Boolean = false,
@@ -24,6 +26,8 @@ data class LibraryState(val songs: List<Song> = emptyList(), val scanning: Boole
     val deletedSongs: List<Song> = emptyList())
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
+    private data class UserSnapshot(val playlists: List<StonePlaylist>, val favorites: Set<String>,
+        val recent: List<String>, val counts: Map<String, Int>)
     private val repository = LibraryRepository(application)
     private val userStore = LibraryUserStore(application)
     private val settings = StoneSettingsStore(application)
@@ -34,9 +38,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val loadJob = viewModelScope.launch {
         val cached = repository.cached()
         val songs = cached.songs
-        mutable.update { it.copy(songs = songs, playlists = userStore.playlists(),
-            favoriteIds = userStore.favoriteIds(), recentIds = userStore.recentIds(),
-            playCounts = userStore.playCounts(songs),
+        val user = readUserSnapshot(songs)
+        mutable.update { it.copy(songs = songs, playlists = user.playlists,
+            favoriteIds = user.favorites, recentIds = user.recent,
+            playCounts = user.counts,
             deletedSongs = cached.deletedSongs) }
     }
 
@@ -80,9 +85,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun syncFavorites() { mutable.update { it.copy(favoriteIds = userStore.favoriteIds()) } }
     fun reloadUserData() { viewModelScope.launch {
         val cached = repository.cached(); val songs = cached.songs
-        mutable.update { it.copy(songs = songs, playlists = userStore.playlists(),
-            favoriteIds = userStore.favoriteIds(), recentIds = userStore.recentIds(),
-            playCounts = userStore.playCounts(songs),
+        val user = readUserSnapshot(songs)
+        mutable.update { it.copy(songs = songs, playlists = user.playlists,
+            favoriteIds = user.favorites, recentIds = user.recent,
+            playCounts = user.counts,
             deletedSongs = cached.deletedSongs) }
     } }
     fun createPlaylist(name: String) { if (name.isNotBlank()) { userStore.createPlaylist(name)
@@ -92,14 +98,21 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun removeFromPlaylist(playlistId: String, song: Song) { userStore.remove(playlistId, song.id)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
 
+    private suspend fun readUserSnapshot(songs: List<Song>): UserSnapshot = withContext(Dispatchers.IO) {
+        UserSnapshot(userStore.playlists(), userStore.favoriteIds(), userStore.recentIds(),
+            userStore.playCounts(songs))
+    }
+
     private suspend fun scan(manual: Boolean) {
         mutable.update { it.copy(scanning = true, failed = false) }
         try {
             repository.refresh(manual)?.let { refreshed ->
                 val songs = refreshed.songs
+                val (favorites, counts) = withContext(Dispatchers.IO) {
+                    userStore.favoriteIds() to userStore.playCounts(songs)
+                }
                 mutable.update { it.copy(songs = songs, deletedSongs = refreshed.deletedSongs,
-                    favoriteIds = userStore.favoriteIds(),
-                    playCounts = userStore.playCounts(songs)) }
+                    favoriteIds = favorites, playCounts = counts) }
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.update { it.copy(failed = true) } }

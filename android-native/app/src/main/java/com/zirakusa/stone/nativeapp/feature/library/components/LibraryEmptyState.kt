@@ -25,8 +25,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     }
 }
 
-@Composable fun LibraryScanActions(scanning: Boolean, showHint: Boolean,
-    onFolder: () -> Unit, onScan: () -> Unit, videos: Boolean = false) {
+@Composable fun LibraryFolderAction(scanning: Boolean, showHint: Boolean,
+    onFolder: () -> Unit, videos: Boolean = false) {
     Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         HorizontalDivider(color = StonePalette.Chip)
         Spacer(Modifier.height(24.dp))
@@ -40,18 +40,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 Text(stringResource(if (videos) R.string.choose_video_folder else R.string.choose_stone_folder),
                     color = StonePalette.PurpleText,
                     fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.sp)
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Surface(onClick = onScan, enabled = !scanning, shape = CircleShape,
-            color = StonePalette.Yellow, shadowElevation = 6.dp) {
-            Row(Modifier.padding(horizontal = 22.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (scanning) CircularProgressIndicator(Modifier.size(20.dp), color = StonePalette.Background, strokeWidth = 2.dp)
-                else StoneIcon(StoneGlyph.ScanButton, color = StonePalette.Background, size = 20)
-                Text(stringResource(if (scanning) R.string.scanning else
-                    if (videos) R.string.scan_video_folders else R.string.scan_folders),
-                    color = StonePalette.Background, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.sp)
             }
         }
         if (showHint) Text(stringResource(R.string.scan_hint),

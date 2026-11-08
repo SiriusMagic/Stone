@@ -32,7 +32,7 @@
     <string name="clear_search">Borrar búsqueda</string>
     <string name="choose_stone_folder">Elegir carpeta Stone</string>
     <string name="scan_folders">Escanear carpetas</string>
-    <string name="scan_hint">Pulsa Escanear carpetas para elegir y cargar tu carpeta de Stone.</string>
+    <string name="scan_hint">Elige una carpeta para cargar su contenido en Stone.</string>
     <string name="no_songs">No hay canciones todavía</string>
     <string name="songs_not_found">¿Canciones no encontradas?</string>
     <string name="videos">Videos</string>
@@ -61,9 +61,6 @@
     <string name="more_options">Más opciones</string>
     <string name="equalizer">Ecualizador</string>
     <string name="analyze_audio">Analizar audio</string>
-    <string name="save_eq_profile">Guardar perfil</string>
-    <string name="profile_name">Nombre del perfil</string>
-    <string name="saved_eq_profiles">Perfiles guardados</string>
     <string name="compare_original">Comparar original</string>
     <string name="lyrics">Letras</string>
     <string name="lyrics_badge">LETRAS</string>

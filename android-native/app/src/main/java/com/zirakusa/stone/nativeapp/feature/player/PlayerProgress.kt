@@ -21,7 +21,7 @@ import kotlinx.coroutines.isActive
 @Composable fun rememberPlayerProgress(state: PlaybackState, playback: PlaybackViewModel): Pair<Long, Long> {
     var progress by remember { mutableStateOf(0L to 0L) }
     val owner = LocalLifecycleOwner.current
-    LaunchedEffect(owner, state.playing) {
+    LaunchedEffect(owner, state.playing, state.currentId) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (isActive) {
                 progress = playback.progress()

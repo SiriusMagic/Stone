@@ -17,7 +17,7 @@
     <string name="video_folders">Video folders</string>
     <string name="edit_queue">Edit queue</string><string name="done">Done</string>
     <string name="choose_stone_folder">Choose Stone folder</string><string name="scan_folders">Scan folders</string>
-    <string name="scan_hint">Tap Scan folders to choose and load your Stone folder.</string>
+    <string name="scan_hint">Choose a folder to load its contents into Stone.</string>
     <string name="no_songs">No songs yet</string><string name="songs_not_found">Can’t find your songs?</string>
     <string name="videos">Videos</string><string name="playlists">Playlists</string>
     <string name="sort">Sort</string><string name="settings">Settings</string><string name="sort_title">Title (A-Z)</string>
@@ -116,8 +116,7 @@
     <string name="home_shortcut_hint">Choose which shortcuts appear in the main toolbar.</string>
     <string name="home_shortcut_toggle_hint">Show this icon on the home screen.</string>
     <string name="analyze_audio">Analyze audio</string>
-    <string name="save_eq_profile">Save profile</string><string name="profile_name">Profile name</string>
-    <string name="saved_eq_profiles">Saved profiles</string><string name="compare_original">Compare original</string>
+    <string name="compare_original">Compare original</string>
     <string name="export_lrc">Export LRC</string><string name="embed_lrc">Create MP3 with lyrics</string>
     <string name="lrc_embedded">MP3 copy created with embedded lyrics</string><string name="lrc_embed_failed">Could not embed lyrics</string>
     <string name="lyrics_offset">Offset: %1$d ms</string><string name="reset">Reset</string>

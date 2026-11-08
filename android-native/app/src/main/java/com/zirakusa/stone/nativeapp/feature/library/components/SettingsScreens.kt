@@ -559,7 +559,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     val context = LocalContext.current
     val mode = playback?.state?.collectAsState()?.value?.audioMode ?: AudioMode.BALANCED
     var snapshot by remember { mutableStateOf(PerformanceDiagnostics.read(context)) }
-    var samples by remember { mutableStateOf<List<com.zirakusa.stone.nativeapp.playback.PerformanceSnapshot>>(emptyList()) }
+    var sampleCount by remember { mutableIntStateOf(0) }
     var summary by remember { mutableStateOf<com.zirakusa.stone.nativeapp.playback.DiagnosticSessionSummary?>(null) }
     var running by remember { mutableStateOf(false) }
     var duration by remember { mutableLongStateOf(30_000L) }
@@ -605,10 +605,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         Button(enabled = !running, onClick = { snapshot = PerformanceDiagnostics.read(context) },
             modifier = Modifier.weight(1f)) { Text(stringResource(R.string.refresh_metrics)) }
         OutlinedButton(enabled = !running, onClick = {
-            running = true; samples = emptyList()
+            running = true; sampleCount = 0
             scope.launch {
                 summary = PerformanceDiagnostics.session(context, duration) { sample ->
-                    snapshot = sample; samples = samples + sample
+                    snapshot = sample; sampleCount++
                 }
                 running = false
             }
@@ -668,7 +668,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     DiagnosticSection(stringResource(R.string.diagnostics_advanced)) {
         DiagnosticValue(stringResource(R.string.low_memory), snapshot.lowMemory.toString())
         DiagnosticValue(stringResource(R.string.low_memory_threshold), "${snapshot.lowMemoryThresholdMb} MB")
-        DiagnosticValue(stringResource(R.string.session_samples), samples.size.toString())
+        DiagnosticValue(stringResource(R.string.session_samples), sampleCount.toString())
         Text(stringResource(R.string.diagnostics_limitations), color = StonePalette.Muted, fontSize = 12.sp)
     }
 }

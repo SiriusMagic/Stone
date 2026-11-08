@@ -47,7 +47,20 @@ class LibraryScreenTest {
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
         compose.onNodeWithText(text(R.string.choose_stone_folder)).performClick()
-        compose.onNodeWithText(text(R.string.scan_folders)).performClick()
+        compose.onNodeWithText(text(R.string.scan_folders)).assertDoesNotExist()
+        assertEquals(1, folderRequests)
+    }
+
+    @Test fun videosCanChooseAnotherFolderEvenWhenLibraryAlreadyHasOne() {
+        var folderRequests = 0
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
+            LibraryScreen(LibraryState(hasFolder = true), true, { folderRequests++ }, {}, { _, _ -> },
+                Modifier.fillMaxSize())
+        } } }
+        compose.onNodeWithText(text(R.string.videos)).performClick()
+        compose.onNodeWithText(text(R.string.choose_video_folder)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.choose_video_folder)).performClick()
+        compose.onNodeWithText(text(R.string.scan_video_folders)).assertDoesNotExist()
         assertEquals(2, folderRequests)
     }
 

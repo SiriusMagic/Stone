@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
 enum class AudioMode(val key: String, val maxVolumePercent: Int) {
@@ -42,8 +41,7 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val sleepEndAtMs: Long = 0L,
     val sleepFinishTrack: Boolean = false, val volumePercent: Int = 100,
     val audioMode: AudioMode = AudioMode.BALANCED,
-    val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC,
-    val equalizerProfiles: Map<String, List<Int>> = emptyMap())
+    val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC)
 
 class PlaybackViewModel(application: Application) : AndroidViewModel(application) {
     private val mutable = MutableStateFlow(PlaybackState())
@@ -57,7 +55,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private var equalizerEnabled = data.boolean("equalizer-enabled", false)
     private var equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
     private var equalizerPreset = data.string("equalizer-preset", "Personalizado")
-    private var equalizerProfiles = loadEqualizerProfiles()
     private var volumePercent = data.int("volume-percent", 100).coerceIn(0, 300)
     private var audioMode = runCatching { AudioMode.valueOf(settings.read().audioMode.uppercase()) }
         .getOrDefault(AudioMode.BALANCED)
@@ -126,7 +123,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             sleepFinishTrack = sleepFinishTrack,
             volumePercent = volumePercent, audioMode = audioMode,
             hardwareAcceleration = hardwareAcceleration)
-            .copy(equalizerProfiles = equalizerProfiles)
     }
 
     fun play(song: Song, songs: List<Song>) {
@@ -279,21 +275,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         data.put("equalizer-enabled", value)
         configureEqualizer(value); publish()
     }
-    fun saveEqualizerProfile(name: String) {
-        val clean = name.trim().take(40)
-        if (clean.isBlank()) return
-        equalizerProfiles = equalizerProfiles + (clean to equalizerValues.toList())
-        saveEqualizerProfiles()
-        publish()
-    }
-    fun deleteEqualizerProfile(name: String) {
-        equalizerProfiles = equalizerProfiles - name
-        saveEqualizerProfiles()
-        publish()
-    }
-    fun applyEqualizerProfile(name: String) {
-        equalizerProfiles[name]?.let { setEqualizerPreset(name, it) }
-    }
     fun analyzeAndApply(song: Song, result: (AudioAnalysis) -> Unit = {}) {
         viewModelScope.launch {
             val analysis = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -328,20 +309,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizer.attach(StonePlaybackService.playbackAudioSessionId)
         // The battery profile keeps the user's EQ values, but suspends the effect while active.
         equalizer.configure(enabled && audioMode != AudioMode.BATTERY, equalizerValues)
-    }
-    private fun loadEqualizerProfiles(): Map<String, List<Int>> = runCatching {
-        val root = org.json.JSONObject(data.string("equalizer-profiles", "{}"))
-        buildMap {
-            root.keys().forEach { name ->
-                val values = root.optJSONArray(name) ?: return@forEach
-                put(name, List(values.length()) { values.optInt(it).coerceIn(-10, 10) })
-            }
-        }
-    }.getOrDefault(emptyMap())
-    private fun saveEqualizerProfiles() {
-        val root = org.json.JSONObject()
-        equalizerProfiles.forEach { (name, values) -> root.put(name, JSONArray(values)) }
-        data.put("equalizer-profiles", root.toString())
     }
     private fun genrePreset(genre: String): List<Int>? = when (genre) {
         "Electrónica" -> listOf(4,7,6,-1,-2,0,5,8,3,5)

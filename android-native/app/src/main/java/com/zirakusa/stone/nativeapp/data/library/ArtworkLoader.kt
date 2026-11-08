@@ -67,16 +67,17 @@ object ArtworkLoader {
         slots.withPermit {
             currentCoroutineContext().ensureActive()
             cache.get(key)?.let { return@withPermit it }
-            val retriever = MediaMetadataRetriever()
             val bitmap = try {
                 val source = Uri.parse(uri)
                 if (source.scheme == "file") decodeArtworkFile(source.path)
                 else {
-                    retriever.setDataSource(context, source)
-                    retriever.embeddedPicture?.let(::decodeArtworkBytes)
+                    val retriever = MediaMetadataRetriever()
+                    try {
+                        retriever.setDataSource(context, source)
+                        retriever.embeddedPicture?.let(::decodeArtworkBytes)
+                    } finally { retriever.release() }
                 }
             } catch (_: RuntimeException) { null }
-            finally { retriever.release() }
             currentCoroutineContext().ensureActive()
             if (bitmap != null) cache.put(key, bitmap) else missing.put(key, true)
             bitmap

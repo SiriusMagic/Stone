@@ -233,7 +233,7 @@ import kotlin.math.roundToInt
     }
     when (tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback) { tool = null }
-        PlayerTool.Equalizer -> EqualizerSheet(state, playback, song = song) { tool = null }
+        PlayerTool.Equalizer -> EqualizerSheet(state, playback, progress, song = song) { tool = null }
         PlayerTool.Cover -> song?.let { TagEditorSheet(it, initialTab = 0, close = { tool = null }) {
             tool = null; onMetadataChanged(); back()
         } }

@@ -125,7 +125,7 @@ private val EqMuted = Color(0xFF91A4A4)
 /** Preset and band values live in PlaybackViewModel/PlaybackDataStore, not per song. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun EqualizerSheet(state: PlaybackState, playback: PlaybackViewModel,
-    song: Song? = null, close: () -> Unit) {
+    progress: Pair<Long, Long>, song: Song? = null, close: () -> Unit) {
     val frequencies = listOf("31", "63", "125", "250", "500", "1K", "2K", "4K", "8K", "16K")
     val presets = listOf(
         EqPreset(R.string.eq_custom, state.equalizerValues),
@@ -146,9 +146,6 @@ private val EqMuted = Color(0xFF91A4A4)
         EqPreset(R.string.eq_latin, listOf(1,3,2,0,0,-1,0,-1,0,3)),
     )
     val context = LocalContext.current
-    var profileDialog by remember { mutableStateOf(false) }
-    var profileName by remember { mutableStateOf("") }
-    val progress = rememberPlayerProgress(state, playback)
     ModalBottomSheet(onDismissRequest = close, containerColor = EqSurface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = { BottomSheetDefaults.DragHandle(color = EqOutline) }) {
@@ -182,11 +179,8 @@ private val EqMuted = Color(0xFF91A4A4)
                     fontSize = 26.sp, fontWeight = FontWeight.Black)
                 Switch(state.equalizerEnabled, playback::setEqualizerEnabled)
             }
-            Row(Modifier.fillMaxWidth().padding(bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { profileName = ""; profileDialog = true }) {
-                    Icon(Icons.Default.Save, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.save_eq_profile))
-                }
-                if (state.equalizerEnabled) TextButton(onClick = { playback.setEqualizerEnabled(false) }) {
+            if (state.equalizerEnabled) {
+                TextButton(onClick = { playback.setEqualizerEnabled(false) }) {
                     Text(stringResource(R.string.compare_original))
                 }
             }
@@ -223,45 +217,8 @@ private val EqMuted = Color(0xFF91A4A4)
                         if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
-                if (state.equalizerProfiles.isNotEmpty()) item {
-                    Text(stringResource(R.string.saved_eq_profiles), color = EqText,
-                        fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
-                    state.equalizerProfiles.toList().chunked(2).forEach { row ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            row.forEach { (name, values) ->
-                                Column(Modifier.weight(1f).padding(bottom = 12.dp)
-                                    .heightIn(min = 88.dp).clip(RoundedCornerShape(22.dp))
-                                    .background(if (state.equalizerPreset == name) Color(0xFF2D484A) else EqSurface)
-                                    .border(1.dp, if (state.equalizerPreset == name) EqMuted else EqOutline,
-                                        RoundedCornerShape(22.dp))
-                                    .clickable { playback.applyEqualizerProfile(name) }
-                                    .padding(horizontal = 18.dp, vertical = 14.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Person, null, tint = EqMuted)
-                                        Spacer(Modifier.width(8.dp)); Text(name, color = EqText,
-                                            fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                                        IconButton(onClick = { playback.deleteEqualizerProfile(name) }) {
-                                            Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = EqMuted)
-                                        }
-                                    }
-                                }
-                            }
-                            if (row.size == 1) Spacer(Modifier.weight(1f))
-                        }
-                    }
-                }
             }
         }
-        if (profileDialog) AlertDialog(onDismissRequest = { profileDialog = false },
-            title = { Text(stringResource(R.string.save_eq_profile)) },
-            text = { OutlinedTextField(profileName, { profileName = it.take(40) },
-                label = { Text(stringResource(R.string.profile_name)) }, singleLine = true) },
-            confirmButton = { TextButton(enabled = profileName.isNotBlank(), onClick = {
-                playback.saveEqualizerProfile(profileName); profileDialog = false
-            }) { Text(stringResource(R.string.save)) } },
-            dismissButton = { TextButton(onClick = { profileDialog = false }) {
-                Text(stringResource(R.string.cancel))
-            } })
     }
 }
 

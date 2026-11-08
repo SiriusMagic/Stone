@@ -200,7 +200,7 @@ private fun Song.hasUsableLyrics(): Boolean =
         if (state.failed) Text(stringResource(R.string.scan_failed), Modifier.padding(horizontal = 16.dp),
             color = MaterialTheme.colorScheme.error)
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
-            canPlay, currentId, onPlay, onFolder, scan, Modifier.weight(1f), onCreatePlaylist,
+            canPlay, currentId, onPlay, onFolder, Modifier.weight(1f), onCreatePlaylist,
             onRemoveFromPlaylist, onDelete, onAudioOnly)
     }
     LibrarySheets(sheet,

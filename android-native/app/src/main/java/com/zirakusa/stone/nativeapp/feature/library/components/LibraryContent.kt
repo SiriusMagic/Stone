@@ -29,7 +29,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 @Composable fun LibraryContent(state: LibraryState, songs: List<Song>, tab: LibraryTab,
     collection: String?, select: (String?) -> Unit, searching: Boolean, canPlay: Boolean,
     currentId: String, onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
-    onScan: () -> Unit, modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
+    modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
@@ -46,7 +46,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onScan, onDelete, onAudioOnly)
+        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onDelete, onAudioOnly)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -117,8 +117,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 } else LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, visible) }
             }
             if (!searching && !state.hasFolder) item {
-                LibraryScanActions(state.scanning, state.songs.isEmpty(), onFolder, onScan,
-                    videos = tab == LibraryTab.Videos)
+                LibraryFolderAction(state.scanning, state.songs.isEmpty(), onFolder)
             }
         }
     }
@@ -157,7 +156,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, modifier: Modifier,
-    onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit, onScan: () -> Unit,
+    onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
     var folderBrowser by remember { mutableStateOf(false) }
     var selectedFolder by remember { mutableStateOf<String?>(null) }
@@ -175,6 +174,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             Text(if (selectedFolder != null) selectedFolder.orEmpty()
                 else stringResource(R.string.video_count, videos.size), Modifier.weight(1f),
                 color = StonePalette.SongSubtitle, fontSize = 15.sp)
+            IconButton(onClick = onFolder, enabled = !state.scanning) {
+                Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_video_folder))
+            }
             IconButton(onClick = {
                 folderBrowser = !folderBrowser
                 if (!folderBrowser) selectedFolder = null
@@ -207,8 +209,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {
                 item {
                     if (!state.scanning) LibraryEmptyState(videos = true)
-                    if (!state.hasFolder) LibraryScanActions(state.scanning, state.songs.isEmpty(), onFolder,
-                        onScan, videos = true)
+                    LibraryFolderAction(state.scanning, !state.hasFolder, onFolder, videos = true)
                 }
             }
         }
