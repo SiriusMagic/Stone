@@ -23,10 +23,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (isVolumeKey(keyCode)) {
-            // Android sends repeated ACTION_DOWN events while the hardware key
-            // is held. Forward all of them so the Stone volume keeps moving.
             com.zirakusa.stone.nativeapp.playback.StonePlaybackService.handleVolumeKey(
-                if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5)
+                if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5, event.repeatCount > 0)
             return true
         }
         return super.onKeyDown(keyCode, event)
@@ -44,7 +42,8 @@ class MainActivity : ComponentActivity() {
         val service = com.zirakusa.stone.nativeapp.playback.StonePlaybackService
         if (volumeKey) {
             if (event.action == KeyEvent.ACTION_DOWN) {
-                service.handleVolumeKey(if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5)
+                service.handleVolumeKey(if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP) 5 else -5,
+                    event.repeatCount > 0)
             }
             return true
         }

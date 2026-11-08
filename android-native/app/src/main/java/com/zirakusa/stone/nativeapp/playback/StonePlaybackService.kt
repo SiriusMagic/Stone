@@ -39,8 +39,10 @@ class StonePlaybackService : MediaSessionService() {
                     (max * volumePercent / 100f).roundToInt()
                 } else max
                 // Do not request the system UI: Stone owns the visible overlay.
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, nativeLevel,
-                    AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+                if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != nativeLevel) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, nativeLevel,
+                        AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
+                }
             }
             activePlayer?.volume = 1f
             volumeBoost?.setPercent(volumePercent, maxVolumePercent > 100)
@@ -59,8 +61,13 @@ class StonePlaybackService : MediaSessionService() {
             }
         }
 
-        fun handleVolumeKey(delta: Int): Boolean {
-            setVolumePercent(volumePercent + delta)
+        fun handleVolumeKey(delta: Int, repeated: Boolean = false): Boolean {
+            val next = nextVolumeKeyLevel(volumePercent, delta, maxVolumePercent, repeated)
+            if (next != volumePercent) setVolumePercent(next)
+            else if (!repeated) {
+                revision++
+                mutableVolumeUi.value = VolumeUiState(volumePercent, revision, true, maxVolumePercent)
+            }
             return true
         }
 
