@@ -180,9 +180,7 @@
     <string name="settings_language">Idioma</string>
     <string name="settings_playback">Ajustes de reproducción</string>
     <string name="video_settings">Vídeo</string>
-    <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo. Puedes cambiar la presentación, el encuadre y el método de desbloqueo.</string>
-    <string name="video_presentation_immersive">Modo inmersivo</string>
-    <string name="video_presentation_split">Modo dividido</string>
+    <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo. Puedes cambiar el encuadre y el método de desbloqueo.</string>
     <string name="video_scale_fit">Ajustar (sin recortar)</string>
     <string name="video_scale_fill">Llenar (puede recortar)</string>
     <string name="video_unlock_method">Método para desbloquear controles</string>

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -109,6 +110,19 @@ class LibraryScreenTest {
         assertEquals(0, opens)
         compose.onAllNodesWithText("After Dark")[1].performClick()
         assertEquals(1, opens)
+    }
+
+    @Test fun miniPlayerOptionsButtonIsOptInForHorizontalLayout() {
+        val song = Song("content://fixture/options", "After Dark", "Mr.Kitty", "Time", "Music", 1000, 1, 1)
+        val player = PlaybackState(ready = true, title = song.title, artist = song.artist,
+            queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
+        val showOptions = mutableStateOf(true)
+        compose.setContent { StoneTheme {
+            MiniPlayer(player, {}, {}, song, showOptions = showOptions.value)
+        } }
+        compose.onNodeWithContentDescription(text(R.string.more_options)).assertIsDisplayed()
+        compose.runOnIdle { showOptions.value = false }
+        compose.onNodeWithContentDescription(text(R.string.more_options)).assertDoesNotExist()
     }
 
     @Test @Config(qualifiers = "w360dp-h780dp-xhdpi")

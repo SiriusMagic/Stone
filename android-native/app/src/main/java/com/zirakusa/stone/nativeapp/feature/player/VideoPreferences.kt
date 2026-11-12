@@ -4,12 +4,6 @@ package com.zirakusa.stone.nativeapp.feature.player
 
 import androidx.media3.ui.AspectRatioFrameLayout
 
-/** The two presentation modes available for a landscape video. */
-enum class VideoPresentation {
-    IMMERSIVE,
-    SPLIT,
-}
-
 /** How the video is fitted inside its available bounds. */
 enum class VideoScale(val key: String) {
     FIT("fit"),

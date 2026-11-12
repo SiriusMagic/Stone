@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
 import android.widget.Toast
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.zirakusa.stone.core.Song
@@ -18,13 +19,11 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     val context = LocalContext.current
     if (sheets.queueVisible) QueueSheet(state, playback) { sheets.queueVisible = false }
     if (sheets.lyricsVisible && song != null) LyricsSheet(song, state, playback, progress) { sheets.lyricsVisible = false }
-    if (sheets.optionsVisible) PlayerOptionsSheet(state, song, { sheets.optionsVisible = false }) { selected ->
-        when (selected) {
-            PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
-                .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_LONG).show() } }
-            PlayerTool.FloatingWindow -> enterVideoPictureInPicture(context, playback.player())
-            else -> sheets.tool = selected
-        }
+    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(state, song, {
+        sheets.optionsVisible = false
+    }) { selected ->
+        sheets.optionsVisible = false
+        selectPlayerTool(context, sheets, selected, song, playback)
     }
     val close = { sheets.tool = null }
     val edited = { sheets.tool = null; onMetadataChanged(); onEditComplete() }
@@ -40,5 +39,16 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             song?.let { playback.remove(it.id); onDelete(it) }; close(); onEditComplete()
         }, close)
         else -> Unit
+    }
+}
+
+/** Keeps option actions identical whether they came from a sheet or the horizontal side panel. */
+internal fun selectPlayerTool(context: Context, sheets: PlayerSheetsState, selected: PlayerTool,
+    song: Song?, playback: PlaybackViewModel) {
+    when (selected) {
+        PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
+            .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_LONG).show() } }
+        PlayerTool.FloatingWindow -> enterVideoPictureInPicture(context, playback.player())
+        else -> sheets.tool = selected
     }
 }

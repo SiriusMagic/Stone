@@ -15,7 +15,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
@@ -30,7 +29,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -140,12 +138,11 @@ import kotlin.math.roundToInt
     BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
-        LandscapeVideoPlayer(song, state, progress, playback, back,
+        FullscreenVideoPlayer(song, state, progress, playback, close = back,
+            onAudioOnly = onAudioOnly, videoScale = videoScale,
+            videoUnlockMethod = videoUnlockMethod, onVideoScaleChange = onVideoScaleChange,
             onOptions = { sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
-            onAudioOnly = {
-                onAudioOnly(it)
-            }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
-            onVideoScaleChange = onVideoScaleChange)
+        )
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             onOptions = { sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
@@ -295,8 +292,8 @@ private fun Context.findActivity(): Activity? = when (this) {
 @Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
-    onVideoScaleChange: (VideoScale) -> Unit, onTogglePresentation: (() -> Unit)? = null,
-    onOptions: (() -> Unit)? = null, onQueue: (() -> Unit)? = null) {
+    onVideoScaleChange: (VideoScale) -> Unit, onOptions: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null) {
     VideoSystemBars(hidden = true)
     val controls = rememberVideoControls(song.id, state.playing)
     var locked by remember(song.id) { mutableStateOf(false) }
@@ -340,9 +337,6 @@ private fun Context.findActivity(): Activity? = when (this) {
                         onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
                     },
                     onLock = { locked = true },
-                    onFullscreen = onTogglePresentation ?: close,
-                    presentationToggle = onTogglePresentation != null,
-                    presentationDescription = R.string.video_presentation_split,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -471,8 +465,6 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
     onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
     onScaleToggle: (() -> Unit)? = null, onLock: (() -> Unit)? = null,
-    presentationToggle: Boolean = false,
-    presentationDescription: Int = R.string.video_presentation_split,
     ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically) {
@@ -501,13 +493,7 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
         }
         onFullscreen?.let { action ->
             IconButton(onClick = action) {
-                Icon(
-                    if (presentationToggle) Icons.Default.ViewQuilt
-                    else Icons.Default.FullscreenExit,
-                    if (presentationToggle) stringResource(presentationDescription)
-                    else stringResource(R.string.close_player),
-                    tint = Color.White
-                )
+                Icon(Icons.Default.Fullscreen, stringResource(R.string.open_video), tint = Color.White)
             }
         }
     }
@@ -812,83 +798,6 @@ private fun setWindowBrightness(context: Context, value: Float) {
         val attributes = activity.window.attributes
         attributes.screenBrightness = value.coerceIn(.02f, 1f)
         activity.window.attributes = attributes
-    }
-}
-
-@Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
-    progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit, onAudioOnly: (Song) -> Unit,
-    videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
-    onVideoScaleChange: (VideoScale) -> Unit) {
-    var presentation by rememberSaveable(song.id) { mutableStateOf(VideoPresentation.IMMERSIVE) }
-    if (presentation == VideoPresentation.IMMERSIVE) {
-        FullscreenVideoPlayer(song, state, progress, playback, close = back,
-            onAudioOnly = onAudioOnly, videoScale = videoScale,
-            videoUnlockMethod = videoUnlockMethod, onVideoScaleChange = onVideoScaleChange,
-            onTogglePresentation = { presentation = VideoPresentation.SPLIT },
-            onOptions = onOptions, onQueue = onQueue)
-        return
-    }
-    val controls = rememberVideoControls(song.id, state.playing)
-    Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(1.55f).fillMaxHeight()) {
-            AndroidView(factory = { context ->
-                PlayerView(context).apply {
-                    useController = false
-                    resizeMode = videoScale.resizeMode
-                    player = playback.player()
-                }
-            }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
-            VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-                onDoubleTap = { leftSide ->
-                    seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
-                }, onPrevious = playback::previous, onNext = playback::next,
-                unlockMethod = videoUnlockMethod)
-        }
-        Box(Modifier.weight(1f).fillMaxHeight()) {
-            Box(Modifier.matchParentSize().pointerInput(Unit) {
-                detectTapGestures(onTap = { controls.toggle() })
-            })
-            if (controls.visible) {
-                Column(Modifier.fillMaxSize().padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 2.dp),
-                    verticalArrangement = Arrangement.SpaceBetween) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = back) { Icon(Icons.Default.KeyboardArrowDown,
-                            stringResource(R.string.close_player), Modifier.size(30.dp)) }
-                        Text(song.title, Modifier.weight(1f), textAlign = TextAlign.Center,
-                            color = StonePalette.Muted, fontWeight = FontWeight.Bold)
-                        SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
-                            showLabel = false)
-                        IconButton(onClick = { onAudioOnly(song) }) {
-                            Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
-                        }
-                        IconButton(onClick = onOptions) { Icon(Icons.Default.MoreVert,
-                            stringResource(R.string.more_options)) }
-                    }
-                    Column(Modifier.fillMaxWidth()) {
-                        Text(state.title, fontSize = 21.sp, fontWeight = FontWeight.Black,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(song.folder, color = StonePalette.Muted, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis)
-                    }
-                    VideoTimeline(song, progress, playback)
-                    VideoTransportControls(state, progress, playback,
-                        Modifier.fillMaxWidth().padding(vertical = 4.dp))
-                    VideoActionRow(
-                        onAudioOnly = { onAudioOnly(song) },
-                        onOptions = onOptions,
-                        onQueue = onQueue,
-                        onFullscreen = { presentation = VideoPresentation.IMMERSIVE },
-                        presentationToggle = true,
-                        presentationDescription = R.string.video_presentation_immersive,
-                        onScaleToggle = {
-                            onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
-                        }
-                    )
-                }
-            }
-        }
     }
 }
 

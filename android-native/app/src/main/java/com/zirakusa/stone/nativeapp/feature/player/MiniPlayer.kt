@@ -9,6 +9,8 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +37,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.abs
 
 @Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
-    song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {}) {
+    song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {},
+    showOptions: Boolean = false, onOptions: () -> Unit = {}) {
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
@@ -63,6 +66,11 @@ import kotlin.math.abs
                 Text(stringResource(if (state.playing) R.string.now_playing else R.string.tap_to_play),
                     Modifier.padding(top = 4.dp), color = StonePalette.MiniSubtitle, fontSize = 12.sp,
                     maxLines = 1, letterSpacing = 0.sp)
+            }
+            if (showOptions) {
+                IconButton(onClick = onOptions) {
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
+                }
             }
             StoneIconButton(if (state.playing) StoneGlyph.Pause else StoneGlyph.Play,
                 stringResource(if (state.playing) R.string.pause else R.string.play), toggle,

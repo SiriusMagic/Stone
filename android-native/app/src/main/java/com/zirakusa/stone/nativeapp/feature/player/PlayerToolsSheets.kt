@@ -56,9 +56,24 @@ enum class PlayerTool { Tags, Cover, Equalizer, Playlist, Share, Speed, Ringtone
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
     val tool: PlayerTool)
 
+internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val label: Int, val onClick: () -> Unit)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
     onSelect: (PlayerTool) -> Unit) {
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
+        PlayerOptionsContent(state, song, onSelect = { selected ->
+            onClose()
+            onSelect(selected)
+        })
+    }
+}
+
+/** Shared options content used by the normal bottom sheet and the horizontal mini-player panel. */
+@Composable internal fun PlayerOptionsContent(state: PlaybackState, song: Song?,
+    onSelect: (PlayerTool) -> Unit, modifier: Modifier = Modifier,
+    extraActions: List<PlayerOptionExtra> = emptyList()) {
     val rows = buildList {
         add(ToolRow(Icons.Default.PlaylistAdd, R.string.add_to_playlist, PlayerTool.Playlist))
         add(ToolRow(Icons.Default.Share, R.string.share, PlayerTool.Share))
@@ -71,28 +86,34 @@ private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVe
         ToolRow(Icons.Default.PictureInPictureAlt, R.string.floating_window, PlayerTool.FloatingWindow)
     ) else emptyList()
     val visibleRows = rows.take(8) + videoRows + rows.drop(8)
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
-        LazyColumn(Modifier.padding(horizontal = 28.dp), contentPadding = PaddingValues(bottom = 32.dp)) {
-            item {
-                Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.size(64.dp))
-                    Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                        Text(state.title, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis)
-                        Text(state.artist, color = Color(0xFFD0BFC0), maxLines = 1)
-                    }
-                    IconButton(onClick = { onClose(); onSelect(PlayerTool.Tags) }) {
-                        Icon(Icons.Default.Edit, stringResource(R.string.tag_editor))
-                    }
+    LazyColumn(modifier.padding(horizontal = 28.dp), contentPadding = PaddingValues(bottom = 32.dp)) {
+        item {
+            Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.size(64.dp))
+                Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                    Text(state.title, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis)
+                    Text(state.artist, color = Color(0xFFD0BFC0), maxLines = 1)
+                }
+                IconButton(onClick = { onSelect(PlayerTool.Tags) }) {
+                    Icon(Icons.Default.Edit, stringResource(R.string.tag_editor))
                 }
             }
-            items(visibleRows) { row ->
-                Row(Modifier.fillMaxWidth().height(64.dp).clickable { onClose(); onSelect(row.tool) },
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Icon(row.icon, null, Modifier.size(28.dp))
-                    Text(stringResource(row.label), Modifier.padding(start = 24.dp), fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold)
-                }
+        }
+        items(visibleRows) { row ->
+            Row(Modifier.fillMaxWidth().height(64.dp).clickable { onSelect(row.tool) },
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(row.icon, null, Modifier.size(28.dp))
+                Text(stringResource(row.label), Modifier.padding(start = 24.dp), fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold)
+            }
+        }
+        items(extraActions) { action ->
+            Row(Modifier.fillMaxWidth().height(64.dp).clickable(onClick = action.onClick),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(action.icon, null, Modifier.size(28.dp))
+                Text(stringResource(action.label), Modifier.padding(start = 24.dp), fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold)
             }
         }
     }

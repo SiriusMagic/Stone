@@ -5,6 +5,10 @@ import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -89,6 +93,10 @@ import kotlinx.coroutines.delay
     val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
+    val closeMiniOptions = {
+        playerSheets.optionsVisible = false
+        playerSheets.optionsSidePanel = false
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
     }
@@ -143,9 +151,16 @@ import kotlinx.coroutines.delay
         (windowOrientation == Configuration.ORIENTATION_UNDEFINED && configurationLandscape)
     val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
         isPictureInPicture, landscapeMode)
+    LaunchedEffect(landscape, layout.fullPlayer) {
+        if (!landscape || layout.fullPlayer) closeMiniOptions()
+    }
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical), bottomBar = {
         if (layout.showMiniPlayer) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            currentSong, playback::previous, playback::next)
+            currentSong, playback::previous, playback::next, showOptions = landscape,
+            onOptions = {
+                playerSheets.optionsSidePanel = true
+                playerSheets.optionsVisible = true
+            })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
@@ -297,6 +312,34 @@ import kotlinx.coroutines.delay
                 })
             }
         }
+    }
+    if (landscape && layout.showMiniPlayer && playerSheets.optionsVisible &&
+        playerSheets.optionsSidePanel) {
+        MiniPlayerOptionsPanel(
+            state = player,
+            song = currentSong,
+            onClose = closeMiniOptions,
+            onSelect = { selected ->
+                closeMiniOptions()
+                selectPlayerTool(context, playerSheets, selected, currentSong, playback)
+            },
+            extraActions = listOf(
+                PlayerOptionExtra(Icons.Default.QueueMusic, R.string.queue) {
+                    closeMiniOptions()
+                    playerSheets.queueVisible = true
+                },
+                PlayerOptionExtra(Icons.Default.Tune, R.string.settings_playback) {
+                    closeMiniOptions()
+                    settingsPage = "playback"
+                    settingsVisible = true
+                },
+                PlayerOptionExtra(Icons.Default.Settings, R.string.settings) {
+                    closeMiniOptions()
+                    settingsPage = null
+                    settingsVisible = true
+                }
+            )
+        )
     }
         if (volumeUi.visible) {
             LaunchedEffect(volumeUi.revision) {

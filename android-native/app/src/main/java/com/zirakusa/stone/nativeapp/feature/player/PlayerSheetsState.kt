@@ -8,18 +8,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
     var queueVisible by mutableStateOf(false)
     var lyricsVisible by mutableStateOf(false)
     var optionsVisible by mutableStateOf(false)
+    var optionsSidePanel by mutableStateOf(false)
     var tool by mutableStateOf<PlayerTool?>(null)
     val visible get() = queueVisible || lyricsVisible || optionsVisible || tool != null
 }
 
 @Composable fun rememberPlayerSheetsState(): PlayerSheetsState = rememberSaveable(
     saver = listSaver<PlayerSheetsState, Any>(
-        save = { listOf(it.queueVisible, it.lyricsVisible, it.optionsVisible, it.tool?.name.orEmpty()) },
+        save = {
+            listOf(it.queueVisible, it.lyricsVisible, it.optionsVisible,
+                it.optionsSidePanel, it.tool?.name.orEmpty())
+        },
         restore = { values -> PlayerSheetsState().apply {
             queueVisible = values[0] as Boolean
             lyricsVisible = values[1] as Boolean
             optionsVisible = values[2] as Boolean
-            tool = PlayerTool.entries.firstOrNull { it.name == values[3] }
+            optionsSidePanel = values.getOrNull(3) as? Boolean ?: false
+            val toolName = values.getOrNull(4) as? String ?: values.getOrNull(3) as? String
+            tool = PlayerTool.entries.firstOrNull { it.name == toolName }
         } }
     )
 ) { PlayerSheetsState() }

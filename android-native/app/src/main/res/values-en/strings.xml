@@ -78,9 +78,7 @@
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
     <string name="video_settings">Video</string>
-    <string name="video_settings_hint">Landscape videos open in immersive mode. You can change the presentation, framing and unlock method.</string>
-    <string name="video_presentation_immersive">Immersive mode</string>
-    <string name="video_presentation_split">Split mode</string>
+    <string name="video_settings_hint">Landscape videos open in immersive mode. You can change the framing and unlock method.</string>
     <string name="video_scale_fit">Fit (no crop)</string>
     <string name="video_scale_fill">Fill (may crop)</string>
     <string name="video_unlock_method">Control unlock method</string>
