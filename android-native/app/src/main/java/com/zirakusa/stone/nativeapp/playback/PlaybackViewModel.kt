@@ -55,7 +55,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private var equalizerEnabled = data.boolean("equalizer-enabled", false)
     private var equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
     private var equalizerPreset = data.string("equalizer-preset", "Personalizado")
-    private var volumePercent = data.int("volume-percent", 100).coerceIn(0, 300)
+    private var volumePercent = 100
     private var audioMode = runCatching { AudioMode.valueOf(settings.read().audioMode.uppercase()) }
         .getOrDefault(AudioMode.BALANCED)
     private var hardwareAcceleration = runCatching {
@@ -82,7 +82,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             StonePlaybackService.volumeUi.collect { volume ->
                 if (volume.revision > 0) {
                     volumePercent = volume.percent
-                    data.put("volume-percent", volumePercent)
                     publish()
                 }
             }
@@ -95,7 +94,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 applyAudioMixing(it, settings.read().playWithOthers)
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
-                StonePlaybackService.setVolumePercent(volumePercent, showOverlay = false)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 configureEqualizer(equalizerEnabled)
                 publish()
@@ -144,7 +142,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         volumePercent = volumePercent.coerceAtMost(mode.maxVolumePercent)
-        data.put("volume-percent", volumePercent)
         settings.setAudioMode(mode.key)
         if (mode == AudioMode.BATTERY) {
             hardwareAcceleration = HardwareAcceleration.ADAPTIVE
@@ -162,7 +159,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         audioMode = mode
         hardwareAcceleration = acceleration
         volumePercent = volumePercent.coerceAtMost(mode.maxVolumePercent)
-        data.put("volume-percent", volumePercent)
         settings.setAudioMode(mode.key)
         settings.setHardwareAcceleration(acceleration.key)
         configureEqualizer(equalizerEnabled)

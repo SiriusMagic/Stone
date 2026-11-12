@@ -8,35 +8,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.core.HomeLayout
+import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.components.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
-import com.zirakusa.stone.nativeapp.feature.player.SleepSheet
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
-import java.text.Collator
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
-private val homeShortcutKeys = listOf("search", "scan", "sort", "sleep")
+private val homeShortcutKeys = listOf("search", "scan", "sort")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
 private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
     QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
 private val legacyDefinitions = listOf(
     QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
     QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
-    QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
-    QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true)
+    QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true)
 )
-
-private fun Song.hasUsableLyrics(): Boolean =
-    lyrics.any { it.isNotBlank() } || syncedLyrics.any { it.text.isNotBlank() }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryScreen(state: LibraryState, canPlay: Boolean, onFolder: () -> Unit,
@@ -56,7 +54,11 @@ private fun Song.hasUsableLyrics(): Boolean =
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
-    onOpenCoverEditor: () -> Unit = {}) {
+    onOpenCoverEditor: () -> Unit = {}, layout: HomeLayout = HomeLayout(false),
+    landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
+    onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
+    onHome: () -> Unit = {}, onEqualizer: () -> Unit = {},
+    playerContent: @Composable (Boolean) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -66,6 +68,8 @@ private fun Song.hasUsableLyrics(): Boolean =
     var descending by rememberSaveable { mutableStateOf(false) }
     var moreQuickActions by rememberSaveable { mutableStateOf(false) }
     var feedbackQuickActionId by remember { mutableStateOf<String?>(null) }
+    var shortcutRevision by remember { mutableIntStateOf(0) }
+    val contentState = rememberSaveableStateHolder()
     val context = LocalContext.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
         val profile = settingsStore?.shortcutProfile() ?: "custom"
@@ -73,7 +77,7 @@ private fun Song.hasUsableLyrics(): Boolean =
         else settingsStore?.shortcutVisible(it, it in defaultVisibleHomeShortcutKeys)
             ?: (it in homeShortcutKeys)
     }) }
-    val quickActions = remember(shortcuts, settingsStore) {
+    val quickActions = remember(shortcuts, settingsStore, shortcutRevision) {
         if (settingsStore == null) return@remember emptyList()
         val definitions = legacyDefinitions + QuickActionRegistry.operational
         val ordered = settingsStore.shortcutOrder(allQuickActionIds)
@@ -83,7 +87,6 @@ private fun Song.hasUsableLyrics(): Boolean =
         } else ordered
         profileOrdered.mapNotNull { id -> definitions.find { it.id == id }?.takeIf { shortcuts[id] == true } }
     }
-    var homeTool by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(artistDestination) {
         artistDestination?.takeIf { it.isNotBlank() }?.let { artist ->
             tab = LibraryTab.Artists
@@ -91,7 +94,7 @@ private fun Song.hasUsableLyrics(): Boolean =
             onArtistDestinationConsumed()
         }
     }
-    val playbackState = playbackViewModel?.state?.collectAsState()?.value
+    val playbackState = playbackViewModel?.state?.collectAsStateWithLifecycle()?.value
     val activeQuickActionIds = setOfNotNull(
         when (playbackState?.audioMode) {
             AudioMode.BATTERY -> "audio_mode_battery"
@@ -129,7 +132,6 @@ private fun Song.hasUsableLyrics(): Boolean =
             "folder" -> onFolder()
             "scan" -> scan()
             "sort" -> sheet = "sort"
-            "sleep" -> homeTool = "sleep"
             "shuffle" -> playbackViewModel?.shuffle()
             "repeat" -> playbackViewModel?.repeat()
             "audio_mode_battery" -> {
@@ -152,59 +154,46 @@ private fun Song.hasUsableLyrics(): Boolean =
         }
         moreQuickActions = false
     }
-    val songs = remember(state.songs, state.playCounts, query, sort, descending) {
-        val collator = Collator.getInstance()
-        val filtered = state.songs.filter { it.matches(query) }
-        val ordered = when (sort) {
-            LibrarySort.Duration -> filtered.sortedBy { it.durationMs }
-            LibrarySort.Size -> filtered.sortedBy { it.size }
-            LibrarySort.MostPlayed -> filtered.sortedWith(
-                compareByDescending<Song> { state.playCounts[it.id] ?: 0 }
-                    .thenBy { it.title.lowercase() })
-            LibrarySort.Lyrics -> filtered.sortedWith { first, second ->
-                // Ascending means lyrics available first; reversing the complete result below
-                // gives the user the inverse grouping (songs without lyrics first).
-                val lyricsOrder = second.hasUsableLyrics().compareTo(first.hasUsableLyrics())
-                if (lyricsOrder != 0) lyricsOrder else collator.compare(first.title, second.title)
-            }
-            else -> filtered.sortedWith { a, b ->
-                fun key(song: Song) = when (sort) {
-                    LibrarySort.Artist -> song.artist
-                    LibrarySort.Album -> song.album
-                    else -> song.title
-                }
-                collator.compare(key(a), key(b))
-            }
-        }
-        if (descending) ordered.reversed() else ordered
-    }
+    val songs = rememberLibrarySongs(state, query, sort, descending)
     BackHandler(enabled = collection != null || searchVisible) {
         if (collection != null) collection = null else { searchVisible = false; query = "" }
     }
-    Column(modifier) {
-        LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
+    LibraryLayoutFrame(layout, modifier, sidebar = {
+        HomeNavigationRail(
+            if (settingsStore == null) legacyDefinitions.filter { shortcuts[it.id] != false } else quickActions,
+            highlightedQuickActionIds + if (playbackState?.equalizerEnabled == true) setOf("equalizer") else emptySet(),
+            expanded = layout.sidebarWidthDp >= 160f, scanning = state.scanning,
+            onHome = { tab = LibraryTab.Songs; collection = null; query = ""; searchVisible = false; onHome() },
+            onAction = dispatchQuickAction, onEqualizer = onEqualizer,
+            onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
+    }, player = playerContent) {
+        if (layout.sidebar) LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,
+            onFolder, { tab = LibraryTab.Folders; collection = null })
+        else LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
             onFolder, scan, { sheet = "sort" }, {
                 onOpenSettings(); onSettingsSheetVisible(true)
-            }, onSleep = { homeTool = "sleep" },
+            },
             showSearch = shortcuts["search"] != false, showFolder = false,
             showScan = shortcuts["scan"] != false,
             showSort = shortcuts["sort"] != false, showEqualizer = false,
-            showSleep = shortcuts["sleep"] != false, quickActions = quickActions,
+            quickActions = quickActions,
             onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
-            activeQuickActionIds = highlightedQuickActionIds,
-            sleepMinutes = playbackState?.sleepMinutes ?: 0,
-            sleepEndAtMs = playbackState?.sleepEndAtMs ?: 0L)
+            activeQuickActionIds = highlightedQuickActionIds)
         if (searchVisible) LibrarySearch(query) { query = it }
-        LibraryTabs(tab) { tab = it; collection = null }
+        LibraryTabs(tab, landscape = layout.sidebar) { tab = it; collection = null }
         if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (state.failed) Text(stringResource(R.string.scan_failed), Modifier.padding(horizontal = 16.dp),
             color = MaterialTheme.colorScheme.error)
+        Box(Modifier.weight(1f)) {
+        contentState.SaveableStateProvider("${tab.name}:${collection.orEmpty()}") {
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
-            canPlay, currentId, onPlay, onFolder, Modifier.weight(1f), onCreatePlaylist,
+            canPlay, currentId, onPlay, onFolder, Modifier.fillMaxSize(), onCreatePlaylist,
             onRemoveFromPlaylist, onDelete, onAudioOnly, onOpenFolders = {
                 tab = LibraryTab.Folders
                 collection = null
-            })
+            }, compact = layout.sidebar)
+        }
+        }
     }
     LibrarySheets(sheet,
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
@@ -213,11 +202,11 @@ private fun Song.hasUsableLyrics(): Boolean =
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,
         scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare,
         onExportPackage, onImportPackage, onTransfer, transferState, onHostTransfer,
-        onReceiveTransfer, onStopTransfer) { key, visible ->
+        onReceiveTransfer, onStopTransfer, landscapeLayoutMode = landscapeLayoutMode,
+        onLandscapeLayoutChange = onLandscapeLayoutChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)
+        shortcutRevision++
     }
-    if (homeTool == "sleep" && playbackViewModel != null && playbackState != null)
-        SleepSheet(playbackState, playbackViewModel) { homeTool = null }
     if (moreQuickActions) ModalBottomSheet(onDismissRequest = { moreQuickActions = false }) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(stringResource(R.string.more_options), style = MaterialTheme.typography.titleLarge)

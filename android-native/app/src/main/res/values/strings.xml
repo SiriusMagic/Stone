@@ -1,4 +1,14 @@
 <resources>
+    <string name="horizontal_layout">Diseño horizontal</string>
+    <string name="horizontal_layout_hint">Elige cómo se organiza Stone al girar el teléfono. El diseño vertical se conserva.</string>
+    <string name="horizontal_always">Siempre las tres zonas</string>
+    <string name="horizontal_always_hint">Navegación, biblioteca y reproductor juntos, también al girar desde la música.</string>
+    <string name="horizontal_library_only">Solo desde la biblioteca</string>
+    <string name="horizontal_library_only_hint">El reproductor abierto conserva su pantalla independiente.</string>
+    <string name="home">Inicio</string>
+    <string name="choose_song_to_play">Elige una canción para reproducir</string>
+    <string name="open_player">Abrir reproductor</string>
+    <string name="open_video">Abrir vídeo</string>
     <string name="app_name">Stone</string>
     <string name="stone">Stone</string>
     <string name="choose_folder">Agregar carpeta</string>
@@ -30,11 +40,8 @@
     <string name="dismiss">Cerrar</string>
     <string name="search_toggle">Buscar</string>
     <string name="clear_search">Borrar búsqueda</string>
-    <string name="choose_stone_folder">Elegir carpeta Stone</string>
     <string name="scan_folders">Escanear carpetas</string>
-    <string name="scan_hint">Elige una carpeta para cargar su contenido en Stone.</string>
     <string name="no_songs">No hay canciones todavía</string>
-    <string name="songs_not_found">¿Canciones no encontradas?</string>
     <string name="videos">Videos</string>
     <string name="video_count">%1$d videos</string>
     <string name="video_details">%1$s | %2$s</string>
@@ -181,7 +188,6 @@
     <string name="settings_stone_folder">Agregar carpeta multimedia</string>
     <string name="video_media">Video</string>
     <string name="no_videos">No hay videos todavía</string>
-    <string name="videos_not_found">¿Videos no encontrados?</string>
     <string name="choose_video_folder">Elegir carpeta de videos</string>
     <string name="scan_video_folders">Escanear videos</string>
     <string name="settings_scan_library">Escanear biblioteca</string>

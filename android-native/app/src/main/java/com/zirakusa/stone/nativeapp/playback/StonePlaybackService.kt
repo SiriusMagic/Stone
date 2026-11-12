@@ -25,6 +25,7 @@ class StonePlaybackService : MediaSessionService() {
         @Volatile private var activePlayer: ExoPlayer? = null
         @Volatile private var volumePercent: Int = 100
         @Volatile private var maxVolumePercent: Int = AudioMode.BALANCED.maxVolumePercent
+        @Volatile private var lastAppliedNativeLevel: Int = -1
         @Volatile private var revision: Long = 0
         private var volumeBoost: PlaybackVolumeBoost? = null
         private val mutableVolumeUi = MutableStateFlow(VolumeUiState())
@@ -38,6 +39,7 @@ class StonePlaybackService : MediaSessionService() {
                 val nativeLevel = if (volumePercent <= 100) {
                     (max * volumePercent / 100f).roundToInt()
                 } else max
+                lastAppliedNativeLevel = nativeLevel
                 // Do not request the system UI: Stone owns the visible overlay.
                 if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != nativeLevel) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, nativeLevel,
@@ -48,6 +50,19 @@ class StonePlaybackService : MediaSessionService() {
             volumeBoost?.setPercent(volumePercent, maxVolumePercent > 100)
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
+        }
+
+        /** Reconciles Stone with Android after the user changed media volume outside Stone. */
+        fun syncWithAndroidVolume() {
+            val service = instance ?: return
+            val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            // A max Android level is also the expected base level for Stone's boost range;
+            // retain the logical boost unless Android was actually changed underneath us.
+            if (lastAppliedNativeLevel >= 0 && current == lastAppliedNativeLevel) return
+            val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+            val percent = (current * 100f / max).roundToInt().coerceIn(0, 100)
+            setVolumePercent(percent, showOverlay = false)
         }
 
         fun setMaxVolumePercent(maxPercent: Int) {
@@ -95,11 +110,10 @@ class StonePlaybackService : MediaSessionService() {
         }
         activePlayer = player
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if (volumePercent <= 100) {
-            val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
-            volumePercent = (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) * 100f / max)
-                .roundToInt().coerceIn(0, 100)
-        }
+        // Android is the source of truth at service start. Never restore a saved Stone volume.
+        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+        volumePercent = (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) * 100f / max)
+            .roundToInt().coerceIn(0, 100)
         ecoEngine = StoneEcoEngine(applicationContext).also {
             it.apply(AudioMode.BALANCED, player)
         }

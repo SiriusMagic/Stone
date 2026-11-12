@@ -9,5 +9,5 @@ Código de Stone y comienzo de su migración a Android nativo con Kotlin.
 - **`docs/MIGRACION-KOTLIN.md`**: [funciones trasladadas y pendientes](docs/MIGRACION-KOTLIN.md).
 
 Ruta en este entorno: `/workspace/stone/android-native`.
-Es una carpeta del entorno de trabajo; aún no hay un nuevo repositorio publicado en GitHub.
-Los enlaces a carpetas pueden no abrirse en el chat: usa los enlaces a documentos o descarga el ZIP.
+El repositorio publicado es `https://github.com/SiriusMagic/Stone`.
+El APK final se encuentra en `android-native/app/build/outputs/apk/debug/app-debug.apk`.

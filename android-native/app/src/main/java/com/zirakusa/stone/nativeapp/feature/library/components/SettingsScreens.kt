@@ -50,6 +50,7 @@ import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionRegistry
+import com.zirakusa.stone.core.LandscapeLayoutMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -73,6 +74,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     transferState: LocalTransferUiState = LocalTransferUiState(),
     onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
     onStopTransfer: () -> Unit = {},
+    landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
+    onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
@@ -112,6 +115,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
                     )),
                     SettingsMenuSection(R.string.settings_section_appearance, listOf(
+                        SettingsMenuItem(Icons.Default.ViewQuilt, stringResource(R.string.horizontal_layout), "",
+                            "horizontal paisaje girar pantalla distribución layout landscape", { onPage("horizontal-layout") }),
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
                             "personalización tema apariencia colores", { onPage("theme") }),
                         SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
@@ -159,6 +164,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
+                    "horizontal-layout" -> HorizontalLayoutSettings(landscapeLayoutMode, onLandscapeLayoutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
                         { onPage("hardware-acceleration") })
                     "audio-mode" -> AudioModeDetail(playback)
@@ -186,6 +192,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {
     "theme" -> R.string.settings_theme; "language" -> R.string.settings_language
     "shortcuts" -> R.string.settings_home_shortcuts
+    "horizontal-layout" -> R.string.horizontal_layout
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "hardware-acceleration" -> R.string.hardware_acceleration
     "audio-output" -> R.string.audio_output
@@ -283,8 +290,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     val legacy = listOf(
         QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
         QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
-        QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true),
-        QuickActionDefinition("sleep", "Temporizador", "Temporizador para dormir", Icons.Default.Timer, true))
+        QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true))
     val legacyIds = remember { legacy.map { it.id } }
     val defaultVisibleIds = legacyIds.toSet() + QuickActionRegistry.defaultVisibleIds
     val items = remember {

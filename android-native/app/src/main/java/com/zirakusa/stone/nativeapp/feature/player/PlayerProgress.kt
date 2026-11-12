@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
@@ -21,6 +22,16 @@ import kotlinx.coroutines.isActive
 @Composable fun rememberPlayerProgress(state: PlaybackState, playback: PlaybackViewModel): Pair<Long, Long> {
     var progress by remember { mutableStateOf(0L to 0L) }
     val owner = LocalLifecycleOwner.current
+    val player = playback.player()
+    DisposableEffect(player, owner) {
+        val listener = object : Player.Listener {
+            override fun onEvents(player: Player, events: Player.Events) {
+                if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) progress = playback.progress()
+            }
+        }
+        player?.addListener(listener)
+        onDispose { player?.removeListener(listener) }
+    }
     LaunchedEffect(owner, state.playing, state.currentId) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (isActive) {

@@ -64,6 +64,11 @@ class MainActivity : ComponentActivity() {
         setContent { com.zirakusa.stone.nativeapp.ui.StoneApp(isPictureInPicture = pictureInPicture) }
     }
 
+    override fun onResume() {
+        super.onResume()
+        com.zirakusa.stone.nativeapp.playback.StonePlaybackService.syncWithAndroidVolume()
+    }
+
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean,
         newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)

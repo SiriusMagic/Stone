@@ -12,8 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,10 +34,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
-    onOpenFolders: () -> Unit = {}) {
+    onOpenFolders: () -> Unit = {}, compact: Boolean = false) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
-            onCreatePlaylist, onRemoveFromPlaylist)
+            onCreatePlaylist, onRemoveFromPlaylist, compact)
         return
     }
     val groupKey: (Song) -> String = when (tab) {
@@ -56,14 +58,14 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     var menuVisible by remember(collection) { mutableStateOf(false) }
     var deleteConfirmVisible by remember(collection) { mutableStateOf(false) }
     Column(modifier.fillMaxWidth()) {
-    LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
+    LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("library-list"), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
         run {
-            if (tab == LibraryTab.Songs && collection == null) item {
+            if (!compact && tab == LibraryTab.Songs && collection == null) item {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.song_count, visible.size), Modifier.weight(1f),
                         color = StonePalette.SongSubtitle, fontSize = 15.sp)
-                    IconButton(onClick = onFolder) {
+                    IconButton(onClick = onFolder, enabled = !state.scanning) {
                         Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_folder))
                     }
                     IconButton(onClick = onOpenFolders) {
@@ -111,7 +113,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     }
                     Row(Modifier.fillMaxWidth().clickable { select(name) }.padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        LibraryCover(glyph = glyph)
+                        LibraryCover(glyph = glyph, compact = compact)
                         Column(Modifier.weight(1f)) {
                             Text(name, fontSize = 16.sp)
                             Text(stringResource(R.string.song_count, tracks.size), color = StonePalette.SongSubtitle, fontSize = 13.sp)
@@ -126,9 +128,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 }, verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(song.id in selectedIds, null)
                     Box(Modifier.weight(1f)) {
-                        LibrarySongRow(song, song.id == currentId, false) { }
+                        LibrarySongRow(song, song.id == currentId, false, compact = compact) { }
                     }
-                } else LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, visible) }
+                } else LibrarySongRow(song, song.id == currentId, canPlay, compact = compact) { onPlay(song, visible) }
             }
         }
     }
@@ -169,8 +171,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, modifier: Modifier,
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
-    var folderBrowser by remember { mutableStateOf(false) }
-    var selectedFolder by remember { mutableStateOf<String?>(null) }
+    var folderBrowser by rememberSaveable { mutableStateOf(false) }
+    var selectedFolder by rememberSaveable { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
     var selectedVideo by remember { mutableStateOf<Song?>(null) }
     var deleteConfirmVisible by remember { mutableStateOf(false) }
@@ -282,7 +284,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @Composable private fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,
     canPlay: Boolean, currentId: String, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier,
-    onCreate: (String) -> Unit, onRemove: (String, Song) -> Unit) {
+    onCreate: (String) -> Unit, onRemove: (String, Song) -> Unit, compact: Boolean) {
     var createVisible by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     val audio = state.songs.filterNot { it.isVideo }
@@ -317,7 +319,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             }
             items(currentTracks, key = { it.id }) { song ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f)) { LibrarySongRow(song, song.id == currentId, canPlay) { onPlay(song, currentTracks) } }
+                    Box(Modifier.weight(1f)) { LibrarySongRow(song, song.id == currentId, canPlay, compact = compact) { onPlay(song, currentTracks) } }
                     if (collection.startsWith("custom-")) IconButton(onClick = { onRemove(collection, song) }) {
                         Icon(Icons.Default.RemoveCircleOutline, stringResource(R.string.remove_from_playlist)) }
                 }

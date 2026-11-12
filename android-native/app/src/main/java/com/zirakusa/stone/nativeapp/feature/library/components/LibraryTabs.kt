@@ -27,13 +27,14 @@ enum class LibraryTab(val label: Int) {
     Folders(R.string.folders), Artists(R.string.artists), Albums(R.string.albums)
 }
 
-@Composable fun LibraryTabs(selected: LibraryTab, onSelect: (LibraryTab) -> Unit) {
-    Row(Modifier.padding(top = 6.dp).height(56.dp).fillMaxWidth()
-        .horizontalScroll(rememberScrollState()).selectableGroup().padding(horizontal = 16.dp),
+@Composable fun LibraryTabs(selected: LibraryTab, landscape: Boolean = false, onSelect: (LibraryTab) -> Unit) {
+    Row(Modifier.padding(top = if (landscape) 0.dp else 6.dp).height(if (landscape) 48.dp else 56.dp).fillMaxWidth()
+        .horizontalScroll(rememberScrollState()).selectableGroup().padding(horizontal = if (landscape) 8.dp else 16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         LibraryTab.entries.forEach { tab ->
             val active = tab == selected
-            val color = if (active) StonePalette.Blue else StonePalette.Chip
+            val color = if (active) { if (landscape) StonePalette.Yellow else StonePalette.Blue } else StonePalette.Chip
+            val activeText = if (landscape) StonePalette.Background else Color.White
             Row(Modifier.height(36.dp).widthIn(min = 78.dp).clip(CircleShape).background(color)
                 .border(1.dp, if (active) color else StonePalette.Border, CircleShape)
                 .selectable(active, role = Role.Tab, onClick = { onSelect(tab) })
@@ -41,11 +42,11 @@ enum class LibraryTab(val label: Int) {
                 .padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (tab == LibraryTab.Videos) StoneIcon(StoneGlyph.Video,
-                    color = if (active) Color.White else StonePalette.Muted, size = 16)
+                    color = if (active) activeText else StonePalette.Muted, size = 16)
                 Text(stringResource(tab.label), modifier = Modifier
                     .selectable(active, role = Role.Tab, onClick = { onSelect(tab) })
                     .semantics { selectedSemantics = active },
-                    color = if (active) Color.White else StonePalette.Secondary,
+                    color = if (active) activeText else StonePalette.Secondary,
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp)
             }
         }

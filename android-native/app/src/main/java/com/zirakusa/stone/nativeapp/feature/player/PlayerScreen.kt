@@ -84,13 +84,10 @@ import kotlin.math.roundToInt
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
     modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
     onAudioOnly: (Song) -> Unit = {}, openCoverEditor: Boolean = false,
-    onCoverEditorConsumed: () -> Unit = {}) {
+    onCoverEditorConsumed: () -> Unit = {},
+    sheets: PlayerSheetsState = rememberPlayerSheetsState()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
-    var queueVisible by remember { mutableStateOf(false) }
-    var lyricsVisible by remember { mutableStateOf(false) }
-    var optionsVisible by remember { mutableStateOf(false) }
-    var tool by remember { mutableStateOf<PlayerTool?>(null) }
     var videoFullscreen by remember { mutableStateOf(false) }
     val dynamicBackground by produceState(
         Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
@@ -109,7 +106,7 @@ import kotlin.math.roundToInt
         label = "player-background")
     LaunchedEffect(openCoverEditor, song?.id) {
         if (openCoverEditor && song != null) {
-            tool = PlayerTool.Cover
+            sheets.tool = PlayerTool.Cover
             onCoverEditorConsumed()
         }
     }
@@ -134,18 +131,20 @@ import kotlin.math.roundToInt
     val landscape = maxWidth > maxHeight
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
-            onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
+            onOptions = { sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
+            onFullscreen = { videoFullscreen = true },
             onAudioOnly = {
                 videoFullscreen = false
                 onAudioOnly(it)
             })
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
-            onOptions = { optionsVisible = true }, onLyrics = { lyricsVisible = true },
-            onEqualizer = { tool = PlayerTool.Equalizer },
-            onQueue = { queueVisible = true })
+            onOptions = { sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
+            onEqualizer = { sheets.tool = PlayerTool.Equalizer },
+            onQueue = { sheets.queueVisible = true })
     } else if (song?.isVideo == true) PortraitVideoPlayer(song, state, progress, playback, back,
-        onOptions = { optionsVisible = true }, onQueue = { queueVisible = true },
+        onOptions = { sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
+        onFullscreen = { videoFullscreen = true },
         onAudioOnly = {
             videoFullscreen = false
             onAudioOnly(it)
@@ -164,7 +163,7 @@ import kotlin.math.roundToInt
                     overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
                 if (state.sleepMinutes > 0) SleepTimerIndicator(state.sleepMinutes,
                     Modifier.height(30.dp), endAtMillis = state.sleepEndAtMs,
-                    onClick = { tool = PlayerTool.Sleep })
+                    onClick = { sheets.tool = PlayerTool.Sleep })
             }
         }
         if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -194,7 +193,7 @@ import kotlin.math.roundToInt
                 Icon(if (state.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     stringResource(R.string.favorite), tint = if (state.favorite) StonePalette.Yellow else Color(0xFFE8E6EE))
             }
-            IconButton(onClick = { optionsVisible = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more_options)) }
+            IconButton(onClick = { sheets.optionsVisible = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more_options)) }
         }
         PlayerProgress(progress, playback)
         Row(Modifier.fillMaxWidth().height(104.dp), horizontalArrangement = Arrangement.SpaceEvenly,
@@ -212,43 +211,14 @@ import kotlin.math.roundToInt
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton(onClick = { tool = PlayerTool.Equalizer }) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
-            CurrentLyricChip(song, progress.first, { lyricsVisible = true }, Modifier.weight(1f))
-            IconButton(onClick = { queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
+            IconButton(onClick = { sheets.tool = PlayerTool.Equalizer }) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+            CurrentLyricChip(song, progress.first, { sheets.lyricsVisible = true }, Modifier.weight(1f))
+            IconButton(onClick = { sheets.queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
         }
     }
     }
-    if (queueVisible) QueueSheet(state, playback) { queueVisible = false }
-    if (lyricsVisible && song != null) LyricsSheet(song, state, playback, progress) { lyricsVisible = false }
-    if (optionsVisible) PlayerOptionsSheet(state, song, { optionsVisible = false }) { selected ->
-        when (selected) {
-            PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
-                .onFailure { error -> android.widget.Toast.makeText(context, error.message, android.widget.Toast.LENGTH_LONG).show() } }
-            PlayerTool.FloatingWindow -> {
-                enterVideoPictureInPicture(context, playback.player())
-                tool = null
-            }
-            else -> tool = selected
-        }
-    }
-    when (tool) {
-        PlayerTool.Speed -> SpeedSheet(state, playback) { tool = null }
-        PlayerTool.Equalizer -> EqualizerSheet(state, playback, progress, song = song) { tool = null }
-        PlayerTool.Cover -> song?.let { TagEditorSheet(it, initialTab = 0, close = { tool = null }) {
-            tool = null; onMetadataChanged(); back()
-        } }
-        PlayerTool.Sleep -> SleepSheet(state, playback) { tool = null }
-        PlayerTool.Tags -> song?.let { TagEditorSheet(it, close = { tool = null }) {
-            tool = null; onMetadataChanged(); back()
-        } }
-        PlayerTool.Ringtone -> song?.let { RingtoneSheet(it) { tool = null } }
-        PlayerTool.Playlist -> song?.let { PlaylistPickerSheet(it, playlists, onCreatePlaylist,
-            onAddToPlaylist) { tool = null } }
-        PlayerTool.Delete -> ConfirmSongAction({
-            song?.let { playback.remove(it.id); onDelete(it) }; tool = null; back()
-        }, { tool = null })
-        else -> Unit
-    }
+    PlayerSheetsHost(sheets, state, song, playback, progress, playlists, onCreatePlaylist,
+        onAddToPlaylist, onDelete, onMetadataChanged, onEditComplete = back)
 }
 
 @Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel) {
@@ -261,7 +231,7 @@ import kotlin.math.roundToInt
     }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
 }
 
-private fun enterVideoPictureInPicture(context: Context, player: Player?) {
+internal fun enterVideoPictureInPicture(context: Context, player: Player?) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val activity = context.findActivity() ?: return
     val videoSize = player?.videoSize
@@ -325,7 +295,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                 VideoTimeline(song, progress, playback)
                 VideoActionRow(
                     onAudioOnly = { onAudioOnly(song) },
-                    onClearScreen = controls.toggle,
+                    onFullscreen = close,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -335,7 +305,7 @@ private fun Context.findActivity(): Activity? = when (this) {
 
 @Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
     onAudioOnly: (Song) -> Unit) {
     val controls = rememberVideoControls(song.id, state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -376,7 +346,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onAudioOnly = { onAudioOnly(song) },
                     onOptions = onOptions,
                     onQueue = onQueue,
-                    onClearScreen = controls.toggle,
+                    onFullscreen = onFullscreen,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -442,7 +412,7 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
 }
 
 @Composable private fun VideoActionRow(onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null, onClearScreen: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
     modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically) {
@@ -459,9 +429,9 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
                 Icon(Icons.Default.QueueMusic, stringResource(R.string.queue), tint = Color.White)
             }
         }
-        onClearScreen?.let { action ->
+        onFullscreen?.let { action ->
             IconButton(onClick = action) {
-                Icon(Icons.Default.Fullscreen, "Limpiar pantalla", tint = Color.White)
+                Icon(Icons.Default.Fullscreen, "Pantalla completa", tint = Color.White)
             }
         }
     }
@@ -716,7 +686,7 @@ private fun setWindowBrightness(context: Context, value: Float) {
 
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
     onAudioOnly: (Song) -> Unit) {
     val controls = rememberVideoControls(song.id, state.playing)
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -765,7 +735,7 @@ private fun setWindowBrightness(context: Context, value: Float) {
                         onAudioOnly = { onAudioOnly(song) },
                         onOptions = onOptions,
                         onQueue = onQueue,
-                        onClearScreen = controls.toggle
+                        onFullscreen = onFullscreen
                     )
                 }
             }

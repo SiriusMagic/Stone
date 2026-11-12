@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp.data.persistence
 
 import android.content.Context
 import org.json.JSONArray
+import com.zirakusa.stone.core.LandscapeLayoutMode
 
 data class StoneSettings(
     val theme: String = "dark",
@@ -17,6 +18,7 @@ data class StoneSettings(
     val autoRescan: Boolean = true,
     val hardwareAcceleration: String = "automatic",
     val musicReminders: Boolean = false,
+    val landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
 )
 
 class StoneSettingsStore(context: Context) {
@@ -37,8 +39,10 @@ class StoneSettingsStore(context: Context) {
         hardwareAcceleration = db.setting("hardwareAcceleration", "automatic")
             .takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic",
         musicReminders = db.setting("musicReminders", "false").toBoolean(),
+        landscapeLayoutMode = LandscapeLayoutMode.fromKey(db.setting("landscapeLayoutMode", "always")),
     )
     fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in setOf("dark", "gray") } ?: "dark")
+    fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
     fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in setOf("es", "en") } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())
     fun shortcutVisible(key: String, fallback: Boolean = true) =

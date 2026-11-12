@@ -45,7 +45,6 @@ class LibraryScreenTest {
         compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
         compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.choose_stone_folder)).assertDoesNotExist()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
         compose.onNodeWithContentDescription(text(R.string.choose_folder)).performClick()
         compose.onNodeWithText(text(R.string.scan_folders)).assertDoesNotExist()

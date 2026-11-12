@@ -22,6 +22,13 @@ class LibraryTest {
         assertEquals(186_260L, document.synced.single().timeMs)
         assertEquals("Oh, necesito un amor, ahora mi corazón", document.synced.single().text)
     }
+
+    @Test fun `plain lyrics get zero timestamps while timed lyrics stay unchanged`() {
+        val plain = LyricsParser.parse("Primera línea\nSegunda línea")
+        assertEquals(listOf(0L, 0L), plain.synced.map { it.timeMs })
+        val timed = LyricsParser.parse("[00:01.250] Conservada")
+        assertEquals(listOf(1_250L), timed.synced.map { it.timeMs })
+    }
     @Test fun `rapid resumes and manual requests cannot overlap`() {
         val policy = RefreshPolicy(100)
         assertTrue(policy.tryStart(false, 1000))

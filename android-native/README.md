@@ -17,11 +17,12 @@ Build Tools 35.0.0 y usa JDK 21 para Gradle. No necesita Node, Expo ni un servid
 ```
 
 En Windows usa `gradlew.bat`. El APK queda en `app/build/outputs/apk/debug/app-debug.apk`.
-Para un APK de prueba optimizado: `./gradlew :app:assemblePreview`.
+Para el APK descargable optimizado: `./gradlew :app:assemblePreview`.
 Sale en `app/build/outputs/apk/preview/app-preview.apk`, con firma de desarrollo,
 sin depuración y con reducción de código y recursos. No es una publicación estable.
 La prueba usa `com.zirakusa.stone.kotlin.preview` y el nombre **Stone Kotlin · Prueba**.
-La última vista previa generada es `1.4.2` (versionCode 7). El siguiente lote de paridad será `1.4.3`; genera su APK al completar 30 cambios funcionales.
+La última versión generada es `1.5.6` (versionCode 16). El APK final de este cambio incluye
+la distribución horizontal configurable; consulta [`DISENO-HORIZONTAL.md`](DISENO-HORIZONTAL.md).
 Pruebas de interfaz y capturas: `./gradlew :app:testDebugUnitTest`.
 Las imágenes se escriben en `app/build/screenshots/`.
 Se instala junto a Stone. El APK debug incluye el código Kotlin compilado y no necesita Metro.

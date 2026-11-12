@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp.ui
 
 import android.app.Activity
-import android.content.Intent
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -9,17 +9,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.core.content.FileProvider
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.core.LandscapeLayoutMode
+import com.zirakusa.stone.core.homeLayout
 import com.zirakusa.stone.nativeapp.feature.library.*
 import com.zirakusa.stone.nativeapp.feature.player.*
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
@@ -42,10 +45,15 @@ import kotlinx.coroutines.delay
     val context = LocalContext.current
     val settingsStore = remember(context) { StoneSettingsStore(context.applicationContext) }
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
-    var theme by rememberSaveable { mutableStateOf(settingsStore.read().theme) }
-    var language by rememberSaveable { mutableStateOf(settingsStore.read().language) }
+    val initialSettings = remember(settingsStore) { settingsStore.read() }
+    var theme by rememberSaveable { mutableStateOf(initialSettings.theme) }
+    var language by rememberSaveable { mutableStateOf(initialSettings.language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
+    var landscapeMode by rememberSaveable { mutableStateOf(initialSettings.landscapeLayoutMode) }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val libraryScreens = rememberSaveableStateHolder()
+    val playerSheets = rememberPlayerSheetsState()
     val state by library.state.collectAsStateWithLifecycle()
     val player by playback.state.collectAsStateWithLifecycle()
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
@@ -61,7 +69,6 @@ import kotlinx.coroutines.delay
     }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
-    var openCoverEditor by rememberSaveable { mutableStateOf(false) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -122,14 +129,18 @@ import kotlinx.coroutines.delay
         if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) library.onForeground()
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
-    StoneTheme(theme) { Box(Modifier.fillMaxSize()) { Scaffold(bottomBar = {
-        if (!isPictureInPicture && !playerOpen) MiniPlayer(player, { playerOpen = true }, playback::toggle,
+    StoneTheme(theme) { BoxWithConstraints(Modifier.fillMaxSize()
+        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+    val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
+        isPictureInPicture, landscapeMode)
+    Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical), bottomBar = {
+        if (layout.showMiniPlayer) MiniPlayer(player, { playerOpen = true }, playback::toggle,
             currentSong, playback::previous, playback::next)
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
-            if (playerOpen) PlayerScreen(player, currentSong, playback,
+            if (layout.fullPlayer) PlayerScreen(player, currentSong, playback,
                 { playerOpen = false }, library::delete, { library.refresh() },
                 state.playlists, library::createPlaylist, library::addToPlaylist, Modifier.weight(1f),
                 onArtist = {
@@ -139,8 +150,9 @@ import kotlinx.coroutines.delay
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
-                }, openCoverEditor = openCoverEditor, onCoverEditorConsumed = { openCoverEditor = false })
-            else LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
+                }, sheets = playerSheets)
+            else libraryScreens.SaveableStateProvider("library") {
+            LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreDeleted,
                 { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
@@ -233,15 +245,32 @@ import kotlinx.coroutines.delay
                 }, artistDestination = artistDestination,
                 onArtistDestinationConsumed = { artistDestination = null },
                 onDelete = library::delete,
+                layout = layout, landscapeLayoutMode = landscapeMode,
+                onLandscapeLayoutChange = {
+                    settingsStore.setLandscapeLayoutMode(it)
+                    landscapeMode = it
+                    settingsVisible = false
+                    settingsPage = null
+                },
+                onHome = { playerOpen = false },
+                onEqualizer = { playerSheets.tool = PlayerTool.Equalizer },
+                playerContent = { showPanel ->
+                    LibraryPlaybackPane(showPanel, player, currentSong, playback, playerSheets,
+                        onOpen = if (landscapeMode == LandscapeLayoutMode.LIBRARY_ONLY || currentSong?.isVideo == true)
+                            ({ playerOpen = true }) else null,
+                        state.playlists, library::createPlaylist, library::addToPlaylist, library::delete,
+                        onMetadataChanged = { library.refresh() })
+                },
                 onOpenCoverEditor = {
                     if (player.currentId.isNotBlank()) {
-                        openCoverEditor = true
+                        playerSheets.tool = PlayerTool.Cover
                         playerOpen = true
                     } else {
                         android.widget.Toast.makeText(context, R.string.cover_editor_requires_song,
                             android.widget.Toast.LENGTH_SHORT).show()
                     }
                 })
+            }
         }
     }
         if (volumeUi.visible) {
@@ -252,70 +281,4 @@ import kotlinx.coroutines.delay
             VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
         }
     } }
-}
-
-private fun shareStoneBackup(context: android.content.Context) {
-    val text = runCatching { StoneBackup.exportText(context) }.getOrNull() ?: return
-    context.startActivity(android.content.Intent.createChooser(
-        android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(android.content.Intent.EXTRA_SUBJECT, "Stone - respaldo de playlists")
-            putExtra(android.content.Intent.EXTRA_TEXT, text)
-        }, "Compartir respaldo de Stone"))
-}
-
-private fun shareStoneLibrary(context: android.content.Context,
-    songs: List<com.zirakusa.stone.core.Song>, scope: kotlinx.coroutines.CoroutineScope,
-    onState: (LocalTransferUiState) -> Unit): kotlinx.coroutines.Job {
-    return scope.launch {
-        val packageFile = File(context.cacheDir, "stone-bluetooth.musp")
-        onState(LocalTransferUiState(busy = true,
-            message = context.getString(R.string.transfer_packaging_indeterminate)))
-        var lastProgressAt = 0L
-        val result = try {
-            Result.success(withContext(Dispatchers.IO) {
-                StonePackage.exportToFile(context, packageFile, songs.distinctBy { it.id }) { done, total ->
-                    if (total > 0L) {
-                        val now = System.currentTimeMillis()
-                        if (now - lastProgressAt >= 100L || done >= total) {
-                            lastProgressAt = now
-                            val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
-                            scope.launch {
-                                onState(LocalTransferUiState(
-                                    busy = true,
-                                    progress = progress,
-                                    message = context.getString(
-                                        R.string.transfer_packaging,
-                                        (progress * 100).toInt()
-                                    )
-                                ))
-                            }
-                        }
-                    }
-                }
-            })
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-            packageFile.delete()
-            throw cancelled
-        } catch (error: Throwable) {
-            Result.failure(error)
-        }
-        result.onSuccess {
-            onState(LocalTransferUiState(
-                progress = 1f,
-                message = context.getString(R.string.transfer_package_ready,
-                    packageFile.length() / 1024 / 1024)
-            ))
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", packageFile)
-            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = StonePackage.MIME
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }, context.getString(R.string.bluetooth_transfer)))
-        }.onFailure {
-            onState(LocalTransferUiState(message = it.message ?: context.getString(R.string.musp_failed)))
-            android.widget.Toast.makeText(context, it.message ?: context.getString(R.string.musp_failed),
-                android.widget.Toast.LENGTH_LONG).show()
-        }
-    }
 }

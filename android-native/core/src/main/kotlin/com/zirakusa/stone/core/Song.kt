@@ -63,7 +63,13 @@ object LyricsParser {
                     .coerceAtLeast(0), text)
             }
         }
-        return LyricsDocument(plain, synced.sortedBy(LyricLine::timeMs))
+        // Plain lyrics have no timing information to infer. Keep every line editable as
+        // synchronized data at the origin; real LRC timestamps above always take priority
+        // and remain unchanged.
+        val timedLines = if (synced.isEmpty()) {
+            plain.map { LyricLine(0L, it) }
+        } else synced.sortedBy(LyricLine::timeMs)
+        return LyricsDocument(plain, timedLines)
     }
 
     fun activeIndex(lines: List<LyricLine>, positionMs: Long): Int {
