@@ -9,6 +9,8 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.util.LruCache
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -68,7 +70,7 @@ object ArtworkLoader {
             currentCoroutineContext().ensureActive()
             cache.get(key)?.let { return@withPermit it }
             val bitmap = try {
-                val source = Uri.parse(uri)
+                val source = uri.toUri()
                 if (source.scheme == "file") decodeArtworkFile(source.path)
                 else {
                     val retriever = MediaMetadataRetriever()
@@ -123,7 +125,7 @@ object ArtworkLoader {
                 videoCache.get(key)?.let { return@withPermit it }
                 val retriever = MediaMetadataRetriever()
                 val frame = try {
-                    retriever.setDataSource(context, Uri.parse(uri))
+                    retriever.setDataSource(context, uri.toUri())
                     val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
                         ?.toIntOrNull() ?: 0
                     val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
@@ -144,7 +146,7 @@ object ArtworkLoader {
                         val sourceLongest = maxOf(source.width, source.height)
                         if (sourceLongest <= safeDimension) source else {
                             val fallbackScale = safeDimension.toFloat() / sourceLongest
-                            Bitmap.createScaledBitmap(source,
+                            source.scale(
                                 (source.width * fallbackScale).toInt().coerceAtLeast(1),
                                 (source.height * fallbackScale).toInt().coerceAtLeast(1), true)
                                 .also { if (it !== source) source.recycle() }

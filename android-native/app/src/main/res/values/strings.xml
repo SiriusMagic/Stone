@@ -12,15 +12,12 @@
     <string name="app_name">Stone</string>
     <string name="stone">Stone</string>
     <string name="choose_folder">Agregar carpeta</string>
-    <string name="refresh">Actualizar</string>
     <string name="search">Buscar canciones, artistas, álbumes…</string>
     <string name="songs">Canciones</string>
     <string name="folders">Carpetas</string>
     <string name="artists">Artistas</string>
     <string name="albums">Álbumes</string>
-    <string name="empty_library">Elige tu carpeta de música para comenzar.</string>
     <string name="no_results">No se encontraron canciones.</string>
-    <string name="scanning">Actualizando biblioteca…</string>
     <string name="scan_failed">No se pudo leer la carpeta. Comprueba el acceso o elígela de nuevo. Se conserva la biblioteca anterior.</string>
     <string name="playback_failed">No se pudo reproducir esta canción. Comprueba el archivo y el acceso a su carpeta.</string>
     <string name="playback_connect_failed">No se pudo conectar con el reproductor. Vuelve a abrir Stone.</string>
@@ -43,7 +40,7 @@
     <string name="scan_folders">Escanear carpetas</string>
     <string name="no_songs">No hay canciones todavía</string>
     <string name="videos">Videos</string>
-    <string name="video_count">%1$d videos</string>
+    <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="other">%1$d videos</item></plurals>
     <string name="video_details">%1$s | %2$s</string>
     <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string><string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
@@ -57,10 +54,7 @@
     <string name="sort_lyrics">Letras</string>
     <string name="ascending">Ascendente</string>
     <string name="descending">Descendente</string>
-    <string name="song_count">%1$d canciones</string>
-    <string name="videos_pending">Los videos todavía no están disponibles en esta versión de prueba.</string>
-    <string name="playlists_pending">Las playlists todavía no están disponibles en esta versión de prueba.</string>
-    <string name="settings_pending">Los demás ajustes de Stone aún están pendientes en esta versión de prueba.</string>
+    <plurals name="song_count"><item quantity="one">%1$d canción</item><item quantity="other">%1$d canciones</item></plurals>
     <string name="tap_to_play">Toca para reproducir</string>
     <string name="player_now">REPRODUCIENDO AHORA</string>
     <string name="close_player">Cerrar reproductor</string>
@@ -83,28 +77,17 @@
     <string name="lyrics_browser_select_hint">Si no se detectan automáticamente, selecciona las letras en la página y pulsa Copiar.</string>
     <string name="lyrics_copied">Letras copiadas</string>
     <string name="lyrics_select_to_copy">Selecciona primero el texto de la letra.</string>
-    <string name="export_lrc">Exportar LRC</string>
-    <string name="embed_lrc">Crear MP3 con letras</string>
-    <string name="lrc_embedded">Copia MP3 creada con letras incrustadas</string>
-    <string name="lrc_embed_failed">No se pudo incrustar la letra</string>
-    <string name="lyrics_offset">Desfase: %1$d ms</string>
-    <string name="reset">Restablecer</string>
     <string name="go_to_current_song">Ir a la canción actual</string>
-    <string name="edit_queue">Editar fila</string>
     <string name="clear_queue">Limpiar cola</string>
     <string name="clear_queue_title">Limpiar cola de reproducción</string>
     <string name="clear_queue_message">¿Quieres borrar la cola de reproducción actual?</string>
-    <string name="done">Listo</string>
     <string name="hold_to_reorder">Mantén pulsado para reordenar</string>
     <string name="repeat_one">Repetir una</string>
     <string name="repeat_all">Repetir todo</string>
     <string name="tag_editor">Editor de etiquetas</string>
-    <string name="cover">Portada</string><string name="tags">Etiquetas</string><string name="information">Información</string><string name="extras">Extras</string>
+    <string name="cover">Portada</string><string name="tags">Etiquetas</string><string name="information">Información</string>
     <string name="cover_editor_unavailable">La portada se conserva; la integración segura de nuevas imágenes estará disponible en una próxima versión.</string>
-    <string name="album_artist">Artista del álbum</string><string name="composer">Compositor</string><string name="comment">Comentarios</string><string name="description">Descripción</string><string name="disc_number">Número de disco</string>
     <string name="mp3_tags_only">Estos campos se guardan actualmente de forma segura en etiquetas ID3 de archivos MP3. Otros formatos permanecen sin cambios.</string>
-    <string name="file_name">Nombre</string><string name="format">Formato</string><string name="file_size">Peso</string><string name="file_bytes">Bytes</string><string name="duration">Duración</string><string name="bitrate">Bitrate</string><string name="sample_rate">Frecuencia</string><string name="channels">Canales</string><string name="mime">MIME</string><string name="location">Ubicación</string>
-    <string name="extras_unavailable">Las letras se gestionan desde el panel Letras. Conversión, hash y restauración aún no están habilitados porque requieren operaciones adicionales seguras.</string>
     <string name="add_to_playlist">Agregar a la lista de reproducción</string>
     <string name="share">Compartir</string>
     <string name="speed">Velocidad</string>
@@ -112,21 +95,19 @@
     <string name="sleep_timer">Temporizador para dormir</string>
     <string name="sleep_timer_active">Temporizador activo</string>
     <string name="sleep_timer_until">Hasta las %1$s</string>
-    <string name="cover_editor">Editor de portadas</string>
     <string name="floating_window">Ventana flotante</string>
     <string name="delete">Borrar</string>
     <string name="manage">Administrar</string>
     <string name="delete_album">Eliminar álbum</string>
     <string name="select_all">Seleccionar todos</string>
-    <string name="selected_count">%1$d seleccionadas</string>
-    <string name="delete_selected_message">¿Borrar %1$d canciones seleccionadas?</string>
+    <plurals name="selected_count"><item quantity="one">%1$d seleccionada</item><item quantity="other">%1$d seleccionadas</item></plurals>
+    <plurals name="delete_selected_message"><item quantity="one">¿Borrar %1$d canción seleccionada?</item><item quantity="other">¿Borrar %1$d canciones seleccionadas?</item></plurals>
     <string name="floating_window_unavailable">Ventana flotante (no disponible)</string>
     <string name="playback_mode">Modo de reproducción</string>
     <string name="video_scale">Ajustar escala</string>
-    <string name="audio_track">Pista de audio</string>
     <string name="default_value">Por defecto</string>
     <string name="off">Apagar</string>
-    <string name="minutes_later">%1$d minutos más tarde</string>
+    <plurals name="minutes_later"><item quantity="one">%1$d minuto más tarde</item><item quantity="other">%1$d minutos más tarde</item></plurals>
     <string name="finish_current_track">Reproducir la última hasta el final</string>
     <string name="custom_sleep_time">Tiempo personalizado</string>
     <string name="hours">Hora</string>
@@ -138,8 +119,6 @@
     <string name="artist">Artista</string>
     <string name="album">Álbum</string>
     <string name="genre">Género</string>
-    <string name="year">Año</string>
-    <string name="track_number">Número de pista</string>
     <string name="ringtone_start">Inicio del recorte: %1$s</string>
     <string name="ringtone_ready">Tono de llamada establecido</string>
     <string name="ringtone_failed">No se pudo establecer el tono de llamada</string>
@@ -148,7 +127,6 @@
     <string name="delete_song_message">Esta canción se moverá a “Eliminado recientemente”. El archivo físico no se borrará ahora.</string>
     <string name="cancel">Cancelar</string>
     <string name="cover_editor_requires_song">Reproduce una canción o vídeo para abrir su portada.</string>
-    <string name="playlist_next_batch">Las playlists se conectarán en Stone 1.3.6.</string>
     <string name="eq_normal">Normal</string>
     <string name="eq_bass">Aumento de graves</string>
     <string name="eq_voice">Aumento de voz</string>
@@ -175,27 +153,18 @@
     <string name="remove_from_playlist">Quitar de la playlist</string>
     <string name="add_to_playlist_title">Agregar a playlist</string>
     <string name="no_playlists">Crea una playlist primero</string>
-    <string name="restored">Archivo restaurado</string>
     <string name="recently_deleted">Eliminado recientemente</string>
     <string name="restore">Restaurar</string>
-    <string name="export_backup">Exportar copia de seguridad</string>
-    <string name="import_backup">Importar copia de seguridad</string>
     <string name="backup_exported">Copia de seguridad creada</string>
     <string name="backup_imported">Copia importada correctamente</string>
     <string name="backup_failed">No se pudo procesar la copia de seguridad</string>
     <string name="musp_exported">Paquete .musp creado correctamente</string>
     <string name="musp_failed">No se pudo procesar el paquete .musp</string>
-    <string name="settings_stone_folder">Agregar carpeta multimedia</string>
     <string name="video_media">Video</string>
     <string name="no_videos">No hay videos todavía</string>
     <string name="choose_video_folder">Elegir carpeta de videos</string>
     <string name="scan_video_folders">Escanear videos</string>
     <string name="settings_scan_library">Escanear biblioteca</string>
-    <string name="settings_scan_mode">Modo de escaneo</string>
-    <string name="scan_mode_intro">Configura cuándo se actualiza la biblioteca. Stone no escanea continuamente.</string>
-    <string name="auto_rescan">Auto reescanear</string>
-    <string name="auto_rescan_hint">Escanear al iniciar Stone en busca de archivos nuevos o eliminados.</string>
-    <string name="manual_scan_hint">También puedes iniciar un escaneo manual tocando el icono de escanear.</string>
     <string name="hardware_acceleration">Aceleración de hardware</string>
     <string name="hardware_acceleration_intro">La disponibilidad depende del dispositivo, la salida de audio y el formato.</string>
     <string name="accel_automatic">Automático</string><string name="accel_disabled">Deshabilitado</string>
@@ -216,13 +185,10 @@
     <string name="settings_section_playback">Reproducción</string>
     <string name="settings_section_system">Sistema</string>
     <string name="settings_section_appearance">Personalización</string>
-    <string name="settings_section_transfer">Transferencia y respaldo</string>
     <string name="settings_section_about">Ayuda y acerca de Stone</string>
     <string name="playback_section_mode">Modo y calidad</string>
-    <string name="playback_section_diagnostics">Diagnóstico</string>
     <string name="playback_section_behavior">Comportamiento</string>
     <string name="audio_mode">Modo de reproducción</string>
-    <string name="audio_diagnostics">Diagnóstico de rendimiento</string>
     <string name="system_diagnostics">Diagnóstico avanzado del sistema</string>
     <string name="system_diagnostics_hint">Estado de Stone, memoria, CPU, audio, batería y temperatura bajo demanda.</string>
     <string name="diagnostics_system_status">Estado del sistema</string>
@@ -230,16 +196,14 @@
     <string name="diagnostics_device_model">Modelo</string>
     <string name="diagnostics_android">Android</string>
     <string name="diagnostics_api_level">Nivel de API</string>
-    <string name="audio_diagnostics_hint">RAM, batería y memoria de Stone bajo demanda.</string>
     <string name="audio_diagnostics_intro">Estas métricas solo se leen cuando abres esta pantalla. Stone no mantiene un monitor en segundo plano.</string>
     <string name="refresh_metrics">Actualizar métricas</string>
-    <string name="ram_used">RAM utilizada</string>
     <string name="device_ram_used">RAM utilizada del dispositivo</string>
     <string name="ram_available">RAM disponible</string>
     <string name="process_heap">Memoria de Stone</string>
     <string name="battery_level">Batería</string>
-    <string name="diagnostics_running">Analizando…</string><string name="start_diagnostics">Iniciar diagnóstico</string><string name="diagnostics_summary">Resumen</string><string name="diagnostics_cpu">CPU</string><string name="diagnostics_memory">Memoria</string><string name="device_memory">Memoria del dispositivo</string><string name="diagnostics_audio">Audio</string><string name="diagnostics_energy">Energía</string><string name="diagnostics_advanced">Diagnóstico avanzado</string>
-    <string name="diagnostic_status">Estado</string><string name="cpu_stone">CPU de Stone</string><string name="cpu_threads">Hilos activos</string><string name="cpu_cores">Núcleos disponibles</string><string name="pss_total">PSS total</string><string name="pss_native">PSS nativa</string><string name="pss_dalvik">PSS administrada</string><string name="native_heap">Heap nativo</string><string name="audio_route">Ruta de audio</string><string name="audio_errors">Errores de reproducción</string><string name="audio_latency">Latencia</string><string name="battery_temperature">Temperatura de batería</string><string name="charging_state">Carga</string><string name="charging">Cargando</string><string name="not_charging">No cargando</string><string name="thermal_status">Estado térmico</string><string name="low_memory">Memoria baja</string><string name="low_memory_threshold">Umbral de memoria baja</string><string name="session_samples">Muestras de sesión</string><string name="not_available">No disponible</string>
+    <string name="diagnostics_running">Analizando…</string><string name="start_diagnostics">Iniciar diagnóstico</string><string name="diagnostics_summary">Resumen</string><string name="device_memory">Memoria del dispositivo</string><string name="diagnostics_audio">Audio</string><string name="diagnostics_energy">Energía</string><string name="diagnostics_advanced">Diagnóstico avanzado</string>
+    <string name="diagnostic_status">Estado</string><string name="cpu_stone">CPU de Stone</string><string name="cpu_threads">Hilos activos</string><string name="pss_total">PSS total</string><string name="pss_native">PSS nativa</string><string name="pss_dalvik">PSS administrada</string><string name="native_heap">Heap nativo</string><string name="audio_route">Ruta de audio</string><string name="audio_errors">Errores de reproducción</string><string name="audio_latency">Latencia</string><string name="battery_temperature">Temperatura de batería</string><string name="charging_state">Carga</string><string name="charging">Cargando</string><string name="not_charging">No cargando</string><string name="thermal_status">Estado térmico</string><string name="low_memory">Memoria baja</string><string name="low_memory_threshold">Umbral de memoria baja</string><string name="session_samples">Muestras de sesión</string><string name="not_available">No disponible</string>
     <string name="stone_consumption">Consumo de Stone</string>
     <string name="stone_consumption_hint">Solo métricas del proceso de Stone; no representan el consumo total del teléfono.</string>
     <string name="diagnostics_limitations">La latencia física, el consumo exacto en mAh y algunas propiedades del dispositivo no están disponibles mediante APIs universales de Android. No se interpretan como mediciones reales.</string>
@@ -254,9 +218,7 @@
     <string name="quick_action_activated">%1$s activado</string>
     <string name="quick_action_confirmed">Acceso ejecutado: %1$s</string>
     <string name="settings_notifications">Configuración de notificaciones</string>
-    <string name="settings_feedback_about">Opinión     Sobre</string>
     <string name="feedback">Opinión</string><string name="about_stone">Sobre Stone</string>
-    <string name="feedback_placeholder">Gracias por ayudar a mejorar Stone. Esta sección estará disponible próximamente.</string>
     <string name="feedback_intro">Cuéntanos el problema</string><string name="feedback_lyrics">Letras</string>
     <string name="feedback_ads">Anuncios</string><string name="feedback_missing_file">Archivo no encontrado</string>
     <string name="feedback_unplayable">El archivo no se puede reproducir</string><string name="feedback_stops">Se detiene la música</string>
@@ -265,7 +227,7 @@
     <string name="feedback_attachments">Capturas de pantalla o videos (opcional)</string>
     <string name="feedback_consent">Para continuar, Stone compartiría los datos necesarios con el servicio de soporte. Revisa los términos y la política de privacidad.</string>
     <string name="feedback_submit">Entregar</string>
-    <string name="feedback_attachment_count">%1$d adjuntos seleccionados</string>
+    <plurals name="feedback_attachment_count"><item quantity="one">%1$d adjunto seleccionado</item><item quantity="other">%1$d adjuntos seleccionados</item></plurals>
     <string name="music_reminders">Recordatorios musicales</string>
     <string name="music_reminders_hint">Recibe hasta dos invitaciones para escuchar música al día.</string>
     <string name="morning_reminder">Por la mañana</string><string name="morning_reminder_time">Entre las 8:00 y las 9:00</string>
@@ -273,7 +235,7 @@
     <string name="reminder_play_choice">Qué reproducir al tocar</string>
     <string name="reminder_not_implemented">La programación y las acciones de reproducción se añadirán sin servicios permanentes.</string>
     <string name="version_label">Versión %1$s</string><string name="rate_stone">Calificarnos</string>
-    <string name="share_stone">Compartir Stone</string><string name="privacy_policy">Política de privacidad</string>
+    <string name="privacy_policy">Política de privacidad</string>
     <string name="terms_service">Términos de servicio</string><string name="open_source_licenses">Licencias de código abierto</string>
     <string name="copyright_stone">© 2026 Stone.</string>
     <string name="theme_dark">Negro</string>
@@ -285,17 +247,11 @@
     <string name="gapless_hint">Media3 gestiona automáticamente las transiciones sin pausas.</string>
     <string name="crossfade">Crossfade</string>
     <string name="crossfade_hint">La mezcla gradual entre pistas aún no está disponible.</string>
-    <string name="crossfade_seconds">Duración: %1$d segundos</string>
     <string name="notify_new_files">Notificación de nuevos archivos</string>
     <string name="notify_new_files_hint">Avisar cuando se detecten archivos nuevos al escanear.</string>
     <string name="push_notifications">Notificación push</string>
     <string name="push_notifications_hint">Las recomendaciones musicales aún no están disponibles.</string>
     <string name="notifications_unavailable">Las notificaciones locales de nuevos archivos aún no están disponibles.</string>
-    <string name="export_stone_backup">Exportar copia de Stone Kotlin</string>
-    <string name="import_stone_backup">Importar copia de Stone Kotlin</string>
-    <string name="share_stone_backup">Compartir respaldo de Stone</string>
-    <string name="share_app">Compartir app</string>
-    <string name="share_app_unavailable">Esta versión no tiene disponible este apartado.</string>
     <string name="export_musp">Exportar paquete .musp</string>
     <string name="import_musp">Importar paquete .musp</string>
     <string name="wifi_transfer">Transferencia Wi‑Fi local</string>
@@ -315,17 +271,11 @@
     <string name="transfer_packaging_indeterminate">Empaquetando biblioteca…</string>
     <string name="transfer_packaging">Empaquetando biblioteca… %1$d%%</string>
     <string name="transfer_package_ready">Paquete listo para compartir (%1$d MB)</string>
-    <string name="storage_manager">Administrador de almacenamiento</string>
-    <string name="storage_manager_intro">Herramientas para revisar el espacio y organizar la música. Las funciones avanzadas se incorporarán más adelante.</string>
-    <string name="storage_duplicates">Detector de duplicados</string>
-    <string name="storage_future_note">El detector de duplicados queda reservado para una versión futura y no modifica archivos automáticamente.</string>
-    <string name="feature_future">Próximamente</string>
     <string name="audio_output">Salida de audio</string>
     <string name="audio_output_intro">Consulta la salida que Android está usando actualmente. La selección avanzada depende del sistema y del dispositivo conectado.</string>
     <string name="audio_output_current">Salida actual</string>
     <string name="audio_output_open_settings">Abrir ajustes de sonido del sistema</string>
     <string name="settings_home_shortcuts">Iconos de inicio</string>
     <string name="home_shortcut_hint">Elige qué accesos rápidos aparecen en la barra principal.</string>
-    <string name="home_shortcut_toggle_hint">Mostrar este icono en inicio.</string>
     <string name="restore_defaults">Restaurar configuración predeterminada</string>
 </resources>

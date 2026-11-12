@@ -3,6 +3,7 @@ package com.zirakusa.stone.nativeapp.data.transfer
 import android.content.Context
 import android.net.Uri
 import android.media.MediaMetadataRetriever
+import androidx.core.net.toUri
 import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.ImportedLibraryStore
@@ -203,7 +204,7 @@ object StonePackage {
     }
 
     private fun openInput(context: Context, value: String): InputStream? {
-        val uri = Uri.parse(value)
+        val uri = value.toUri()
         return if (uri.scheme == "file") uri.path?.let(::File)?.inputStream()
         else context.contentResolver.openInputStream(uri)
     }
@@ -213,7 +214,7 @@ object StonePackage {
         var total = 0L
         for (song in songs) {
             val size = runCatching {
-                val uri = Uri.parse(song.uri)
+                val uri = song.uri.toUri()
                 if (uri.scheme == "file") {
                     uri.path?.let(::File)?.takeIf(File::isFile)?.length()
                 } else {
@@ -229,7 +230,7 @@ object StonePackage {
 
     private fun embeddedArtwork(context: Context, value: String): ByteArray? = runCatching {
         val retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(context, Uri.parse(value)); retriever.embeddedPicture }
+        try { retriever.setDataSource(context, value.toUri()); retriever.embeddedPicture }
         finally { retriever.release() }
     }.getOrNull()
 

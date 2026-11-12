@@ -3,6 +3,8 @@ package com.zirakusa.stone.nativeapp.data.library
 import android.content.Context
 import android.net.Uri
 import android.os.SystemClock
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.zirakusa.stone.core.RefreshPolicy
 import com.zirakusa.stone.core.Song
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +28,10 @@ class LibraryRepository(context: Context) {
 
     fun selectFolder(uri: Uri) {
         val selected = (folders + uri.toString()).distinct()
-        preferences.edit().putStringSet("folders", selected.toSet())
-            .putString("folder", selected.firstOrNull()).apply()
+        preferences.edit {
+            putStringSet("folders", selected.toSet())
+            putString("folder", selected.firstOrNull())
+        }
     }
     suspend fun cached(): CachedLibrary = withContext(Dispatchers.IO) {
         entries((folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id })
@@ -45,7 +49,7 @@ class LibraryRepository(context: Context) {
                     currentCoroutineContext().ensureActive()
                     val previous = cache.read(tree)
                     try {
-                        scanner.scan(Uri.parse(tree), previous).also { cache.write(tree, it); scannedTrees++ }
+                        scanner.scan(tree.toUri(), previous).also { cache.write(tree, it); scannedTrees++ }
                     } catch (error: Exception) {
                         if (previous.isEmpty()) throw error
                         previous

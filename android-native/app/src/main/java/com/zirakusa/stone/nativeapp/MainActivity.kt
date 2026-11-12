@@ -17,6 +17,7 @@ import java.util.Locale
 @SuppressLint("RestrictedApi")
 class MainActivity : ComponentActivity() {
     private var pictureInPicture by mutableStateOf(false)
+    private var windowOrientation by mutableStateOf(Configuration.ORIENTATION_UNDEFINED)
 
     private fun isVolumeKey(keyCode: Int): Boolean =
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
@@ -61,7 +62,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pictureInPicture = isInPictureInPictureMode
-        setContent { com.zirakusa.stone.nativeapp.ui.StoneApp(isPictureInPicture = pictureInPicture) }
+        windowOrientation = resources.configuration.orientation
+        setContent {
+            com.zirakusa.stone.nativeapp.ui.StoneApp(
+                isPictureInPicture = pictureInPicture,
+                windowOrientation = windowOrientation
+            )
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // The manifest keeps the playback Activity alive while rotating. Push
+        // the new orientation into Compose explicitly so the three-pane layout
+        // is shown immediately instead of waiting for a process recreation.
+        windowOrientation = newConfig.orientation
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            val bounds = window.decorView
+            val rect = android.graphics.Rect(0, 0, bounds.width, bounds.height)
+            setPictureInPictureParams(
+                android.app.PictureInPictureParams.Builder()
+                    .setAutoEnterEnabled(true)
+                    .setSourceRectHint(rect)
+                    .build()
+            )
+        }
     }
 
     override fun onResume() {

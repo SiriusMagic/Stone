@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,7 +64,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             if (!compact && tab == LibraryTab.Songs && collection == null) item {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.song_count, visible.size), Modifier.weight(1f),
+                    Text(pluralStringResource(R.plurals.song_count, visible.size, visible.size), Modifier.weight(1f),
                         color = StonePalette.SongSubtitle, fontSize = 15.sp)
                     IconButton(onClick = onFolder, enabled = !state.scanning) {
                         Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_folder))
@@ -79,7 +80,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), {
                             managing = false; selectedIds = emptySet()
                         })
-                        Text(stringResource(R.string.selected_count, selectedIds.size), fontWeight = FontWeight.Bold)
+                        Text(pluralStringResource(R.plurals.selected_count, selectedIds.size, selectedIds.size), fontWeight = FontWeight.Bold)
                     } else {
                         StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), { select(null) })
                         Text(collection, Modifier.weight(1f))
@@ -116,7 +117,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         LibraryCover(glyph = glyph, compact = compact)
                         Column(Modifier.weight(1f)) {
                             Text(name, fontSize = 16.sp)
-                            Text(stringResource(R.string.song_count, tracks.size), color = StonePalette.SongSubtitle, fontSize = 13.sp)
+                            Text(pluralStringResource(R.plurals.song_count, tracks.size, tracks.size), color = StonePalette.SongSubtitle, fontSize = 13.sp)
                         }
                         StoneIcon(StoneGlyph.Forward, color = StonePalette.Muted)
                     }
@@ -157,7 +158,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     }
     if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },
         title = { Text(stringResource(R.string.delete)) },
-        text = { Text(stringResource(R.string.delete_selected_message, selectedIds.size)) },
+        text = { Text(pluralStringResource(R.plurals.delete_selected_message, selectedIds.size, selectedIds.size)) },
         confirmButton = { TextButton(onClick = {
             visible.filter { it.id in selectedIds }.forEach(onDelete)
             deleteConfirmVisible = false; managing = false; selectedIds = emptySet()
@@ -185,7 +186,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
             }
             Text(if (selectedFolder != null) selectedFolder.orEmpty()
-                else stringResource(R.string.video_count, videos.size), Modifier.weight(1f),
+                else pluralStringResource(R.plurals.video_count, videos.size, videos.size), Modifier.weight(1f),
                 color = StonePalette.SongSubtitle, fontSize = 15.sp)
             IconButton(onClick = onFolder, enabled = !state.scanning) {
                 Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_video_folder))
@@ -204,7 +205,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         Icon(Icons.Default.Folder, null, tint = StonePalette.Yellow, modifier = Modifier.size(30.dp))
                         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                             Text(folder, fontWeight = FontWeight.SemiBold)
-                            Text(stringResource(R.string.video_count, items.size), color = StonePalette.SongSubtitle,
+                            Text(pluralStringResource(R.plurals.video_count, items.size, items.size), color = StonePalette.SongSubtitle,
                                 fontSize = 13.sp)
                         }
                         Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
@@ -312,7 +313,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { select(null) }) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) }
                     Column(Modifier.weight(1f)) { Text(collectionTitle, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Black)
-                        Text(stringResource(R.string.song_count, currentTracks.size), color = StonePalette.Muted) }
+                        Text(pluralStringResource(R.plurals.song_count, currentTracks.size, currentTracks.size), color = StonePalette.Muted) }
                     FilledIconButton(enabled = currentTracks.isNotEmpty(), onClick = { onPlay(currentTracks.first(), currentTracks) }) {
                         Icon(Icons.Default.PlayArrow, stringResource(R.string.play)) }
                 }
@@ -339,7 +340,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         verticalAlignment = Alignment.CenterVertically) {
         LibraryCover(glyph = StoneGlyph.Music)
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) { Text(title, fontSize = 17.sp)
-            Text(stringResource(R.string.song_count, count), color = StonePalette.Muted) }
+            Text(pluralStringResource(R.plurals.song_count, count, count), color = StonePalette.Muted) }
         Icon(Icons.Default.ChevronRight, null)
     }
 }

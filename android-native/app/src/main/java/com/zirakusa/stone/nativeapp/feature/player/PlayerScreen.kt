@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.graphics.get
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -232,7 +233,6 @@ import kotlin.math.roundToInt
 }
 
 internal fun enterVideoPictureInPicture(context: Context, player: Player?) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val activity = context.findActivity() ?: return
     val videoSize = player?.videoSize
     val fallback = if (activity.resources.configuration.orientation ==
@@ -411,9 +411,10 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
     }
 }
 
-@Composable private fun VideoActionRow(onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
+@Composable private fun VideoActionRow(modifier: Modifier = Modifier,
+    onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
-    modifier: Modifier = Modifier) {
+    ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onAudioOnly) {
@@ -442,7 +443,7 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
     val stepX = (bitmap.width / 24).coerceAtLeast(1)
     val stepY = (bitmap.height / 24).coerceAtLeast(1)
     for (y in 0 until bitmap.height step stepY) for (x in 0 until bitmap.width step stepX) {
-        val pixel = bitmap.getPixel(x, y)
+        val pixel = bitmap[x, y]
         red += android.graphics.Color.red(pixel); green += android.graphics.Color.green(pixel)
         blue += android.graphics.Color.blue(pixel); count++
     }

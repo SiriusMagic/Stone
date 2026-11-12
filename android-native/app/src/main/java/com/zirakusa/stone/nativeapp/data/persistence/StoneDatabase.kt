@@ -4,17 +4,21 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import androidx.core.database.sqlite.transaction
 import org.json.JSONArray
 import org.json.JSONObject
 
 /** Versioned source of truth for user-created Stone data. The media index remains disposable. */
-class StoneDatabase private constructor(private val context: Context) :
-    SQLiteOpenHelper(context, "stone-user-data.db", null, 1) {
+class StoneDatabase private constructor(context: Context) :
+    SQLiteOpenHelper(context.applicationContext, "stone-user-data.db", null, 1) {
 
     companion object {
         @Volatile private var instance: StoneDatabase? = null
         fun get(context: Context): StoneDatabase = instance ?: synchronized(this) {
-            instance ?: StoneDatabase(context.applicationContext).also { instance = it; it.migratePreferences() }
+            instance ?: StoneDatabase(context.applicationContext).also {
+                instance = it
+                it.migratePreferences(context.applicationContext)
+            }
         }
     }
 
@@ -62,20 +66,19 @@ class StoneDatabase private constructor(private val context: Context) :
 
     @Synchronized fun importJson(root: JSONObject) {
         require(root.getString("format") == "stone-kotlin-backup" && root.getInt("version") == 1)
-        val values = root.getJSONObject("values"); val db = writableDatabase
-        db.beginTransaction()
-        try {
+        val values = root.getJSONObject("values")
+        val db = writableDatabase
+        db.transaction {
             values.keys().forEach { key -> db.insertWithOnConflict("data_key_value", null, ContentValues().apply {
                 put("data_key", key); put("value", values.getString(key)); put("updated_at", System.currentTimeMillis())
             }, SQLiteDatabase.CONFLICT_REPLACE) }
-            db.setTransactionSuccessful()
-        } finally { db.endTransaction() }
+        }
     }
 
-    private fun migratePreferences() {
+    private fun migratePreferences(context: Context) {
         if (getString("meta.preferences-migrated") == "1") return
-        val db = writableDatabase; db.beginTransaction()
-        try {
+        val db = writableDatabase
+        db.transaction {
             val library = context.getSharedPreferences("stone-library-user-data", 0)
             library.all.forEach { (key, value) -> putDirect(db, "library.$key", encode(value)) }
             val favorites = context.getSharedPreferences("stone-favorites", 0).all
@@ -90,8 +93,7 @@ class StoneDatabase private constructor(private val context: Context) :
             context.getSharedPreferences("stone-playback-tools", 0).all.forEach { (key, value) ->
                 putDirect(db, "tool.$key", encode(value)) }
             putDirect(db, "meta.preferences-migrated", "1")
-            db.setTransactionSuccessful()
-        } finally { db.endTransaction() }
+        }
     }
 
     private fun putDirect(db: SQLiteDatabase, key: String, value: String) {

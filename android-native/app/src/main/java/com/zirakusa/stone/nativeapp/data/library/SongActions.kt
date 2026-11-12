@@ -15,12 +15,13 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import java.io.File
 import java.nio.ByteBuffer
 
 object SongActions {
     fun share(context: Context, uri: String, title: String) {
-        val source = Uri.parse(uri)
+        val source = uri.toUri()
         val shareUri = if (source.scheme == "content") source else {
             val file = source.path?.let(::File) ?: error("La canción no tiene una ruta válida")
             require(file.exists()) { "La canción ya no está disponible." }
@@ -37,7 +38,7 @@ object SongActions {
 
     fun requestWriteSettings(context: Context) {
         context.startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-            Uri.parse("package:${context.packageName}")))
+            "package:${context.packageName}".toUri()))
     }
 
     fun canSetRingtone(context: Context) = Settings.System.canWrite(context)
@@ -58,7 +59,7 @@ object SongActions {
         val target = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)
             ?: error("Android no pudo crear el tono")
         try {
-            (clip?.inputStream() ?: resolver.openInputStream(Uri.parse(source)) ?: error("No se pudo abrir la canción"))
+            (clip?.inputStream() ?: resolver.openInputStream(source.toUri()) ?: error("No se pudo abrir la canción"))
                 .use { input -> resolver.openOutputStream(target, "w")!!.use(input::copyTo) }
             RingtoneManager.setActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE, target)
         } catch (error: Exception) { resolver.delete(target, null, null); throw error }
@@ -67,7 +68,7 @@ object SongActions {
 
     private fun createClip(context: Context, value: String, startMs: Int): File {
         val extractor = MediaExtractor()
-        val descriptor = context.contentResolver.openAssetFileDescriptor(Uri.parse(value), "r")
+        val descriptor = context.contentResolver.openAssetFileDescriptor(value.toUri(), "r")
             ?: error("No se pudo abrir la canción")
         try {
             extractor.setDataSource(descriptor.fileDescriptor, descriptor.startOffset, descriptor.length)

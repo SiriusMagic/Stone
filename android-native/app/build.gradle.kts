@@ -11,12 +11,17 @@ android {
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.5.6"
+        versionCode = 17
+        versionName = "1.5.7"
     }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    bundle {
+        // Stone selects its locale at runtime in attachBaseContext. Keep all
+        // translations in the APK instead of relying on a Play language split.
+        language { enableSplit = false }
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true

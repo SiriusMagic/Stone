@@ -3,6 +3,7 @@ package com.zirakusa.stone.nativeapp.data.library
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.core.net.toUri
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -17,7 +18,7 @@ class AudioTagEditor(private val context: Context) {
     fun read(value: String): AudioTags {
         val retriever = MediaMetadataRetriever()
         return try {
-            retriever.setDataSource(context, Uri.parse(value))
+            retriever.setDataSource(context, value.toUri())
             fun text(key: Int) = retriever.extractMetadata(key).orEmpty()
             AudioTags(text(MediaMetadataRetriever.METADATA_KEY_TITLE),
                 text(MediaMetadataRetriever.METADATA_KEY_ARTIST), text(MediaMetadataRetriever.METADATA_KEY_ALBUM),
@@ -33,7 +34,7 @@ class AudioTagEditor(private val context: Context) {
         require(value.substringBefore('?').substringAfterLast('.', "").equals("mp3", true)) {
             "La edición de etiquetas está disponible para archivos MP3."
         }
-        val uri = Uri.parse(value)
+        val uri = value.toUri()
         val source = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             ?: error("No se pudo abrir el archivo")
         val updated = rewrite(source, mapOf("TIT2" to tags.title, "TPE1" to tags.artist,
@@ -49,7 +50,7 @@ class AudioTagEditor(private val context: Context) {
         require(sourceValue.substringBefore('?').substringAfterLast('.', "").equals("mp3", true)) {
             "La incrustación de letras está disponible para copias MP3."
         }
-        val source = context.contentResolver.openInputStream(Uri.parse(sourceValue))?.use { it.readBytes() }
+        val source = context.contentResolver.openInputStream(sourceValue.toUri())?.use { it.readBytes() }
             ?: error("No se pudo abrir el archivo")
         val updated = rewriteLyrics(source, lyrics)
         context.contentResolver.openOutputStream(target, "wt")?.use { it.write(updated) }

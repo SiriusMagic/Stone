@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -460,7 +461,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     OutlinedButton(onClick = { picker.launch("image/*") }, modifier = Modifier.size(82.dp)) {
         Text("+", fontSize = 28.sp)
     }
-    if (attachments.isNotEmpty()) Text(stringResource(R.string.feedback_attachment_count, attachments.size),
+    if (attachments.isNotEmpty()) Text(pluralStringResource(R.plurals.feedback_attachment_count, attachments.size, attachments.size),
         color = StonePalette.Muted, fontSize = 12.sp)
     Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
         Checkbox(checked = consent, onCheckedChange = { consent = it })

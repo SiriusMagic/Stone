@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -22,7 +23,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         Column(Modifier.weight(1f)) {
             Text(stringResource(tab.label), fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (tab == LibraryTab.Songs) Text(stringResource(R.string.song_count, songCount),
+            if (tab == LibraryTab.Songs) Text(pluralStringResource(R.plurals.song_count, songCount, songCount),
                 color = StonePalette.Muted, style = MaterialTheme.typography.bodySmall)
         }
         if (tab != LibraryTab.Videos) {

@@ -3,6 +3,7 @@ package com.zirakusa.stone.nativeapp.playback
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.core.net.toUri
 
 data class AudioAnalysis(val genre: String?, val bitrate: String?, val durationMs: Long)
 
@@ -11,7 +12,7 @@ class AudioGenreAnalyzer(private val context: Context) {
     fun analyze(uri: String): AudioAnalysis = runCatching {
         val retriever = MediaMetadataRetriever()
         try {
-            retriever.setDataSource(context, Uri.parse(uri))
+            retriever.setDataSource(context, uri.toUri())
             val rawGenre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
                 ?.trim()?.takeIf { it.isNotEmpty() }
             AudioAnalysis(normalize(rawGenre),

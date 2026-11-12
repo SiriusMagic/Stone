@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
@@ -302,7 +303,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
                 Row(Modifier.fillMaxWidth().height(58.dp).clickable { playback.setSleepTimer(value) },
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(if (value == 0) stringResource(R.string.off) else
-                        stringResource(R.string.minutes_later, value), Modifier.weight(1f),
+                        pluralStringResource(R.plurals.minutes_later, value, value), Modifier.weight(1f),
                         color = if (state.sleepMinutes == value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                     if (state.sleepMinutes == value) Icon(Icons.Default.Check, null,
                         tint = MaterialTheme.colorScheme.primary)
@@ -312,7 +313,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
                 verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.custom), Modifier.weight(1f))
                 if (state.sleepMinutes !in options && state.sleepMinutes > 0)
-                    Text(stringResource(R.string.minutes_later, state.sleepMinutes), color = MaterialTheme.colorScheme.primary)
+                    Text(pluralStringResource(R.plurals.minutes_later, state.sleepMinutes, state.sleepMinutes), color = MaterialTheme.colorScheme.primary)
                 else Text(stringResource(R.string.set_custom), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Icon(Icons.Default.ChevronRight, null)
             }

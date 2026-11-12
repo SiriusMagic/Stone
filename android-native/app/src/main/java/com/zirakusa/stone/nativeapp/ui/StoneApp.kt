@@ -41,7 +41,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 
 @Composable fun StoneApp(library: LibraryViewModel = viewModel(), playback: PlaybackViewModel = viewModel(),
-    isPictureInPicture: Boolean = false) {
+    isPictureInPicture: Boolean = false,
+    windowOrientation: Int = Configuration.ORIENTATION_UNDEFINED) {
     val context = LocalContext.current
     val settingsStore = remember(context) { StoneSettingsStore(context.applicationContext) }
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
@@ -51,7 +52,7 @@ import kotlinx.coroutines.delay
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
     var landscapeMode by rememberSaveable { mutableStateOf(initialSettings.landscapeLayoutMode) }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val configurationLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val libraryScreens = rememberSaveableStateHolder()
     val playerSheets = rememberPlayerSheetsState()
     val state by library.state.collectAsStateWithLifecycle()
@@ -131,6 +132,11 @@ import kotlinx.coroutines.delay
     }
     StoneTheme(theme) { BoxWithConstraints(Modifier.fillMaxSize()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+    // BoxWithConstraints is the source of truth for split-screen/freeform
+    // windows. The explicit Activity value covers devices that handle rotation
+    // through configChanges and do not refresh LocalConfiguration immediately.
+    val landscape = maxWidth > maxHeight || windowOrientation == Configuration.ORIENTATION_LANDSCAPE ||
+        (windowOrientation == Configuration.ORIENTATION_UNDEFINED && configurationLandscape)
     val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
         isPictureInPicture, landscapeMode)
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical), bottomBar = {

@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -211,6 +212,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     }
 }
 
+@SuppressLint("SetJavaScriptEnabled")
 @Composable private fun LyricsSearchBrowser(song: Song, onClose: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current

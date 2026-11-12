@@ -57,8 +57,10 @@ Comando de validación:
 ```
 
 Las capturas se generan en `app/build/screenshots/`. `assemblePreview` genera el
-APK optimizado correctamente. `lintDebug` sigue fallando con los mismos 80 errores
-de traducciones pendientes y 111 avisos previos; no se han silenciado.
+APK optimizado correctamente y `lintDebug` termina con 0 errores y 0 avisos.
+La Activity conserva el servicio de reproducción al girar, pero ahora publica el
+nuevo `orientation` y el composable también usa las dimensiones reales de la ventana;
+por eso el cambio a las tres zonas no depende de una recreación tardía de Android.
 En la validación de este cambio pasaron 14 pruebas de core y 30 de la app. Las
 tres capturas verticales (`stone-home-empty`, `stone-home-songs` y
 `stone-home-miniplayer`) conservaron exactamente el mismo SHA-256 que antes
