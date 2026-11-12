@@ -42,6 +42,8 @@ import android.content.Intent
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.SleepTimerContent
+import com.zirakusa.stone.nativeapp.feature.player.VideoScale
+import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
@@ -77,6 +79,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onStopTransfer: () -> Unit = {},
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
+    videoScale: VideoScale = VideoScale.FIT,
+    onVideoScaleChange: (VideoScale) -> Unit = {},
+    videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
+    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
@@ -109,7 +115,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
                         SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
-                            "reproducción notificaciones avisos", { onPage("notifications") })
+                            "reproducción notificaciones avisos", { onPage("notifications") }),
+                        SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
+                            "reproducción vídeo video inmersivo pantalla horizontal controles", { onPage("video") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
                         SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
@@ -168,6 +176,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "horizontal-layout" -> HorizontalLayoutSettings(landscapeLayoutMode, onLandscapeLayoutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
                         { onPage("hardware-acceleration") })
+                    "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange,
+                        videoUnlockMethod, onVideoUnlockMethodChange)
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "audio-output" -> AudioOutputDetail()
@@ -195,6 +205,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "shortcuts" -> R.string.settings_home_shortcuts
     "horizontal-layout" -> R.string.horizontal_layout
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
+    "video" -> R.string.video_settings
     "hardware-acceleration" -> R.string.hardware_acceleration
     "audio-output" -> R.string.audio_output
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
@@ -559,6 +570,38 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         Text(stringResource(R.string.crossfade), fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(top = 14.dp))
         Text(stringResource(R.string.crossfade_hint), color = StonePalette.Muted)
+    }
+}
+
+@Composable private fun VideoSettingsDetail(scale: VideoScale,
+    onScaleChange: (VideoScale) -> Unit, unlockMethod: VideoUnlockMethod,
+    onUnlockMethodChange: (VideoUnlockMethod) -> Unit) {
+    Text(stringResource(R.string.video_settings_hint), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 14.dp))
+    Text(stringResource(R.string.video_scale), color = StonePalette.Yellow,
+        fontWeight = FontWeight.Black, modifier = Modifier.padding(bottom = 4.dp))
+    SettingsGroup {
+        SettingsChoice(R.string.video_scale_fit, scale == VideoScale.FIT) {
+            onScaleChange(VideoScale.FIT)
+        }
+        SettingsChoice(R.string.video_scale_fill, scale == VideoScale.ZOOM) {
+            onScaleChange(VideoScale.ZOOM)
+        }
+    }
+    Text(stringResource(R.string.video_unlock_method), color = StonePalette.Yellow,
+        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 4.dp))
+    SettingsGroup {
+        SettingsChoice(R.string.video_unlock_button, unlockMethod == VideoUnlockMethod.BUTTON) {
+            onUnlockMethodChange(VideoUnlockMethod.BUTTON)
+        }
+        SettingsChoice(R.string.video_unlock_double_tap,
+            unlockMethod == VideoUnlockMethod.DOUBLE_TAP) {
+            onUnlockMethodChange(VideoUnlockMethod.DOUBLE_TAP)
+        }
+        SettingsChoice(R.string.video_unlock_swipe_up,
+            unlockMethod == VideoUnlockMethod.SWIPE_UP) {
+            onUnlockMethodChange(VideoUnlockMethod.SWIPE_UP)
+        }
     }
 }
 

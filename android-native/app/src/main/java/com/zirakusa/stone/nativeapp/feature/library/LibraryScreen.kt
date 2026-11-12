@@ -22,6 +22,8 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
+import com.zirakusa.stone.nativeapp.feature.player.VideoScale
+import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -58,7 +60,11 @@ private val legacyDefinitions = listOf(
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     onHome: () -> Unit = {}, onEqualizer: () -> Unit = {},
-    playerContent: @Composable (Boolean) -> Unit = {}) {
+    playerContent: @Composable (Boolean) -> Unit = {},
+    videoScale: VideoScale = VideoScale.FIT,
+    onVideoScaleChange: (VideoScale) -> Unit = {},
+    videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
+    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -203,7 +209,9 @@ private val legacyDefinitions = listOf(
         scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare,
         onExportPackage, onImportPackage, onTransfer, transferState, onHostTransfer,
         onReceiveTransfer, onStopTransfer, landscapeLayoutMode = landscapeLayoutMode,
-        onLandscapeLayoutChange = onLandscapeLayoutChange) { key, visible ->
+        onLandscapeLayoutChange = onLandscapeLayoutChange, videoScale = videoScale,
+        onVideoScaleChange = onVideoScaleChange, videoUnlockMethod = videoUnlockMethod,
+        onVideoUnlockMethodChange = onVideoUnlockMethodChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)
         shortcutRevision++
     }

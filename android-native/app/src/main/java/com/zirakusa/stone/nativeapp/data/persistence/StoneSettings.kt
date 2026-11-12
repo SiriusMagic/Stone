@@ -19,6 +19,8 @@ data class StoneSettings(
     val hardwareAcceleration: String = "automatic",
     val musicReminders: Boolean = false,
     val landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
+    val videoScale: String = "fit",
+    val videoUnlockMethod: String = "button",
 )
 
 class StoneSettingsStore(context: Context) {
@@ -40,6 +42,10 @@ class StoneSettingsStore(context: Context) {
             .takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic",
         musicReminders = db.setting("musicReminders", "false").toBoolean(),
         landscapeLayoutMode = LandscapeLayoutMode.fromKey(db.setting("landscapeLayoutMode", "always")),
+        videoScale = db.setting("videoScale", "fit")
+            .takeIf { it in setOf("fit", "zoom") } ?: "fit",
+        videoUnlockMethod = db.setting("videoUnlockMethod", "button")
+            .takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button",
     )
     fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in setOf("dark", "gray") } ?: "dark")
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
@@ -70,4 +76,8 @@ class StoneSettingsStore(context: Context) {
         value.takeIf { it in setOf("battery", "balanced", "hifi") } ?: "balanced")
     fun setHardwareAcceleration(value: String) = db.setSetting("hardwareAcceleration",
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
+    fun setVideoScale(value: String) = db.setSetting("videoScale",
+        value.takeIf { it in setOf("fit", "zoom") } ?: "fit")
+    fun setVideoUnlockMethod(value: String) = db.setSetting("videoUnlockMethod",
+        value.takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button")
 }

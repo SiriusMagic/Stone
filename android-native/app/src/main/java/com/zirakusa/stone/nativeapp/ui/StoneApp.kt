@@ -52,6 +52,10 @@ import kotlinx.coroutines.delay
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
     var landscapeMode by rememberSaveable { mutableStateOf(initialSettings.landscapeLayoutMode) }
+    var videoScale by rememberSaveable { mutableStateOf(VideoScale.fromKey(initialSettings.videoScale)) }
+    var videoUnlockMethod by rememberSaveable {
+        mutableStateOf(VideoUnlockMethod.fromKey(initialSettings.videoUnlockMethod))
+    }
     val configurationLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val libraryScreens = rememberSaveableStateHolder()
     val playerSheets = rememberPlayerSheetsState()
@@ -156,7 +160,12 @@ import kotlinx.coroutines.delay
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
-                }, sheets = playerSheets)
+                }, sheets = playerSheets, videoScale = videoScale,
+                videoUnlockMethod = videoUnlockMethod,
+                onVideoScaleChange = {
+                    videoScale = it
+                    settingsStore.setVideoScale(it.key)
+                })
             else libraryScreens.SaveableStateProvider("library") {
             LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
@@ -257,6 +266,16 @@ import kotlinx.coroutines.delay
                     landscapeMode = it
                     settingsVisible = false
                     settingsPage = null
+                },
+                videoScale = videoScale,
+                onVideoScaleChange = {
+                    videoScale = it
+                    settingsStore.setVideoScale(it.key)
+                },
+                videoUnlockMethod = videoUnlockMethod,
+                onVideoUnlockMethodChange = {
+                    videoUnlockMethod = it
+                    settingsStore.setVideoUnlockMethod(it.key)
                 },
                 onHome = { playerOpen = false },
                 onEqualizer = { playerSheets.tool = PlayerTool.Equalizer },

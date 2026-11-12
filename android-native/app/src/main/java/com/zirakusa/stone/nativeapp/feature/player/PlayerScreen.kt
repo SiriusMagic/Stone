@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -54,6 +55,9 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.common.Player
@@ -75,6 +79,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -86,7 +91,10 @@ import kotlin.math.roundToInt
     modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
     onAudioOnly: (Song) -> Unit = {}, openCoverEditor: Boolean = false,
     onCoverEditorConsumed: () -> Unit = {},
-    sheets: PlayerSheetsState = rememberPlayerSheetsState()) {
+    sheets: PlayerSheetsState = rememberPlayerSheetsState(),
+    videoScale: VideoScale = VideoScale.FIT,
+    videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
+    onVideoScaleChange: (VideoScale) -> Unit = {}) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var videoFullscreen by remember { mutableStateOf(false) }
@@ -112,7 +120,7 @@ import kotlin.math.roundToInt
         }
     }
     if (isPictureInPicture && song?.isVideo == true) {
-        PictureInPictureVideoPlayer(playback)
+        PictureInPictureVideoPlayer(playback, videoScale)
         return
     }
     if (videoFullscreen && song?.isVideo == true) {
@@ -121,7 +129,8 @@ import kotlin.math.roundToInt
             close = { videoFullscreen = false }, onAudioOnly = {
                 videoFullscreen = false
                 onAudioOnly(it)
-            })
+            }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
+            onVideoScaleChange = onVideoScaleChange)
         return
     }
     val progress = rememberPlayerProgress(state, playback)
@@ -133,11 +142,10 @@ import kotlin.math.roundToInt
     if (landscape && song?.isVideo == true) {
         LandscapeVideoPlayer(song, state, progress, playback, back,
             onOptions = { sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
-            onFullscreen = { videoFullscreen = true },
             onAudioOnly = {
-                videoFullscreen = false
                 onAudioOnly(it)
-            })
+            }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
+            onVideoScaleChange = onVideoScaleChange)
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             onOptions = { sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
@@ -149,7 +157,8 @@ import kotlin.math.roundToInt
         onAudioOnly = {
             videoFullscreen = false
             onAudioOnly(it)
-        })
+        }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
+        onVideoScaleChange = onVideoScaleChange)
     else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)) {
@@ -169,9 +178,9 @@ import kotlin.math.roundToInt
         }
         if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
             AndroidView(factory = { context ->
-                PlayerView(context).apply { useController = false; resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                PlayerView(context).apply { useController = false; resizeMode = videoScale.resizeMode
                     player = playback.player() }
-            }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize()
+            }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode }, modifier = Modifier.fillMaxSize()
                 .clip(RoundedCornerShape(20.dp)))
             IconButton(onClick = { videoFullscreen = true }, modifier = Modifier
                 .align(Alignment.BottomStart).padding(14.dp)
@@ -222,14 +231,15 @@ import kotlin.math.roundToInt
         onAddToPlaylist, onDelete, onMetadataChanged, onEditComplete = back)
 }
 
-@Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel) {
+@Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel, scale: VideoScale) {
     AndroidView(factory = { context ->
         PlayerView(context).apply {
             useController = false
-            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            resizeMode = scale.resizeMode
             player = playback.player()
         }
-    }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+    }, update = { it.player = playback.player(); it.resizeMode = scale.resizeMode },
+        modifier = Modifier.fillMaxSize())
 }
 
 internal fun enterVideoPictureInPicture(context: Context, player: Player?) {
@@ -262,21 +272,50 @@ private fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+@Composable private fun VideoSystemBars(hidden: Boolean) {
+    val context = LocalContext.current
+    DisposableEffect(context, hidden) {
+        val activity = context.findActivity()
+        val controller = activity?.let {
+            WindowCompat.getInsetsController(it.window, it.window.decorView)
+        }
+        if (hidden && controller != null) {
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        }
+        onDispose {
+            if (hidden && controller != null) {
+                controller.show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
+}
+
 @Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
-    onAudioOnly: (Song) -> Unit) {
+    onAudioOnly: (Song) -> Unit, videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
+    onVideoScaleChange: (VideoScale) -> Unit, onTogglePresentation: (() -> Unit)? = null,
+    onOptions: (() -> Unit)? = null, onQueue: (() -> Unit)? = null) {
+    VideoSystemBars(hidden = true)
     val controls = rememberVideoControls(song.id, state.playing)
+    var locked by remember(song.id) { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
                 useController = false
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                resizeMode = videoScale.resizeMode
                 player = playback.player()
             }
-        }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+        }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
+            modifier = Modifier.fillMaxSize())
         VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-            onPrevious = playback::previous, onNext = playback::next)
-        if (controls.visible) {
+            onDoubleTap = { leftSide ->
+                seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
+            }, onPrevious = playback::previous, onNext = playback::next,
+            locked = locked, unlockMethod = videoUnlockMethod,
+            onUnlock = { locked = false; controls.show() })
+        if (controls.visible && !locked) {
             Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -295,7 +334,15 @@ private fun Context.findActivity(): Activity? = when (this) {
                 VideoTimeline(song, progress, playback)
                 VideoActionRow(
                     onAudioOnly = { onAudioOnly(song) },
-                    onFullscreen = close,
+                    onOptions = onOptions,
+                    onQueue = onQueue,
+                    onScaleToggle = {
+                        onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                    },
+                    onLock = { locked = true },
+                    onFullscreen = onTogglePresentation ?: close,
+                    presentationToggle = onTogglePresentation != null,
+                    presentationDescription = R.string.video_presentation_split,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -306,18 +353,23 @@ private fun Context.findActivity(): Activity? = when (this) {
 @Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
     onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
-    onAudioOnly: (Song) -> Unit) {
+    onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
+    videoUnlockMethod: VideoUnlockMethod, onVideoScaleChange: (VideoScale) -> Unit) {
     val controls = rememberVideoControls(song.id, state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
                 useController = false
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                resizeMode = videoScale.resizeMode
                 player = playback.player()
             }
-        }, update = { it.player = playback.player() }, modifier = Modifier.fillMaxSize())
+        }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
+            modifier = Modifier.fillMaxSize())
         VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-            onPrevious = playback::previous, onNext = playback::next)
+            onDoubleTap = { leftSide ->
+                seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
+            }, onPrevious = playback::previous, onNext = playback::next,
+            unlockMethod = videoUnlockMethod)
         if (controls.visible) {
             Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -347,6 +399,9 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onOptions = onOptions,
                     onQueue = onQueue,
                     onFullscreen = onFullscreen,
+                    onScaleToggle = {
+                        onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                    },
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -354,17 +409,18 @@ private fun Context.findActivity(): Activity? = when (this) {
     }
 }
 
-private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit)
+private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit,
+    val show: () -> Unit)
 
 @Composable private fun rememberVideoControls(songId: String, playing: Boolean): VideoControlsState {
-    var visible by remember(songId) { mutableStateOf(false) }
+    var visible by remember(songId) { mutableStateOf(true) }
     LaunchedEffect(visible, playing) {
         if (visible && playing) {
             delay(3_500)
             visible = false
         }
     }
-    return VideoControlsState(visible) { visible = !visible }
+    return VideoControlsState(visible, { visible = !visible }, { visible = true })
 }
 
 @Composable private fun VideoTransportControls(state: PlaybackState, progress: Pair<Long, Long>,
@@ -414,6 +470,9 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
 @Composable private fun VideoActionRow(modifier: Modifier = Modifier,
     onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
+    onScaleToggle: (() -> Unit)? = null, onLock: (() -> Unit)? = null,
+    presentationToggle: Boolean = false,
+    presentationDescription: Int = R.string.video_presentation_split,
     ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically) {
@@ -430,9 +489,25 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
                 Icon(Icons.Default.QueueMusic, stringResource(R.string.queue), tint = Color.White)
             }
         }
+        onScaleToggle?.let { action ->
+            IconButton(onClick = action) {
+                Icon(Icons.Default.Crop, stringResource(R.string.video_scale_toggle), tint = Color.White)
+            }
+        }
+        onLock?.let { action ->
+            IconButton(onClick = action) {
+                Icon(Icons.Default.Lock, stringResource(R.string.video_lock), tint = StonePalette.Yellow)
+            }
+        }
         onFullscreen?.let { action ->
             IconButton(onClick = action) {
-                Icon(Icons.Default.Fullscreen, "Pantalla completa", tint = Color.White)
+                Icon(
+                    if (presentationToggle) Icons.Default.ViewQuilt
+                    else Icons.Default.FullscreenExit,
+                    if (presentationToggle) stringResource(presentationDescription)
+                    else stringResource(R.string.close_player),
+                    tint = Color.White
+                )
             }
         }
     }
@@ -537,7 +612,10 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
 
 /** Handles vertical brightness/volume adjustments and horizontal track changes. */
 @Composable private fun VideoGestureOverlay(state: PlaybackState, playback: PlaybackViewModel,
-    modifier: Modifier, onTap: () -> Unit, onPrevious: () -> Unit, onNext: () -> Unit) {
+    modifier: Modifier, onTap: () -> Unit, onDoubleTap: (leftSide: Boolean) -> Unit = {},
+    onPrevious: () -> Unit, onNext: () -> Unit,
+    locked: Boolean = false, unlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
+    onUnlock: () -> Unit = {}) {
     val context = LocalContext.current
     var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
     val maxVolumePercent = state.audioMode.maxVolumePercent
@@ -555,6 +633,8 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
         }
     }
     val currentTap = rememberUpdatedState(onTap)
+    val currentDoubleTap = rememberUpdatedState(onDoubleTap)
+    val currentUnlock = rememberUpdatedState(onUnlock)
     val currentAdjustment = rememberUpdatedState(newValue = { leftSide: Boolean, delta: Float ->
         if (leftSide) {
             brightness = (brightness + delta).coerceIn(.02f, 1f)
@@ -567,16 +647,29 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
                 volume / maxVolumePercent.toFloat(), maxVolumePercent)
         }
     })
-    Box(modifier.pointerInput(Unit) {
+    Box(modifier.pointerInput(locked, unlockMethod) {
         detectVideoGestures(
+            locked = locked,
+            unlockMethod = unlockMethod,
             onTap = { currentTap.value() },
+            onDoubleTap = { currentDoubleTap.value(it) },
             onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) },
             onHorizontalSwipe = { deltaX ->
                 if (deltaX < 0f) onNext() else onPrevious()
-            }
+            },
+            onUnlock = { currentUnlock.value() }
         )
     }) {
         adjustment?.let { VideoAdjustmentIndicator(it, Modifier.fillMaxSize()) }
+        if (locked && unlockMethod == VideoUnlockMethod.BUTTON) {
+            IconButton(
+                onClick = { currentUnlock.value() },
+                modifier = Modifier.align(Alignment.CenterStart).padding(16.dp)
+                    .background(Color(0xCC17151B), CircleShape)
+            ) {
+                Icon(Icons.Default.Lock, stringResource(R.string.video_unlock), tint = StonePalette.Yellow)
+            }
+        }
     }
 }
 
@@ -612,15 +705,18 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
     }
 }
 
-private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
+private suspend fun PointerInputScope.detectVideoGestures(locked: Boolean,
+    unlockMethod: VideoUnlockMethod, onTap: () -> Unit,
+    onDoubleTap: (leftSide: Boolean) -> Unit,
     onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit,
-    onHorizontalSwipe: (Float) -> Unit) {
+    onHorizontalSwipe: (Float) -> Unit, onUnlock: () -> Unit) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
         var totalY = 0f
         var moved = false
         var horizontalTriggered = false
+        var unlockTriggered = false
         while (true) {
             val event = awaitPointerEvent()
             val change = event.changes.firstOrNull() ?: break
@@ -630,7 +726,15 @@ private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
             totalY += delta.y
             if (!moved && maxOf(abs(totalX), abs(totalY)) > viewConfiguration.touchSlop) moved = true
             if (moved) {
-                if (abs(totalY) >= abs(totalX)) {
+                if (locked) {
+                    if (unlockMethod == VideoUnlockMethod.SWIPE_UP && !unlockTriggered &&
+                        down.position.y >= size.height * .72f &&
+                        totalY <= -density * 64f) {
+                        unlockTriggered = true
+                        onUnlock()
+                    }
+                    change.consume()
+                } else if (abs(totalY) >= abs(totalX)) {
                     val normalized = (-delta.y / size.height.toFloat().coerceAtLeast(1f))
                         .coerceIn(-.12f, .12f)
                     onVerticalChange(down.position.x < size.width / 2f, normalized)
@@ -642,7 +746,33 @@ private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
                 change.consume()
             }
         }
-        if (!moved) onTap()
+        if (!moved) {
+            // Waiting briefly for a second pointer-down lets a double tap remain a seek gesture
+            // without making a single tap impossible. A locked surface only accepts the selected
+            // unlock method; every other gesture is deliberately consumed.
+            val secondDown = withTimeoutOrNull(android.view.ViewConfiguration.getDoubleTapTimeout().toLong()) {
+                awaitFirstDown(requireUnconsumed = false)
+            }
+            if (secondDown == null) {
+                if (!locked) onTap()
+            } else {
+                var secondMoved = false
+                val secondPosition = secondDown.position
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull() ?: break
+                    if (!change.pressed) break
+                    if ((change.position - secondPosition).getDistance() > viewConfiguration.touchSlop) {
+                        secondMoved = true
+                    }
+                    change.consume()
+                }
+                if (!secondMoved) {
+                    if (locked && unlockMethod == VideoUnlockMethod.DOUBLE_TAP) onUnlock()
+                    else if (!locked) onDoubleTap(down.position.x < size.width / 2f)
+                }
+            }
+        }
     }
 }
 
@@ -687,21 +817,34 @@ private fun setWindowBrightness(context: Context, value: Float) {
 
 @Composable private fun LandscapeVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
-    onAudioOnly: (Song) -> Unit) {
+    onOptions: () -> Unit, onQueue: () -> Unit, onAudioOnly: (Song) -> Unit,
+    videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
+    onVideoScaleChange: (VideoScale) -> Unit) {
+    var presentation by rememberSaveable(song.id) { mutableStateOf(VideoPresentation.IMMERSIVE) }
+    if (presentation == VideoPresentation.IMMERSIVE) {
+        FullscreenVideoPlayer(song, state, progress, playback, close = back,
+            onAudioOnly = onAudioOnly, videoScale = videoScale,
+            videoUnlockMethod = videoUnlockMethod, onVideoScaleChange = onVideoScaleChange,
+            onTogglePresentation = { presentation = VideoPresentation.SPLIT },
+            onOptions = onOptions, onQueue = onQueue)
+        return
+    }
     val controls = rememberVideoControls(song.id, state.playing)
     Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1.55f).fillMaxHeight()) {
             AndroidView(factory = { context ->
                 PlayerView(context).apply {
                     useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    resizeMode = videoScale.resizeMode
                     player = playback.player()
                 }
-            }, update = { it.player = playback.player() },
+            }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp)))
             VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-                onPrevious = playback::previous, onNext = playback::next)
+                onDoubleTap = { leftSide ->
+                    seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
+                }, onPrevious = playback::previous, onNext = playback::next,
+                unlockMethod = videoUnlockMethod)
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             Box(Modifier.matchParentSize().pointerInput(Unit) {
@@ -736,7 +879,12 @@ private fun setWindowBrightness(context: Context, value: Float) {
                         onAudioOnly = { onAudioOnly(song) },
                         onOptions = onOptions,
                         onQueue = onQueue,
-                        onFullscreen = onFullscreen
+                        onFullscreen = { presentation = VideoPresentation.IMMERSIVE },
+                        presentationToggle = true,
+                        presentationDescription = R.string.video_presentation_immersive,
+                        onScaleToggle = {
+                            onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                        }
                     )
                 }
             }

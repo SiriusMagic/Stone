@@ -77,6 +77,19 @@
     <string name="hardware_acceleration_note">Hardware decoding and audio offload are not equivalent. Android may use a conventional fallback path.</string>
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
+    <string name="video_settings">Video</string>
+    <string name="video_settings_hint">Landscape videos open in immersive mode. You can change the presentation, framing and unlock method.</string>
+    <string name="video_presentation_immersive">Immersive mode</string>
+    <string name="video_presentation_split">Split mode</string>
+    <string name="video_scale_fit">Fit (no crop)</string>
+    <string name="video_scale_fill">Fill (may crop)</string>
+    <string name="video_unlock_method">Control unlock method</string>
+    <string name="video_unlock_button">Side button</string>
+    <string name="video_unlock_double_tap">Double tap</string>
+    <string name="video_unlock_swipe_up">Swipe up from the bottom</string>
+    <string name="video_lock">Lock controls</string>
+    <string name="video_unlock">Unlock controls</string>
+    <string name="video_scale_toggle">Change framing</string>
     <string name="settings_section_system">System</string>
     <string name="theme_dark">Black</string>
     <string name="feedback">Feedback</string><string name="about_stone">About Stone</string>
