@@ -17,26 +17,27 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     onAddToPlaylist: (String, Song) -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, onEditComplete: () -> Unit = {}) {
     val context = LocalContext.current
+    val targetSong = sheets.actionSong ?: song
     if (sheets.queueVisible) QueueSheet(state, playback) { sheets.queueVisible = false }
     if (sheets.lyricsVisible && song != null) LyricsSheet(song, state, playback, progress) { sheets.lyricsVisible = false }
-    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(state, song, {
+    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(state, targetSong, {
         sheets.optionsVisible = false
     }) { selected ->
         sheets.optionsVisible = false
-        selectPlayerTool(context, sheets, selected, song, playback)
+        selectPlayerTool(context, sheets, selected, targetSong, playback)
     }
-    val close = { sheets.tool = null }
-    val edited = { sheets.tool = null; onMetadataChanged(); onEditComplete() }
+    val close = { sheets.tool = null; sheets.actionSong = null }
+    val edited = { sheets.tool = null; sheets.actionSong = null; onMetadataChanged(); onEditComplete() }
     when (sheets.tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback, close)
-        PlayerTool.Equalizer -> EqualizerSheet(state, playback, progress, song = song, close = close)
-        PlayerTool.Cover -> song?.let { TagEditorSheet(it, initialTab = 0, close = close, saved = edited) }
+        PlayerTool.Equalizer -> EqualizerSheet(state, playback, progress, song = targetSong, close = close)
+        PlayerTool.Cover -> targetSong?.let { TagEditorSheet(it, initialTab = 0, close = close, saved = edited) }
         PlayerTool.Sleep -> SleepSheet(state, playback, close)
-        PlayerTool.Tags -> song?.let { TagEditorSheet(it, close = close, saved = edited) }
-        PlayerTool.Ringtone -> song?.let { RingtoneSheet(it, close) }
-        PlayerTool.Playlist -> song?.let { PlaylistPickerSheet(it, playlists, onCreatePlaylist, onAddToPlaylist, close) }
+        PlayerTool.Tags -> targetSong?.let { TagEditorSheet(it, close = close, saved = edited) }
+        PlayerTool.Ringtone -> targetSong?.let { RingtoneSheet(it, close) }
+        PlayerTool.Playlist -> targetSong?.let { PlaylistPickerSheet(it, playlists, onCreatePlaylist, onAddToPlaylist, close) }
         PlayerTool.Delete -> ConfirmSongAction({
-            song?.let { playback.remove(it.id); onDelete(it) }; close(); onEditComplete()
+            targetSong?.let { playback.remove(it.id); onDelete(it) }; close(); onEditComplete()
         }, close)
         else -> Unit
     }
@@ -45,10 +46,17 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 /** Keeps option actions identical whether they came from a sheet or the horizontal side panel. */
 internal fun selectPlayerTool(context: Context, sheets: PlayerSheetsState, selected: PlayerTool,
     song: Song?, playback: PlaybackViewModel) {
+    sheets.actionSong = song
     when (selected) {
-        PlayerTool.Share -> song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
-            .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_LONG).show() } }
-        PlayerTool.FloatingWindow -> enterVideoPictureInPicture(context, playback.player())
+        PlayerTool.Share -> {
+            song?.let { runCatching { SongActions.share(context, it.uri, it.title) }
+                .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_LONG).show() } }
+            sheets.actionSong = null
+        }
+        PlayerTool.FloatingWindow -> {
+            enterVideoPictureInPicture(context, playback.player())
+            sheets.actionSong = null
+        }
         else -> sheets.tool = selected
     }
 }

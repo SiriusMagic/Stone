@@ -13,10 +13,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.zirakusa.stone.core.HomeLayout
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayer
+import com.zirakusa.stone.nativeapp.feature.player.MiniPlayerOptionsPanel
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.QueueEntry
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
@@ -76,6 +78,37 @@ class LibraryScreenTest {
         compose.onNodeWithText(text(R.string.videos)).performClick()
         compose.onNodeWithText(video.title).assertIsDisplayed().performClick()
         assertEquals(listOf(video), queue)
+    }
+
+    @Test @Config(qualifiers = "es-rES-w1280dp-h720dp-land-xhdpi")
+    fun horizontalVideoMenuReportsTheSelectedVideoForTheSidePanel() {
+        val video = Song("content://fixture/side-video", "Selected video", "Stone", "Videos",
+            "Videos", 24_000, 1, 1, isVideo = true)
+        var menuVideo: Song? = null
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {}, { _, _ -> },
+                Modifier.fillMaxSize(), currentId = video.id,
+                layout = HomeLayout(false, sidebarWidthDp = 64f, playerWidthDp = 300f),
+                onVideoOptions = { menuVideo = it })
+        } } }
+        compose.onNodeWithText(text(R.string.videos)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.more_options)).performClick()
+        assertEquals(video, menuVideo)
+    }
+
+    @Test fun videoOptionsPanelUsesTheSelectedVideoHeader() {
+        val current = Song("content://fixture/current", "Current song", "Current artist", "Music",
+            "Music", 24_000, 1, 1)
+        val selected = Song("content://fixture/selected", "Selected video", "Video artist", "Videos",
+            "Videos", 24_000, 1, 1, isVideo = true)
+        val player = PlaybackState(ready = true, title = current.title, artist = current.artist,
+            currentId = current.id)
+        compose.setContent { StoneTheme {
+            MiniPlayerOptionsPanel(player, selected, {}, onSelect = {})
+        } }
+        compose.onNodeWithText(selected.title).assertIsDisplayed()
+        compose.onNodeWithText(selected.artist).assertIsDisplayed()
+        compose.onNodeWithText(current.title).assertDoesNotExist()
     }
 
     @Test fun searchPreservesPlaybackQueueAndCanBeClosed() {

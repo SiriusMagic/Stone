@@ -74,6 +74,8 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 @Composable internal fun PlayerOptionsContent(state: PlaybackState, song: Song?,
     onSelect: (PlayerTool) -> Unit, modifier: Modifier = Modifier,
     extraActions: List<PlayerOptionExtra> = emptyList()) {
+    val headerTitle = song?.title?.takeIf { it.isNotBlank() } ?: state.title
+    val headerArtist = song?.artist?.takeIf { it.isNotBlank() } ?: state.artist
     val rows = buildList {
         add(ToolRow(Icons.Default.PlaylistAdd, R.string.add_to_playlist, PlayerTool.Playlist))
         add(ToolRow(Icons.Default.Share, R.string.share, PlayerTool.Share))
@@ -82,7 +84,7 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
         add(ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep))
         add(ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
     }
-    val videoRows = if (song?.isVideo == true) listOf(
+    val videoRows = if (song?.isVideo == true && song.id == state.currentId) listOf(
         ToolRow(Icons.Default.PictureInPictureAlt, R.string.floating_window, PlayerTool.FloatingWindow)
     ) else emptyList()
     val visibleRows = rows.take(8) + videoRows + rows.drop(8)
@@ -91,9 +93,9 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
             Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.size(64.dp))
                 Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                    Text(state.title, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
+                    Text(headerTitle, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
                         overflow = TextOverflow.Ellipsis)
-                    Text(state.artist, color = Color(0xFFD0BFC0), maxLines = 1)
+                    Text(headerArtist, color = Color(0xFFD0BFC0), maxLines = 1)
                 }
                 IconButton(onClick = { onSelect(PlayerTool.Tags) }) {
                     Icon(Icons.Default.Edit, stringResource(R.string.tag_editor))

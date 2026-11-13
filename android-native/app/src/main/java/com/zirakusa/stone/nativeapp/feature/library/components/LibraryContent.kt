@@ -35,7 +35,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     modifier: Modifier = Modifier, onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
-    onOpenFolders: () -> Unit = {}, compact: Boolean = false) {
+    onOpenFolders: () -> Unit = {}, compact: Boolean = false,
+    onVideoOptions: (Song) -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist, compact)
@@ -50,7 +51,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder, onDelete, onAudioOnly)
+        VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder, onDelete, onAudioOnly,
+            compact, onVideoOptions)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -171,7 +173,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, currentId: String, modifier: Modifier,
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
-    onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
+    onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit, compact: Boolean,
+    onVideoOptions: (Song) -> Unit) {
     var folderBrowser by rememberSaveable { mutableStateOf(false) }
     var selectedFolder by rememberSaveable { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
@@ -218,7 +221,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 items(visible, key = { it.id }) { video ->
                     VideoGridCard(video, selected = video.id == currentId,
-                        play = { onPlay(video, visible) }) { selectedVideo = video }
+                        play = { onPlay(video, visible) },
+                        onOptions = {
+                            if (compact) onVideoOptions(video) else selectedVideo = video
+                        })
                 }
             }
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {

@@ -3,6 +3,7 @@ package com.zirakusa.stone.nativeapp.feature.player
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.zirakusa.stone.core.Song
 
 @Stable class PlayerSheetsState {
     var queueVisible by mutableStateOf(false)
@@ -10,6 +11,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
     var optionsVisible by mutableStateOf(false)
     var optionsSidePanel by mutableStateOf(false)
     var tool by mutableStateOf<PlayerTool?>(null)
+    /** Temporary target for a tool opened from a non-playing library item. */
+    var actionSong by mutableStateOf<Song?>(null)
     val visible get() = queueVisible || lyricsVisible || optionsVisible || tool != null
 }
 

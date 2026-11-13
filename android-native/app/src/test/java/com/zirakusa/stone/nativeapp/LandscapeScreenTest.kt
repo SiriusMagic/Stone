@@ -82,6 +82,13 @@ class LandscapeScreenTest {
         compose.onRoot().captureRoboImage("build/screenshots/stone-landscape-multiwindow.png")
     }
 
+    @Test fun smallLandscapeVideoKeepsTheGridAndMiniPlayerPolicy() {
+        val layout = homeLayout(560f, true, false, true, false, LandscapeLayoutMode.ALWAYS)
+        assertTrue(layout.sidebar)
+        assertTrue(layout.showMiniPlayer)
+        assertFalse(layout.dockedPlayer)
+    }
+
     @Test fun fontScalingAndSideInsetsKeepControlsWithinBounds() {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1.5f)) {

@@ -83,6 +83,7 @@ import kotlinx.coroutines.delay
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
+    var videoOptionsSong by remember { mutableStateOf<com.zirakusa.stone.core.Song?>(null) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -108,6 +109,7 @@ import kotlinx.coroutines.delay
     val closeMiniOptions = {
         playerSheets.optionsVisible = false
         playerSheets.optionsSidePanel = false
+        videoOptionsSong = null
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
@@ -213,6 +215,11 @@ import kotlinx.coroutines.delay
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
+                },
+                onVideoOptions = { selected ->
+                    videoOptionsSong = selected
+                    playerSheets.optionsSidePanel = true
+                    playerSheets.optionsVisible = true
                 },
                 transferState = transferState,
                 onHostTransfer = {
@@ -347,11 +354,12 @@ import kotlinx.coroutines.delay
         playerSheets.optionsSidePanel) {
         MiniPlayerOptionsPanel(
             state = player,
-            song = currentSong,
+            song = videoOptionsSong ?: currentSong,
             onClose = closeMiniOptions,
             onSelect = { selected ->
+                val target = videoOptionsSong ?: currentSong
                 closeMiniOptions()
-                selectPlayerTool(context, playerSheets, selected, currentSong, playback)
+                selectPlayerTool(context, playerSheets, selected, target, playback)
             },
             extraActions = listOf(
                 PlayerOptionExtra(Icons.Default.QueueMusic, R.string.queue) {

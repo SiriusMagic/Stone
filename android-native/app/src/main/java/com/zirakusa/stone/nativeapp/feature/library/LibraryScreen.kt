@@ -56,6 +56,7 @@ private val legacyDefinitions = listOf(
     settingsSheetVisible: Boolean = false, onSettingsSheetVisible: (Boolean) -> Unit = {},
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
+    onVideoOptions: (Song) -> Unit = {},
     onOpenCoverEditor: () -> Unit = {}, layout: HomeLayout = HomeLayout(false),
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
@@ -198,7 +199,8 @@ private val legacyDefinitions = listOf(
             onRemoveFromPlaylist, onDelete, onAudioOnly, onOpenFolders = {
                 tab = LibraryTab.Folders
                 collection = null
-            }, compact = layout.sidebar)
+            }, compact = layout.sidebar,
+            onVideoOptions = onVideoOptions)
         }
         }
     }
