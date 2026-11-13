@@ -92,7 +92,8 @@ import kotlin.math.roundToInt
     sheets: PlayerSheetsState = rememberPlayerSheetsState(),
     videoScale: VideoScale = VideoScale.FIT,
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
-    onVideoScaleChange: (VideoScale) -> Unit = {}) {
+    onVideoScaleChange: (VideoScale) -> Unit = {},
+    videoControls: VideoControlSettings = VideoControlSettings.defaults()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
     var videoFullscreen by remember { mutableStateOf(false) }
@@ -128,7 +129,7 @@ import kotlin.math.roundToInt
                 videoFullscreen = false
                 onAudioOnly(it)
             }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
-            onVideoScaleChange = onVideoScaleChange)
+            onVideoScaleChange = onVideoScaleChange, videoControls = videoControls)
         return
     }
     val progress = rememberPlayerProgress(state, playback)
@@ -141,6 +142,7 @@ import kotlin.math.roundToInt
         FullscreenVideoPlayer(song, state, progress, playback, close = back,
             onAudioOnly = onAudioOnly, videoScale = videoScale,
             videoUnlockMethod = videoUnlockMethod, onVideoScaleChange = onVideoScaleChange,
+            videoControls = videoControls,
             onOptions = { sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
         )
     } else if (landscape) {
@@ -155,7 +157,7 @@ import kotlin.math.roundToInt
             videoFullscreen = false
             onAudioOnly(it)
         }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
-        onVideoScaleChange = onVideoScaleChange)
+        onVideoScaleChange = onVideoScaleChange, videoControls = videoControls)
     else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)) {
@@ -292,7 +294,8 @@ private fun Context.findActivity(): Activity? = when (this) {
 @Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
-    onVideoScaleChange: (VideoScale) -> Unit, onOptions: (() -> Unit)? = null,
+    onVideoScaleChange: (VideoScale) -> Unit, videoControls: VideoControlSettings,
+    onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null) {
     VideoSystemBars(hidden = true)
     val controls = rememberVideoControls(song.id, state.playing)
@@ -330,6 +333,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                 .background(Color(0x990D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
                 VideoTimeline(song, progress, playback)
                 VideoActionRow(
+                    controls = videoControls,
                     onAudioOnly = { onAudioOnly(song) },
                     onOptions = onOptions,
                     onQueue = onQueue,
@@ -348,7 +352,8 @@ private fun Context.findActivity(): Activity? = when (this) {
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
     onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
-    videoUnlockMethod: VideoUnlockMethod, onVideoScaleChange: (VideoScale) -> Unit) {
+    videoUnlockMethod: VideoUnlockMethod, onVideoScaleChange: (VideoScale) -> Unit,
+    videoControls: VideoControlSettings) {
     val controls = rememberVideoControls(song.id, state.playing)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
@@ -389,6 +394,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                 .background(Color(0xAA0D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
                 VideoTimeline(song, progress, playback)
                 VideoActionRow(
+                    controls = videoControls,
                     onAudioOnly = { onAudioOnly(song) },
                     onOptions = onOptions,
                     onQueue = onQueue,
@@ -462,41 +468,21 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
 }
 
 @Composable private fun VideoActionRow(modifier: Modifier = Modifier,
+    controls: VideoControlSettings,
     onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
     onScaleToggle: (() -> Unit)? = null, onLock: (() -> Unit)? = null,
     ) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onAudioOnly) {
-            Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = Color.White)
-        }
-        onOptions?.let { action ->
-            IconButton(onClick = action) {
-                Icon(Icons.Default.Tune, stringResource(R.string.more_options), tint = Color.White)
-            }
-        }
-        onQueue?.let { action ->
-            IconButton(onClick = action) {
-                Icon(Icons.Default.QueueMusic, stringResource(R.string.queue), tint = Color.White)
-            }
-        }
-        onScaleToggle?.let { action ->
-            IconButton(onClick = action) {
-                Icon(Icons.Default.Crop, stringResource(R.string.video_scale_toggle), tint = Color.White)
-            }
-        }
-        onLock?.let { action ->
-            IconButton(onClick = action) {
-                Icon(Icons.Default.Lock, stringResource(R.string.video_lock), tint = StonePalette.Yellow)
-            }
-        }
-        onFullscreen?.let { action ->
-            IconButton(onClick = action) {
-                Icon(Icons.Default.Fullscreen, stringResource(R.string.open_video), tint = Color.White)
-            }
-        }
-    }
+    VideoControlRow(
+        controls = controls.visibleIds,
+        modifier = modifier,
+        onAudioOnly = onAudioOnly,
+        onOptions = onOptions,
+        onQueue = onQueue,
+        onScaleToggle = onScaleToggle,
+        onLock = onLock,
+        onFullscreen = onFullscreen,
+    )
 }
 
 private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {

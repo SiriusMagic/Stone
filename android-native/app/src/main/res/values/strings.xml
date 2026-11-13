@@ -181,6 +181,13 @@
     <string name="settings_playback">Ajustes de reproducción</string>
     <string name="video_settings">Vídeo</string>
     <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo. Puedes cambiar el encuadre y el método de desbloqueo.</string>
+    <string name="video_controls">Controles de vídeo</string>
+    <string name="video_controls_hint">Elige y ordena los iconos que aparecen debajo de la vista previa y en el reproductor de vídeo.</string>
+    <string name="video_controls_future">Se agregarán más funciones próximamente.</string>
+    <string name="video_preview_empty">Vista previa de vídeo</string>
+    <string name="video_preview_empty_hint">Elige un vídeo para comenzar. Stone conservará aquí el último que reproduzcas.</string>
+    <string name="move_up">Subir</string>
+    <string name="move_down">Bajar</string>
     <string name="video_scale_fit">Ajustar (sin recortar)</string>
     <string name="video_scale_fill">Llenar (puede recortar)</string>
     <string name="video_unlock_method">Método para desbloquear controles</string>

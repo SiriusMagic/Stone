@@ -50,7 +50,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, modifier, onPlay, onFolder, onDelete, onAudioOnly)
+        VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder, onDelete, onAudioOnly)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -169,7 +169,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, modifier: Modifier,
+@Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, currentId: String, modifier: Modifier,
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit) {
     var folderBrowser by rememberSaveable { mutableStateOf(false) }
@@ -212,12 +212,13 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     }
                 }
             }
-            visible.isNotEmpty() -> LazyVerticalGrid(columns = GridCells.Fixed(2),
+            visible.isNotEmpty() -> LazyVerticalGrid(columns = GridCells.Adaptive(190.dp),
                 modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
                     top = 4.dp, bottom = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 items(visible, key = { it.id }) { video ->
-                    VideoGridCard(video, { onPlay(video, visible) }) { selectedVideo = video }
+                    VideoGridCard(video, selected = video.id == currentId,
+                        play = { onPlay(video, visible) }) { selectedVideo = video }
                 }
             }
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {

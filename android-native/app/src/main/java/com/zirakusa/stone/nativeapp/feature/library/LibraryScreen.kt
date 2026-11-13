@@ -60,11 +60,12 @@ private val legacyDefinitions = listOf(
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     onHome: () -> Unit = {}, onEqualizer: () -> Unit = {},
-    playerContent: @Composable (Boolean) -> Unit = {},
+    playerContent: @Composable (Boolean, Boolean) -> Unit = { _, _ -> },
     videoScale: VideoScale = VideoScale.FIT,
     onVideoScaleChange: (VideoScale) -> Unit = {},
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
-    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {}) {
+    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
+    onVideoControlChange: () -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -172,7 +173,7 @@ private val legacyDefinitions = listOf(
             onHome = { tab = LibraryTab.Songs; collection = null; query = ""; searchVisible = false; onHome() },
             onAction = dispatchQuickAction, onEqualizer = onEqualizer,
             onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
-    }, player = playerContent) {
+    }, player = { showPanel -> playerContent(showPanel, tab == LibraryTab.Videos) }) {
         if (layout.sidebar) LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,
             onFolder, { tab = LibraryTab.Folders; collection = null })
         else LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
@@ -211,7 +212,8 @@ private val legacyDefinitions = listOf(
         onReceiveTransfer, onStopTransfer, landscapeLayoutMode = landscapeLayoutMode,
         onLandscapeLayoutChange = onLandscapeLayoutChange, videoScale = videoScale,
         onVideoScaleChange = onVideoScaleChange, videoUnlockMethod = videoUnlockMethod,
-        onVideoUnlockMethodChange = onVideoUnlockMethodChange) { key, visible ->
+        onVideoUnlockMethodChange = onVideoUnlockMethodChange,
+        onVideoControlChange = onVideoControlChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)
         shortcutRevision++
     }

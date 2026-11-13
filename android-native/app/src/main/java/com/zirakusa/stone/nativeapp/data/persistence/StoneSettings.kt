@@ -80,4 +80,18 @@ class StoneSettingsStore(context: Context) {
         value.takeIf { it in setOf("fit", "zoom") } ?: "fit")
     fun setVideoUnlockMethod(value: String) = db.setSetting("videoUnlockMethod",
         value.takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button")
+    fun videoControlVisible(key: String, fallback: Boolean = true) =
+        db.setting("video.control.$key", fallback.toString()).toBoolean()
+    fun setVideoControlVisible(key: String, value: Boolean) =
+        db.setSetting("video.control.$key", value.toString())
+    fun videoControlOrder(defaults: List<String>): List<String> {
+        val saved = runCatching { JSONArray(db.setting("video.control.order", "[]")).let { array ->
+            List(array.length()) { array.getString(it) }
+        } }.getOrDefault(emptyList())
+        return (saved + defaults).distinct().filter { it in defaults }
+    }
+    fun setVideoControlOrder(order: List<String>) =
+        db.setSetting("video.control.order", JSONArray(order.distinct()).toString())
+    fun lastVideoPreviewId() = db.setting("video.lastPreviewId", "")
+    fun setLastVideoPreviewId(id: String) = db.setSetting("video.lastPreviewId", id)
 }

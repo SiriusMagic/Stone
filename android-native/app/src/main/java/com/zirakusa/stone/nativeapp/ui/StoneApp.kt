@@ -60,6 +60,10 @@ import kotlinx.coroutines.delay
     var videoUnlockMethod by rememberSaveable {
         mutableStateOf(VideoUnlockMethod.fromKey(initialSettings.videoUnlockMethod))
     }
+    var videoControlRevision by remember { mutableIntStateOf(0) }
+    val videoControls = remember(settingsStore, videoControlRevision) {
+        VideoControlSettings.from(settingsStore)
+    }
     val configurationLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val libraryScreens = rememberSaveableStateHolder()
     val playerSheets = rememberPlayerSheetsState()
@@ -78,6 +82,7 @@ import kotlinx.coroutines.delay
     }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
+    var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -88,11 +93,18 @@ import kotlinx.coroutines.delay
     }
     val playSong: (com.zirakusa.stone.core.Song, List<com.zirakusa.stone.core.Song>) -> Unit = { song, songs ->
         audioOnlyId = null
+        if (song.isVideo) {
+            lastVideoPreviewId = song.id
+            settingsStore.setLastVideoPreviewId(song.id)
+        }
         playback.play(song, songs)
     }
     val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
+    val videoPreviewSong = currentSong?.takeIf { it.isVideo }
+        ?: state.songs.find { it.id == lastVideoPreviewId && it.isVideo }
+    val videoSongs = remember(state.songs) { state.songs.filter { it.isVideo } }
     val closeMiniOptions = {
         playerSheets.optionsVisible = false
         playerSheets.optionsSidePanel = false
@@ -177,6 +189,7 @@ import kotlinx.coroutines.delay
                     playerOpen = true
                 }, sheets = playerSheets, videoScale = videoScale,
                 videoUnlockMethod = videoUnlockMethod,
+                videoControls = videoControls,
                 onVideoScaleChange = {
                     videoScale = it
                     settingsStore.setVideoScale(it.key)
@@ -292,15 +305,31 @@ import kotlinx.coroutines.delay
                     videoUnlockMethod = it
                     settingsStore.setVideoUnlockMethod(it.key)
                 },
+                onVideoControlChange = { videoControlRevision++ },
                 onHome = { playerOpen = false },
                 onEqualizer = { playerSheets.tool = PlayerTool.Equalizer },
-                playerContent = { showPanel ->
+                playerContent = { showPanel, videoTab ->
                     LibraryPlaybackPane(showPanel, player, currentSong, playback, playerSheets,
-                        onOpen = if (landscapeMode == LandscapeLayoutMode.LIBRARY_ONLY || currentSong?.isVideo == true)
+                        onOpen = if (landscapeMode == LandscapeLayoutMode.LIBRARY_ONLY ||
+                            videoTab || currentSong?.isVideo == true)
                             ({ playerOpen = true }) else null,
                         state.playlists, library::createPlaylist, library::addToPlaylist, library::delete,
                         onMetadataChanged = { library.refresh() },
-                        optionsAsSidePanel = landscape && !layout.fullPlayer)
+                        optionsAsSidePanel = landscape && !layout.fullPlayer,
+                        videoTab = videoTab,
+                        videoPreviewSong = videoPreviewSong,
+                        videoControls = videoControls,
+                        onSelectVideo = { selected -> playSong(selected, videoSongs) },
+                        onAudioOnly = { song ->
+                            audioOnlyId = song.id
+                            playback.play(song.copy(isVideo = false), state.songs)
+                            playerOpen = true
+                        },
+                        videoScale = videoScale,
+                        onVideoScaleChange = {
+                            videoScale = it
+                            settingsStore.setVideoScale(it.key)
+                        })
                 },
                 onOpenCoverEditor = {
                     if (player.currentId.isNotBlank()) {

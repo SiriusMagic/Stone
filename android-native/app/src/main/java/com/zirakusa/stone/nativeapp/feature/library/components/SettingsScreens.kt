@@ -83,6 +83,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onVideoScaleChange: (VideoScale) -> Unit = {},
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
+    onVideoControlChange: () -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
@@ -117,7 +118,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
                             "reproducción notificaciones avisos", { onPage("notifications") }),
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
-                            "reproducción vídeo video inmersivo pantalla horizontal controles", { onPage("video") })
+                            "reproducción vídeo video inmersivo pantalla horizontal controles", { onPage("video") }),
+                        SettingsMenuItem(Icons.Default.Tune, stringResource(R.string.video_controls), "",
+                            "reproducción vídeo video iconos controles personalizar", { onPage("video-controls") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
                         SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
@@ -178,6 +181,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         { onPage("hardware-acceleration") })
                     "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange,
                         videoUnlockMethod, onVideoUnlockMethodChange)
+                    "video-controls" -> VideoControlSettingsDetail(store, onVideoControlChange)
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "audio-output" -> AudioOutputDetail()
@@ -206,6 +210,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "horizontal-layout" -> R.string.horizontal_layout
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
+    "video-controls" -> R.string.video_controls
     "hardware-acceleration" -> R.string.hardware_acceleration
     "audio-output" -> R.string.audio_output
     "feedback" -> R.string.feedback; "about" -> R.string.about_stone
@@ -398,7 +403,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 }
 
 /** A tap moves once; holding the control keeps moving the same shortcut. */
-@Composable private fun RepeatingReorderButton(enabled: Boolean, icon: ImageVector,
+@Composable internal fun RepeatingReorderButton(enabled: Boolean, icon: ImageVector,
     description: String, onMove: () -> Unit) {
     val latestMove by rememberUpdatedState(onMove)
     Box(

@@ -65,6 +65,19 @@ class LibraryScreenTest {
         assertEquals(1, folderRequests)
     }
 
+    @Test fun videoLibraryUsesTheThumbnailGridAndPlaysTheSelectedVideo() {
+        val video = Song("content://fixture/video", "Spider-Man edit", "Stone", "Videos",
+            "Videos", 24_000, 1, 1, isVideo = true)
+        var queue = emptyList<Song>()
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {},
+                { _, tracks -> queue = tracks }, Modifier.fillMaxSize(), currentId = video.id)
+        } } }
+        compose.onNodeWithText(text(R.string.videos)).performClick()
+        compose.onNodeWithText(video.title).assertIsDisplayed().performClick()
+        assertEquals(listOf(video), queue)
+    }
+
     @Test fun searchPreservesPlaybackQueueAndCanBeClosed() {
         val songs = listOf(Song("content://fixture/1", "After Dark", "Mr.Kitty", "Time", "Music", 1000, 1, 1),
             Song("content://fixture/2", "Courtesy Call", "Thousand Foot Krutch", "The End", "Music", 2000, 1, 1))

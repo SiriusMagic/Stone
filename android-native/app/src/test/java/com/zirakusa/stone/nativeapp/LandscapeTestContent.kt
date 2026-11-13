@@ -36,7 +36,7 @@ internal val landscapePlayback = PlaybackState(ready = true, playing = true,
                 { event("folder") }, { event("scan") }, { _, _ -> event("play-song") },
                 Modifier.weight(1f), currentId = state.currentId, layout = layout,
                 settingsStore = store, onOpenSettings = { event("settings") },
-                onEqualizer = { event("equalizer") }, playerContent = { visible ->
+                onEqualizer = { event("equalizer") }, playerContent = { visible, _ ->
                     if (visible) LandscapePlayerPanel(state, songs.firstOrNull(), 84_000L to 237_000L,
                         CompactPlayerActions({ event("toggle") }, { event("previous") }, { event("next") },
                             { event("shuffle") }, { event("repeat") }, { event("favorite") },
