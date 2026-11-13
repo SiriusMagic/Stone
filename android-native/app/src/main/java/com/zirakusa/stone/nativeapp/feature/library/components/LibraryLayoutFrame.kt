@@ -17,7 +17,6 @@ import com.zirakusa.stone.core.HomeLayout
             Spacer(Modifier.width(8.dp))
         }
         Column(Modifier.weight(1f).fillMaxHeight().testTag("home-library"), content = content)
-        if (layout.dockedPlayer) Spacer(Modifier.width(8.dp))
         Box(Modifier.width(layout.playerWidthDp.dp).fillMaxHeight()) { player(layout.dockedPlayer) }
     }
 }

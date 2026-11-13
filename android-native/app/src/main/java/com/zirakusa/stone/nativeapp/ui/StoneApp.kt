@@ -299,7 +299,8 @@ import kotlinx.coroutines.delay
                         onOpen = if (landscapeMode == LandscapeLayoutMode.LIBRARY_ONLY || currentSong?.isVideo == true)
                             ({ playerOpen = true }) else null,
                         state.playlists, library::createPlaylist, library::addToPlaylist, library::delete,
-                        onMetadataChanged = { library.refresh() })
+                        onMetadataChanged = { library.refresh() },
+                        optionsAsSidePanel = landscape && !layout.fullPlayer)
                 },
                 onOpenCoverEditor = {
                     if (player.currentId.isNotBlank()) {
@@ -313,7 +314,7 @@ import kotlinx.coroutines.delay
             }
         }
     }
-    if (landscape && layout.showMiniPlayer && playerSheets.optionsVisible &&
+    if (landscape && !layout.fullPlayer && playerSheets.optionsVisible &&
         playerSheets.optionsSidePanel) {
         MiniPlayerOptionsPanel(
             state = player,

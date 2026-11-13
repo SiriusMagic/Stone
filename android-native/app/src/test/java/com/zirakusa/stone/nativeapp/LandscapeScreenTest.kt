@@ -31,7 +31,7 @@ class LandscapeScreenTest {
         val rail = compose.onNodeWithTag("home-sidebar").fetchSemanticsNode().boundsInRoot
         val library = compose.onNodeWithTag("home-library").fetchSemanticsNode().boundsInRoot
         val player = compose.onNodeWithTag("home-player").fetchSemanticsNode().boundsInRoot
-        assertTrue(rail.right < library.left && library.right < player.left)
+        assertTrue(rail.right < library.left && library.right <= player.left)
         compose.onAllNodesWithContentDescription(label(R.string.pause)).assertCountEquals(1)
         compose.onNodeWithContentDescription(label(R.string.pause)).assertIsDisplayed()
         compose.onNodeWithContentDescription(label(R.string.settings)).assertIsDisplayed()

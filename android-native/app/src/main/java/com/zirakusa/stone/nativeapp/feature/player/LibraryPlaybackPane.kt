@@ -10,13 +10,14 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     playback: PlaybackViewModel, sheets: PlayerSheetsState, onOpen: (() -> Unit)?,
     playlists: List<StonePlaylist>, onCreatePlaylist: (String) -> Unit,
     onAddToPlaylist: (String, Song) -> Unit, onDelete: (Song) -> Unit,
-    onMetadataChanged: () -> Unit) {
+    onMetadataChanged: () -> Unit, optionsAsSidePanel: Boolean = false) {
     val progress = if ((showPanel && state.queue.isNotEmpty()) || sheets.visible)
         rememberPlayerProgress(state, playback) else 0L to 0L
     if (showPanel) LandscapePlayerPanel(state, song, progress, CompactPlayerActions(
         playback::toggle, playback::previous, playback::next, playback::shuffle,
         playback::repeat, { playback.toggleFavorite() }, playback::seek,
-        { sheets.optionsVisible = true }, { sheets.lyricsVisible = true },
+        { sheets.optionsSidePanel = optionsAsSidePanel; sheets.optionsVisible = true },
+        { sheets.lyricsVisible = true },
         { sheets.queueVisible = true }, onOpen
     ))
     PlayerSheetsHost(sheets, state, song, playback, progress, playlists, onCreatePlaylist,
