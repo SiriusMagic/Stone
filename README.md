@@ -11,3 +11,7 @@ Código de Stone y comienzo de su migración a Android nativo con Kotlin.
 Ruta en este entorno: `/workspace/stone/android-native`.
 El repositorio publicado es `https://github.com/SiriusMagic/Stone`.
 El APK final se encuentra en `android-native/app/build/outputs/apk/debug/app-debug.apk`.
+
+## APK actualizado
+
+[Descargar Stone 1.5.13 (APK optimizado)](https://github.com/SiriusMagic/Stone/raw/main/android-native/Stone-1.5.13-optimized.apk)

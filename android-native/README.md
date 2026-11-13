@@ -21,10 +21,10 @@ Para el APK descargable optimizado: `./gradlew :app:assemblePreview`.
 Sale en `app/build/outputs/apk/preview/app-preview.apk`, con firma de desarrollo,
 sin depuración y con reducción de código y recursos. No es una publicación estable.
 La prueba usa `com.zirakusa.stone.kotlin.preview` y el nombre **Stone Kotlin · Prueba**.
-La última versión generada es `1.5.7` (versionCode 17). El APK final de este cambio incluye
+La última versión generada es `1.5.13` (versionCode 23). El APK final de este cambio incluye
 la distribución horizontal configurable y fuerza la actualización al girar la ventana; consulta
 [`DISENO-HORIZONTAL.md`](DISENO-HORIZONTAL.md). `lintDebug` debe terminar con 0 avisos.
-En Git también se conserva `Stone-1.5.7-optimized.apk`: es la misma app con R8 y recursos
+En Git también se conserva `Stone-1.5.13-optimized.apk`: es la misma app con R8 y recursos
 reducidos (aprox. 3,3 MB). `app-debug.apk` es el paquete de diagnóstico sin reducción
 (aprox. 21,6 MB), preferible para comprobar una instalación cuando se sospecha de un APK
 demasiado pequeño.
