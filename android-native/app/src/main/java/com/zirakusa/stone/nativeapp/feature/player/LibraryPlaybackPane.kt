@@ -1,6 +1,9 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.runtime.Composable
+import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
@@ -20,6 +23,15 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
         rememberPlayerProgress(state, playback) else 0L to 0L
     val videoMode = videoTab || song?.isVideo == true
     val previewSong = if (videoTab) videoPreviewSong else song
+    val optionsTarget = sheets.optionsSong ?: song
+    val optionExtras = if (optionsTarget?.isVideo == true) listOf(
+        PlayerOptionExtra(Icons.Default.Headphones, R.string.audio_only) {
+            val target = sheets.optionsSong ?: song
+            sheets.optionsVisible = false
+            sheets.optionsSong = null
+            target?.let(onAudioOnly)
+        }
+    ) else emptyList()
     val activeVideo = previewSong?.isVideo == true && song?.isVideo == true &&
         previewSong.id == song.id && state.currentId == song.id
     if (showPanel && videoMode) {
@@ -34,7 +46,11 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             onSelectVideo = onSelectVideo,
             onOpenFullscreen = { onOpen?.invoke() },
             onAudioOnly = onAudioOnly,
-            onOptions = { sheets.optionsSidePanel = optionsAsSidePanel; sheets.optionsVisible = true },
+            onOptions = {
+                sheets.optionsSong = null
+                sheets.optionsSidePanel = optionsAsSidePanel
+                sheets.optionsVisible = true
+            },
             onQueue = { sheets.queueVisible = true },
             onScaleToggle = {
                 onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
@@ -43,10 +59,14 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     } else if (showPanel) LandscapePlayerPanel(state, song, progress, CompactPlayerActions(
             playback::toggle, playback::previous, playback::next, playback::shuffle,
             playback::repeat, { playback.toggleFavorite() }, playback::seek,
-            { sheets.optionsSidePanel = optionsAsSidePanel; sheets.optionsVisible = true },
+            {
+                sheets.optionsSong = null
+                sheets.optionsSidePanel = optionsAsSidePanel
+                sheets.optionsVisible = true
+            },
             { sheets.lyricsVisible = true },
             { sheets.queueVisible = true }, onOpen
         ))
     PlayerSheetsHost(sheets, state, song, playback, progress, playlists, onCreatePlaylist,
-        onAddToPlaylist, onDelete, onMetadataChanged)
+        onAddToPlaylist, onDelete, onMetadataChanged, extraActions = optionExtras)
 }

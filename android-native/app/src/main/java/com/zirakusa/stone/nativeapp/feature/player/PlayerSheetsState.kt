@@ -10,6 +10,8 @@ import com.zirakusa.stone.core.Song
     var lyricsVisible by mutableStateOf(false)
     var optionsVisible by mutableStateOf(false)
     var optionsSidePanel by mutableStateOf(false)
+    /** Item whose shared options menu is open; null means the current player item. */
+    var optionsSong by mutableStateOf<Song?>(null)
     var tool by mutableStateOf<PlayerTool?>(null)
     /** Temporary target for a tool opened from a non-playing library item. */
     var actionSong by mutableStateOf<Song?>(null)

@@ -17,6 +17,8 @@ import com.zirakusa.stone.core.HomeLayout
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
+import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.library.components.videoDisplayTitle
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayer
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayerOptionsPanel
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
@@ -78,6 +80,29 @@ class LibraryScreenTest {
         compose.onNodeWithText(text(R.string.videos)).performClick()
         compose.onNodeWithText(video.title).assertIsDisplayed().performClick()
         assertEquals(listOf(video), queue)
+    }
+
+    @Test fun videoLibraryCanToggleBetweenPersistentGridAndCompactListLayouts() {
+        val video = Song("content://fixture/video-layout.mp4", "Video layout", "Stone", "Videos",
+            "Videos", 24_000, 1, 1, isVideo = true)
+        val layout = mutableStateOf(VideoLibraryLayout.GRID)
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {}, { _, _ -> },
+                Modifier.fillMaxSize(), videoLibraryLayout = layout.value,
+                onVideoLibraryLayoutChange = { layout.value = it })
+        } } }
+        compose.onNodeWithText(text(R.string.videos)).performClick()
+        compose.onNodeWithTag("video-grid").assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.video_layout_list)).performClick()
+        compose.onNodeWithTag("video-list").assertIsDisplayed()
+        compose.onNodeWithTag("video-grid").assertDoesNotExist()
+        assertEquals(VideoLibraryLayout.LIST, layout.value)
+    }
+
+    @Test fun videoTitleFallsBackToTheFileNameWhenMetadataTitleIsEmpty() {
+        val video = Song("content://fixture/recorded-video.mp4", "", "", "", "Videos",
+            24_000, 1, 1, isVideo = true)
+        assertEquals("recorded-video", videoDisplayTitle(video))
     }
 
     @Test @Config(qualifiers = "es-rES-w1280dp-h720dp-land-xhdpi")

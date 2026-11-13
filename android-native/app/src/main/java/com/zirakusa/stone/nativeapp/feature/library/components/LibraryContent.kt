@@ -36,7 +36,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
     onOpenFolders: () -> Unit = {}, compact: Boolean = false,
-    onVideoOptions: (Song) -> Unit = {}) {
+    onVideoOptions: (Song) -> Unit = {},
+    videoLibraryLayout: VideoLibraryLayout = VideoLibraryLayout.GRID,
+    onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit = {}) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist, compact)
@@ -51,8 +53,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
     if (tab == LibraryTab.Videos) {
-        VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder, onDelete, onAudioOnly,
-            compact, onVideoOptions)
+        VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder,
+            compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -173,15 +175,13 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun VideoLibraryContent(videos: List<Song>, state: LibraryState, currentId: String, modifier: Modifier,
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
-    onDelete: (Song) -> Unit, onAudioOnly: (Song) -> Unit, compact: Boolean,
+    compact: Boolean, videoLibraryLayout: VideoLibraryLayout,
+    onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit,
     onVideoOptions: (Song) -> Unit) {
     var folderBrowser by rememberSaveable { mutableStateOf(false) }
     var selectedFolder by rememberSaveable { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
-    var selectedVideo by remember { mutableStateOf<Song?>(null) }
-    var deleteConfirmVisible by remember { mutableStateOf(false) }
-    var infoVideo by remember { mutableStateOf<Song?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val effectiveLayout = if (compact) VideoLibraryLayout.GRID else videoLibraryLayout
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically) {
@@ -199,6 +199,26 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 if (!folderBrowser) selectedFolder = null
             }) { Icon(if (folderBrowser) Icons.Default.VideoLibrary else Icons.Default.Folder,
                 stringResource(R.string.video_folders)) }
+            if (!compact && selectedFolder == null) {
+                IconButton(
+                    onClick = {
+                        onVideoLibraryLayoutChange(
+                            if (videoLibraryLayout == VideoLibraryLayout.GRID) VideoLibraryLayout.LIST
+                            else VideoLibraryLayout.GRID
+                        )
+                    },
+                    modifier = Modifier.testTag("video-layout-toggle")
+                ) {
+                    Icon(
+                        if (videoLibraryLayout == VideoLibraryLayout.GRID) Icons.Default.ViewList
+                        else Icons.Default.ViewModule,
+                        stringResource(
+                            if (videoLibraryLayout == VideoLibraryLayout.GRID)
+                                R.string.video_layout_list else R.string.video_layout_grid
+                        )
+                    )
+                }
+            }
         }
         when {
             folderBrowser -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 18.dp)) {
@@ -215,18 +235,32 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     }
                 }
             }
-            visible.isNotEmpty() -> LazyVerticalGrid(columns = GridCells.Adaptive(190.dp),
-                modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
-                    top = 4.dp, bottom = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                items(visible, key = { it.id }) { video ->
-                    VideoGridCard(video, selected = video.id == currentId,
-                        play = { onPlay(video, visible) },
-                        onOptions = {
-                            if (compact) onVideoOptions(video) else selectedVideo = video
-                        })
+            visible.isNotEmpty() && effectiveLayout == VideoLibraryLayout.GRID ->
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(170.dp),
+                    modifier = Modifier.fillMaxSize().testTag("video-grid"),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
+                        top = 4.dp, bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    items(visible, key = { it.id }) { video ->
+                        VideoGridCard(video, selected = video.id == currentId,
+                            play = { onPlay(video, visible) },
+                            onOptions = { onVideoOptions(video) })
+                    }
                 }
-            }
+            visible.isNotEmpty() && effectiveLayout == VideoLibraryLayout.LIST ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().testTag("video-list"),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp)
+                ) {
+                    items(visible, key = { it.id }) { video ->
+                        VideoListRow(video, selected = video.id == currentId,
+                            play = { onPlay(video, visible) },
+                            onOptions = { onVideoOptions(video) })
+                    }
+                }
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {
                 item {
                     if (!state.scanning) LibraryEmptyState(videos = true)
@@ -234,60 +268,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             }
         }
     }
-    selectedVideo?.let { video ->
-        ModalBottomSheet(onDismissRequest = { selectedVideo = null }) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)) {
-                Text(video.title, fontWeight = FontWeight.Bold, maxLines = 2,
-                    overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(bottom = 12.dp))
-                TextButton(onClick = {
-                    selectedVideo = null
-                    com.zirakusa.stone.nativeapp.data.library.SongActions.share(context, video.uri, video.title)
-                }) { Icon(Icons.Default.Share, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.share)) }
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.PictureInPictureAlt, null); Spacer(Modifier.width(12.dp));
-                    Text(stringResource(R.string.floating_window_unavailable))
-                }
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.Repeat, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.playback_mode))
-                }
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.Fullscreen, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.video_scale))
-                }
-                TextButton(onClick = { val item = selectedVideo; selectedVideo = null; item?.let(onAudioOnly) }) {
-                    Icon(Icons.Default.Headphones, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.audio_only))
-                }
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.ClosedCaption, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.subtitles_cc))
-                }
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.PlaylistAdd, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.add_to_playlist))
-                }
-                TextButton(onClick = { selectedVideo = null }) {
-                    Icon(Icons.Default.Lock, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.private_folder))
-                }
-                TextButton(onClick = { infoVideo = selectedVideo; selectedVideo = null }) {
-                    Icon(Icons.Default.Info, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.information))
-                }
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                TextButton(onClick = { deleteConfirmVisible = true }) {
-                    Icon(Icons.Default.Delete, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.delete))
-                }
-            }
-        }
-    }
-    if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },
-        title = { Text(stringResource(R.string.delete_song_title)) },
-        text = { Text(stringResource(R.string.delete_song_message)) },
-        confirmButton = { TextButton(onClick = {
-            selectedVideo?.let(onDelete); selectedVideo = null; deleteConfirmVisible = false
-        }) { Text(stringResource(R.string.delete)) } },
-        dismissButton = { TextButton(onClick = { deleteConfirmVisible = false }) { Text(stringResource(R.string.cancel)) } })
-    infoVideo?.let { video -> AlertDialog(onDismissRequest = { infoVideo = null },
-        title = { Text(stringResource(R.string.information)) },
-        text = { Column { Text(video.title); Text(video.folder, color = StonePalette.Muted); Text(video.uri, color = StonePalette.Muted, fontSize = 12.sp) } },
-        confirmButton = { TextButton(onClick = { infoVideo = null }) { Text(stringResource(R.string.dismiss)) } }) }
 }
 
 @Composable private fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,

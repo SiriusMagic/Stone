@@ -84,6 +84,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
     onVideoControlChange: () -> Unit = {},
+    immersivePlayers: Boolean = true,
+    onImmersivePlayersChange: (Boolean) -> Unit = {},
+    immersiveLibrary: Boolean = false,
+    onImmersiveLibraryChange: (Boolean) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
@@ -127,6 +131,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
                     )),
                     SettingsMenuSection(R.string.settings_section_appearance, listOf(
+                        SettingsMenuItem(Icons.Default.Fullscreen, stringResource(R.string.immersive_screen), "",
+                            "personalización apariencia pantalla inmersiva barras sistema reproductor biblioteca", { onPage("immersive") }),
                         SettingsMenuItem(Icons.Default.ViewQuilt, stringResource(R.string.horizontal_layout), "",
                             "horizontal paisaje girar pantalla distribución layout landscape", { onPage("horizontal-layout") }),
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
@@ -176,6 +182,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
+                    "immersive" -> ImmersiveSettingsDetail(immersivePlayers, onImmersivePlayersChange,
+                        immersiveLibrary, onImmersiveLibraryChange)
                     "horizontal-layout" -> HorizontalLayoutSettings(landscapeLayoutMode, onLandscapeLayoutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
                         { onPage("hardware-acceleration") })
@@ -207,6 +215,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {
     "theme" -> R.string.settings_theme; "language" -> R.string.settings_language
     "shortcuts" -> R.string.settings_home_shortcuts
+    "immersive" -> R.string.immersive_screen
     "horizontal-layout" -> R.string.horizontal_layout
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
@@ -607,6 +616,18 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             unlockMethod == VideoUnlockMethod.SWIPE_UP) {
             onUnlockMethodChange(VideoUnlockMethod.SWIPE_UP)
         }
+    }
+}
+
+@Composable private fun ImmersiveSettingsDetail(players: Boolean,
+    onPlayersChange: (Boolean) -> Unit, library: Boolean, onLibraryChange: (Boolean) -> Unit) {
+    Text(stringResource(R.string.immersive_screen_hint), color = StonePalette.Muted,
+        modifier = Modifier.padding(bottom = 14.dp))
+    SettingsGroup {
+        ToggleSetting(R.string.immersive_players, R.string.immersive_players_hint,
+            players, onPlayersChange)
+        ToggleSetting(R.string.immersive_library, R.string.immersive_library_hint,
+            library, onLibraryChange)
     }
 }
 

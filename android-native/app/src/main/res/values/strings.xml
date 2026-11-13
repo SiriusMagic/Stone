@@ -44,6 +44,8 @@
     <string name="video_details">%1$s | %2$s</string>
     <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string><string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
+    <string name="video_layout_grid">Cambiar a cuadrícula</string>
+    <string name="video_layout_list">Cambiar a lista</string>
     <string name="playlists">Playlists</string>
     <string name="sort">Ordenar</string>
     <string name="settings">Ajustes</string>
@@ -177,6 +179,12 @@
     <string name="accel_adaptive_info">Reduce al máximo el trabajo sostenido: libera la CPU cuando la salida de audio lo permite y mantiene un fallback seguro.</string>
     <string name="hardware_acceleration_note">La aceleración de decodificación y el audio offload no son equivalentes. Android puede usar una ruta convencional como fallback.</string>
     <string name="settings_theme">Tema</string>
+    <string name="immersive_screen">Pantalla inmersiva</string>
+    <string name="immersive_screen_hint">Oculta temporalmente las barras del sistema y aprovecha toda la pantalla sin cambiar la reproducción.</string>
+    <string name="immersive_players">Pantalla inmersiva en reproductores</string>
+    <string name="immersive_players_hint">Activa el modo inmersivo al abrir un reproductor de música o vídeo.</string>
+    <string name="immersive_library">Pantalla inmersiva en biblioteca</string>
+    <string name="immersive_library_hint">Oculta las barras del sistema en la biblioteca, manteniendo visible la navegación de Stone.</string>
     <string name="settings_language">Idioma</string>
     <string name="settings_playback">Ajustes de reproducción</string>
     <string name="video_settings">Vídeo</string>

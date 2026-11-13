@@ -21,7 +21,8 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
 
 /** Right-side options panel used only by the horizontal mini player. */
 @Composable internal fun MiniPlayerOptionsPanel(state: PlaybackState, song: Song?, onClose: () -> Unit,
-    onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
+    onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList(),
+    immersive: Boolean = false) {
     BackHandler(onBack = onClose)
     Box(Modifier.fillMaxSize().zIndex(10f)) {
         Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .58f))
@@ -35,7 +36,8 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
                 modifier = Modifier.fillMaxHeight()
                     .fillMaxWidth(.82f)
                     .widthIn(max = 420.dp)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)),
+                    .then(if (immersive) Modifier else
+                        Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical))),
                 shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
                 color = Color(0xFF62393B),
                 tonalElevation = 8.dp
@@ -49,10 +51,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
                         song = song,
                         modifier = Modifier.weight(1f),
                         extraActions = extraActions,
-                        onSelect = { selected ->
-                            onClose()
-                            onSelect(selected)
-                        }
+                        onSelect = onSelect
                     )
                 }
             }

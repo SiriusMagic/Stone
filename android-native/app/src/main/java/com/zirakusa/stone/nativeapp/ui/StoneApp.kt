@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
@@ -15,10 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -28,6 +31,7 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.core.homeLayout
 import com.zirakusa.stone.nativeapp.feature.library.*
+import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
 import com.zirakusa.stone.nativeapp.feature.player.*
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
@@ -60,6 +64,11 @@ import kotlinx.coroutines.delay
     var videoUnlockMethod by rememberSaveable {
         mutableStateOf(VideoUnlockMethod.fromKey(initialSettings.videoUnlockMethod))
     }
+    var videoLibraryLayout by rememberSaveable {
+        mutableStateOf(VideoLibraryLayout.fromKey(initialSettings.videoLibraryLayout))
+    }
+    var immersivePlayers by rememberSaveable { mutableStateOf(initialSettings.immersivePlayers) }
+    var immersiveLibrary by rememberSaveable { mutableStateOf(initialSettings.immersiveLibrary) }
     var videoControlRevision by remember { mutableIntStateOf(0) }
     val videoControls = remember(settingsStore, videoControlRevision) {
         VideoControlSettings.from(settingsStore)
@@ -83,7 +92,6 @@ import kotlinx.coroutines.delay
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
-    var videoOptionsSong by remember { mutableStateOf<com.zirakusa.stone.core.Song?>(null) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var lastRecordedId by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(player.favorite, player.currentId) { library.syncFavorites() }
@@ -109,7 +117,7 @@ import kotlinx.coroutines.delay
     val closeMiniOptions = {
         playerSheets.optionsVisible = false
         playerSheets.optionsSidePanel = false
-        videoOptionsSong = null
+        playerSheets.optionsSong = null
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
@@ -156,8 +164,7 @@ import kotlinx.coroutines.delay
         if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) library.onForeground()
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
-    StoneTheme(theme) { BoxWithConstraints(Modifier.fillMaxSize()
-        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+    StoneTheme(theme) { BoxWithConstraints(Modifier.fillMaxSize()) {
     // BoxWithConstraints is the source of truth for split-screen/freeform
     // windows. The explicit Activity value covers devices that handle rotation
     // through configChanges and do not refresh LocalConfiguration immediately.
@@ -165,18 +172,23 @@ import kotlinx.coroutines.delay
         (windowOrientation == Configuration.ORIENTATION_UNDEFINED && configurationLandscape)
     val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
         isPictureInPicture, landscapeMode)
-    LaunchedEffect(landscape, layout.fullPlayer) {
-        if (!landscape || layout.fullPlayer) closeMiniOptions()
+    val immersive = if (layout.fullPlayer) immersivePlayers else immersiveLibrary
+    val appContentModifier = Modifier.fillMaxSize().then(
+        if (immersive) Modifier else
+            Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+    )
+    Box(appContentModifier) {
+    var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
+    val miniPlayerHeight = with(LocalDensity.current) { miniPlayerHeightPx.toDp() }
+    if (!layout.fullPlayer) VideoSystemBars(hidden = immersiveLibrary)
+    LaunchedEffect(landscape, layout.fullPlayer, playerSheets.optionsSidePanel) {
+        if (layout.fullPlayer || (!landscape && playerSheets.optionsSidePanel)) closeMiniOptions()
     }
-    Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical), bottomBar = {
-        if (layout.showMiniPlayer) MiniPlayer(player, { playerOpen = true }, playback::toggle,
-            currentSong, playback::previous, playback::next, showOptions = landscape,
-            onOptions = {
-                playerSheets.optionsSidePanel = true
-                playerSheets.optionsVisible = true
-            })
-    }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+    Scaffold(contentWindowInsets = if (immersive) WindowInsets(0, 0, 0, 0)
+        else WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)) { padding ->
+        Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(padding)
+            .padding(bottom = if (layout.showMiniPlayer) miniPlayerHeight else 0.dp)) {
             if (player.failed) Text(stringResource(if (player.ready) R.string.playback_failed
                 else R.string.playback_connect_failed), color = MaterialTheme.colorScheme.error)
             if (layout.fullPlayer) PlayerScreen(player, currentSong, playback,
@@ -192,6 +204,7 @@ import kotlinx.coroutines.delay
                 }, sheets = playerSheets, videoScale = videoScale,
                 videoUnlockMethod = videoUnlockMethod,
                 videoControls = videoControls,
+                immersive = immersivePlayers,
                 onVideoScaleChange = {
                     videoScale = it
                     settingsStore.setVideoScale(it.key)
@@ -217,8 +230,8 @@ import kotlinx.coroutines.delay
                     playerOpen = true
                 },
                 onVideoOptions = { selected ->
-                    videoOptionsSong = selected
-                    playerSheets.optionsSidePanel = true
+                    playerSheets.optionsSong = selected
+                    playerSheets.optionsSidePanel = landscape && !layout.fullPlayer
                     playerSheets.optionsVisible = true
                 },
                 transferState = transferState,
@@ -313,6 +326,21 @@ import kotlinx.coroutines.delay
                     settingsStore.setVideoUnlockMethod(it.key)
                 },
                 onVideoControlChange = { videoControlRevision++ },
+                videoLibraryLayout = videoLibraryLayout,
+                onVideoLibraryLayoutChange = {
+                    videoLibraryLayout = it
+                    settingsStore.setVideoLibraryLayout(it.key)
+                },
+                immersivePlayers = immersivePlayers,
+                onImmersivePlayersChange = {
+                    immersivePlayers = it
+                    settingsStore.setImmersivePlayers(it)
+                },
+                immersiveLibrary = immersiveLibrary,
+                onImmersiveLibraryChange = {
+                    immersiveLibrary = it
+                    settingsStore.setImmersiveLibrary(it)
+                },
                 onHome = { playerOpen = false },
                 onEqualizer = { playerSheets.tool = PlayerTool.Equalizer },
                 playerContent = { showPanel, videoTab ->
@@ -349,34 +377,70 @@ import kotlinx.coroutines.delay
                 })
             }
         }
+        if (layout.showMiniPlayer) {
+            val miniContainerModifier = Modifier.fillMaxSize().then(
+                if (immersive) Modifier else Modifier.navigationBarsPadding()
+            )
+            Box(miniContainerModifier) {
+                MiniPlayer(
+                    state = player,
+                    open = { playerOpen = true },
+                    toggle = playback::toggle,
+                    song = currentSong,
+                    previous = playback::previous,
+                    next = playback::next,
+                    showOptions = true,
+                    onOptions = {
+                        playerSheets.optionsSong = null
+                        playerSheets.optionsSidePanel = landscape && !layout.fullPlayer
+                        playerSheets.optionsVisible = true
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged {
+                        miniPlayerHeightPx = it.height
+                    }
+                )
+            }
+        }
+        }
     }
     if (landscape && !layout.fullPlayer && playerSheets.optionsVisible &&
         playerSheets.optionsSidePanel) {
+        val optionsTarget = playerSheets.optionsSong ?: currentSong
         MiniPlayerOptionsPanel(
             state = player,
-            song = videoOptionsSong ?: currentSong,
+            song = optionsTarget,
             onClose = closeMiniOptions,
             onSelect = { selected ->
-                val target = videoOptionsSong ?: currentSong
+                val target = playerSheets.optionsSong ?: currentSong
                 closeMiniOptions()
                 selectPlayerTool(context, playerSheets, selected, target, playback)
             },
-            extraActions = listOf(
-                PlayerOptionExtra(Icons.Default.QueueMusic, R.string.queue) {
+            extraActions = buildList {
+                if (optionsTarget?.isVideo == true) add(PlayerOptionExtra(Icons.Default.Headphones, R.string.audio_only) {
+                    val target = playerSheets.optionsSong ?: currentSong
+                    closeMiniOptions()
+                    target?.let { video ->
+                        audioOnlyId = video.id
+                        playback.play(video.copy(isVideo = false), state.songs)
+                        playerOpen = true
+                    }
+                })
+                add(PlayerOptionExtra(Icons.Default.QueueMusic, R.string.queue) {
                     closeMiniOptions()
                     playerSheets.queueVisible = true
-                },
-                PlayerOptionExtra(Icons.Default.Tune, R.string.settings_playback) {
+                })
+                add(PlayerOptionExtra(Icons.Default.Tune, R.string.settings_playback) {
                     closeMiniOptions()
                     settingsPage = "playback"
                     settingsVisible = true
-                },
-                PlayerOptionExtra(Icons.Default.Settings, R.string.settings) {
+                })
+                add(PlayerOptionExtra(Icons.Default.Settings, R.string.settings) {
                     closeMiniOptions()
                     settingsPage = null
                     settingsVisible = true
-                }
-            )
+                })
+            },
+            immersive = immersive
         )
     }
         if (volumeUi.visible) {
@@ -386,5 +450,5 @@ import kotlinx.coroutines.delay
             }
             VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
         }
-    } }
+    } } }
 }

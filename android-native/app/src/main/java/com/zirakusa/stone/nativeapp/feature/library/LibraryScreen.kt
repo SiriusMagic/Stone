@@ -66,7 +66,13 @@ private val legacyDefinitions = listOf(
     onVideoScaleChange: (VideoScale) -> Unit = {},
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
-    onVideoControlChange: () -> Unit = {}) {
+    onVideoControlChange: () -> Unit = {},
+    videoLibraryLayout: VideoLibraryLayout = VideoLibraryLayout.GRID,
+    onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit = {},
+    immersivePlayers: Boolean = true,
+    onImmersivePlayersChange: (Boolean) -> Unit = {},
+    immersiveLibrary: Boolean = false,
+    onImmersiveLibraryChange: (Boolean) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -200,7 +206,9 @@ private val legacyDefinitions = listOf(
                 tab = LibraryTab.Folders
                 collection = null
             }, compact = layout.sidebar,
-            onVideoOptions = onVideoOptions)
+            onVideoOptions = onVideoOptions,
+            videoLibraryLayout = videoLibraryLayout,
+            onVideoLibraryLayoutChange = onVideoLibraryLayoutChange)
         }
         }
     }
@@ -215,7 +223,11 @@ private val legacyDefinitions = listOf(
         onLandscapeLayoutChange = onLandscapeLayoutChange, videoScale = videoScale,
         onVideoScaleChange = onVideoScaleChange, videoUnlockMethod = videoUnlockMethod,
         onVideoUnlockMethodChange = onVideoUnlockMethodChange,
-        onVideoControlChange = onVideoControlChange) { key, visible ->
+        onVideoControlChange = onVideoControlChange,
+        immersivePlayers = immersivePlayers,
+        onImmersivePlayersChange = onImmersivePlayersChange,
+        immersiveLibrary = immersiveLibrary,
+        onImmersiveLibraryChange = onImmersiveLibraryChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)
         shortcutRevision++
     }

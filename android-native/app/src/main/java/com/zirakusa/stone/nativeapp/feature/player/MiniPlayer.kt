@@ -38,7 +38,7 @@ import kotlin.math.abs
 
 @Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
     song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {},
-    showOptions: Boolean = false, onOptions: () -> Unit = {}) {
+    showOptions: Boolean = false, onOptions: () -> Unit = {}, modifier: Modifier = Modifier) {
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
@@ -48,7 +48,7 @@ import kotlin.math.abs
     LaunchedEffect(song?.uri, song?.modifiedMs, hasVideoSource) {
         videoFrame = if (hasVideoSource) ArtworkLoader.loadVideoFrame(context, song!!.uri, song.modifiedMs) else null
     }
-    Surface(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
+    Surface(modifier.padding(start = 16.dp, end = 16.dp, bottom = 10.dp)
         .pointerInput(state.currentId) { detectMiniPlayerSwipe(previous, next) }
         .clickable(onClick = open),
         shape = RoundedCornerShape(24.dp), color = StonePalette.MiniBackground,
@@ -57,7 +57,8 @@ import kotlin.math.abs
             verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
                 if (hasVideoSource && videoFrame?.bitmap != null) {
-                    Image(videoFrame!!.bitmap!!.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    Image(videoFrame!!.bitmap!!.asImageBitmap(), null, Modifier.fillMaxSize(),
+                        contentScale = if (videoFrame!!.height > videoFrame!!.width) ContentScale.Fit else ContentScale.Crop)
                 } else StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0, Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(start = 12.dp)) {

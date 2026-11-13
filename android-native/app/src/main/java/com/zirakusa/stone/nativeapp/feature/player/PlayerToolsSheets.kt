@@ -60,13 +60,10 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
     val label: Int, val onClick: () -> Unit)
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
-    onSelect: (PlayerTool) -> Unit) {
+@Composable internal fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
+    onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
-        PlayerOptionsContent(state, song, onSelect = { selected ->
-            onClose()
-            onSelect(selected)
-        })
+        PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect)
     }
 }
 

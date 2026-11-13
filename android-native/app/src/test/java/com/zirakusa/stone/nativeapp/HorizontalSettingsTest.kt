@@ -43,4 +43,26 @@ class HorizontalSettingsTest {
         assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,
             VideoControlId.Scale, VideoControlId.Lock, VideoControlId.Fullscreen), settings.visibleIds)
     }
+
+    @Test fun videoLayoutAndImmersivePreferencesHaveSafeDefaultsAndPersist() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val store = StoneSettingsStore(context)
+        val defaults = store.read()
+        assertEquals("grid", defaults.videoLibraryLayout)
+        assertTrue(defaults.immersivePlayers)
+        assertFalse(defaults.immersiveLibrary)
+
+        store.setVideoLibraryLayout("list")
+        store.setImmersivePlayers(false)
+        store.setImmersiveLibrary(true)
+        val reopened = StoneSettingsStore(context).read()
+        assertEquals("list", reopened.videoLibraryLayout)
+        assertFalse(reopened.immersivePlayers)
+        assertTrue(reopened.immersiveLibrary)
+
+        // Do not leak this test's preference changes into other persistence tests.
+        store.setVideoLibraryLayout("grid")
+        store.setImmersivePlayers(true)
+        store.setImmersiveLibrary(false)
+    }
 }

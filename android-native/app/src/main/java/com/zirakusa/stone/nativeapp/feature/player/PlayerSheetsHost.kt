@@ -11,21 +11,31 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 
 /** Shared by the full player and the home dock; only the visible presentation owns this host. */
-@Composable fun PlayerSheetsHost(sheets: PlayerSheetsState, state: PlaybackState,
+@Composable internal fun PlayerSheetsHost(sheets: PlayerSheetsState, state: PlaybackState,
     song: Song?, playback: PlaybackViewModel, progress: Pair<Long, Long>,
     playlists: List<StonePlaylist>, onCreatePlaylist: (String) -> Unit,
     onAddToPlaylist: (String, Song) -> Unit, onDelete: (Song) -> Unit,
-    onMetadataChanged: () -> Unit, onEditComplete: () -> Unit = {}) {
+    onMetadataChanged: () -> Unit, onEditComplete: () -> Unit = {},
+    extraActions: List<PlayerOptionExtra> = emptyList()) {
     val context = LocalContext.current
-    val targetSong = sheets.actionSong ?: song
+    val targetSong = sheets.actionSong ?: sheets.optionsSong ?: song
     if (sheets.queueVisible) QueueSheet(state, playback) { sheets.queueVisible = false }
     if (sheets.lyricsVisible && song != null) LyricsSheet(song, state, playback, progress) { sheets.lyricsVisible = false }
-    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(state, targetSong, {
-        sheets.optionsVisible = false
-    }) { selected ->
-        sheets.optionsVisible = false
-        selectPlayerTool(context, sheets, selected, targetSong, playback)
-    }
+    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(
+        state = state,
+        song = targetSong,
+        extraActions = extraActions,
+        onClose = {
+            sheets.optionsVisible = false
+            sheets.optionsSong = null
+        },
+        onSelect = { selected ->
+            val selectedSong = sheets.actionSong ?: sheets.optionsSong ?: song
+            sheets.optionsVisible = false
+            sheets.optionsSong = null
+            selectPlayerTool(context, sheets, selected, selectedSong, playback)
+        }
+    )
     val close = { sheets.tool = null; sheets.actionSong = null }
     val edited = { sheets.tool = null; sheets.actionSong = null; onMetadataChanged(); onEditComplete() }
     when (sheets.tool) {
