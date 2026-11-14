@@ -28,6 +28,19 @@ class PlaybackEqualizer {
         apply()
     }
 
+    /** Read-only state used by the audio investigation; it does not touch either effect. */
+    fun diagnostics(): String {
+        val equalizerState = effect?.let { equalizer -> runCatching {
+            "Equalizer(session=$sessionId,id=${equalizer.id},enabled=${equalizer.enabled})"
+        }.getOrElse { "Equalizer(error)" } } ?: "Equalizer:none(session=$sessionId)"
+        val dynamicsState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            dynamics?.let { processor -> runCatching {
+                "DynamicsProcessing(id=${processor.id},enabled=${processor.enabled})"
+            }.getOrElse { "DynamicsProcessing(error)" } } ?: "DynamicsProcessing:none"
+        } else "DynamicsProcessing:unsupported"
+        return "$equalizerState,$dynamicsState,configured=$enabled"
+    }
+
     private fun apply() = runCatching {
         if (!enabled) {
             releaseEffects()

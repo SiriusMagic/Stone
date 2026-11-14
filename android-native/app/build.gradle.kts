@@ -36,15 +36,21 @@ android {
     }
     kotlinOptions { jvmTarget = "21" }
     buildTypes {
+        debug {
+            // Diagnostic-only A/B switch. Release and preview builds never expose it.
+            buildConfigField("boolean", "AUDIO_DIAGNOSTICS_ENABLED", "true")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            buildConfigField("boolean", "AUDIO_DIAGNOSTICS_ENABLED", "false")
         }
         create("preview") {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
+            buildConfigField("boolean", "AUDIO_DIAGNOSTICS_ENABLED", "false")
         }
     }
 }

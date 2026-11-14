@@ -44,8 +44,10 @@ import com.zirakusa.stone.nativeapp.feature.player.VideoScale
 import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.AudioMode
+import com.zirakusa.stone.nativeapp.playback.AudioDiagnostics
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
@@ -572,6 +574,42 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         }
     }
     if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
+    if (BuildConfig.AUDIO_DIAGNOSTICS_ENABLED) {
+        val audioDiagnostic by StonePlaybackService.audioDiagnosticUi.collectAsState()
+        Surface(Modifier.fillMaxWidth().padding(top = 12.dp),
+            shape = RoundedCornerShape(18.dp), color = StonePalette.Chip) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text(stringResource(R.string.audio_ab_title), fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.audio_ab_hint), color = StonePalette.Muted,
+                        fontSize = 12.sp)
+                    Text(if (audioDiagnostic.loudnessEnhancerDisabled)
+                        stringResource(R.string.audio_ab_mode_b)
+                    else stringResource(R.string.audio_ab_mode_a),
+                        color = StonePalette.Yellow, fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 6.dp))
+                }
+                Switch(checked = audioDiagnostic.loudnessEnhancerDisabled,
+                    onCheckedChange = StonePlaybackService::setDiagnosticBoostDisabled)
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = {
+                    AudioDiagnostics.log(context, "USER_MARKER.sound_amplified",
+                        state = StonePlaybackService.diagnosticState(), includeSystemEffects = true)
+                }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.audio_ab_mark_loud), fontSize = 11.sp)
+                }
+                OutlinedButton(onClick = {
+                    AudioDiagnostics.log(context, "USER_MARKER.sound_normalized",
+                        state = StonePlaybackService.diagnosticState(), includeSystemEffects = true)
+                }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.audio_ab_mark_normal), fontSize = 11.sp)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+    }
     DiagnosticSection(stringResource(R.string.diagnostics_summary), initiallyOpen = true) {
         DiagnosticValue(stringResource(R.string.audio_mode), modeLabel)
         DiagnosticValue(stringResource(R.string.diagnostic_status), status)

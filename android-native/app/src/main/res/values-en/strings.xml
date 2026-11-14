@@ -190,6 +190,12 @@
     <string name="diagnostic_status">Diagnostic status</string>
     <string name="diagnostics_advanced">Advanced diagnostics</string>
     <string name="diagnostics_audio">Audio</string>
+    <string name="audio_ab_title">Audio A/B test (diagnostic only)</string>
+    <string name="audio_ab_hint">A keeps the current behavior. B releases LoudnessEnhancer without changing Android or Stone volume.</string>
+    <string name="audio_ab_mode_a">Mode A: current behavior</string>
+    <string name="audio_ab_mode_b">Mode B: LoudnessEnhancer released</string>
+    <string name="audio_ab_mark_loud">Mark louder</string>
+    <string name="audio_ab_mark_normal">Mark normalized</string>
     <string name="diagnostics_energy">Energy</string>
     <string name="diagnostics_limitations">Diagnostic limitations</string>
     <string name="diagnostics_running">Diagnostics running</string>

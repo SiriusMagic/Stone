@@ -54,6 +54,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val settings = StoneSettingsStore(application)
     private val equalizer = PlaybackEqualizer()
     private val analyzer = AudioGenreAnalyzer(application)
+    private var playWithOthers = settings.read().playWithOthers
+    private var audioFocusPolicy = if (playWithOthers) {
+        "Media3: handleAudioFocus=false (reproducir con otras apps)"
+    } else {
+        "Media3: handleAudioFocus=true"
+    }
     private var speed = data.float("speed", 1f)
     private var equalizerEnabled = data.boolean("equalizer-enabled", false)
     private var equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
@@ -73,6 +79,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val systemArtworkSources = mutableMapOf<String, ArtworkSource>()
     private var manualShuffle = false
     private var originalQueueIds: List<String> = emptyList()
+
+    private fun diagnosticState(player: Player? = controller): AudioDiagnostics.State {
+        val serviceState = StonePlaybackService.diagnosticState(player, audioFocusPolicy)
+        return serviceState.copy(effects = "${serviceState.effects};${equalizer.diagnostics()}")
+    }
+
     private val future = MediaController.Builder(application,
         SessionToken(application, ComponentName(application, StonePlaybackService::class.java))).buildAsync()
     private val listener = object : Player.Listener {
@@ -80,9 +92,57 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             publish()
             requestSystemArtwork()
+            AudioDiagnostics.log(getApplication(), "MediaController.onMediaItemTransition(reason=$reason)",
+                state = diagnosticState(controller))
+        }
+        @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onAudioSessionIdChanged($audioSessionId)",
+                state = diagnosticState(controller), includeSystemEffects = true)
+        }
+        override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onAudioAttributesChanged(usage=${audioAttributes.usage}," +
+                    "content=${audioAttributes.contentType},flags=${audioAttributes.flags})",
+                state = diagnosticState(controller))
+        }
+        override fun onVolumeChanged(volume: Float) {
+            AudioDiagnostics.log(getApplication(), "MediaController.onVolumeChanged($volume)",
+                state = diagnosticState(controller))
+        }
+        override fun onDeviceInfoChanged(deviceInfo: androidx.media3.common.DeviceInfo) {
+            AudioDiagnostics.log(getApplication(), "MediaController.onDeviceInfoChanged",
+                state = diagnosticState(controller), includeSystemEffects = true)
+        }
+        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onDeviceVolumeChanged(volume=$volume,muted=$muted)",
+                state = diagnosticState(controller))
+        }
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            AudioDiagnostics.log(getApplication(), "MediaController.onPlaybackStateChanged($playbackState)",
+                state = diagnosticState(controller))
+        }
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            AudioDiagnostics.log(getApplication(), "MediaController.onIsPlayingChanged($isPlaying)",
+                state = diagnosticState(controller))
+        }
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onPlayWhenReadyChanged(ready=$playWhenReady,reason=$reason)",
+                state = diagnosticState(controller))
+        }
+        override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onPlaybackSuppressionReasonChanged($playbackSuppressionReason)",
+                state = diagnosticState(controller))
         }
         override fun onPlayerError(error: PlaybackException) {
             PerformanceDiagnostics.recordPlaybackError()
+            AudioDiagnostics.log(getApplication(),
+                "MediaController.onPlayerError(${error.errorCodeName})",
+                state = diagnosticState(controller), includeSystemEffects = true)
             publish()
         }
     }
@@ -97,15 +157,18 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             }
         }
         future.addListener({
+            val before = AudioDiagnostics.capture(getApplication(), diagnosticState(player = null))
             runCatching { future.get() }.onSuccess {
                 controller = it
                 it.addListener(listener)
                 it.setPlaybackSpeed(speed)
-                applyAudioMixing(it, settings.read().playWithOthers)
+                applyAudioMixing(it, playWithOthers)
                 StonePlaybackService.instance?.applyAudioMode(audioMode)
                 StonePlaybackService.instance?.applyHardwareAcceleration(hardwareAcceleration)
                 if (it.mediaItemCount == 0) restoreQueue(it)
                 configureEqualizer(equalizerEnabled)
+                AudioDiagnostics.log(getApplication(), "MediaController.connected", before,
+                    diagnosticState(it), includeSystemEffects = true)
                 publish()
             }.onFailure { mutable.value = PlaybackState(failed = true) }
         }, ContextCompat.getMainExecutor(application))
@@ -194,12 +257,21 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         player.repeatMode = mode
     }
     fun setPlayWithOthers(enabled: Boolean) {
+        playWithOthers = enabled
         settings.setBoolean("playWithOthers", enabled)
         controller?.let { applyAudioMixing(it, enabled) }
     }
     private fun applyAudioMixing(player: Player, enabled: Boolean) {
+        val before = AudioDiagnostics.capture(getApplication(), diagnosticState(player))
+        audioFocusPolicy = if (enabled) {
+            "Media3: handleAudioFocus=false (reproducir con otras apps)"
+        } else {
+            "Media3: handleAudioFocus=true"
+        }
         player.setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), !enabled)
+        AudioDiagnostics.log(getApplication(), "MediaController.applyAudioMixing(enabled=$enabled)",
+            before, diagnosticState(player))
     }
     fun setShuffle(enabled: Boolean) {
         val player = controller ?: return
@@ -315,9 +387,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
 
     /** Reconnects lazily because Android may expose the audio session before its effects route. */
     private fun configureEqualizer(enabled: Boolean) {
+        val before = AudioDiagnostics.capture(getApplication(), diagnosticState(), includeSystemEffects = true)
         equalizer.attach(StonePlaybackService.playbackAudioSessionId)
         // The battery profile keeps the user's EQ values, but suspends the effect while active.
         equalizer.configure(enabled && audioMode != AudioMode.BATTERY, equalizerValues)
+        AudioDiagnostics.log(getApplication(), "PlaybackEqualizer.configure(enabled=$enabled,mode=${audioMode.key})",
+            before, diagnosticState(), includeSystemEffects = true)
     }
     private fun genrePreset(genre: String): List<Int>? = when (genre) {
         "Electrónica" -> listOf(4,7,6,-1,-2,0,5,8,3,5)
@@ -472,6 +547,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     }
 
     override fun onCleared() {
+        AudioDiagnostics.log(getApplication(), "PlaybackViewModel.onCleared", state = diagnosticState(),
+            includeSystemEffects = true)
         cancelSystemArtworkRequests(clearSources = true)
         persist()
         controller?.removeListener(listener)
