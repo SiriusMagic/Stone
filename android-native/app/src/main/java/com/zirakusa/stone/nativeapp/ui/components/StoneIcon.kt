@@ -23,10 +23,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 // Original Ionicons glyphs, bundled offline from Stone's existing icon dependency.
 enum class StoneGlyph(val character: String) {
-    Search("\uf55f"), Folder("\uf327"), Scan("\uf55a"), ScanButton("\uf556"),
-    Download("\uf2ba"), Sort("\uf5b4"), Settings("\uf56c"), Video("\uf4ce"),
+    Search("\uf55f"), Folder("\uf327"),
+    Sort("\uf5b4"), Settings("\uf56c"), Video("\uf4ce"),
     Music("\uf46a"), Note("\uf467"), Close("\uf24b"), Play("\uf4c6"), Pause("\uf493"),
-    Options("\uf2ce"), Back("\uf229"), Forward("\uf23b"), Check("\uf21d"),
+    Back("\uf229"), Forward("\uf23b"), Check("\uf21d"),
     Person("\uf4ac"), Album("\uf110")
 }
 private val StoneIconFont = FontFamily(Font(R.font.stone_icons))

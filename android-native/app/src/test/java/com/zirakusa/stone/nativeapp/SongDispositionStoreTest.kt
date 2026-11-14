@@ -5,7 +5,6 @@ import com.zirakusa.stone.nativeapp.data.library.SongDispositionStore
 import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
 import com.zirakusa.stone.nativeapp.data.persistence.StoneDatabase
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,16 +21,6 @@ class SongDispositionStoreTest {
         StoneDatabase.get(context).clearAll()
     }
 
-    @Test fun `retired hidden entries are restored without changing the deleted list`() {
-        val database = StoneDatabase.get(context)
-        database.putString("disposition.hidden", "[\"123|local:one\"]")
-        val store = SongDispositionStore(context)
-        store.delete("local:two")
-        store.restoreRetiredHidden()
-        assertEquals(null, database.getString("disposition.hidden"))
-        assertEquals(setOf("local:two"), SongDispositionStore(context).deletedIds())
-    }
-
     @Test fun `playlists history and counts survive reopening`() {
         val store = LibraryUserStore(context)
         val playlist = store.createPlaylist("Viaje")
@@ -43,12 +32,4 @@ class SongDispositionStoreTest {
         assertEquals(1, reopened.playCount("local:one"))
     }
 
-    @Test fun `backup round trip is transactional and versioned`() {
-        val database = StoneDatabase.get(context)
-        database.putString("test.value", "Stone")
-        val backup = database.exportJson()
-        database.clearAll()
-        database.importJson(backup)
-        assertEquals("Stone", database.getString("test.value"))
-    }
 }

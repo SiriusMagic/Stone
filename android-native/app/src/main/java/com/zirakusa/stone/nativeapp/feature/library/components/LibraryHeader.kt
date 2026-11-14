@@ -33,10 +33,10 @@ import com.zirakusa.stone.nativeapp.ui.components.*
 import kotlinx.coroutines.launch
 
 @Composable fun LibraryHeader(scanning: Boolean, onSearch: () -> Unit, onFolder: () -> Unit,
-    onScan: () -> Unit, onSort: () -> Unit, onSettings: () -> Unit,
+    onSort: () -> Unit, onSettings: () -> Unit,
     onEqualizer: () -> Unit = {},
     onPenguinClick: () -> Unit = {},
-    showSearch: Boolean = true, showFolder: Boolean = true, showScan: Boolean = true,
+    showSearch: Boolean = true, showFolder: Boolean = true,
     showSort: Boolean = true, showEqualizer: Boolean = true,
     quickActions: List<QuickActionDefinition> = emptyList(),
     onQuickAction: (String) -> Unit = {}, onMoreQuickActions: () -> Unit = {},
@@ -81,7 +81,6 @@ import kotlinx.coroutines.launch
             } else {
                 if (showSearch) StoneIconButton(StoneGlyph.Search, stringResource(R.string.search_toggle), onSearch)
                 if (showFolder) StoneIconButton(StoneGlyph.Folder, stringResource(R.string.choose_folder), onFolder, enabled = !scanning)
-                if (showScan) StoneIconButton(StoneGlyph.Scan, stringResource(R.string.scan_folders), onScan, enabled = !scanning)
                 if (showSort) StoneIconButton(StoneGlyph.Sort, stringResource(R.string.sort), onSort)
                 if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))

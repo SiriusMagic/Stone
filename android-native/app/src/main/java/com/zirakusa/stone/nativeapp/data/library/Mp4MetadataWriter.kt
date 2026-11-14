@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.data.library
 
 import android.content.Context
+import androidx.core.net.toUri
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -20,7 +21,7 @@ internal object Mp4MetadataWriter {
     private val textTypes = listOf("©nam", "©cmt", "©ART", "©day", "©gen")
 
     fun canWrite(context: Context, value: String): Boolean {
-        val uri = android.net.Uri.parse(value)
+        val uri = value.toUri()
         if (uri.scheme != "file") return false
         val file = File(uri.path ?: return false)
         val extension = value.substringBefore('?').substringAfterLast('.', "").lowercase(Locale.ROOT)
@@ -30,7 +31,7 @@ internal object Mp4MetadataWriter {
 
     fun write(context: Context, value: String, draft: VideoMetadataDraft,
         cover: ByteArray?, removeCover: Boolean) {
-        val file = File(android.net.Uri.parse(value).path ?: error("Ruta MP4 no válida"))
+        val file = File(value.toUri().path ?: error("Ruta MP4 no válida"))
         require(file.isFile && file.length() <= MAX_BYTES) { "El MP4 es demasiado grande para editarlo de forma segura" }
         val source = FileInputStream(file).use { input ->
             val bytes = input.readBytes()

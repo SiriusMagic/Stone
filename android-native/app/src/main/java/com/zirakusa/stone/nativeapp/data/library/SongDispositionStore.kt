@@ -9,10 +9,6 @@ class SongDispositionStore(context: Context) {
     fun deletedIds(): Set<String> = ids("deleted")
     fun delete(id: String) = add("deleted", id)
     fun restoreDeleted(id: String) = remove("deleted", id)
-    /** Removes the old persistent video-to-audio override; audio-only is now session-only. */
-    fun clearAudioOnly() = database.remove("disposition.audioOnly")
-    /** The retired Hide feature must never leave songs inaccessible after an update or import. */
-    fun restoreRetiredHidden() = database.remove("disposition.hidden")
 
     private fun values(key: String): MutableList<String> = runCatching {
         JSONArray(database.getString("disposition.$key") ?: "[]").let { array ->

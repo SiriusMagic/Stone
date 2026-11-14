@@ -110,10 +110,8 @@ class LandscapeScreenTest {
     @Test fun customizedRailRespectsVisibilityAndOrder() {
         val store = StoneSettingsStore(context)
         store.setShortcutProfile("custom")
-        store.setShortcutVisible("scan", false)
         store.setShortcutOrder(listOf("sort", "search"))
         compose.setContent { LandscapeTestContent(store = store) }
-        compose.onNodeWithContentDescription("Escanear").assertDoesNotExist()
         compose.onNodeWithContentDescription(label(R.string.sleep_timer)).assertDoesNotExist()
         val sort = compose.onNodeWithContentDescription(label(R.string.sort)).fetchSemanticsNode().boundsInRoot
         val search = compose.onNodeWithContentDescription(label(R.string.search_toggle)).fetchSemanticsNode().boundsInRoot

@@ -58,24 +58,6 @@ class LibraryUserStore(context: Context) {
         if (uri.isNullOrBlank()) database.remove(key) else database.putString(key, uri)
     }
 
-    /** Rebinds user data from source URIs to the private files created by a .musp import. */
-    fun remapSongIds(mapping: Map<String, String>) {
-        if (mapping.isEmpty()) return
-        val favorites = favoriteIds().map { mapping[it] ?: it }.distinct()
-        database.putString("favorites", JSONArray(favorites).toString())
-        val recent = recentIds().map { mapping[it] ?: it }.distinct()
-        database.putString("library.recent", JSONArray(recent).toString())
-        savePlaylists(playlists().map { playlist ->
-            playlist.copy(songIds = playlist.songIds.map { mapping[it] ?: it }.distinct())
-        })
-        database.keys("library.count:").forEach { key ->
-            val oldId = key.removePrefix("library.count:")
-            mapping[oldId]?.let { newId ->
-                database.getString(key)?.let { database.putString("library.count:$newId", it) }
-                database.remove(key)
-            }
-        }
-    }
     private fun savePlaylists(playlists: List<StonePlaylist>) {
         val array = JSONArray(); playlists.forEach { array.put(JSONObject().put("id", it.id)
             .put("name", it.name).put("songIds", JSONArray(it.songIds))) }

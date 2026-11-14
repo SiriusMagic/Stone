@@ -5,7 +5,8 @@ import com.zirakusa.stone.core.Song
 import org.json.JSONArray
 import java.io.File
 
-/** Songs imported from a .musp package. They live in app-private storage and never alter originals. */
+/** Legacy app-private media index kept so imports from older releases remain playable.
+ * There is no import/export UI in the current app. */
 class ImportedLibraryStore(context: Context) {
     private val index = File(context.filesDir, "imported-media/index.json")
 

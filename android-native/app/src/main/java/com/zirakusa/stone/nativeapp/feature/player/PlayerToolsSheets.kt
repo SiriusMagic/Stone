@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-enum class PlayerTool { Tags, Cover, Equalizer, Playlist, Share, Speed, Ringtone, Sleep,
+enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep,
     FloatingWindow, Delete }
 
 private data class ToolRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: Int,
@@ -379,14 +379,14 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun TagEditorSheet(song: Song, initialTab: Int = 1, close: () -> Unit, saved: () -> Unit) {
+@Composable fun TagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
     if (song.isVideo) {
-        VideoTagEditorSheet(song, initialTab, close, saved)
+        VideoTagEditorSheet(song, close, saved)
         return
     }
     val context = LocalContext.current; val scope = rememberCoroutineScope(); val editor = remember { AudioTagEditor(context) }
     var tags by remember { mutableStateOf(AudioTags(song.title, song.artist, song.album)) }
-    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 1)) }
+    var tab by remember(song.id) { mutableIntStateOf(1) }
     var busy by remember { mutableStateOf(true) }; var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(song.id) { tags = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrDefault(tags) }; busy = false }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
@@ -424,7 +424,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun VideoTagEditorSheet(song: Song, initialTab: Int, close: () -> Unit, saved: () -> Unit) {
+@Composable private fun VideoTagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val editor = remember { VideoMetadataEditor(context.applicationContext) }
@@ -432,7 +432,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     var draft by remember(song.id) { mutableStateOf(VideoMetadataDraft(title = song.title, author = song.artist)) }
     var framePosition by remember(song.id) { mutableLongStateOf(0L) }
     var frame by remember(song.id) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
-    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 1)) }
+    var tab by remember(song.id) { mutableIntStateOf(1) }
     var busy by remember(song.id) { mutableStateOf(true) }
     var error by remember(song.id) { mutableStateOf<String?>(null) }
     var message by remember(song.id) { mutableStateOf<String?>(null) }

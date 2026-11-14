@@ -289,7 +289,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         onQueue = onQueue,
                         onScaleToggle = onScaleToggle,
                         onLock = { locked = true; controlsVisible = false },
-                        onFullscreen = onOpenFullscreen,
                     )
                 }
             }

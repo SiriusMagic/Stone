@@ -34,15 +34,13 @@
     <string name="queue">A continuación</string>
     <string name="now_playing">Reproduciendo</string>
     <string name="seek">Posición de reproducción</string>
-    <string name="dismiss">Cerrar</string>
     <string name="search_toggle">Buscar</string>
     <string name="clear_search">Borrar búsqueda</string>
-    <string name="scan_folders">Escanear carpetas</string>
     <string name="no_songs">No hay canciones todavía</string>
     <string name="videos">Videos</string>
     <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="other">%1$d videos</item></plurals>
     <string name="video_details">%1$s | %2$s</string>
-    <string name="subtitles_cc">Subtítulos/CC</string><string name="private_folder">Bloquear en carpeta privada</string><string name="audio_only">Solo audio</string>
+    <string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
     <string name="video_layout_grid">Cambiar a cuadrícula</string>
     <string name="video_layout_list">Cambiar a lista</string>
@@ -87,7 +85,7 @@
     <string name="repeat_one">Repetir una</string>
     <string name="repeat_all">Repetir todo</string>
     <string name="tag_editor">Editor de etiquetas</string>
-    <string name="cover">Portada</string><string name="tags">Etiquetas</string><string name="information">Información</string>
+    <string name="cover">Portada</string><string name="tags">Etiquetas</string>
     <string name="cover_editor_unavailable">La portada se conserva; la integración segura de nuevas imágenes estará disponible en una próxima versión.</string>
     <string name="mp3_tags_only">Estos campos se guardan actualmente de forma segura en etiquetas ID3 de archivos MP3. Otros formatos permanecen sin cambios.</string>
     <string name="add_to_playlist">Agregar a la lista de reproducción</string>
@@ -104,8 +102,6 @@
     <string name="select_all">Seleccionar todos</string>
     <plurals name="selected_count"><item quantity="one">%1$d seleccionada</item><item quantity="other">%1$d seleccionadas</item></plurals>
     <plurals name="delete_selected_message"><item quantity="one">¿Borrar %1$d canción seleccionada?</item><item quantity="other">¿Borrar %1$d canciones seleccionadas?</item></plurals>
-    <string name="floating_window_unavailable">Ventana flotante (no disponible)</string>
-    <string name="playback_mode">Modo de reproducción</string>
     <string name="video_scale">Ajustar escala</string>
     <string name="default_value">Por defecto</string>
     <string name="off">Apagar</string>
@@ -128,7 +124,6 @@
     <string name="delete_song_title">¿Borrar canción?</string>
     <string name="delete_song_message">Esta canción se moverá a “Eliminado recientemente”. El archivo físico no se borrará ahora.</string>
     <string name="cancel">Cancelar</string>
-    <string name="cover_editor_requires_song">Reproduce una canción o vídeo para abrir su portada.</string>
     <string name="eq_normal">Normal</string>
     <string name="eq_bass">Aumento de graves</string>
     <string name="eq_voice">Aumento de voz</string>
@@ -157,16 +152,9 @@
     <string name="no_playlists">Crea una playlist primero</string>
     <string name="recently_deleted">Eliminado recientemente</string>
     <string name="restore">Restaurar</string>
-    <string name="backup_exported">Copia de seguridad creada</string>
-    <string name="backup_imported">Copia importada correctamente</string>
-    <string name="backup_failed">No se pudo procesar la copia de seguridad</string>
-    <string name="musp_exported">Paquete .musp creado correctamente</string>
-    <string name="musp_failed">No se pudo procesar el paquete .musp</string>
     <string name="video_media">Video</string>
     <string name="no_videos">No hay videos todavía</string>
     <string name="choose_video_folder">Elegir carpeta de videos</string>
-    <string name="scan_video_folders">Escanear videos</string>
-    <string name="settings_scan_library">Escanear biblioteca</string>
     <string name="hardware_acceleration">Aceleración de hardware</string>
     <string name="hardware_acceleration_intro">La disponibilidad depende del dispositivo, la salida de audio y el formato.</string>
     <string name="accel_automatic">Automático</string><string name="accel_disabled">Deshabilitado</string>
@@ -246,7 +234,7 @@
     <string name="quick_action_activated">%1$s activado</string>
     <string name="quick_action_confirmed">Acceso ejecutado: %1$s</string>
     <string name="settings_notifications">Configuración de notificaciones</string>
-    <string name="feedback">Opinión</string><string name="about_stone">Sobre Stone</string>
+    <string name="about_stone">Sobre Stone</string>
     <string name="feedback_title">Opiniones y sugerencias</string>
     <string name="feedback_report_bug">Reportar error</string>
     <string name="feedback_suggest_feature">Sugerir función</string>
@@ -276,9 +264,6 @@
     <string name="feedback_slow">Aplicación lenta</string><string name="feedback_other">Otros</string>
     <string name="feedback_details">Detalles *</string><string name="feedback_details_hint">Describe el problema con detalle</string>
     <string name="feedback_attachments">Capturas de pantalla o videos (opcional)</string>
-    <string name="feedback_consent">Para continuar, Stone compartiría los datos necesarios con el servicio de soporte. Revisa los términos y la política de privacidad.</string>
-    <string name="feedback_submit">Entregar</string>
-    <plurals name="feedback_attachment_count"><item quantity="one">%1$d adjunto seleccionado</item><item quantity="other">%1$d adjuntos seleccionados</item></plurals>
     <string name="music_reminders">Recordatorios musicales</string>
     <string name="music_reminders_hint">Recibe hasta dos invitaciones para escuchar música al día.</string>
     <string name="morning_reminder">Por la mañana</string><string name="morning_reminder_time">Entre las 8:00 y las 9:00</string>
@@ -303,25 +288,6 @@
     <string name="push_notifications">Notificación push</string>
     <string name="push_notifications_hint">Las recomendaciones musicales aún no están disponibles.</string>
     <string name="notifications_unavailable">Las notificaciones locales de nuevos archivos aún no están disponibles.</string>
-    <string name="export_musp">Exportar paquete .musp</string>
-    <string name="import_musp">Importar paquete .musp</string>
-    <string name="wifi_transfer">Transferencia Wi‑Fi local</string>
-    <string name="bluetooth_transfer">Transferencia por Bluetooth</string>
-    <string name="transfer_library">Transferir mi biblioteca</string>
-    <string name="wifi_transfer_intro">Envía una biblioteca Stone directamente entre teléfonos conectados a la misma red Wi‑Fi. No se usa un servidor externo.</string>
-    <string name="start_transfer">Abrir transferencia</string>
-    <string name="transfer_share_address">Dirección para enviar: %1$s</string>
-    <string name="transfer_share_code">Código: %1$s</string>
-    <string name="transfer_share_url">URL para entregar: %1$s</string>
-    <string name="transfer_waiting">Mantén esta pantalla abierta hasta que el otro teléfono termine.</string>
-    <string name="transfer_receive_title">Recibir desde otro teléfono</string>
-    <string name="transfer_address">Dirección local del emisor</string>
-    <string name="transfer_code">Código de un solo uso</string>
-    <string name="transfer_receive">Descargar e importar</string>
-    <string name="transfer_working">Transferencia en curso…</string>
-    <string name="transfer_packaging_indeterminate">Empaquetando biblioteca…</string>
-    <string name="transfer_packaging">Empaquetando biblioteca… %1$d%%</string>
-    <string name="transfer_package_ready">Paquete listo para compartir (%1$d MB)</string>
     <string name="audio_output">Salida de audio</string>
     <string name="audio_output_intro">Consulta la salida que Android está usando actualmente. La selección avanzada depende del sistema y del dispositivo conectado.</string>
     <string name="audio_output_current">Salida actual</string>

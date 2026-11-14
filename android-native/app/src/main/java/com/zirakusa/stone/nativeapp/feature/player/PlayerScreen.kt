@@ -84,8 +84,7 @@ import kotlin.math.roundToInt
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
     modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
-    onAudioOnly: (Song) -> Unit = {}, openCoverEditor: Boolean = false,
-    onCoverEditorConsumed: () -> Unit = {},
+    onAudioOnly: (Song) -> Unit = {},
     sheets: PlayerSheetsState = rememberPlayerSheetsState(),
     videoScale: VideoScale = VideoScale.AUTO,
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
@@ -93,7 +92,6 @@ import kotlin.math.roundToInt
     videoControls: VideoControlSettings = VideoControlSettings.defaults()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
-    var videoFullscreen by remember { mutableStateOf(false) }
     val dynamicBackground by produceState(
         Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
     ) {
@@ -109,24 +107,8 @@ import kotlin.math.roundToInt
     }
     val animatedBackground by animateColorAsState(dynamicBackground, animationSpec = tween(350),
         label = "player-background")
-    LaunchedEffect(openCoverEditor, song?.id) {
-        if (openCoverEditor && song != null) {
-            sheets.tool = PlayerTool.Cover
-            onCoverEditorConsumed()
-        }
-    }
     if (isPictureInPicture && song?.isVideo == true) {
         PictureInPictureVideoPlayer(playback, videoScale)
-        return
-    }
-    if (videoFullscreen && song?.isVideo == true) {
-        BackHandler { videoFullscreen = false }
-        FullscreenVideoPlayer(song, state, rememberPlayerProgress(state, playback), playback,
-            close = { videoFullscreen = false }, onAudioOnly = {
-                videoFullscreen = false
-                onAudioOnly(it)
-            }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
-            onVideoScaleChange = onVideoScaleChange, videoControls = videoControls)
         return
     }
     val progress = rememberPlayerProgress(state, playback)
@@ -151,9 +133,7 @@ import kotlin.math.roundToInt
             onQueue = { sheets.queueVisible = true })
     } else if (song?.isVideo == true) PortraitVideoPlayer(song, state, progress, playback, back,
         onOptions = { sheets.optionsSong = null; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
-        onFullscreen = { videoFullscreen = true },
         onAudioOnly = {
-            videoFullscreen = false
             onAudioOnly(it)
         }, videoScale = videoScale, videoUnlockMethod = videoUnlockMethod,
         onVideoScaleChange = onVideoScaleChange, videoControls = videoControls)
@@ -181,11 +161,6 @@ import kotlin.math.roundToInt
                     player = playback.player() }
             }, update = { it.player = playback.player(); it.resizeMode = videoScale.resolve(0, 0, false).resizeMode }, modifier = Modifier.fillMaxSize()
                 .clip(RoundedCornerShape(20.dp)))
-            IconButton(onClick = { videoFullscreen = true }, modifier = Modifier
-                .align(Alignment.BottomStart).padding(14.dp)
-                .background(Color(0xFFE51C23), RoundedCornerShape(5.dp))) {
-                Icon(Icons.Default.Fullscreen, "Reproducir en pantalla completa", tint = Color.White)
-            }
         }
         else if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs,
             Modifier.weight(1f).aspectRatio(1f).fillMaxWidth().clip(RoundedCornerShape(28.dp))
@@ -349,7 +324,7 @@ private fun Context.findActivity(): Activity? = when (this) {
 
 @Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit, onFullscreen: () -> Unit,
+    onOptions: () -> Unit, onQueue: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
     videoUnlockMethod: VideoUnlockMethod, onVideoScaleChange: (VideoScale) -> Unit,
     videoControls: VideoControlSettings) {
@@ -400,7 +375,6 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onAudioOnly = { onAudioOnly(song) },
                     onOptions = onOptions,
                     onQueue = onQueue,
-                    onFullscreen = onFullscreen,
                     onScaleToggle = {
                         onVideoScaleChange(videoScale.next())
                     },
@@ -472,7 +446,7 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
 @Composable private fun VideoActionRow(modifier: Modifier = Modifier,
     controls: VideoControlSettings,
     onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null, onFullscreen: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null,
     onScaleToggle: (() -> Unit)? = null, onLock: (() -> Unit)? = null,
     ) {
     VideoControlRow(
@@ -483,7 +457,6 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
         onQueue = onQueue,
         onScaleToggle = onScaleToggle,
         onLock = onLock,
-        onFullscreen = onFullscreen,
     )
 }
 
@@ -519,12 +492,15 @@ private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
         mutableStateOf(List(framePositions.size) { ArtworkLoader.VideoFrame(null, 0, 0) })
     }
     LaunchedEffect(song.id, song.modifiedMs, durationMs) {
-        framePositions.forEachIndexed { index, positionMs ->
-            val frame = ArtworkLoader.loadVideoFrameAt(
+        // Decode the bounded thumbnails sequentially, but publish one state update after
+        // the strip is complete. This avoids eight Compose recompositions while a preview
+        // is loading and keeps the existing two-decoder memory limit in ArtworkLoader.
+        val loaded = framePositions.map { positionMs ->
+            ArtworkLoader.loadVideoFrameAt(
                 context.applicationContext, song.uri, song.modifiedMs, positionMs, maxDimension = 180
             )
-            frames = frames.toMutableList().also { it[index] = frame }
         }
+        frames = loaded
     }
     val currentFraction = (progress.first.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
     Box(
@@ -591,9 +567,9 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
     locked: Boolean = false, unlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onUnlock: () -> Unit = {}) {
     val context = LocalContext.current
-    var brightness by remember { mutableStateOf(currentWindowBrightness(context)) }
+    var brightness by remember { mutableFloatStateOf(currentWindowBrightness(context)) }
     val maxVolumePercent = state.audioMode.maxVolumePercent
-    var volume by remember { mutableStateOf(
+    var volume by remember { mutableFloatStateOf(
         state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
     ) }
     var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }

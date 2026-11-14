@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.ui
 
 import android.os.Build
+import android.util.Log
 import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import java.util.Collections
@@ -32,6 +34,10 @@ internal val LocalImmersiveSystemBarsController =
  * their normal behavior.
  */
 internal class ImmersiveSystemBarsController(private val activity: ComponentActivity) {
+    private companion object {
+        const val TAG = "StoneImmersive"
+    }
+
     private class ManagedWindow(val window: Window, val root: Boolean) {
         val decorView get() = window.decorView
         var attached = false
@@ -46,6 +52,8 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         var baseCutoutMode: Int? = null
         var insetsListener: OnApplyWindowInsetsListener? = null
         var focusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
+        var animationListener: WindowInsetsAnimationCompat.Callback? = null
+        var systemBarsAnimationRunning = false
     }
 
     private val rootWindow = activity.window
@@ -68,28 +76,34 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         if (attached) return
         attached = true
         root = registerWindowInternal(rootWindow, root = true)
-        // enableEdgeToEdge() is the Activity baseline. Keep it for the whole app so Compose
-        // receives real insets; immersive mode only changes bar visibility and cutout policy.
+        // Configure edge-to-edge once. Immersive mode changes visibility and cutout policy,
+        // but never delegates those decisions to individual screens.
         WindowCompat.setDecorFitsSystemWindows(rootWindow, false)
         ViewCompat.requestApplyInsets(rootWindow.decorView)
+        log("attach activity window=${windowId(rootWindow)}")
     }
 
     /** Registers a Compose ModalBottomSheet/AlertDialog window with the same policy. */
     fun registerWindow(window: Window) {
         if (!attached || window === rootWindow) return
         val managed = registerWindowInternal(window, root = false)
+        log("register dialog window=${windowId(window)} requested=$requested")
         if (requested) reconcile(managed, force = true)
     }
 
     fun unregisterWindow(window: Window) {
         if (window === rootWindow) return
         val managed = windows.remove(window) ?: return
-        restore(managed)
+        // The dialog window is going away. Showing bars here can leak a visibility change
+        // into the next window transition and is not needed for a destroyed window.
+        managed.attached = false
         val decor = managed.decorView
         managed.insetsListener?.let { ViewCompat.setOnApplyWindowInsetsListener(decor, null) }
+        managed.animationListener?.let { ViewCompat.setWindowInsetsAnimationCallback(decor, null) }
         managed.focusListener?.let { listener ->
             if (decor.viewTreeObserver.isAlive) decor.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
         }
+        log("unregister dialog window=${windowId(window)}")
     }
 
     fun setImmersiveEnabled(enabled: Boolean) {
@@ -98,12 +112,14 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             if (!enabled) restoreAll() else reconcileAll(force = false)
             return
         }
+        log("request immersive=$enabled")
         requested = enabled
         resetTransientRevealState()
         if (enabled) reconcileAll(force = true) else restoreAll()
     }
 
     fun onResume() {
+        log("lifecycle onResume requested=$requested")
         resumed = true
         root?.hasFocus = hasActivityFocus
         resetTransientRevealState()
@@ -111,10 +127,12 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     }
 
     fun onPause() {
+        log("lifecycle onPause")
         resumed = false
     }
 
     fun onStop() {
+        log("lifecycle onStop requested=$requested")
         resumed = false
         hasActivityFocus = false
         root?.hasFocus = false
@@ -123,12 +141,14 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     }
 
     fun onWindowFocusChanged(focused: Boolean) {
+        log("activity focus=$focused requested=$requested")
         hasActivityFocus = focused
         root?.hasFocus = focused
         if (focused) reconcileAll(force = false)
     }
 
     fun onConfigurationChanged() {
+        log("configuration changed requested=$requested")
         resetTransientRevealState()
         windows.values.toList().forEach { managed ->
             managed.lastSystemBarsVisible = null
@@ -140,6 +160,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
 
     fun dispose() {
         if (!attached) return
+        log("dispose")
         requested = false
         resumed = false
         hasActivityFocus = false
@@ -147,6 +168,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         windows.values.toList().filterNot { it.root }.forEach { managed ->
             val decor = managed.decorView
             managed.insetsListener?.let { ViewCompat.setOnApplyWindowInsetsListener(decor, null) }
+            managed.animationListener?.let { ViewCompat.setWindowInsetsAnimationCallback(decor, null) }
             managed.focusListener?.let { listener ->
                 if (decor.viewTreeObserver.isAlive) decor.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
             }
@@ -171,9 +193,35 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         }
         managed.focusListener = ViewTreeObserver.OnWindowFocusChangeListener { focused ->
             managed.hasFocus = focused
+            log("window focus=${focused} window=${windowId(window)} requested=$requested")
             if (focused && requested) reconcile(managed, force = false)
         }
+        managed.animationListener = object : WindowInsetsAnimationCompat.Callback(
+            WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE
+        ) {
+            override fun onPrepare(animation: WindowInsetsAnimationCompat) {
+                if (animation.typeMask and WindowInsetsCompat.Type.systemBars() != 0) {
+                    managed.systemBarsAnimationRunning = true
+                    log("system-bar animation start window=${windowId(window)} pendingHide=${managed.pendingHide}")
+                }
+                super.onPrepare(animation)
+            }
+
+            override fun onProgress(
+                insets: WindowInsetsCompat,
+                runningAnimations: MutableList<WindowInsetsAnimationCompat>,
+            ): WindowInsetsCompat = insets
+
+            override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                if (animation.typeMask and WindowInsetsCompat.Type.systemBars() != 0) {
+                    managed.systemBarsAnimationRunning = false
+                    log("system-bar animation end window=${windowId(window)} visible=${managed.systemBarsVisible}")
+                }
+                super.onEnd(animation)
+            }
+        }
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView, managed.insetsListener)
+        ViewCompat.setWindowInsetsAnimationCallback(window.decorView, managed.animationListener)
         window.decorView.viewTreeObserver.addOnWindowFocusChangeListener(managed.focusListener)
         windows[window] = managed
         if (root) systemBarsVisible = managed.systemBarsVisible
@@ -183,17 +231,32 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     private fun onInsets(managed: ManagedWindow, insets: WindowInsetsCompat) {
         val barsVisible = insets.isVisible(WindowInsetsCompat.Type.systemBars())
         val keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+        val wasVisible = managed.lastSystemBarsVisible
         if (managed.pendingHide && !barsVisible) managed.pendingHide = false
-        if (requested && !managed.applying && !managed.pendingHide &&
-            managed.lastSystemBarsVisible == false && barsVisible) {
-            // A system-edge swipe has revealed transient bars. Do not immediately hide them
-            // again from a focus callback; Android dismisses them according to its own policy.
-            managed.userRevealedTransientBars = true
+        if (!barsVisible && managed.userRevealedTransientBars) {
+            managed.userRevealedTransientBars = false
+            log("system bars hidden after transient reveal window=${windowId(managed.window)}")
         }
         managed.lastSystemBarsVisible = barsVisible
         managed.systemBarsVisible = barsVisible
+        if (requested && !managed.applying && !managed.pendingHide &&
+            wasVisible == false && barsVisible) {
+            if (managed.systemBarsAnimationRunning) {
+                // A real system-edge gesture animates the system-bar insets. Leave those bars
+                // transiently visible and let Android dismiss them according to its policy.
+                managed.userRevealedTransientBars = true
+                log("transient system gesture revealed bars window=${windowId(managed.window)}")
+            } else {
+                // A content/window transition re-dispatched visible insets without a system
+                // gesture. Reconcile once at the central owner instead of accepting overlap.
+                managed.userRevealedTransientBars = false
+                log("unexpected visible insets; reapplying immersive window=${windowId(managed.window)}")
+                managed.systemBarsVisible = true
+                reconcile(managed, force = false)
+            }
+        }
         if (managed.root) {
-            systemBarsVisible = barsVisible
+            systemBarsVisible = managed.systemBarsVisible
             imeVisible = keyboardVisible
         }
     }
@@ -213,6 +276,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     }
 
     private fun applyImmersive(managed: ManagedWindow, force: Boolean) {
+        if (!force && managed.pendingHide) return
         val controller = WindowCompat.getInsetsController(managed.window, managed.decorView)
         if (!managed.configuredForImmersive) {
             WindowCompat.setDecorFitsSystemWindows(managed.window, false)
@@ -227,6 +291,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             managed.configuredForImmersive = true
         }
         if (force || managed.systemBarsVisible) {
+            log("hide system bars window=${windowId(managed.window)} force=$force")
             managed.pendingHide = true
             managed.applying = true
             controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -242,6 +307,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         if (!managed.attached) return
         val controller = WindowCompat.getInsetsController(managed.window, managed.decorView)
         if (managed.configuredForImmersive || requested || !managed.systemBarsVisible) {
+            log("show system bars window=${windowId(managed.window)}")
             managed.pendingHide = false
             managed.applying = true
             controller.show(WindowInsetsCompat.Type.systemBars())
@@ -263,8 +329,14 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         windows.values.toList().forEach {
             it.userRevealedTransientBars = false
             it.pendingHide = false
+            it.systemBarsAnimationRunning = false
         }
     }
+
+    private fun windowId(window: Window): String =
+        if (window === rootWindow) "activity" else "dialog#${System.identityHashCode(window)}"
+
+    private fun log(message: String) = Log.d(TAG, message)
 }
 
 /** Registers the independent Window used by a Compose sheet or alert. */

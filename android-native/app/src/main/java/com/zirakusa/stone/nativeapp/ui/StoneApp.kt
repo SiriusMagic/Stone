@@ -40,17 +40,9 @@ import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackReportShe
 import com.zirakusa.stone.nativeapp.feature.player.*
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import com.zirakusa.stone.nativeapp.data.persistence.StoneBackup
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.data.transfer.StonePackage
-import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferManager
-import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
-import java.io.File
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 
 @Composable fun StoneApp(library: LibraryViewModel = viewModel(), playback: PlaybackViewModel = viewModel(),
@@ -87,16 +79,6 @@ import kotlinx.coroutines.delay
     val state by library.state.collectAsStateWithLifecycle()
     val player by playback.state.collectAsStateWithLifecycle()
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    val transferManager = remember(context) { LocalTransferManager(context.applicationContext) }
-    var transferState by remember { mutableStateOf(LocalTransferUiState()) }
-    var bluetoothTransferJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-    DisposableEffect(transferManager) {
-        onDispose {
-            transferManager.stop()
-            bluetoothTransferJob?.cancel()
-        }
-    }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
@@ -129,38 +111,6 @@ import kotlinx.coroutines.delay
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
-    }
-    val exportPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        uri?.let { scope.launch { val success = withContext(Dispatchers.IO) { runCatching { StoneBackup.export(context, it) }.isSuccess }
-            android.widget.Toast.makeText(context, if (success) R.string.backup_exported else R.string.backup_failed,
-                android.widget.Toast.LENGTH_LONG).show() } }
-    }
-    val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { scope.launch { val success = withContext(Dispatchers.IO) { runCatching { StoneBackup.import(context, it) }.isSuccess }
-            if (success) library.reloadUserData()
-            android.widget.Toast.makeText(context, if (success) R.string.backup_imported else R.string.backup_failed,
-                android.widget.Toast.LENGTH_LONG).show() } }
-    }
-    val packageExportPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument(StonePackage.MIME)) { uri ->
-        uri?.let { target -> scope.launch {
-            val songs = (state.songs + state.deletedSongs).distinctBy { it.id }
-            val success = withContext(Dispatchers.IO) { runCatching {
-                StonePackage.export(context, target, songs)
-            }.isSuccess }
-            android.widget.Toast.makeText(context,
-                if (success) R.string.musp_exported else R.string.musp_failed,
-                android.widget.Toast.LENGTH_LONG).show()
-        } }
-    }
-    val packageImportPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { source -> scope.launch {
-            val result = withContext(Dispatchers.IO) { runCatching { StonePackage.import(context, source) } }
-            library.reloadUserData()
-            android.widget.Toast.makeText(context,
-                result.getOrNull()?.message ?: context.getString(R.string.musp_failed),
-                android.widget.Toast.LENGTH_LONG).show()
-        } }
     }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, library) {
@@ -212,9 +162,8 @@ import kotlinx.coroutines.delay
         isPictureInPicture, landscapeMode)
     val immersive = if (layout.fullPlayer) immersivePlayers else immersiveLibrary
     val immersiveRequest = immersive && !isPictureInPicture
-    DisposableEffect(systemBarsController, immersiveRequest) {
+    LaunchedEffect(systemBarsController, immersiveRequest) {
         systemBarsController?.setImmersiveEnabled(immersiveRequest)
-        onDispose { systemBarsController?.setImmersiveEnabled(false) }
     }
     val systemBarsVisible = systemBarsController?.systemBarsVisible == true
     val imeVisible = systemBarsController?.imeVisible == true
@@ -256,20 +205,9 @@ import kotlinx.coroutines.delay
                     settingsStore.setVideoScale(it.key)
                 })
             else libraryScreens.SaveableStateProvider("library") {
-            LibraryScreen(state, player.ready, { picker.launch(null) }, { library.refresh() },
+            LibraryScreen(state, player.ready, { picker.launch(null) },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreDeleted,
-                { exportPicker.launch("stone-backup-${System.currentTimeMillis()}.json") },
-                { importPicker.launch(arrayOf("application/json", "text/plain")) },
-                {
-                    bluetoothTransferJob?.cancel()
-                    bluetoothTransferJob = shareStoneLibrary(
-                        context, state.songs + state.deletedSongs, scope
-                    ) { transferState = it }
-                },
-                { packageExportPicker.launch("stone-library-${System.currentTimeMillis()}.musp") },
-                { packageImportPicker.launch(arrayOf(StonePackage.MIME, "application/zip", "application/octet-stream")) },
-                { settingsPage = "wifi-transfer" },
                 onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
@@ -286,69 +224,6 @@ import kotlinx.coroutines.delay
                 onShakeToReportChange = {
                     shakeToReport = it
                     settingsStore.setShakeToReport(it)
-                },
-                transferState = transferState,
-                onHostTransfer = {
-                    scope.launch {
-                        transferState = LocalTransferUiState(busy = true,
-                            message = context.getString(R.string.transfer_packaging_indeterminate))
-                        val packageFile = File(context.cacheDir, "stone-transfer.musp")
-                        val songs = (state.songs + state.deletedSongs).distinctBy { it.id }
-                        var lastProgressAt = 0L
-                        val result = withContext(Dispatchers.IO) { runCatching {
-                            StonePackage.exportToFile(context, packageFile, songs) { done, total ->
-                                if (total > 0L) {
-                                    val now = System.currentTimeMillis()
-                                    if (now - lastProgressAt >= 100L || done >= total) {
-                                        lastProgressAt = now
-                                        val progress = (done.toDouble() / total).toFloat().coerceIn(0f, 1f)
-                                        scope.launch {
-                                            if (transferState.busy) transferState = LocalTransferUiState(
-                                                busy = true,
-                                                progress = progress,
-                                                message = context.getString(
-                                                    R.string.transfer_packaging,
-                                                    (progress * 100).toInt()
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            transferManager.startHost(packageFile)
-                        } }
-                        result.onSuccess { host ->
-                            transferState = LocalTransferUiState(address = host.address, code = host.code,
-                                message = context.getString(R.string.transfer_package_ready,
-                                    packageFile.length() / 1024 / 1024))
-                        }.onFailure { error ->
-                            transferState = LocalTransferUiState(message = error.message ?: "No se pudo preparar la transferencia")
-                        }
-                    }
-                },
-                onReceiveTransfer = { address, code ->
-                    scope.launch {
-                        transferState = LocalTransferUiState(busy = true, message = "Descargando paquete…")
-                        val packageFile = File(context.cacheDir, "stone-received.musp")
-                        val result = withContext(Dispatchers.IO) { runCatching {
-                            transferManager.download(address, code, packageFile) { done, total ->
-                                if (total > 0) scope.launch {
-                                    transferState = transferState.copy(progress = done.toFloat() / total)
-                                }
-                            }
-                            StonePackage.importFile(context, packageFile)
-                        } }
-                        packageFile.delete()
-                        library.reloadUserData()
-                        transferState = LocalTransferUiState(message = result.getOrNull()?.message
-                            ?: result.exceptionOrNull()?.message ?: "No se pudo recibir el paquete")
-                    }
-                },
-                onStopTransfer = {
-                    bluetoothTransferJob?.cancel()
-                    bluetoothTransferJob = null
-                    transferManager.stop()
-                    transferState = LocalTransferUiState(message = "Transferencia cancelada")
                 },
                 onOpenSettings = { settingsPage = null }, theme = theme,
                 onThemeChange = { theme = it; settingsStore.setTheme(it); (context as? Activity)?.recreate() }, language = language,
@@ -418,15 +293,6 @@ import kotlinx.coroutines.delay
                             videoScale = it
                             settingsStore.setVideoScale(it.key)
                         })
-                },
-                onOpenCoverEditor = {
-                    if (player.currentId.isNotBlank()) {
-                        playerSheets.tool = PlayerTool.Cover
-                        playerOpen = true
-                    } else {
-                        android.widget.Toast.makeText(context, R.string.cover_editor_requires_song,
-                            android.widget.Toast.LENGTH_SHORT).show()
-                    }
                 })
             }
         }

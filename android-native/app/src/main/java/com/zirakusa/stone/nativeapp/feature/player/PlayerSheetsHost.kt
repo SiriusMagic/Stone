@@ -41,7 +41,6 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     when (sheets.tool) {
         PlayerTool.Speed -> SpeedSheet(state, playback, close)
         PlayerTool.Equalizer -> EqualizerSheet(state, playback, progress, song = targetSong, close = close)
-        PlayerTool.Cover -> targetSong?.let { TagEditorSheet(it, initialTab = 0, close = close, saved = edited) }
         PlayerTool.Sleep -> SleepSheet(state, playback, close)
         PlayerTool.Tags -> targetSong?.let { TagEditorSheet(it, close = close, saved = edited) }
         PlayerTool.Ringtone -> targetSong?.let { RingtoneSheet(it, close) }

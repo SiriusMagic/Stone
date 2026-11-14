@@ -1,8 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -50,7 +48,6 @@ import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
-import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionRegistry
@@ -71,13 +68,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun SettingsPanel(theme: String, onTheme: (String) -> Unit, language: String,
     onLanguage: (String) -> Unit, store: StoneSettingsStore?, page: String?,
-    onPage: (String?) -> Unit, onClose: () -> Unit, onFolder: () -> Unit,
-    onScan: () -> Unit, onLibrarySheet: (String) -> Unit, playback: PlaybackViewModel?,
-    onExport: () -> Unit, onImport: () -> Unit, onShare: () -> Unit,
-    onExportPackage: () -> Unit = {}, onImportPackage: () -> Unit = {}, onTransfer: () -> Unit = {},
-    transferState: LocalTransferUiState = LocalTransferUiState(),
-    onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
-    onStopTransfer: () -> Unit = {},
+    onPage: (String?) -> Unit, onClose: () -> Unit,
+    onLibrarySheet: (String) -> Unit, playback: PlaybackViewModel?,
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     videoScale: VideoScale = VideoScale.AUTO,
@@ -111,8 +103,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     })
                 val menuSections = listOf(
                     SettingsMenuSection(R.string.settings_section_library, listOf(
-                        SettingsMenuItem(Icons.Default.Refresh, stringResource(R.string.settings_scan_library), "",
-                            "biblioteca escanear actualizar archivos", { onClose(); onScan() }),
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
                             "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
                     )),
@@ -201,10 +191,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "about" -> AboutDetail()
                     "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
-                    "library-transfer" -> LibraryTransferDetail(onShare, transferState, onHostTransfer,
-                        onReceiveTransfer, onStopTransfer, onExportPackage, onImportPackage)
-                    "wifi-transfer" -> TransferDetail(transferState, onHostTransfer,
-                        onReceiveTransfer, onStopTransfer)
                     "system-diagnostics", "audio-diagnostics" -> SystemDiagnosticsDetail(playback)
                 }
             }
@@ -228,98 +214,15 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "audio-output" -> R.string.audio_output
     "feedback" -> R.string.feedback_title; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
-    "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
-    "library-transfer" -> R.string.transfer_library
+    "sleep" -> R.string.sleep_timer
     "system-diagnostics", "audio-diagnostics" -> R.string.system_diagnostics; else -> R.string.settings
 })
-
-@Composable private fun TransferDetail(state: LocalTransferUiState, host: () -> Unit,
-    receive: (String, String) -> Unit, stop: () -> Unit) {
-    var address by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
-    Text(stringResource(R.string.wifi_transfer_intro), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 18.dp))
-    Button(enabled = !state.busy, onClick = host, modifier = Modifier.fillMaxWidth()) {
-        Icon(Icons.Default.Wifi, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.start_transfer))
-    }
-    if (state.address.isNotBlank()) {
-        Text(stringResource(R.string.transfer_share_address, state.address), fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 18.dp))
-        Text(stringResource(R.string.transfer_share_code, state.code), fontSize = 22.sp,
-            fontWeight = FontWeight.Black, color = StonePalette.Yellow)
-        Text(stringResource(R.string.transfer_share_url,
-            "http://${state.address}/stone/${state.code}"), color = StonePalette.Yellow,
-            fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
-        Text(stringResource(R.string.transfer_waiting), color = StonePalette.Muted)
-        TextButton(onClick = stop) { Text(stringResource(R.string.cancel)) }
-    }
-    HorizontalDivider(Modifier.padding(vertical = 18.dp))
-    Text(stringResource(R.string.transfer_receive_title), fontWeight = FontWeight.Bold)
-    OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
-        label = { Text(stringResource(R.string.transfer_address)) }, singleLine = true,
-        placeholder = { Text("192.168.1.20:43210") })
-    OutlinedTextField(code, { code = it.filter(Char::isDigit).take(6) }, Modifier.fillMaxWidth().padding(top = 8.dp),
-        label = { Text(stringResource(R.string.transfer_code)) }, singleLine = true)
-    Button(enabled = !state.busy && address.isNotBlank() && code.length == 6,
-        onClick = { receive(address, code) }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
-        Text(stringResource(R.string.transfer_receive))
-    }
-    TransferProgress(state, stop)
-}
-
-@Composable private fun LibraryTransferDetail(bluetooth: () -> Unit, state: LocalTransferUiState,
-    host: () -> Unit, receive: (String, String) -> Unit, stop: () -> Unit,
-    exportPackage: () -> Unit, importPackage: () -> Unit) {
-    var wifiSelected by remember { mutableStateOf(true) }
-    SettingsGroup {
-        SettingsRow(Icons.Default.Bluetooth, R.string.bluetooth_transfer, "") {
-            wifiSelected = false
-            bluetooth()
-        }
-        SettingsRow(Icons.Default.Wifi, R.string.wifi_transfer, "") {
-            wifiSelected = true
-        }
-    }
-    if (wifiSelected) TransferDetail(state, host, receive, stop)
-    else {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = exportPackage, modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.Archive, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.export_musp))
-            }
-            OutlinedButton(onClick = importPackage, modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.Unarchive, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.import_musp))
-            }
-        }
-        TransferProgress(state, stop)
-    }
-}
-
-@Composable private fun TransferProgress(state: LocalTransferUiState, cancel: (() -> Unit)? = null) {
-    if (state.busy) {
-        if (state.progress > 0f) {
-            LinearProgressIndicator(
-                progress = { state.progress.coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-            )
-        } else {
-            LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 16.dp))
-        }
-        Text(state.message.ifBlank { stringResource(R.string.transfer_working) },
-            color = StonePalette.Muted)
-        if (cancel != null) TextButton(onClick = cancel) { Text(stringResource(R.string.cancel)) }
-    }
-    if (!state.busy && state.message.isNotBlank()) {
-        Text(state.message, color = StonePalette.Muted,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp))
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
     onChange: (String, Boolean) -> Unit) {
     val legacy = listOf(
         QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
-        QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
         QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true))
     val legacyIds = remember { legacy.map { it.id } }
     val defaultVisibleIds = legacyIds.toSet() + QuickActionRegistry.defaultVisibleIds
@@ -351,7 +254,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 store?.setShortcutProfile(id)
                 val enabled = when (id) {
                     "minimal" -> QuickActionRegistry.pinnedIds.toSet()
-                    "basic" -> QuickActionRegistry.pinnedIds.toSet() + setOf("scan")
+                    "basic" -> QuickActionRegistry.pinnedIds.toSet()
                     "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
                         "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
                         "diagnostics")

@@ -20,12 +20,13 @@ class HorizontalSettingsTest {
         val store = StoneSettingsStore(context)
         assertEquals(LandscapeLayoutMode.ALWAYS, store.read().landscapeLayoutMode)
         store.setShortcutProfile("custom")
-        store.setShortcutVisible("scan", false)
+        store.setShortcutVisible("sort", false)
         store.setLandscapeLayoutMode(LandscapeLayoutMode.LIBRARY_ONLY)
         val reopened = StoneSettingsStore(context)
         assertEquals(LandscapeLayoutMode.LIBRARY_ONLY, reopened.read().landscapeLayoutMode)
-        assertFalse(reopened.shortcutVisible("scan"))
+        assertFalse(reopened.shortcutVisible("sort"))
         assertEquals("custom", reopened.shortcutProfile())
+        store.setShortcutVisible("sort", true)
     }
 
     @Test fun videoControlsKeepTheirOrderAndVisibilityAfterReopeningTheStore() {
@@ -37,11 +38,11 @@ class HorizontalSettingsTest {
         val settings = VideoControlSettings.from(StoneSettingsStore(context))
         assertEquals(
             listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Options,
-                VideoControlId.Scale, VideoControlId.Lock, VideoControlId.Fullscreen),
+                VideoControlId.Scale, VideoControlId.Lock),
             settings.order,
         )
         assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,
-            VideoControlId.Scale, VideoControlId.Lock, VideoControlId.Fullscreen), settings.visibleIds)
+            VideoControlId.Scale, VideoControlId.Lock), settings.visibleIds)
     }
 
     @Test fun videoLayoutAndImmersivePreferencesHaveSafeDefaultsAndPersist() {

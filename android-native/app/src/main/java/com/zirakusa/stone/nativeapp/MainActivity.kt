@@ -7,8 +7,8 @@ import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
@@ -19,7 +19,7 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     internal val immersiveSystemBars by lazy { ImmersiveSystemBarsController(this) }
     private var pictureInPicture by mutableStateOf(false)
-    private var windowOrientation by mutableStateOf(Configuration.ORIENTATION_UNDEFINED)
+    private var windowOrientation by mutableIntStateOf(Configuration.ORIENTATION_UNDEFINED)
 
     private fun isVolumeKey(keyCode: Int): Boolean =
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
@@ -62,7 +62,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // ImmersiveSystemBarsController is the single owner of edge-to-edge and
+        // system-bar visibility for the Activity and its Compose windows.
         immersiveSystemBars.attach()
         pictureInPicture = isInPictureInPictureMode
         windowOrientation = resources.configuration.orientation

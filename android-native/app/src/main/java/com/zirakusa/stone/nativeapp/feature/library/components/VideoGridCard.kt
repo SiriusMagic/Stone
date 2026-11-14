@@ -1,6 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.library.components
 
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,7 +50,7 @@ private fun rememberVideoFrame(song: Song): ArtworkLoader.VideoFrame {
 
 internal fun videoDisplayTitle(song: Song): String {
     song.title.trim().takeIf { it.isNotEmpty() }?.let { return it }
-    val fileName = Uri.parse(song.uri).lastPathSegment.orEmpty()
+    val fileName = song.uri.toUri().lastPathSegment.orEmpty()
         .substringBeforeLast('.')
         .trim()
     return fileName.ifEmpty { "Video" }

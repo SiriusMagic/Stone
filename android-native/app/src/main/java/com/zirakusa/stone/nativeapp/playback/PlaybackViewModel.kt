@@ -2,7 +2,7 @@ package com.zirakusa.stone.nativeapp.playback
 
 import android.app.Application
 import android.content.ComponentName
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -396,7 +396,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         val media = saved.items.filter { it.uri.isNotEmpty() }.map { item ->
             val metadata = MediaMetadata.Builder().setTitle(item.title).setArtist(item.artist)
                 .setAlbumTitle(item.album)
-            if (item.artworkUri.isNotBlank()) metadata.setArtworkUri(Uri.parse(item.artworkUri))
+            if (item.artworkUri.isNotBlank()) metadata.setArtworkUri(item.artworkUri.toUri())
             MediaItem.Builder().setMediaId(item.id).setUri(item.uri)
                 .setMediaMetadata(metadata.build()).build()
         }
@@ -418,7 +418,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             .setAlbumTitle(song.album)
         // An extracted cover is a safe fallback while the derived watermark is
         // being prepared. Embedded artwork is loaded by ArtworkLoader below.
-        if (song.artworkUri.isNotBlank()) metadata.setArtworkUri(Uri.parse(song.artworkUri))
+        if (song.artworkUri.isNotBlank()) metadata.setArtworkUri(song.artworkUri.toUri())
         return MediaItem.Builder().setMediaId(song.id).setUri(song.uri)
             .setMediaMetadata(metadata.build()).build()
     }

@@ -71,7 +71,7 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
     val context = LocalContext.current
     var kind by remember(initialKind) { mutableStateOf(initialKind) }
     var details by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(R.string.feedback_other) }
+    var category by remember { mutableIntStateOf(R.string.feedback_other) }
     var includeTechnical by remember { mutableStateOf(false) }
     var attachments by remember { mutableStateOf<List<Uri>>(emptyList()) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->

@@ -33,7 +33,7 @@ internal val landscapePlayback = PlaybackState(ready = true, playing = true,
     StoneTheme { Surface(color = StonePalette.Background) {
         Column(Modifier.fillMaxSize().padding(horizontal = inset.dp)) {
             LibraryScreen(LibraryState(songs, hasFolder = true), true,
-                { event("folder") }, { event("scan") }, { _, _ -> event("play-song") },
+                { event("folder") }, { _, _ -> event("play-song") },
                 Modifier.weight(1f), currentId = state.currentId, layout = layout,
                 settingsStore = store, onOpenSettings = { event("settings") },
                 onEqualizer = { event("equalizer") }, playerContent = { visible, _ ->

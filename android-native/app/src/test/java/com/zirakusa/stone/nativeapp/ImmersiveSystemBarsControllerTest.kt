@@ -37,14 +37,17 @@ class ImmersiveSystemBarsControllerTest {
         activity.finish()
     }
 
-    @Test fun transientBarsShownBySystemGestureAreNotImmediatelyHiddenAgain() {
+    @Test fun visibleInsetsFromAContentTransitionAreRehiddenByTheCentralOwner() {
         dispatchInsets(systemBarsVisible = false)
         assertFalse(controller.systemBarsVisible)
 
+        // A normal content/window transition can dispatch visible insets without a
+        // system-edge gesture. The central owner must restore immersive mode so the
+        // bars cannot overlap the library or player controls.
         dispatchInsets(systemBarsVisible = true)
         controller.onWindowFocusChanged(true)
 
-        assertTrue(controller.systemBarsVisible)
+        assertFalse(controller.systemBarsVisible)
     }
 
     @Test fun resumeAndConfigurationReapplyTheRequestedModeWithoutAConstantLoop() {

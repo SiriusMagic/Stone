@@ -33,7 +33,7 @@ class LandscapeNavigationTest {
         compose.setContent {
             val screens = rememberSaveableStateHolder()
             StoneTheme { if (showingLibrary.value) screens.SaveableStateProvider("library") {
-                LibraryScreen(LibraryState(landscapeSongs, hasFolder = true), true, {}, {},
+                LibraryScreen(LibraryState(landscapeSongs, hasFolder = true), true, {},
                     { _, _ -> playbackCommands++ }, layout = homeLayout(
                         if (landscape.value) 891f else 411f, landscape.value, false, false,
                         false, LandscapeLayoutMode.ALWAYS))

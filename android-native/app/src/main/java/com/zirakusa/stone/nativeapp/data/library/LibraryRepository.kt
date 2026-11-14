@@ -22,7 +22,6 @@ class LibraryRepository(context: Context) {
     private val disposition = SongDispositionStore(context)
     private val imported = ImportedLibraryStore(context)
     private val policy = RefreshPolicy()
-    init { disposition.clearAudioOnly(); disposition.restoreRetiredHidden() }
     val folders: List<String> get() = preferences.getStringSet("folders", null)
         ?.toList().orEmpty().ifEmpty { listOfNotNull(preferences.getString("folder", null)) }
     val folder: String? get() = folders.firstOrNull()
@@ -67,9 +66,6 @@ class LibraryRepository(context: Context) {
     fun delete(song: Song) = disposition.delete(song.id)
     fun restoreDeleted(song: Song) = disposition.restoreDeleted(song.id)
     private fun entries(songs: List<Song>): CachedLibrary {
-        // Backups from older versions can reintroduce hidden IDs. Restore their
-        // visibility before building the library and keep the deleted list intact.
-        disposition.restoreRetiredHidden()
         val deleted = disposition.deletedIds()
         val visible = songs.map(videoMetadata::applyToSong)
         return CachedLibrary(visible.filterNot { it.id in deleted }, visible.filter { it.id in deleted })

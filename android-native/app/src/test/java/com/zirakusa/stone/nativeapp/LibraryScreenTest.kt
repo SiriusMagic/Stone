@@ -45,27 +45,25 @@ class LibraryScreenTest {
     @Test fun emptyLibraryMatchesStoneAndOffersRealFolderActions() {
         var folderRequests = 0
         compose.setContent {
-            StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(), true, { folderRequests++ }, {}, { _, _ -> }, Modifier.fillMaxSize()) } }
+            StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(), true, { folderRequests++ }, { _, _ -> }, Modifier.fillMaxSize()) } }
         }
         compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
         compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
         compose.onNodeWithContentDescription(text(R.string.choose_folder)).performClick()
-        compose.onNodeWithText(text(R.string.scan_folders)).assertDoesNotExist()
         assertEquals(1, folderRequests)
     }
 
     @Test fun videosCanChooseAnotherFolderEvenWhenLibraryAlreadyHasOne() {
         var folderRequests = 0
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(hasFolder = true), true, { folderRequests++ }, {}, { _, _ -> },
+            LibraryScreen(LibraryState(hasFolder = true), true, { folderRequests++ }, { _, _ -> },
                 Modifier.fillMaxSize())
         } } }
         compose.onNodeWithText(text(R.string.videos)).performClick()
         compose.onNodeWithContentDescription(text(R.string.choose_video_folder)).performClick()
         compose.onNodeWithText(text(R.string.choose_video_folder)).assertDoesNotExist()
-        compose.onNodeWithText(text(R.string.scan_video_folders)).assertDoesNotExist()
         assertEquals(1, folderRequests)
     }
 
@@ -74,7 +72,7 @@ class LibraryScreenTest {
             "Videos", 24_000, 1, 1, isVideo = true)
         var queue = emptyList<Song>()
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {},
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {},
                 { _, tracks -> queue = tracks }, Modifier.fillMaxSize(), currentId = video.id)
         } } }
         compose.onNodeWithText(text(R.string.videos)).performClick()
@@ -87,7 +85,7 @@ class LibraryScreenTest {
             "Videos", 24_000, 1, 1, isVideo = true)
         val layout = mutableStateOf(VideoLibraryLayout.GRID)
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {}, { _, _ -> },
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, { _, _ -> },
                 Modifier.fillMaxSize(), videoLibraryLayout = layout.value,
                 onVideoLibraryLayoutChange = { layout.value = it })
         } } }
@@ -111,7 +109,7 @@ class LibraryScreenTest {
             "Videos", 24_000, 1, 1, isVideo = true)
         var menuVideo: Song? = null
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, {}, { _, _ -> },
+            LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, { _, _ -> },
                 Modifier.fillMaxSize(), currentId = video.id,
                 layout = HomeLayout(false, sidebarWidthDp = 64f, playerWidthDp = 300f),
                 onVideoOptions = { menuVideo = it })
@@ -141,7 +139,7 @@ class LibraryScreenTest {
             Song("content://fixture/2", "Courtesy Call", "Thousand Foot Krutch", "The End", "Music", 2000, 1, 1))
         var queue = emptyList<Song>()
         compose.setContent {
-            StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(songs, hasFolder = true), true, {}, {},
+            StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(songs, hasFolder = true), true, {},
                 { _, tracks -> queue = tracks }, Modifier.fillMaxSize()) } }
         }
         compose.onRoot().captureRoboImage("build/screenshots/stone-home-songs.png")
@@ -156,7 +154,7 @@ class LibraryScreenTest {
 
     @Test fun sortOffersMostPlayedAndLyrics() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize())
+            LibraryScreen(LibraryState(), true, {}, { _, _ -> }, Modifier.fillMaxSize())
         } } }
         compose.onNodeWithContentDescription(text(R.string.sort)).performClick()
         compose.onNodeWithText(text(R.string.sort_most_played)).assertIsDisplayed()
@@ -171,7 +169,7 @@ class LibraryScreenTest {
             queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
         compose.setContent { StoneTheme {
             Scaffold(bottomBar = { MiniPlayer(player, { opens++ }, { toggles++ }) }) { insets ->
-                LibraryScreen(LibraryState(listOf(song), hasFolder = true), true, {}, {}, { _, _ -> },
+                LibraryScreen(LibraryState(listOf(song), hasFolder = true), true, {}, { _, _ -> },
                     Modifier.fillMaxSize().padding(insets), currentId = song.id)
             }
         } }
@@ -189,7 +187,7 @@ class LibraryScreenTest {
             queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
         val showOptions = mutableStateOf(true)
         compose.setContent { StoneTheme {
-            MiniPlayer(player, {}, {}, song, showOptions = showOptions.value)
+            MiniPlayer(player, {}, {}, song = song, showOptions = showOptions.value)
         } }
         compose.onNodeWithContentDescription(text(R.string.more_options)).assertIsDisplayed()
         compose.runOnIdle { showOptions.value = false }
@@ -200,7 +198,7 @@ class LibraryScreenTest {
     fun compactPhoneKeepsHeaderActionsAccessible() {
         var settingsRequests = 0
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
-            LibraryScreen(LibraryState(), true, {}, {}, { _, _ -> }, Modifier.fillMaxSize(),
+            LibraryScreen(LibraryState(), true, {}, { _, _ -> }, Modifier.fillMaxSize(),
                 onOpenSettings = { settingsRequests++ })
         } } }
         compose.onNodeWithContentDescription(text(R.string.settings)).assertIsDisplayed().performClick()

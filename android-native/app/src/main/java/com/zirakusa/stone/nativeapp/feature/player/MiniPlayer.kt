@@ -37,8 +37,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.abs
 
 @Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
+    modifier: Modifier = Modifier,
     song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {},
-    showOptions: Boolean = false, onOptions: () -> Unit = {}, modifier: Modifier = Modifier) {
+    showOptions: Boolean = false, onOptions: () -> Unit = {}) {
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }

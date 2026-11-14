@@ -28,7 +28,7 @@ import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @Composable fun HomeNavigationRail(actions: List<QuickActionDefinition>, activeIds: Set<String>,
-    expanded: Boolean, scanning: Boolean, onHome: () -> Unit, onAction: (String) -> Unit,
+    expanded: Boolean, onHome: () -> Unit, onAction: (String) -> Unit,
     onEqualizer: () -> Unit, onSettings: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
@@ -41,8 +41,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             actions.forEach { action ->
-                RailAction(action.icon, action.label, expanded, action.id in activeIds,
-                    enabled = action.id != "scan" || !scanning) { onAction(action.id) }
+                RailAction(action.icon, action.label, expanded, action.id in activeIds) { onAction(action.id) }
             }
             RailAction(Icons.Default.Tune, stringResource(R.string.equalizer), expanded,
                 "equalizer" in activeIds, onClick = onEqualizer)

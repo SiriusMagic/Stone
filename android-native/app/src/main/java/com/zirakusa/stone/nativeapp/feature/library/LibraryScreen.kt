@@ -28,32 +28,25 @@ import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
 import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
-import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
-private val homeShortcutKeys = listOf("search", "scan", "sort")
+private val homeShortcutKeys = listOf("search", "sort")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
 private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
     QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
 private val legacyDefinitions = listOf(
     QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
-    QuickActionDefinition("scan", "Escanear", "Actualizar biblioteca", Icons.Default.Refresh, true),
     QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true)
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryScreen(state: LibraryState, canPlay: Boolean, onFolder: () -> Unit,
-    onRefresh: () -> Unit, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier = Modifier,
+    onPlay: (Song, List<Song>) -> Unit, modifier: Modifier = Modifier,
     currentId: String = "", onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onRestoreDeleted: (Song) -> Unit = {},
-    onExport: () -> Unit = {}, onImport: () -> Unit = {}, onShare: () -> Unit = {},
-    onExportPackage: () -> Unit = {}, onImportPackage: () -> Unit = {}, onTransfer: () -> Unit = {},
-    transferState: LocalTransferUiState = LocalTransferUiState(),
-    onHostTransfer: () -> Unit = {}, onReceiveTransfer: (String, String) -> Unit = { _, _ -> },
-    onStopTransfer: () -> Unit = {},
     theme: String = "dark", onThemeChange: (String) -> Unit = {}, language: String = "es",
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
@@ -62,7 +55,7 @@ private val legacyDefinitions = listOf(
     artistDestination: String? = null, onArtistDestinationConsumed: () -> Unit = {},
     onDelete: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
     onVideoOptions: (Song) -> Unit = {},
-    onOpenCoverEditor: () -> Unit = {}, layout: HomeLayout = HomeLayout(false),
+    layout: HomeLayout = HomeLayout(false),
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     onHome: () -> Unit = {}, onEqualizer: () -> Unit = {},
@@ -136,7 +129,7 @@ private val legacyDefinitions = listOf(
     fun showQuickActionConfirmation(id: String) {
         val label = (legacyDefinitions + QuickActionRegistry.definitions)
             .firstOrNull { it.id == id }?.label ?: id
-        val modeAction = id.startsWith("audio_mode_") || id.startsWith("hardware_accel_")
+        val modeAction = id.startsWith("audio_mode_")
         val message = if (modeAction) {
             context.getString(R.string.quick_action_activated, label)
         } else {
@@ -144,19 +137,14 @@ private val legacyDefinitions = listOf(
         }
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
-    val scan = { if (state.hasFolder) onRefresh() else onFolder() }
     val dispatchQuickAction: (String) -> Unit = { id ->
-        // Every shortcut gets immediate visual feedback, including one-shot actions such as
-        // scanning or opening a collection. Stateful modes remain highlighted by their real state.
+        // Every shortcut gets immediate visual feedback. Stateful modes remain highlighted by
+        // their real state.
         feedbackQuickActionId = id
         showQuickActionConfirmation(id)
         when (id) {
             "search" -> { searchVisible = true }
-            "folder" -> onFolder()
-            "scan" -> scan()
             "sort" -> sheet = "sort"
-            "shuffle" -> playbackViewModel?.shuffle()
-            "repeat" -> playbackViewModel?.repeat()
             "audio_mode_battery" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
             }
@@ -166,14 +154,9 @@ private val legacyDefinitions = listOf(
             "audio_mode_hifi" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.FULL)
             }
-            "hardware_acceleration" -> {
-                onOpenSettings(); onSettingsPage("hardware-acceleration"); onSettingsSheetVisible(true)
-            }
             "diagnostics" -> {
                 onOpenSettings(); onSettingsPage("system-diagnostics"); onSettingsSheetVisible(true)
             }
-            "playlists" -> { tab = LibraryTab.Playlists; collection = null }
-            "favorites", "history" -> { tab = LibraryTab.Playlists; collection = id }
         }
         moreQuickActions = false
     }
@@ -185,7 +168,7 @@ private val legacyDefinitions = listOf(
         HomeNavigationRail(
             if (settingsStore == null) legacyDefinitions.filter { shortcuts[it.id] != false } else quickActions,
             highlightedQuickActionIds + if (playbackState?.equalizerEnabled == true) setOf("equalizer") else emptySet(),
-            expanded = layout.sidebarWidthDp >= 160f, scanning = state.scanning,
+            expanded = layout.sidebarWidthDp >= 160f,
             onHome = { tab = LibraryTab.Songs; collection = null; query = ""; searchVisible = false; onHome() },
             onAction = dispatchQuickAction, onEqualizer = onEqualizer,
             onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
@@ -196,11 +179,10 @@ private val legacyDefinitions = listOf(
                 onFolder, { tab = LibraryTab.Folders; collection = null })
         } else Box(fixedChrome) {
             LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
-                onFolder, scan, { sheet = "sort" }, {
+                onFolder, { sheet = "sort" }, {
                     onOpenSettings(); onSettingsSheetVisible(true)
                 },
                 showSearch = shortcuts["search"] != false, showFolder = false,
-                showScan = shortcuts["scan"] != false,
                 showSort = shortcuts["sort"] != false, showEqualizer = false,
                 quickActions = quickActions,
                 onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
@@ -233,10 +215,8 @@ private val legacyDefinitions = listOf(
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
         { sheet = null }, state.deletedSongs, onRestoreDeleted)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
-        settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) }, onFolder,
-        scan, { sheet = it }, playbackViewModel, onExport, onImport, onShare,
-        onExportPackage, onImportPackage, onTransfer, transferState, onHostTransfer,
-        onReceiveTransfer, onStopTransfer, landscapeLayoutMode = landscapeLayoutMode,
+        settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) },
+        { sheet = it }, playbackViewModel, landscapeLayoutMode = landscapeLayoutMode,
         onLandscapeLayoutChange = onLandscapeLayoutChange, videoScale = videoScale,
         onVideoScaleChange = onVideoScaleChange, videoUnlockMethod = videoUnlockMethod,
         onVideoUnlockMethodChange = onVideoUnlockMethodChange,

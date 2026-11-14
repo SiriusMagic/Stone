@@ -6,7 +6,7 @@ import com.zirakusa.stone.core.LyricsParser
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** One stable representation shared by the cache, backup and portable Stone package. */
+/** Stable representation shared by the library cache and legacy app-private media index. */
 object SongJson {
     fun toJson(song: Song): JSONObject = JSONObject().apply {
         put("uri", song.uri)

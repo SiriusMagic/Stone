@@ -56,25 +56,6 @@ class StoneDatabase private constructor(context: Context) :
     @Synchronized fun setting(key: String, fallback: String): String = getString("setting.$key") ?: fallback
     @Synchronized fun setSetting(key: String, value: String) = putString("setting.$key", value)
 
-    @Synchronized fun exportJson(): JSONObject {
-        val values = JSONObject()
-        readableDatabase.query("data_key_value", arrayOf("data_key", "value"), null, null,
-            null, null, "data_key").use { cursor -> while (cursor.moveToNext()) values.put(cursor.getString(0), cursor.getString(1)) }
-        return JSONObject().put("format", "stone-kotlin-backup").put("version", 1)
-            .put("createdAt", System.currentTimeMillis()).put("values", values)
-    }
-
-    @Synchronized fun importJson(root: JSONObject) {
-        require(root.getString("format") == "stone-kotlin-backup" && root.getInt("version") == 1)
-        val values = root.getJSONObject("values")
-        val db = writableDatabase
-        db.transaction {
-            values.keys().forEach { key -> db.insertWithOnConflict("data_key_value", null, ContentValues().apply {
-                put("data_key", key); put("value", values.getString(key)); put("updated_at", System.currentTimeMillis())
-            }, SQLiteDatabase.CONFLICT_REPLACE) }
-        }
-    }
-
     private fun migratePreferences(context: Context) {
         if (getString("meta.preferences-migrated") == "1") return
         val db = writableDatabase
