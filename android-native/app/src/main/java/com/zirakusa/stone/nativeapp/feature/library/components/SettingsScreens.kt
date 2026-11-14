@@ -49,6 +49,7 @@ import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
 import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
@@ -79,7 +80,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onStopTransfer: () -> Unit = {},
     landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
-    videoScale: VideoScale = VideoScale.FIT,
+    videoScale: VideoScale = VideoScale.AUTO,
     onVideoScaleChange: (VideoScale) -> Unit = {},
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
@@ -88,11 +89,14 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onImmersivePlayersChange: (Boolean) -> Unit = {},
     immersiveLibrary: Boolean = false,
     onImmersiveLibraryChange: (Boolean) -> Unit = {},
+    shakeToReport: Boolean = true,
+    onShakeToReportChange: (Boolean) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
     BackHandler(enabled = page != null, onBack = { onPage(null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight(.88f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
             if (page == null) {
                 Text(stringResource(R.string.settings), fontSize = 27.sp, fontWeight = FontWeight.Black)
@@ -143,7 +147,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             "personalización inicio iconos accesos rápidos barra", { onPage("shortcuts") })
                     )),
                     SettingsMenuSection(R.string.settings_section_about, listOf(
-                        SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback), "",
+                        SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback_title), "",
                             "ayuda opinión sugerencias", { onPage("feedback") }),
                         SettingsMenuItem(Icons.Default.Info, stringResource(R.string.about_stone), "",
                             "ayuda acerca versión información", { onPage("about") })
@@ -193,7 +197,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "audio-output" -> AudioOutputDetail()
-                    "feedback" -> FeedbackDetail()
+                    "feedback" -> FeedbackDetail(shakeToReport, onShakeToReportChange)
                     "about" -> AboutDetail()
                     "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
@@ -222,7 +226,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "video-controls" -> R.string.video_controls
     "hardware-acceleration" -> R.string.hardware_acceleration
     "audio-output" -> R.string.audio_output
-    "feedback" -> R.string.feedback; "about" -> R.string.about_stone
+    "feedback" -> R.string.feedback_title; "about" -> R.string.about_stone
     "notifications" -> R.string.settings_notifications
     "sleep" -> R.string.sleep_timer; "wifi-transfer" -> R.string.wifi_transfer
     "library-transfer" -> R.string.transfer_library
@@ -455,50 +459,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable private fun FeedbackDetail() {
-    var selected by remember { mutableStateOf(R.string.feedback_other) }
-    var details by remember { mutableStateOf("") }
-    var consent by remember { mutableStateOf(false) }
-    var attachments by remember { mutableStateOf<List<android.net.Uri>>(emptyList()) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) {
-        attachments = it.take(4)
-    }
-    val categories = listOf(R.string.feedback_lyrics, R.string.feedback_ads,
-        R.string.feedback_missing_file, R.string.feedback_unplayable,
-        R.string.feedback_stops, R.string.feedback_slow, R.string.feedback_other)
-    Text(stringResource(R.string.feedback_intro), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 14.dp))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        categories.forEach { category ->
-            FilterChip(selected = selected == category, onClick = { selected = category },
-                label = { Text(stringResource(category)) })
-        }
-    }
-    Text(stringResource(R.string.feedback_details), fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp))
-    OutlinedTextField(value = details, onValueChange = { details = it.take(500) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp), minLines = 5,
-        supportingText = { Text("${details.length}/500") },
-        placeholder = { Text(stringResource(R.string.feedback_details_hint)) })
-    Text(stringResource(R.string.feedback_attachments), fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-    OutlinedButton(onClick = { picker.launch("image/*") }, modifier = Modifier.size(82.dp)) {
-        Text("+", fontSize = 28.sp)
-    }
-    if (attachments.isNotEmpty()) Text(pluralStringResource(R.plurals.feedback_attachment_count, attachments.size, attachments.size),
-        color = StonePalette.Muted, fontSize = 12.sp)
-    Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
-        Checkbox(checked = consent, onCheckedChange = { consent = it })
-        Text(stringResource(R.string.feedback_consent), color = StonePalette.Muted,
-            fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp))
-    }
-    Button(onClick = { }, enabled = details.isNotBlank() && consent,
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp)) {
-        Text(stringResource(R.string.feedback_submit))
-    }
-}
-
 @Composable private fun AboutDetail() {
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -595,11 +555,17 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     Text(stringResource(R.string.video_scale), color = StonePalette.Yellow,
         fontWeight = FontWeight.Black, modifier = Modifier.padding(bottom = 4.dp))
     SettingsGroup {
+        SettingsChoice(R.string.video_scale_auto, scale == VideoScale.AUTO) {
+            onScaleChange(VideoScale.AUTO)
+        }
         SettingsChoice(R.string.video_scale_fit, scale == VideoScale.FIT) {
             onScaleChange(VideoScale.FIT)
         }
-        SettingsChoice(R.string.video_scale_fill, scale == VideoScale.ZOOM) {
+        SettingsChoice(R.string.video_scale_zoom, scale == VideoScale.ZOOM) {
             onScaleChange(VideoScale.ZOOM)
+        }
+        SettingsChoice(R.string.video_scale_fill, scale == VideoScale.FILL) {
+            onScaleChange(VideoScale.FILL)
         }
     }
     Text(stringResource(R.string.video_unlock_method), color = StonePalette.Yellow,

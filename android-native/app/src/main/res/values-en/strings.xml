@@ -86,7 +86,7 @@
     <string name="immersive_library_hint">Hide system bars in the library while keeping Stone navigation visible.</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
     <string name="video_settings">Video</string>
-    <string name="video_settings_hint">Landscape videos open in immersive mode. You can change the framing and unlock method.</string>
+    <string name="video_settings_hint">Landscape videos open in immersive mode and fill the screen without distortion. You can change the framing and unlock method.</string>
     <string name="video_controls">Video controls</string>
     <string name="video_controls_hint">Choose and reorder the icons shown below the preview and in the video player.</string>
     <string name="video_controls_future">More functions will be added soon.</string>
@@ -94,8 +94,10 @@
     <string name="video_preview_empty_hint">Choose a video to begin. Stone will keep the last one you played here.</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
+    <string name="video_scale_auto">Automatic (ZOOM horizontal, FIT vertical)</string>
     <string name="video_scale_fit">Fit (no crop)</string>
-    <string name="video_scale_fill">Fill (may crop)</string>
+    <string name="video_scale_zoom">Fill (ZOOM, preserves aspect ratio)</string>
+    <string name="video_scale_fill">Stretch (FILL, may distort)</string>
     <string name="video_unlock_method">Control unlock method</string>
     <string name="video_unlock_button">Side button</string>
     <string name="video_unlock_double_tap">Double tap</string>
@@ -106,6 +108,29 @@
     <string name="settings_section_system">System</string>
     <string name="theme_dark">Black</string>
     <string name="feedback">Feedback</string><string name="about_stone">About Stone</string>
+    <string name="feedback_title">Opinions and suggestions</string>
+    <string name="feedback_report_bug">Report a bug</string>
+    <string name="feedback_suggest_feature">Suggest a feature</string>
+    <string name="feedback_send_opinion">Send feedback</string>
+    <string name="feedback_category">Category</string>
+    <string name="feedback_add_attachment">Add screenshot</string>
+    <string name="feedback_review_attachments">Selected attachments; review them before sharing:</string>
+    <string name="feedback_remove_attachment">Remove attachment</string>
+    <string name="feedback_include_technical">Include app version, Android and current screen (optional)</string>
+    <string name="feedback_review_before_share">Nothing is sent automatically. You choose the app used to share it.</string>
+    <string name="feedback_share">Review and share</string>
+    <string name="feedback_share_title">Share Stone report</string>
+    <string name="feedback_subject">Stone report</string>
+    <string name="feedback_no_share_app">No app is available to share this report.</string>
+    <string name="feedback_type_line">Type: %1$s</string>
+    <string name="feedback_category_line">Category: %1$s</string>
+    <string name="feedback_technical_header">Authorized technical information</string>
+    <string name="feedback_app_version">Stone version: %1$s</string>
+    <string name="feedback_android_version">Android: %1$s (API %2$d)</string>
+    <string name="feedback_current_screen">Screen: %1$s</string>
+    <string name="feedback_shake_title">Shake to report</string>
+    <string name="feedback_shake_hint">Open the form after detecting a deliberate shake.</string>
+    <string name="penguin_mascot_description">Stone mascot</string>
     <string name="feedback_intro">Tell us about the problem</string><string name="feedback_lyrics">Lyrics</string>
     <string name="feedback_ads">Ads</string><string name="feedback_missing_file">File not found</string>
     <string name="feedback_unplayable">File cannot be played</string><string name="feedback_stops">Music stops</string>
@@ -222,4 +247,25 @@
     <string name="thermal_status">Thermal status</string>
     <string name="transfer_library">Transfer my library</string>
     <string name="transfer_share_url">Share transfer URL: %1$s</string>
+    <string name="playlist_cover_title">Playlist cover</string>
+    <string name="playlist_cover_message">Choose a custom cover or restore the automatic artwork mosaic.</string>
+    <string name="choose_cover">Choose cover</string>
+    <string name="restore_automatic_cover">Restore automatic</string>
+    <string name="playlist_cover_options">Cover options</string>
+    <string name="playing">Playing</string>
+    <string name="empty_playlist">Empty playlist</string>
+    <string name="video_metadata_title">Video editor</string>
+    <string name="video_metadata_description">Description or comment</string>
+    <string name="video_metadata_author">Author or creator</string>
+    <string name="video_metadata_date">Date</string>
+    <string name="video_metadata_genre">Genre</string>
+    <string name="video_metadata_thumbnail">Video thumbnail</string>
+    <string name="video_metadata_frame">Use current frame</string>
+    <string name="video_metadata_gallery">Choose image from gallery</string>
+    <string name="video_metadata_format">Format: %1$s</string>
+    <string name="video_metadata_native_status">Compatible fields are written to the file without recompressing it.</string>
+    <string name="video_metadata_internal_status">This format or location cannot be written safely; Stone will store the changes.</string>
+    <string name="video_metadata_saved_native">Metadata was written to the file and saved in Stone.</string>
+    <string name="video_metadata_saved_internal">Metadata was saved in Stone; the original file was not changed.</string>
+    <string name="video_metadata_native_failed">The file could not be modified. Changes were saved in Stone.</string>
 </resources>

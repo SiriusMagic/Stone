@@ -188,7 +188,7 @@
     <string name="settings_language">Idioma</string>
     <string name="settings_playback">Ajustes de reproducción</string>
     <string name="video_settings">Vídeo</string>
-    <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo. Puedes cambiar el encuadre y el método de desbloqueo.</string>
+    <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo y llenan la pantalla sin deformarse. Puedes cambiar el encuadre y el método de desbloqueo.</string>
     <string name="video_controls">Controles de vídeo</string>
     <string name="video_controls_hint">Elige y ordena los iconos que aparecen debajo de la vista previa y en el reproductor de vídeo.</string>
     <string name="video_controls_future">Se agregarán más funciones próximamente.</string>
@@ -196,8 +196,10 @@
     <string name="video_preview_empty_hint">Elige un vídeo para comenzar. Stone conservará aquí el último que reproduzcas.</string>
     <string name="move_up">Subir</string>
     <string name="move_down">Bajar</string>
-    <string name="video_scale_fit">Ajustar (sin recortar)</string>
-    <string name="video_scale_fill">Llenar (puede recortar)</string>
+    <string name="video_scale_auto">Automático (ZOOM horizontal, FIT vertical)</string>
+    <string name="video_scale_fit">Ajustar (FIT, sin recortar)</string>
+    <string name="video_scale_zoom">Llenar (ZOOM, conserva proporción)</string>
+    <string name="video_scale_fill">Estirar (FILL, puede deformar)</string>
     <string name="video_unlock_method">Método para desbloquear controles</string>
     <string name="video_unlock_button">Botón lateral</string>
     <string name="video_unlock_double_tap">Doble toque</string>
@@ -245,6 +247,29 @@
     <string name="quick_action_confirmed">Acceso ejecutado: %1$s</string>
     <string name="settings_notifications">Configuración de notificaciones</string>
     <string name="feedback">Opinión</string><string name="about_stone">Sobre Stone</string>
+    <string name="feedback_title">Opiniones y sugerencias</string>
+    <string name="feedback_report_bug">Reportar error</string>
+    <string name="feedback_suggest_feature">Sugerir función</string>
+    <string name="feedback_send_opinion">Enviar opinión</string>
+    <string name="feedback_category">Categoría</string>
+    <string name="feedback_add_attachment">Agregar captura</string>
+    <string name="feedback_review_attachments">Adjuntos seleccionados; revísalos antes de compartir:</string>
+    <string name="feedback_remove_attachment">Quitar adjunto</string>
+    <string name="feedback_include_technical">Incluir versión, Android y pantalla actual (opcional)</string>
+    <string name="feedback_review_before_share">Nada se envía automáticamente. Tú eliges la aplicación para compartirlo.</string>
+    <string name="feedback_share">Revisar y compartir</string>
+    <string name="feedback_share_title">Compartir reporte de Stone</string>
+    <string name="feedback_subject">Reporte de Stone</string>
+    <string name="feedback_no_share_app">No hay una aplicación disponible para compartir el reporte.</string>
+    <string name="feedback_type_line">Tipo: %1$s</string>
+    <string name="feedback_category_line">Categoría: %1$s</string>
+    <string name="feedback_technical_header">Información técnica autorizada</string>
+    <string name="feedback_app_version">Versión de Stone: %1$s</string>
+    <string name="feedback_android_version">Android: %1$s (API %2$d)</string>
+    <string name="feedback_current_screen">Pantalla: %1$s</string>
+    <string name="feedback_shake_title">Agitar para reportar</string>
+    <string name="feedback_shake_hint">Abre el formulario al detectar una sacudida deliberada.</string>
+    <string name="penguin_mascot_description">Mascota de Stone</string>
     <string name="feedback_intro">Cuéntanos el problema</string><string name="feedback_lyrics">Letras</string>
     <string name="feedback_ads">Anuncios</string><string name="feedback_missing_file">Archivo no encontrado</string>
     <string name="feedback_unplayable">El archivo no se puede reproducir</string><string name="feedback_stops">Se detiene la música</string>
@@ -304,4 +329,25 @@
     <string name="settings_home_shortcuts">Iconos de inicio</string>
     <string name="home_shortcut_hint">Elige qué accesos rápidos aparecen en la barra principal.</string>
     <string name="restore_defaults">Restaurar configuración predeterminada</string>
+    <string name="playlist_cover_title">Portada de la playlist</string>
+    <string name="playlist_cover_message">Elige una portada personalizada o vuelve al mosaico automático de carátulas.</string>
+    <string name="choose_cover">Elegir portada</string>
+    <string name="restore_automatic_cover">Restaurar automática</string>
+    <string name="playlist_cover_options">Opciones de portada</string>
+    <string name="playing">Reproduciendo</string>
+    <string name="empty_playlist">Playlist vacía</string>
+    <string name="video_metadata_title">Editor de video</string>
+    <string name="video_metadata_description">Descripción o comentario</string>
+    <string name="video_metadata_author">Autor o creador</string>
+    <string name="video_metadata_date">Fecha</string>
+    <string name="video_metadata_genre">Género</string>
+    <string name="video_metadata_thumbnail">Miniatura del video</string>
+    <string name="video_metadata_frame">Usar fotograma actual</string>
+    <string name="video_metadata_gallery">Elegir imagen de la galería</string>
+    <string name="video_metadata_format">Formato: %1$s</string>
+    <string name="video_metadata_native_status">Los campos compatibles se escriben en el archivo sin recomprimirlo.</string>
+    <string name="video_metadata_internal_status">Este formato o ubicación no permite escritura segura; se guardará en Stone.</string>
+    <string name="video_metadata_saved_native">Metadatos escritos en el archivo y guardados en Stone.</string>
+    <string name="video_metadata_saved_internal">Metadatos guardados en Stone; el archivo original no se modificó.</string>
+    <string name="video_metadata_native_failed">No se pudo modificar el archivo. Los cambios se guardaron en Stone.</string>
 </resources>

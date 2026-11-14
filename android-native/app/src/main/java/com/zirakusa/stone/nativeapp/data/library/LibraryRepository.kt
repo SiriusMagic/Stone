@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 data class CachedLibrary(val songs: List<Song>, val deletedSongs: List<Song>)
 
 class LibraryRepository(context: Context) {
+    private val videoMetadata = VideoMetadataStore(context)
     private val preferences = context.getSharedPreferences("stone-native-library", Context.MODE_PRIVATE)
     private val cache = LibraryCache(context)
     private val scanner = FolderScanner(context)
@@ -70,6 +71,7 @@ class LibraryRepository(context: Context) {
         // visibility before building the library and keep the deleted list intact.
         disposition.restoreRetiredHidden()
         val deleted = disposition.deletedIds()
-        return CachedLibrary(songs.filterNot { it.id in deleted }, songs.filter { it.id in deleted })
+        val visible = songs.map(videoMetadata::applyToSong)
+        return CachedLibrary(visible.filterNot { it.id in deleted }, visible.filter { it.id in deleted })
     }
 }

@@ -4,7 +4,16 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class SavedQueueItem(val id: String, val uri: String, val title: String, val artist: String, val album: String)
+data class SavedQueueItem(
+    val id: String,
+    val uri: String,
+    val title: String,
+    val artist: String,
+    val album: String,
+    /** Optional extracted cover used to rebuild system media artwork after restart. */
+    val artworkUri: String = "",
+    val modifiedMs: Long = 0L,
+)
 data class SavedPlayback(val items: List<SavedQueueItem>, val index: Int, val position: Long,
     val shuffle: Boolean, val repeat: Int)
 
@@ -26,7 +35,8 @@ class PlaybackDataStore(context: Context) {
 
     fun saveQueue(value: SavedPlayback) {
         val items = JSONArray(); value.items.forEach { items.put(JSONObject().put("id", it.id).put("uri", it.uri)
-            .put("title", it.title).put("artist", it.artist).put("album", it.album)) }
+            .put("title", it.title).put("artist", it.artist).put("album", it.album)
+            .put("artworkUri", it.artworkUri).put("modifiedMs", it.modifiedMs)) }
         database.putString("playback.queue", JSONObject().put("items", items).put("index", value.index)
             .put("position", value.position).put("shuffle", value.shuffle).put("repeat", value.repeat).toString())
     }
@@ -34,7 +44,8 @@ class PlaybackDataStore(context: Context) {
         val root = JSONObject(database.getString("playback.queue") ?: return null)
         val items = root.getJSONArray("items")
         SavedPlayback(List(items.length()) { index -> items.getJSONObject(index).let { item -> SavedQueueItem(
-            item.getString("id"), item.getString("uri"), item.optString("title"), item.optString("artist"), item.optString("album")) } },
+            item.getString("id"), item.getString("uri"), item.optString("title"), item.optString("artist"),
+            item.optString("album"), item.optString("artworkUri"), item.optLong("modifiedMs", 0L)) } },
             root.optInt("index", 0), root.optLong("position", 0), root.optBoolean("shuffle"), root.optInt("repeat"))
     }.getOrNull()
 }

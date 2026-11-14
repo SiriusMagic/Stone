@@ -44,6 +44,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import org.json.JSONTokener
 
 private const val copySelectionScript = """
@@ -106,6 +107,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
 
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF17151B),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF3A353D)) }) {
+        ImmersiveWindowEffect()
         if (browserVisible) {
             LyricsSearchBrowser(song, onClose = { browserVisible = false })
             return@ModalBottomSheet

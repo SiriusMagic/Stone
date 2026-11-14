@@ -5,12 +5,8 @@ package com.zirakusa.stone.nativeapp.feature.player
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Build
 import android.util.Rational
 import androidx.activity.compose.BackHandler
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,11 +54,7 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.ui.PlayerView
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.common.Player
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.LyricsDocument
@@ -95,14 +87,12 @@ import kotlin.math.roundToInt
     onAudioOnly: (Song) -> Unit = {}, openCoverEditor: Boolean = false,
     onCoverEditorConsumed: () -> Unit = {},
     sheets: PlayerSheetsState = rememberPlayerSheetsState(),
-    videoScale: VideoScale = VideoScale.FIT,
+    videoScale: VideoScale = VideoScale.AUTO,
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoScaleChange: (VideoScale) -> Unit = {},
-    videoControls: VideoControlSettings = VideoControlSettings.defaults(),
-    immersive: Boolean = true) {
+    videoControls: VideoControlSettings = VideoControlSettings.defaults()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
-    VideoSystemBars(hidden = immersive && !isPictureInPicture)
     var videoFullscreen by remember { mutableStateOf(false) }
     val dynamicBackground by produceState(
         Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
@@ -187,9 +177,9 @@ import kotlin.math.roundToInt
         }
         if (song?.isVideo == true) Box(Modifier.weight(1f).fillMaxWidth()) {
             AndroidView(factory = { context ->
-                PlayerView(context).apply { useController = false; resizeMode = videoScale.resizeMode
+                PlayerView(context).apply { useController = false; resizeMode = videoScale.resolve(0, 0, false).resizeMode
                     player = playback.player() }
-            }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode }, modifier = Modifier.fillMaxSize()
+            }, update = { it.player = playback.player(); it.resizeMode = videoScale.resolve(0, 0, false).resizeMode }, modifier = Modifier.fillMaxSize()
                 .clip(RoundedCornerShape(20.dp)))
             IconButton(onClick = { videoFullscreen = true }, modifier = Modifier
                 .align(Alignment.BottomStart).padding(14.dp)
@@ -257,13 +247,14 @@ import kotlin.math.roundToInt
 }
 
 @Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel, scale: VideoScale) {
+    val resolvedScale = rememberResolvedVideoScale(playback.player(), scale, false, "pip")
     AndroidView(factory = { context ->
         PlayerView(context).apply {
             useController = false
-            resizeMode = scale.resizeMode
+            resizeMode = resolvedScale.resizeMode
             player = playback.player()
         }
-    }, update = { it.player = playback.player(); it.resizeMode = scale.resizeMode },
+    }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
         modifier = Modifier.fillMaxSize())
 }
 
@@ -297,69 +288,6 @@ private fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
-@Composable internal fun VideoSystemBars(hidden: Boolean) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(context, lifecycleOwner, hidden) {
-        val activity = context.findActivity()
-        val window = activity?.window
-        val controller = activity?.let {
-            WindowCompat.getInsetsController(it.window, it.window.decorView)
-        }
-        // MainActivity enables edge-to-edge for the whole app, so false is the
-        // baseline to restore after the immersive player is closed.
-        val originalDecorFits = false
-        val originalBehavior = controller?.systemBarsBehavior
-        val originalCutoutMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && window != null) {
-            window.attributes.layoutInDisplayCutoutMode
-        } else null
-
-        fun applyImmersive() {
-            if (!hidden || window == null || controller == null) return
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val attributes = window.attributes
-                attributes.layoutInDisplayCutoutMode =
-                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                window.attributes = attributes
-            }
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-        }
-
-        fun restoreSystemBars() {
-            controller?.show(WindowInsetsCompat.Type.systemBars())
-            if (controller != null && originalBehavior != null) {
-                controller.systemBarsBehavior = originalBehavior
-            }
-            if (window != null) {
-                WindowCompat.setDecorFitsSystemWindows(window, originalDecorFits)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-                window != null && originalCutoutMode != null) {
-                val attributes = window.attributes
-                attributes.layoutInDisplayCutoutMode = originalCutoutMode
-                window.attributes = attributes
-            }
-        }
-
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> if (hidden) applyImmersive() else restoreSystemBars()
-                Lifecycle.Event.ON_STOP -> restoreSystemBars()
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        if (hidden) applyImmersive() else restoreSystemBars()
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            restoreSystemBars()
-        }
-    }
-}
-
 @Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
     progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale, videoUnlockMethod: VideoUnlockMethod,
@@ -367,15 +295,16 @@ private fun Context.findActivity(): Activity? = when (this) {
     onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null) {
     val controls = rememberPlaybackControls(song.id, state.playing)
+    val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     var locked by remember(song.id) { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
                 useController = false
-                resizeMode = videoScale.resizeMode
+                resizeMode = resolvedScale.resizeMode
                 player = playback.player()
             }
-        }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
+        }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
             modifier = Modifier.fillMaxSize())
         VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
             onDoubleTap = { leftSide ->
@@ -408,7 +337,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onOptions = onOptions,
                     onQueue = onQueue,
                     onScaleToggle = {
-                        onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                        onVideoScaleChange(videoScale.next())
                     },
                     onLock = { locked = true },
                     modifier = Modifier.padding(top = 4.dp)
@@ -425,14 +354,15 @@ private fun Context.findActivity(): Activity? = when (this) {
     videoUnlockMethod: VideoUnlockMethod, onVideoScaleChange: (VideoScale) -> Unit,
     videoControls: VideoControlSettings) {
     val controls = rememberPlaybackControls(song.id, state.playing)
+    val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, false, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
             PlayerView(context).apply {
                 useController = false
-                resizeMode = videoScale.resizeMode
+                resizeMode = resolvedScale.resizeMode
                 player = playback.player()
             }
-        }, update = { it.player = playback.player(); it.resizeMode = videoScale.resizeMode },
+        }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
             modifier = Modifier.fillMaxSize())
         VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
             onDoubleTap = { leftSide ->
@@ -472,7 +402,7 @@ private fun Context.findActivity(): Activity? = when (this) {
                     onQueue = onQueue,
                     onFullscreen = onFullscreen,
                     onScaleToggle = {
-                        onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                        onVideoScaleChange(videoScale.next())
                     },
                     modifier = Modifier.padding(top = 4.dp)
                 )

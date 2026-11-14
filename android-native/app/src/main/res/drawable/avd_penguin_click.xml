@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_penguin">
+    <target android:name="all" android:animation="@animator/penguin_jump" />
+    <target android:name="wing_left" android:animation="@animator/penguin_flap_left" />
+    <target android:name="wing_right" android:animation="@animator/penguin_flap_right" />
+    <target android:name="head" android:animation="@animator/penguin_head_click" />
+</animated-vector>

@@ -2,6 +2,8 @@ package com.zirakusa.stone.nativeapp.ui
 
 import android.app.Activity
 import android.content.res.Configuration
+import android.hardware.Sensor
+import android.hardware.SensorManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -27,11 +29,14 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zirakusa.stone.nativeapp.MainActivity
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.core.homeLayout
 import com.zirakusa.stone.nativeapp.feature.library.*
 import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackKind
+import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackReportSheet
 import com.zirakusa.stone.nativeapp.feature.player.*
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
@@ -52,6 +57,7 @@ import kotlinx.coroutines.delay
     isPictureInPicture: Boolean = false,
     windowOrientation: Int = Configuration.ORIENTATION_UNDEFINED) {
     val context = LocalContext.current
+    val systemBarsController = (context as? MainActivity)?.immersiveSystemBars
     val settingsStore = remember(context) { StoneSettingsStore(context.applicationContext) }
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
     val initialSettings = remember(settingsStore) { settingsStore.read() }
@@ -69,6 +75,8 @@ import kotlinx.coroutines.delay
     }
     var immersivePlayers by rememberSaveable { mutableStateOf(initialSettings.immersivePlayers) }
     var immersiveLibrary by rememberSaveable { mutableStateOf(initialSettings.immersiveLibrary) }
+    var shakeToReport by rememberSaveable { mutableStateOf(initialSettings.shakeToReport) }
+    var shakeReportVisible by rememberSaveable { mutableStateOf(false) }
     var videoControlRevision by remember { mutableIntStateOf(0) }
     val videoControls = remember(settingsStore, videoControlRevision) {
         VideoControlSettings.from(settingsStore)
@@ -164,7 +172,37 @@ import kotlinx.coroutines.delay
         if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) library.onForeground()
         onDispose { owner.lifecycle.removeObserver(observer); library.onBackground(); playback.persist() }
     }
-    StoneTheme(theme) { BoxWithConstraints(Modifier.fillMaxSize()) {
+    DisposableEffect(owner, shakeToReport) {
+        val sensorManager = context.getSystemService(SensorManager::class.java)
+        val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val detector = if (shakeToReport && sensor != null) ShakeDetector(onShake = {
+            if (!shakeReportVisible) shakeReportVisible = true
+        }) else null
+        fun register() {
+            if (detector != null && sensor != null) {
+                sensorManager.registerListener(detector, sensor, SensorManager.SENSOR_DELAY_UI)
+            }
+        }
+        fun unregister() {
+            if (detector != null) sensorManager?.unregisterListener(detector)
+        }
+        val lifecycleObserver = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> register()
+                Lifecycle.Event.ON_PAUSE -> unregister()
+                else -> Unit
+            }
+        }
+        owner.lifecycle.addObserver(lifecycleObserver)
+        if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) register()
+        onDispose {
+            owner.lifecycle.removeObserver(lifecycleObserver)
+            unregister()
+        }
+    }
+    StoneTheme(theme) {
+    CompositionLocalProvider(LocalImmersiveSystemBarsController provides systemBarsController) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
     // BoxWithConstraints is the source of truth for split-screen/freeform
     // windows. The explicit Activity value covers devices that handle rotation
     // through configChanges and do not refresh LocalConfiguration immediately.
@@ -173,19 +211,28 @@ import kotlinx.coroutines.delay
     val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
         isPictureInPicture, landscapeMode)
     val immersive = if (layout.fullPlayer) immersivePlayers else immersiveLibrary
+    val immersiveRequest = immersive && !isPictureInPicture
+    DisposableEffect(systemBarsController, immersiveRequest) {
+        systemBarsController?.setImmersiveEnabled(immersiveRequest)
+        onDispose { systemBarsController?.setImmersiveEnabled(false) }
+    }
+    val systemBarsVisible = systemBarsController?.systemBarsVisible == true
+    val imeVisible = systemBarsController?.imeVisible == true
+    val useSystemInsets = !immersiveRequest || systemBarsVisible || imeVisible
     val appContentModifier = Modifier.fillMaxSize().then(
-        if (immersive) Modifier else
-            Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+        if (useSystemInsets) Modifier.windowInsetsPadding(
+            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+        else Modifier
     )
     Box(appContentModifier) {
     var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
     val miniPlayerHeight = with(LocalDensity.current) { miniPlayerHeightPx.toDp() }
-    if (!layout.fullPlayer) VideoSystemBars(hidden = immersiveLibrary)
     LaunchedEffect(landscape, layout.fullPlayer, playerSheets.optionsSidePanel) {
         if (layout.fullPlayer || (!landscape && playerSheets.optionsSidePanel)) closeMiniOptions()
     }
-    Scaffold(contentWindowInsets = if (immersive) WindowInsets(0, 0, 0, 0)
-        else WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)) { padding ->
+    Scaffold(contentWindowInsets = if (useSystemInsets)
+        WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)
+        else WindowInsets(0, 0, 0, 0)) { padding ->
         Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(padding)
             .padding(bottom = if (layout.showMiniPlayer) miniPlayerHeight else 0.dp)) {
@@ -204,7 +251,6 @@ import kotlinx.coroutines.delay
                 }, sheets = playerSheets, videoScale = videoScale,
                 videoUnlockMethod = videoUnlockMethod,
                 videoControls = videoControls,
-                immersive = immersivePlayers,
                 onVideoScaleChange = {
                     videoScale = it
                     settingsStore.setVideoScale(it.key)
@@ -233,6 +279,13 @@ import kotlinx.coroutines.delay
                     playerSheets.optionsSong = selected
                     playerSheets.optionsSidePanel = landscape && !layout.fullPlayer
                     playerSheets.optionsVisible = true
+                },
+                onSetPlaylistCover = library::setPlaylistCoverFromUri,
+                onRestorePlaylistCover = library::restorePlaylistCover,
+                shakeToReport = shakeToReport,
+                onShakeToReportChange = {
+                    shakeToReport = it
+                    settingsStore.setShakeToReport(it)
                 },
                 transferState = transferState,
                 onHostTransfer = {
@@ -401,6 +454,11 @@ import kotlinx.coroutines.delay
                 )
             }
         }
+        if (shakeReportVisible) FeedbackReportSheet(
+            initialKind = FeedbackKind.BUG,
+            screenLabel = if (layout.fullPlayer) "Reproductor" else "Biblioteca",
+            close = { shakeReportVisible = false }
+        )
         }
     }
     if (landscape && !layout.fullPlayer && playerSheets.optionsVisible &&
@@ -450,5 +508,5 @@ import kotlinx.coroutines.delay
             }
             VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
         }
-    } } }
+    } } } }
 }

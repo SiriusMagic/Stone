@@ -36,6 +36,7 @@ import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
+import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.R
 import kotlinx.coroutines.launch
@@ -55,6 +56,7 @@ private val QueueDark = Color(0xFF4A292B)
     ModalBottomSheet(onDismissRequest = onClose, containerColor = QueueBrown,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF7A5759)) }) {
+        ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight(0.78f).padding(horizontal = 18.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.queue), Modifier.weight(1f), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
@@ -165,7 +167,7 @@ private val QueueDark = Color(0xFF4A292B)
             }
             if (clearDialog) AlertDialog(
                 onDismissRequest = { clearDialog = false },
-                title = { Text(stringResource(R.string.clear_queue_title)) },
+                title = { ImmersiveWindowEffect(); Text(stringResource(R.string.clear_queue_title)) },
                 text = { Text(stringResource(R.string.clear_queue_message)) },
                 confirmButton = {
                     TextButton(onClick = { playback.clearQueue(); clearDialog = false }) {

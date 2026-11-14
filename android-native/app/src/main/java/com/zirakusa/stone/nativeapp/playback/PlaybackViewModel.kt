@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp.playback
 
 import android.app.Application
 import android.content.ComponentName
+import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,6 +45,8 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC)
 
 class PlaybackViewModel(application: Application) : AndroidViewModel(application) {
+    private data class ArtworkSource(val uri: String, val modifiedMs: Long)
+
     private val mutable = MutableStateFlow(PlaybackState())
     val state = mutable.asStateFlow()
     private var controller: MediaController? = null
@@ -65,12 +68,19 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private var sleepEndAtMs = 0L
     private var sleepFinishTrack = false
     private var sleepJob: Job? = null
+    private var systemArtworkJob: Job? = null
+    private var systemArtworkGeneration = 0L
+    private val systemArtworkSources = mutableMapOf<String, ArtworkSource>()
     private var manualShuffle = false
     private var originalQueueIds: List<String> = emptyList()
     private val future = MediaController.Builder(application,
         SessionToken(application, ComponentName(application, StonePlaybackService::class.java))).buildAsync()
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            publish()
+            requestSystemArtwork()
+        }
         override fun onPlayerError(error: PlaybackException) {
             PerformanceDiagnostics.recordPlaybackError()
             publish()
@@ -126,16 +136,16 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun play(song: Song, songs: List<Song>) {
         val index = songs.indexOfFirst { it.id == song.id }
         if (index < 0) return
+        prepareSystemArtworkSources(songs)
         originalQueueIds = songs.map { it.id }
         manualShuffle = false
         controller?.apply {
             shuffleModeEnabled = false
-            setMediaItems(songs.map { MediaItem.Builder().setMediaId(it.id).setUri(it.uri)
-                .setMediaMetadata(MediaMetadata.Builder().setTitle(it.title).setArtist(it.artist)
-                    .setAlbumTitle(it.album).build()).build() }, index, 0)
+            setMediaItems(songs.map(::mediaItem), index, 0)
             prepare()
             play()
         }
+        requestSystemArtwork(index)
     }
     fun toggle() { controller?.run { if (isPlaying) pause() else { prepare(); play() } } }
     fun setVolumePercent(value: Int) { StonePlaybackService.setVolumePercent(value) }
@@ -225,7 +235,9 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
 
     fun removeAt(index: Int) {
         controller?.takeIf { index in 0 until it.mediaItemCount }?.run {
+            val removedId = getMediaItemAt(index).mediaId
             removeMediaItem(index)
+            systemArtworkSources.remove(removedId)
             originalQueueIds = queueIds(this)
             publish()
         }
@@ -234,6 +246,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun clearQueue() {
         controller?.let {
             it.clearMediaItems()
+            cancelSystemArtworkRequests(clearSources = true)
             originalQueueIds = emptyList()
             manualShuffle = false
             data.saveQueue(SavedPlayback(emptyList(), 0, 0L, false, Player.REPEAT_MODE_OFF))
@@ -353,6 +366,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         val player = controller ?: return
         for (index in player.mediaItemCount - 1 downTo 0) if (player.getMediaItemAt(index).mediaId == id)
             player.removeMediaItem(index)
+        systemArtworkSources.remove(id)
     }
     fun progress(): Pair<Long, Long> = controller?.let {
         it.currentPosition.coerceAtLeast(0) to it.duration.coerceAtLeast(0)
@@ -366,26 +380,99 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         }
         data.saveQueue(SavedPlayback(List(player.mediaItemCount) { index ->
             val item = player.getMediaItemAt(index); val metadata = item.mediaMetadata
-            SavedQueueItem(item.mediaId, item.localConfiguration?.uri?.toString().orEmpty(),
+            val mediaUri = item.localConfiguration?.uri?.toString().orEmpty()
+            val artwork = systemArtworkSources[item.mediaId]
+                ?.takeIf { it.uri.isNotBlank() && it.uri != mediaUri }
+            SavedQueueItem(item.mediaId, mediaUri,
                 metadata.title?.toString().orEmpty(), metadata.artist?.toString().orEmpty(),
-                metadata.albumTitle?.toString().orEmpty())
+                metadata.albumTitle?.toString().orEmpty(), artwork?.uri.orEmpty(),
+                artwork?.modifiedMs ?: 0L)
         }, player.currentMediaItemIndex, player.currentPosition.coerceAtLeast(0),
             manualShuffle || player.shuffleModeEnabled, player.repeatMode))
     }
 
     private fun restoreQueue(player: MediaController) {
         val saved = data.queue()?.takeIf { it.items.isNotEmpty() } ?: return
-        val media = saved.items.filter { it.uri.isNotEmpty() }.map { item -> MediaItem.Builder()
-            .setMediaId(item.id).setUri(item.uri).setMediaMetadata(MediaMetadata.Builder()
-                .setTitle(item.title).setArtist(item.artist).setAlbumTitle(item.album).build()).build() }
+        val media = saved.items.filter { it.uri.isNotEmpty() }.map { item ->
+            val metadata = MediaMetadata.Builder().setTitle(item.title).setArtist(item.artist)
+                .setAlbumTitle(item.album)
+            if (item.artworkUri.isNotBlank()) metadata.setArtworkUri(Uri.parse(item.artworkUri))
+            MediaItem.Builder().setMediaId(item.id).setUri(item.uri)
+                .setMediaMetadata(metadata.build()).build()
+        }
         if (media.isEmpty()) return
+        cancelSystemArtworkRequests(clearSources = true)
+        saved.items.filter { it.uri.isNotEmpty() }.forEach { item ->
+            systemArtworkSources[item.id] = ArtworkSource(
+                item.artworkUri.ifBlank { item.uri }, item.modifiedMs)
+        }
         originalQueueIds = media.map { it.mediaId }
         manualShuffle = saved.shuffle
         player.setMediaItems(media, saved.index.coerceIn(0, media.lastIndex), saved.position.coerceAtLeast(0))
         player.shuffleModeEnabled = false; player.repeatMode = saved.repeat; player.prepare()
+        requestSystemArtwork()
+    }
+
+    private fun mediaItem(song: Song): MediaItem {
+        val metadata = MediaMetadata.Builder().setTitle(song.title).setArtist(song.artist)
+            .setAlbumTitle(song.album)
+        // An extracted cover is a safe fallback while the derived watermark is
+        // being prepared. Embedded artwork is loaded by ArtworkLoader below.
+        if (song.artworkUri.isNotBlank()) metadata.setArtworkUri(Uri.parse(song.artworkUri))
+        return MediaItem.Builder().setMediaId(song.id).setUri(song.uri)
+            .setMediaMetadata(metadata.build()).build()
+    }
+
+    private fun prepareSystemArtworkSources(songs: List<Song>) {
+        cancelSystemArtworkRequests(clearSources = true)
+        songs.forEach { song ->
+            systemArtworkSources[song.id] = ArtworkSource(song.artworkSource, song.modifiedMs)
+        }
+    }
+
+    /**
+     * Media3's default notification provider reads MediaMetadata.artworkData.
+     * The player still owns the original media file; only the immutable media
+     * item metadata is replaced with the cached, derived image for Android's
+     * system controls.
+     */
+    private fun requestSystemArtwork(index: Int = controller?.currentMediaItemIndex ?: -1) {
+        val player = controller ?: return
+        if (index !in 0 until player.mediaItemCount) return
+        val item = player.getMediaItemAt(index)
+        if (item.mediaMetadata.artworkData != null) return
+        val source = systemArtworkSources[item.mediaId]
+            ?: ArtworkSource(item.localConfiguration?.uri?.toString().orEmpty(), 0L)
+        if (source.uri.isBlank()) return
+        val generation = systemArtworkGeneration
+        systemArtworkJob?.cancel()
+        systemArtworkJob = viewModelScope.launch {
+            val artwork = SystemArtworkOverlay.load(getApplication(), source.uri, source.modifiedMs)
+                ?: return@launch
+            if (generation != systemArtworkGeneration) return@launch
+            val activePlayer = controller ?: return@launch
+            val activeIndex = activePlayer.currentMediaItemIndex
+            if (activeIndex !in 0 until activePlayer.mediaItemCount) return@launch
+            val activeItem = activePlayer.getMediaItemAt(activeIndex)
+            if (activeItem.mediaId != item.mediaId || activeItem.mediaMetadata.artworkData != null) return@launch
+            val metadata = activeItem.mediaMetadata.buildUpon()
+                .setArtworkData(artwork, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
+            // ExoPlayer keeps the current URI and playback position when a
+            // playlist item is replaced with the same media source.
+            activePlayer.replaceMediaItem(activeIndex,
+                activeItem.buildUpon().setMediaMetadata(metadata).build())
+        }
+    }
+
+    private fun cancelSystemArtworkRequests(clearSources: Boolean = false) {
+        systemArtworkGeneration++
+        systemArtworkJob?.cancel()
+        systemArtworkJob = null
+        if (clearSources) systemArtworkSources.clear()
     }
 
     override fun onCleared() {
+        cancelSystemArtworkRequests(clearSources = true)
         persist()
         controller?.removeListener(listener)
         MediaController.releaseFuture(future)

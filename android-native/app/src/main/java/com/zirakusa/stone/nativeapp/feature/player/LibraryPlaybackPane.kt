@@ -17,7 +17,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     videoTab: Boolean = false, videoPreviewSong: Song? = null,
     videoControls: VideoControlSettings = VideoControlSettings.defaults(),
     onSelectVideo: (Song) -> Unit = {}, onAudioOnly: (Song) -> Unit = {},
-    videoScale: VideoScale = VideoScale.FIT,
+    videoScale: VideoScale = VideoScale.AUTO,
     onVideoScaleChange: (VideoScale) -> Unit = {}) {
     val progress = if ((showPanel && state.queue.isNotEmpty()) || sheets.visible)
         rememberPlayerProgress(state, playback) else 0L to 0L
@@ -53,7 +53,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             },
             onQueue = { sheets.queueVisible = true },
             onScaleToggle = {
-                onVideoScaleChange(if (videoScale == VideoScale.FIT) VideoScale.ZOOM else VideoScale.FIT)
+                onVideoScaleChange(videoScale.next())
             },
         )
     } else if (showPanel) LandscapePlayerPanel(state, song, progress, CompactPlayerActions(

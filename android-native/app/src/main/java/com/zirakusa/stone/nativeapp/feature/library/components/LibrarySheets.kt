@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import com.zirakusa.stone.core.Song
 
 enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.string.artists),
@@ -32,6 +33,7 @@ enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.st
     }
     if (sheet != "sort") return
     ModalBottomSheet(onDismissRequest = dismiss, containerColor = StonePalette.Chip) {
+        ImmersiveWindowEffect()
         Column(Modifier.verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.sort),
@@ -53,6 +55,7 @@ enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.st
     dismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = dismiss, containerColor = StonePalette.Chip,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight(.8f).padding(horizontal = 20.dp)) {
             Text(stringResource(R.string.recently_deleted),
                 style = MaterialTheme.typography.headlineSmall)

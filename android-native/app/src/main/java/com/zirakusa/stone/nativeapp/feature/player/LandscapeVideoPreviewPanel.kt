@@ -134,6 +134,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val currentOpen by rememberUpdatedState(onOpenFullscreen)
     val currentToggle = rememberUpdatedState { if (active) playback.toggle() else currentSelect(song) }
     val context = LocalContext.current.applicationContext
+    val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     var frame by remember(song.uri, song.modifiedMs) {
         mutableStateOf(ArtworkLoader.VideoFrame(null, 0, 0))
     }
@@ -172,13 +173,13 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     factory = { viewContext ->
                         PlayerView(viewContext).apply {
                             useController = false
-                            resizeMode = videoScale.resizeMode
+                            resizeMode = resolvedScale.resizeMode
                             player = playback.player()
                         }
                     },
                     update = {
                         it.player = playback.player()
-                        it.resizeMode = videoScale.resizeMode
+                        it.resizeMode = resolvedScale.resizeMode
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -188,7 +189,11 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         it.asImageBitmap(),
                         null,
                         Modifier.fillMaxSize(),
-                        contentScale = if (videoScale == VideoScale.ZOOM) ContentScale.Crop else ContentScale.Fit,
+                        contentScale = when (videoScale.resolve(frame.width, frame.height, true)) {
+                            VideoScale.FILL -> ContentScale.FillBounds
+                            VideoScale.ZOOM -> ContentScale.Crop
+                            else -> ContentScale.Fit
+                        },
                     )
                 }
             }

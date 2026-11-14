@@ -48,6 +48,7 @@ class HorizontalSettingsTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val store = StoneSettingsStore(context)
         val defaults = store.read()
+        assertEquals("auto", defaults.videoScale)
         assertEquals("grid", defaults.videoLibraryLayout)
         assertTrue(defaults.immersivePlayers)
         assertFalse(defaults.immersiveLibrary)

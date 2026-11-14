@@ -1,7 +1,9 @@
 package com.zirakusa.stone.nativeapp.feature.library
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -10,8 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.HomeLayout
@@ -25,6 +29,7 @@ import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
 import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.data.transfer.LocalTransferUiState
+import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
@@ -62,17 +67,21 @@ private val legacyDefinitions = listOf(
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     onHome: () -> Unit = {}, onEqualizer: () -> Unit = {},
     playerContent: @Composable (Boolean, Boolean) -> Unit = { _, _ -> },
-    videoScale: VideoScale = VideoScale.FIT,
+    videoScale: VideoScale = VideoScale.AUTO,
     onVideoScaleChange: (VideoScale) -> Unit = {},
     videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
     onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
     onVideoControlChange: () -> Unit = {},
     videoLibraryLayout: VideoLibraryLayout = VideoLibraryLayout.GRID,
     onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit = {},
+    onSetPlaylistCover: (String, Uri) -> Unit = { _, _ -> },
+    onRestorePlaylistCover: (String) -> Unit = {},
     immersivePlayers: Boolean = true,
     onImmersivePlayersChange: (Boolean) -> Unit = {},
     immersiveLibrary: Boolean = false,
-    onImmersiveLibraryChange: (Boolean) -> Unit = {}) {
+    onImmersiveLibraryChange: (Boolean) -> Unit = {},
+    shakeToReport: Boolean = true,
+    onShakeToReportChange: (Boolean) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
@@ -181,24 +190,30 @@ private val legacyDefinitions = listOf(
             onAction = dispatchQuickAction, onEqualizer = onEqualizer,
             onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
     }, player = { showPanel -> playerContent(showPanel, tab == LibraryTab.Videos) }) {
-        if (layout.sidebar) LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,
-            onFolder, { tab = LibraryTab.Folders; collection = null })
-        else LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
-            onFolder, scan, { sheet = "sort" }, {
-                onOpenSettings(); onSettingsSheetVisible(true)
-            },
-            showSearch = shortcuts["search"] != false, showFolder = false,
-            showScan = shortcuts["scan"] != false,
-            showSort = shortcuts["sort"] != false, showEqualizer = false,
-            quickActions = quickActions,
-            onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
-            activeQuickActionIds = highlightedQuickActionIds)
-        if (searchVisible) LibrarySearch(query) { query = it }
-        LibraryTabs(tab, landscape = layout.sidebar) { tab = it; collection = null }
-        if (state.scanning) LinearProgressIndicator(Modifier.fillMaxWidth())
-        if (state.failed) Text(stringResource(R.string.scan_failed), Modifier.padding(horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.error)
-        Box(Modifier.weight(1f)) {
+        val fixedChrome = Modifier.fillMaxWidth().zIndex(1f).background(StonePalette.Background)
+        if (layout.sidebar) Box(fixedChrome) {
+            LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,
+                onFolder, { tab = LibraryTab.Folders; collection = null })
+        } else Box(fixedChrome) {
+            LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
+                onFolder, scan, { sheet = "sort" }, {
+                    onOpenSettings(); onSettingsSheetVisible(true)
+                },
+                showSearch = shortcuts["search"] != false, showFolder = false,
+                showScan = shortcuts["scan"] != false,
+                showSort = shortcuts["sort"] != false, showEqualizer = false,
+                quickActions = quickActions,
+                onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
+                activeQuickActionIds = highlightedQuickActionIds)
+        }
+        if (searchVisible) Box(fixedChrome) { LibrarySearch(query) { query = it } }
+        Box(fixedChrome) { LibraryTabs(tab, landscape = layout.sidebar) { tab = it; collection = null } }
+        if (state.scanning) Box(fixedChrome) { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        if (state.failed) Box(fixedChrome) {
+            Text(stringResource(R.string.scan_failed), Modifier.padding(horizontal = 16.dp),
+                color = MaterialTheme.colorScheme.error)
+        }
+        Box(Modifier.weight(1f).fillMaxWidth().clipToBounds().zIndex(0f)) {
         contentState.SaveableStateProvider("${tab.name}:${collection.orEmpty()}") {
         LibraryContent(state, songs, tab, collection, { collection = it }, query.isNotEmpty(),
             canPlay, currentId, onPlay, onFolder, Modifier.fillMaxSize(), onCreatePlaylist,
@@ -208,7 +223,9 @@ private val legacyDefinitions = listOf(
             }, compact = layout.sidebar,
             onVideoOptions = onVideoOptions,
             videoLibraryLayout = videoLibraryLayout,
-            onVideoLibraryLayoutChange = onVideoLibraryLayoutChange)
+            onVideoLibraryLayoutChange = onVideoLibraryLayoutChange,
+            onSetPlaylistCover = onSetPlaylistCover,
+            onRestorePlaylistCover = onRestorePlaylistCover)
         }
         }
     }
@@ -227,11 +244,14 @@ private val legacyDefinitions = listOf(
         immersivePlayers = immersivePlayers,
         onImmersivePlayersChange = onImmersivePlayersChange,
         immersiveLibrary = immersiveLibrary,
-        onImmersiveLibraryChange = onImmersiveLibraryChange) { key, visible ->
+        onImmersiveLibraryChange = onImmersiveLibraryChange,
+        shakeToReport = shakeToReport,
+        onShakeToReportChange = onShakeToReportChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)
         shortcutRevision++
     }
     if (moreQuickActions) ModalBottomSheet(onDismissRequest = { moreQuickActions = false }) {
+        com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect()
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(stringResource(R.string.more_options), style = MaterialTheme.typography.titleLarge)
             quickActions.drop(8).forEach { action ->

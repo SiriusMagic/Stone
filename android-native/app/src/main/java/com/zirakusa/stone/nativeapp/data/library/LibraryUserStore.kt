@@ -46,6 +46,18 @@ class LibraryUserStore(context: Context) {
     fun favoriteIds(): Set<String> = runCatching { JSONArray(database.getString("favorites") ?: "[]").let {
         array -> List(array.length()) { array.getString(it) }.toSet() } }.getOrDefault(emptySet())
 
+    /** Covers are keyed separately so built-in automatic playlists can also be customized. */
+    fun playlistCovers(): Map<String, String> = buildMap {
+        database.forEachValueStartingWith("library.playlist.cover:") { key, value ->
+            if (value.isNotBlank()) put(key.removePrefix("library.playlist.cover:"), value)
+        }
+    }
+
+    fun setPlaylistCover(playlistId: String, uri: String?) {
+        val key = "library.playlist.cover:$playlistId"
+        if (uri.isNullOrBlank()) database.remove(key) else database.putString(key, uri)
+    }
+
     /** Rebinds user data from source URIs to the private files created by a .musp import. */
     fun remapSongIds(mapping: Map<String, String>) {
         if (mapping.isEmpty()) return

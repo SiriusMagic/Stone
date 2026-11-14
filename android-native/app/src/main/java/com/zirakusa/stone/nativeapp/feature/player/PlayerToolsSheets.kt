@@ -2,8 +2,12 @@ package com.zirakusa.stone.nativeapp.feature.player
 
 import android.widget.Toast
 import android.widget.NumberPicker
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -21,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -39,12 +45,16 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
 import com.zirakusa.stone.nativeapp.data.library.AudioTags
+import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.library.SongActions
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
+import com.zirakusa.stone.nativeapp.data.library.VideoMetadataDraft
+import com.zirakusa.stone.nativeapp.data.library.VideoMetadataEditor
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,6 +73,7 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 @Composable internal fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
     onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
+        ImmersiveWindowEffect()
         PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect)
     }
 }
@@ -122,6 +133,7 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 @Composable fun SpeedSheet(state: PlaybackState, playback: PlaybackViewModel, close: () -> Unit) {
     val speeds = listOf(.5f, .75f, 1f, 1.25f, 1.5f, 2f)
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
+        ImmersiveWindowEffect()
         Column(Modifier.padding(28.dp).padding(bottom = 24.dp)) {
             Text(stringResource(R.string.speed), fontSize = 28.sp, fontWeight = FontWeight.Black)
             speeds.forEach { speed ->
@@ -170,6 +182,7 @@ private val EqMuted = Color(0xFF91A4A4)
     ModalBottomSheet(onDismissRequest = close, containerColor = EqSurface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = { BottomSheetDefaults.DragHandle(color = EqOutline) }) {
+        ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight(.94f).padding(horizontal = 22.dp)) {
             Row(Modifier.fillMaxWidth().height(68.dp), verticalAlignment = Alignment.CenterVertically) {
                 StoneArtwork(song?.artworkSource, song?.modifiedMs ?: 0,
@@ -282,6 +295,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun SleepSheet(state: PlaybackState, playback: PlaybackViewModel, close: () -> Unit) {
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
+        ImmersiveWindowEffect()
         SleepTimerContent(state, playback)
     }
 }
@@ -366,6 +380,10 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun TagEditorSheet(song: Song, initialTab: Int = 1, close: () -> Unit, saved: () -> Unit) {
+    if (song.isVideo) {
+        VideoTagEditorSheet(song, initialTab, close, saved)
+        return
+    }
     val context = LocalContext.current; val scope = rememberCoroutineScope(); val editor = remember { AudioTagEditor(context) }
     var tags by remember { mutableStateOf(AudioTags(song.title, song.artist, song.album)) }
     var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 1)) }
@@ -373,6 +391,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     LaunchedEffect(song.id) { tags = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrDefault(tags) }; busy = false }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight(.92f).padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.tag_editor), Modifier.weight(1f), fontSize = 25.sp, fontWeight = FontWeight.Black)
@@ -404,6 +423,134 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable private fun VideoTagEditorSheet(song: Song, initialTab: Int, close: () -> Unit, saved: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val editor = remember { VideoMetadataEditor(context.applicationContext) }
+    var document by remember(song.id) { mutableStateOf<com.zirakusa.stone.nativeapp.data.library.VideoMetadataDocument?>(null) }
+    var draft by remember(song.id) { mutableStateOf(VideoMetadataDraft(title = song.title, author = song.artist)) }
+    var framePosition by remember(song.id) { mutableLongStateOf(0L) }
+    var frame by remember(song.id) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
+    var tab by remember(song.id, initialTab) { mutableIntStateOf(initialTab.coerceIn(0, 1)) }
+    var busy by remember(song.id) { mutableStateOf(true) }
+    var error by remember(song.id) { mutableStateOf<String?>(null) }
+    var message by remember(song.id) { mutableStateOf<String?>(null) }
+    LaunchedEffect(song.id) {
+        val loaded = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrNull() }
+        document = loaded
+        loaded?.let { draft = it.draft }
+        busy = false
+    }
+    LaunchedEffect(song.id, framePosition) {
+        if (song.durationMs > 0L) {
+            frame = ArtworkLoader.loadVideoFrameAt(context.applicationContext, song.uri,
+                song.modifiedMs, framePosition, maxDimension = 640)
+        }
+    }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) scope.launch {
+            busy = true
+            val result = withContext(Dispatchers.IO) { runCatching { editor.saveImageFromGallery(song.uri, uri) } }
+            result.onSuccess { path ->
+                draft = draft.copy(thumbnailUri = path, thumbnailChanged = true)
+                error = null
+            }.onFailure { error = it.message ?: "No se pudo guardar la imagen" }
+            busy = false
+        }
+    }
+    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        ImmersiveWindowEffect()
+        Column(Modifier.fillMaxHeight(.94f).padding(24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.video_metadata_title), Modifier.weight(1f),
+                    fontSize = 25.sp, fontWeight = FontWeight.Black)
+                Button(enabled = !busy, onClick = { scope.launch {
+                    busy = true
+                    val result = withContext(Dispatchers.IO) { runCatching { editor.save(song.uri, draft) } }
+                    result.onSuccess { outcome ->
+                        message = if (outcome.nativeFileWritten) {
+                            context.getString(R.string.video_metadata_saved_native)
+                        } else if (outcome.nativeFailureMessage != null) {
+                            context.getString(R.string.video_metadata_native_failed)
+                        } else context.getString(R.string.video_metadata_saved_internal)
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        saved()
+                    }.onFailure { error = it.message ?: "No se pudieron guardar los metadatos" }
+                    busy = false
+                } }) { Text(stringResource(R.string.save)) }
+            }
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            TabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
+                listOf(R.string.cover, R.string.tags).forEachIndexed { index, label ->
+                    Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(label)) })
+                }
+            }
+            document?.let { info ->
+                Text(stringResource(R.string.video_metadata_format,
+                    info.container.extension.ifBlank { "desconocido" }.uppercase()),
+                    color = StonePalette.Muted, fontSize = 12.sp)
+                Text(
+                    stringResource(if (info.nativeWriteAvailable) R.string.video_metadata_native_status
+                        else R.string.video_metadata_internal_status),
+                    color = StonePalette.Muted, fontSize = 12.sp
+                )
+            }
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)) {
+                if (tab == 0) {
+                    item {
+                        Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
+                            val cover = draft.thumbnailUri
+                            val bitmap = frame?.bitmap
+                            if (cover.isNotBlank()) StoneArtwork(cover, 0L, Modifier.fillMaxSize())
+                            else if (bitmap != null) Image(bitmap.asImageBitmap(), null, Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop)
+                            else StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxSize())
+                        }
+                    }
+                    item {
+                        Text(stringResource(R.string.video_metadata_thumbnail), fontWeight = FontWeight.Bold)
+                        if (song.durationMs > 0) {
+                            Slider(value = framePosition.toFloat(), onValueChange = {
+                                framePosition = it.toLong().coerceIn(0L, song.durationMs)
+                            }, valueRange = 0f..song.durationMs.toFloat())
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(enabled = frame?.bitmap != null && !busy, onClick = {
+                                val copy = frame?.bitmap?.copy(Bitmap.Config.ARGB_8888, false)
+                                if (copy != null) scope.launch {
+                                    busy = true
+                                    val result = withContext(Dispatchers.IO) {
+                                        runCatching { editor.saveVideoFrame(song.uri, copy) }
+                                    }
+                                    result.onSuccess { path ->
+                                        draft = draft.copy(thumbnailUri = path, thumbnailChanged = true)
+                                    }.onFailure { error = it.message }
+                                    busy = false
+                                }
+                            }) { Text(stringResource(R.string.video_metadata_frame)) }
+                            OutlinedButton(enabled = !busy, onClick = { imagePicker.launch("image/*") }) {
+                                Text(stringResource(R.string.video_metadata_gallery))
+                            }
+                        }
+                    }
+                } else {
+                    item { TagField(R.string.title, draft.title) { draft = draft.copy(title = it) } }
+                    item { TagField(R.string.video_metadata_description, draft.description, multiline = true) {
+                        draft = draft.copy(description = it)
+                    } }
+                    item { TagField(R.string.video_metadata_author, draft.author) { draft = draft.copy(author = it) } }
+                    item { TagField(R.string.video_metadata_date, draft.date) { draft = draft.copy(date = it) } }
+                    item { TagField(R.string.video_metadata_genre, draft.genre) { draft = draft.copy(genre = it) } }
+                }
+            }
+        }
+    }
+}
+
 @Composable private fun TagField(label: Int, value: String, multiline: Boolean = false, change: (String) -> Unit) {
     OutlinedTextField(value, change, Modifier.fillMaxWidth(), label = { Text(stringResource(label)) }, singleLine = !multiline, minLines = if (multiline) 4 else 1)
 }
@@ -413,6 +560,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     val context = LocalContext.current; val scope = rememberCoroutineScope()
     var start by remember { mutableFloatStateOf(0f) }; var busy by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
+        ImmersiveWindowEffect()
         Column(Modifier.padding(28.dp).padding(bottom = 24.dp)) {
             Text(stringResource(R.string.set_ringtone), fontSize = 25.sp, fontWeight = FontWeight.Black)
             Text(stringResource(R.string.ringtone_start, duration(start.toLong())))
@@ -431,7 +579,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 }
 
 @Composable fun ConfirmSongAction(confirm: () -> Unit, close: () -> Unit) {
-    AlertDialog(onDismissRequest = close, title = { Text(stringResource(R.string.delete_song_title)) },
+    AlertDialog(onDismissRequest = close, title = { ImmersiveWindowEffect(); Text(stringResource(R.string.delete_song_title)) },
         text = { Text(stringResource(R.string.delete_song_message)) },
         confirmButton = { TextButton(onClick = confirm) { Text(stringResource(R.string.delete)) } },
         dismissButton = { TextButton(onClick = close) { Text(stringResource(R.string.cancel)) } })
@@ -443,6 +591,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
     var creating by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
+        ImmersiveWindowEffect()
         Column(Modifier.padding(24.dp).padding(bottom = 28.dp)) {
             Text(stringResource(R.string.add_to_playlist_title), fontSize = 26.sp, fontWeight = FontWeight.Black)
             OutlinedButton(onClick = { creating = true }, Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
@@ -457,7 +606,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
             } }
         }
     }
-    if (creating) AlertDialog(onDismissRequest = { creating = false }, title = { Text(stringResource(R.string.new_playlist)) },
+    if (creating) AlertDialog(onDismissRequest = { creating = false }, title = { ImmersiveWindowEffect(); Text(stringResource(R.string.new_playlist)) },
         text = { OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.playlist_name)) }) },
         confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = { create(name); creating = false; name = "" }) {
             Text(stringResource(R.string.create)) } }, dismissButton = { TextButton(onClick = { creating = false }) {

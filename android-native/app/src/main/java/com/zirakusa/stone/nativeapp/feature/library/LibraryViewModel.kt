@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.LibraryRepository
 import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
+import com.zirakusa.stone.nativeapp.data.library.PlaylistCoverStore
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.CancellationException
@@ -23,13 +24,16 @@ data class LibraryState(val songs: List<Song> = emptyList(), val scanning: Boole
     val hasFolder: Boolean = false, val failed: Boolean = false,
     val playlists: List<StonePlaylist> = emptyList(), val favoriteIds: Set<String> = emptySet(),
     val recentIds: List<String> = emptyList(), val playCounts: Map<String, Int> = emptyMap(),
-    val deletedSongs: List<Song> = emptyList())
+    val deletedSongs: List<Song> = emptyList(),
+    val playlistCovers: Map<String, String> = emptyMap())
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
     private data class UserSnapshot(val playlists: List<StonePlaylist>, val favorites: Set<String>,
-        val recent: List<String>, val counts: Map<String, Int>)
+        val recent: List<String>, val counts: Map<String, Int>,
+        val playlistCovers: Map<String, String>)
     private val repository = LibraryRepository(application)
     private val userStore = LibraryUserStore(application)
+    private val playlistCoverStore = PlaylistCoverStore(application)
     private val settings = StoneSettingsStore(application)
     private val mutable = MutableStateFlow(LibraryState(hasFolder = repository.folder != null))
     val state = mutable.asStateFlow()
@@ -42,7 +46,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         mutable.update { it.copy(songs = songs, playlists = user.playlists,
             favoriteIds = user.favorites, recentIds = user.recent,
             playCounts = user.counts,
-            deletedSongs = cached.deletedSongs) }
+            deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
     }
 
     fun onForeground() { active = true; if (settings.read().autoRescan) refresh(false) }
@@ -89,7 +93,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         mutable.update { it.copy(songs = songs, playlists = user.playlists,
             favoriteIds = user.favorites, recentIds = user.recent,
             playCounts = user.counts,
-            deletedSongs = cached.deletedSongs) }
+            deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
     } }
     fun createPlaylist(name: String) { if (name.isNotBlank()) { userStore.createPlaylist(name)
         mutable.update { it.copy(playlists = userStore.playlists()) } } }
@@ -98,9 +102,27 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun removeFromPlaylist(playlistId: String, song: Song) { userStore.remove(playlistId, song.id)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
 
+    fun setPlaylistCoverFromUri(playlistId: String, source: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val copied = playlistCoverStore.copyFrom(getApplication(), playlistId, source)
+                userStore.setPlaylistCover(playlistId, copied)
+                mutable.update { it.copy(playlistCovers = it.playlistCovers + (playlistId to copied)) }
+            }
+        }
+    }
+
+    fun restorePlaylistCover(playlistId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistCoverStore.clear(playlistId)
+            userStore.setPlaylistCover(playlistId, null)
+            mutable.update { it.copy(playlistCovers = it.playlistCovers - playlistId) }
+        }
+    }
+
     private suspend fun readUserSnapshot(songs: List<Song>): UserSnapshot = withContext(Dispatchers.IO) {
         UserSnapshot(userStore.playlists(), userStore.favoriteIds(), userStore.recentIds(),
-            userStore.playCounts(songs))
+            userStore.playCounts(songs), userStore.playlistCovers())
     }
 
     private suspend fun scan(manual: Boolean) {

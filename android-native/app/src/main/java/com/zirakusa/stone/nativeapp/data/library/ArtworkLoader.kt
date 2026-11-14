@@ -72,6 +72,9 @@ object ArtworkLoader {
             val bitmap = try {
                 val source = uri.toUri()
                 if (source.scheme == "file") decodeArtworkFile(source.path)
+                else if (context.contentResolver.getType(source)?.startsWith("image/") == true) {
+                    decodeArtworkContent(context, source)
+                }
                 else {
                     val retriever = MediaMetadataRetriever()
                     try {
@@ -107,6 +110,19 @@ object ArtworkLoader {
             options.inSampleSize *= 2
         }
         return BitmapFactory.decodeFile(path, options)
+    }
+
+    private fun decodeArtworkContent(context: Context, source: Uri): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        val options = BitmapFactory.Options().apply { inSampleSize = 1 }
+        while (maxOf(bounds.outWidth, bounds.outHeight) / options.inSampleSize > 512) {
+            options.inSampleSize *= 2
+        }
+        return context.contentResolver.openInputStream(source)?.use {
+            BitmapFactory.decodeStream(it, null, options)
+        }
     }
 
     suspend fun loadVideoFrame(context: Context, uri: String, modified: Long): VideoFrame =

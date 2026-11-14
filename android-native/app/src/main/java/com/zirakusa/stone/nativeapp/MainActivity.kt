@@ -12,10 +12,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
+import com.zirakusa.stone.nativeapp.ui.ImmersiveSystemBarsController
 import java.util.Locale
 
 @SuppressLint("RestrictedApi")
 class MainActivity : ComponentActivity() {
+    internal val immersiveSystemBars by lazy { ImmersiveSystemBarsController(this) }
     private var pictureInPicture by mutableStateOf(false)
     private var windowOrientation by mutableStateOf(Configuration.ORIENTATION_UNDEFINED)
 
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        immersiveSystemBars.attach()
         pictureInPicture = isInPictureInPictureMode
         windowOrientation = resources.configuration.orientation
         setContent {
@@ -77,10 +80,12 @@ class MainActivity : ComponentActivity() {
         // the new orientation into Compose explicitly so the three-pane layout
         // is shown immediately instead of waiting for a process recreation.
         windowOrientation = newConfig.orientation
+        immersiveSystemBars.onConfigurationChanged()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        immersiveSystemBars.onWindowFocusChanged(hasFocus)
         if (hasFocus && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             val bounds = window.decorView
             val rect = android.graphics.Rect(0, 0, bounds.width, bounds.height)
@@ -95,7 +100,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        immersiveSystemBars.onResume()
         com.zirakusa.stone.nativeapp.playback.StonePlaybackService.syncWithAndroidVolume()
+    }
+
+    override fun onPause() {
+        immersiveSystemBars.onPause()
+        super.onPause()
+    }
+
+    override fun onStop() {
+        immersiveSystemBars.onStop()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        immersiveSystemBars.dispose()
+        super.onDestroy()
     }
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean,

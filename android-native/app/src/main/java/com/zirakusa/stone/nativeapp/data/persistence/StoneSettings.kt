@@ -19,11 +19,12 @@ data class StoneSettings(
     val hardwareAcceleration: String = "automatic",
     val musicReminders: Boolean = false,
     val landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
-    val videoScale: String = "fit",
+    val videoScale: String = "auto",
     val videoUnlockMethod: String = "button",
     val videoLibraryLayout: String = "grid",
     val immersivePlayers: Boolean = true,
     val immersiveLibrary: Boolean = false,
+    val shakeToReport: Boolean = true,
 )
 
 class StoneSettingsStore(context: Context) {
@@ -45,14 +46,15 @@ class StoneSettingsStore(context: Context) {
             .takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic",
         musicReminders = db.setting("musicReminders", "false").toBoolean(),
         landscapeLayoutMode = LandscapeLayoutMode.fromKey(db.setting("landscapeLayoutMode", "always")),
-        videoScale = db.setting("videoScale", "fit")
-            .takeIf { it in setOf("fit", "zoom") } ?: "fit",
+        videoScale = db.setting("videoScale", "auto")
+            .takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto",
         videoUnlockMethod = db.setting("videoUnlockMethod", "button")
             .takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button",
         videoLibraryLayout = db.setting("videoLibraryLayout", "grid")
             .takeIf { it in setOf("grid", "list") } ?: "grid",
         immersivePlayers = db.setting("immersivePlayers", "true").toBoolean(),
         immersiveLibrary = db.setting("immersiveLibrary", "false").toBoolean(),
+        shakeToReport = db.setting("shakeToReport", "true").toBoolean(),
     )
     fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in setOf("dark", "gray") } ?: "dark")
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
@@ -84,13 +86,14 @@ class StoneSettingsStore(context: Context) {
     fun setHardwareAcceleration(value: String) = db.setSetting("hardwareAcceleration",
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
     fun setVideoScale(value: String) = db.setSetting("videoScale",
-        value.takeIf { it in setOf("fit", "zoom") } ?: "fit")
+        value.takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto")
     fun setVideoUnlockMethod(value: String) = db.setSetting("videoUnlockMethod",
         value.takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button")
     fun setVideoLibraryLayout(value: String) = db.setSetting("videoLibraryLayout",
         value.takeIf { it in setOf("grid", "list") } ?: "grid")
     fun setImmersivePlayers(value: Boolean) = db.setSetting("immersivePlayers", value.toString())
     fun setImmersiveLibrary(value: Boolean) = db.setSetting("immersiveLibrary", value.toString())
+    fun setShakeToReport(value: Boolean) = db.setSetting("shakeToReport", value.toString())
     fun videoControlVisible(key: String, fallback: Boolean = true) =
         db.setting("video.control.$key", fallback.toString()).toBoolean()
     fun setVideoControlVisible(key: String, value: Boolean) =
