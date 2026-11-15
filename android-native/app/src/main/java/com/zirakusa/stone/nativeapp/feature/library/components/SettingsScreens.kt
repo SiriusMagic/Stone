@@ -120,6 +120,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             "reproducción vídeo video iconos controles personalizar", { onPage("video-controls") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
+                        SettingsMenuItem(Icons.Default.Hub, stringResource(R.string.api_title), "",
+                            "sistema api mcp agente ia inteligencia artificial automatización control externo token",
+                            { onPage("api-mode") }),
                         SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
                             "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
                     )),
@@ -183,6 +186,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "library-scan" -> LibraryScanSettings(store)
                     "custom" -> LookSettings(store)
                     "audio-levels" -> AudioLevelSettings(store, playback)
+                    "api-mode" -> ApiModeSettings()
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "playback" -> {
                         PlaybackDetail(store, playback, { onPage("audio-mode") },
@@ -222,6 +226,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "library-scan" -> R.string.device_scan
     "custom" -> R.string.custom_title
     "audio-levels" -> R.string.audio_levels_title
+    "api-mode" -> R.string.api_title
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
     "video-controls" -> R.string.video_controls

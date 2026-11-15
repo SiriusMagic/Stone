@@ -58,6 +58,7 @@ import kotlinx.coroutines.delay
     val initialSettings = remember(settingsStore) {
         com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
         com.zirakusa.stone.nativeapp.playback.AudioLevels.load(settingsStore)
+        com.zirakusa.stone.nativeapp.automation.ApiMode.load(settingsStore)
         settingsStore.read()
     }
     var theme by rememberSaveable { mutableStateOf(initialSettings.theme) }
@@ -82,6 +83,9 @@ import kotlinx.coroutines.delay
     val playerSheets = rememberPlayerSheetsState()
     val state by library.state.collectAsStateWithLifecycle()
     val player by playback.state.collectAsStateWithLifecycle()
+    AutomationBridge(playback, library, state, player, theme, language,
+        onTheme = { theme = it; settingsStore.setTheme(it) },
+        onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() })
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }

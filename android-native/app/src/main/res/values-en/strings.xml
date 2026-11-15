@@ -335,4 +335,24 @@
     <string name="theme_wine">Wine</string>
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
+    <string name="api_title">API mode (AI agents)</string>
+    <string name="api_intro">Lets an MCP-compatible AI agent control Stone: playback, library, playlists, tags, themes and language. Stone works the same without it; off by default.</string>
+    <string name="api_enable">Enable MCP server</string>
+    <string name="api_enable_hint">Works while Stone is open.</string>
+    <string name="api_lan">Allow local network (Wi-Fi)</string>
+    <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
+    <string name="api_running">Server running</string>
+    <string name="api_failed">Could not start (port 8765 in use?)</string>
+    <string name="api_address">Address (tap to copy)</string>
+    <string name="api_token">Access token</string>
+    <string name="api_copy_token">Copy token</string>
+    <string name="api_new_token">Generate another</string>
+    <string name="api_header_hint">The agent must send the header «Authorization: Bearer TOKEN». A new token revokes the previous access.</string>
+    <string name="api_tools">Available tools</string>
+    <string name="api_risk_hint">○ read only · ◐ reversible change · ● modifies files: asks for your confirmation on screen.</string>
+    <string name="api_activity">Recent activity</string>
+    <string name="api_copied">Copied</string>
+    <string name="api_confirm_title">An agent wants to make a change</string>
+    <string name="api_confirm_allow">Allow</string>
+    <string name="api_confirm_deny">Deny</string>
 </resources>

@@ -58,6 +58,9 @@ object StoneLook {
 
     fun chooseSongLayout(key: String) { songLayout = key; store?.setLook("songLayout", key) }
 
+    /** Saves the current values with the store given at [load] (used by automation). */
+    fun persist() { store?.let(::save) }
+
     fun load(store: StoneSettingsStore) {
         this.store = store
         songLayout = store.look("songLayout", "list")

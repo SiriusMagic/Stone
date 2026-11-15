@@ -1,5 +1,8 @@
 # Stone Kotlin 1.6.0
 
+- Ajustes > Sistema > Modo API (agentes de IA): servidor MCP opcional, apagado por defecto, con
+  token Bearer, solo loopback salvo que se permita la red local; herramientas de reproducción,
+  biblioteca, listas, etiquetas (con confirmación en pantalla), tema, acento, idioma y modo de audio.
 - Biblioteca: mantener pulsado selecciona (canciones, vídeos y shorts) con "Seleccionar todos",
   lápiz para editar etiquetas y acciones Agregar a, Reproducir a continuación, Compartir y Borrar.
 - Vídeo: mantener pulsado reproduce a 2.0X mientras se mantiene el dedo.

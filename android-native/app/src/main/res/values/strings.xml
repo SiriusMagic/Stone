@@ -401,4 +401,24 @@
     <string name="theme_wine">Vino</string>
     <string name="theme_violet">Violeta</string>
     <string name="theme_slate">Pizarra</string>
+    <string name="api_title">Modo API (agentes de IA)</string>
+    <string name="api_intro">Permite que un agente de IA compatible con MCP controle Stone: reproducción, biblioteca, listas, etiquetas, temas e idioma. Stone funciona igual sin esto; desactivado por defecto.</string>
+    <string name="api_enable">Activar servidor MCP</string>
+    <string name="api_enable_hint">Funciona mientras Stone esté abierto.</string>
+    <string name="api_lan">Permitir red local (Wi-Fi)</string>
+    <string name="api_lan_hint">Apagado: solo desde este teléfono. Encendido: otros equipos de tu Wi-Fi con el token.</string>
+    <string name="api_running">Servidor activo</string>
+    <string name="api_failed">No se pudo iniciar (¿puerto 8765 ocupado?)</string>
+    <string name="api_address">Dirección (toca para copiar)</string>
+    <string name="api_token">Token de acceso</string>
+    <string name="api_copy_token">Copiar token</string>
+    <string name="api_new_token">Generar otro</string>
+    <string name="api_header_hint">El agente debe enviar la cabecera «Authorization: Bearer TOKEN». Generar otro token revoca el acceso anterior.</string>
+    <string name="api_tools">Herramientas disponibles</string>
+    <string name="api_risk_hint">○ solo lectura · ◐ cambio reversible · ● modifica archivos: pide tu confirmación en pantalla.</string>
+    <string name="api_activity">Actividad reciente</string>
+    <string name="api_copied">Copiado</string>
+    <string name="api_confirm_title">Un agente quiere hacer un cambio</string>
+    <string name="api_confirm_allow">Permitir</string>
+    <string name="api_confirm_deny">Denegar</string>
 </resources>
