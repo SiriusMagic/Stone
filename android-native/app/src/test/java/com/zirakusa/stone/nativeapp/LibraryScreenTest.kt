@@ -69,7 +69,7 @@ class LibraryScreenTest {
 
     @Test fun videoLibraryUsesTheThumbnailGridAndPlaysTheSelectedVideo() {
         val video = Song("content://fixture/video", "Spider-Man edit", "Stone", "Videos",
-            "Videos", 24_000, 1, 1, isVideo = true)
+            "Videos", 240_000, 1, 1, isVideo = true)
         var queue = emptyList<Song>()
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {},
@@ -82,7 +82,7 @@ class LibraryScreenTest {
 
     @Test fun videoLibraryCanToggleBetweenPersistentGridAndCompactListLayouts() {
         val video = Song("content://fixture/video-layout.mp4", "Video layout", "Stone", "Videos",
-            "Videos", 24_000, 1, 1, isVideo = true)
+            "Videos", 240_000, 1, 1, isVideo = true)
         val layout = mutableStateOf(VideoLibraryLayout.GRID)
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, { _, _ -> },
@@ -99,14 +99,14 @@ class LibraryScreenTest {
 
     @Test fun videoTitleFallsBackToTheFileNameWhenMetadataTitleIsEmpty() {
         val video = Song("content://fixture/recorded-video.mp4", "", "", "", "Videos",
-            24_000, 1, 1, isVideo = true)
+            240_000, 1, 1, isVideo = true)
         assertEquals("recorded-video", videoDisplayTitle(video))
     }
 
     @Test @Config(qualifiers = "es-rES-w1280dp-h720dp-land-xhdpi")
     fun horizontalVideoMenuReportsTheSelectedVideoForTheSidePanel() {
         val video = Song("content://fixture/side-video", "Selected video", "Stone", "Videos",
-            "Videos", 24_000, 1, 1, isVideo = true)
+            "Videos", 240_000, 1, 1, isVideo = true)
         var menuVideo: Song? = null
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             LibraryScreen(LibraryState(listOf(video), hasFolder = true), true, {}, { _, _ -> },
@@ -123,7 +123,7 @@ class LibraryScreenTest {
         val current = Song("content://fixture/current", "Current song", "Current artist", "Music",
             "Music", 24_000, 1, 1)
         val selected = Song("content://fixture/selected", "Selected video", "Video artist", "Videos",
-            "Videos", 24_000, 1, 1, isVideo = true)
+            "Videos", 240_000, 1, 1, isVideo = true)
         val player = PlaybackState(ready = true, title = current.title, artist = current.artist,
             currentId = current.id)
         compose.setContent { StoneTheme {

@@ -16,15 +16,30 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
     playlists: List<StonePlaylist>, onCreatePlaylist: (String) -> Unit,
     onAddToPlaylist: (String, Song) -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, onEditComplete: () -> Unit = {},
-    extraActions: List<PlayerOptionExtra> = emptyList()) {
+    extraActions: List<PlayerOptionExtra> = emptyList(),
+    videoScale: VideoScale? = null, onVideoScaleChange: (VideoScale) -> Unit = {}) {
     val context = LocalContext.current
     val targetSong = sheets.actionSong ?: sheets.optionsSong ?: song
-    if (sheets.queueVisible) QueueSheet(state, playback) { sheets.queueVisible = false }
+    val tint = rememberSongTint(song)
+    if (sheets.queueVisible) QueueSheet(state, playback, tint) { sheets.queueVisible = false }
     if (sheets.lyricsVisible && song != null) LyricsSheet(song, state, playback, progress) { sheets.lyricsVisible = false }
-    if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    val videoMenu = targetSong?.isVideo == true && targetSong.id != AudioOnlySelection.id
+    if (sheets.optionsVisible && !sheets.optionsSidePanel && videoMenu) VideoOptionsSheet(
+        state, targetSong!!, playback, landscape = window.width > window.height,
+        videoScale = videoScale, onVideoScaleChange = onVideoScaleChange,
+        onSelect = { selected ->
+            val selectedSong = sheets.actionSong ?: sheets.optionsSong ?: song
+            sheets.optionsVisible = false
+            sheets.optionsSong = null
+            selectPlayerTool(context, sheets, selected, selectedSong, playback)
+        },
+        onClose = { sheets.optionsVisible = false; sheets.optionsSong = null })
+    else if (sheets.optionsVisible && !sheets.optionsSidePanel) PlayerOptionsSheet(
         state = state,
         song = targetSong,
         extraActions = extraActions,
+        tint = tint,
         onClose = {
             sheets.optionsVisible = false
             sheets.optionsSong = null

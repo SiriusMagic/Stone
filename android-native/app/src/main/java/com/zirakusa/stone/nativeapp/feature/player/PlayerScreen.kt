@@ -123,10 +123,10 @@ import kotlin.math.roundToInt
             onVideoScaleChange = onVideoScaleChange,
             videoControls = videoControls,
             onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
+            onSpeed = { sheets.tool = PlayerTool.Speed },
         )
     } else if (landscape) {
-        LandscapeAudioPlayer(state, song, progress, playback, back,
-            controls = audioControls,
+        LandscapeVinylPlayer(state, song, progress, playback, back,
             onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
             onEqualizer = { sheets.tool = PlayerTool.Equalizer },
             onQueue = { sheets.queueVisible = true })
@@ -135,7 +135,8 @@ import kotlin.math.roundToInt
         onAudioOnly = {
             onAudioOnly(it)
         }, videoScale = videoScale,
-        onVideoScaleChange = onVideoScaleChange, videoControls = videoControls)
+        onVideoScaleChange = onVideoScaleChange, videoControls = videoControls,
+        onSpeed = { sheets.tool = PlayerTool.Speed })
     else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)
@@ -169,8 +170,8 @@ import kotlin.math.roundToInt
         Row(Modifier.fillMaxWidth().padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(state.title, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 1,
-                    overflow = TextOverflow.Ellipsis)
-                Text(state.artist.uppercase(), color = Color(0xFF8A848F), fontSize = 15.sp,
+                    overflow = TextOverflow.Ellipsis, color = PlayerCream)
+                Text(state.artist, color = Color(0xFF8A848F), fontSize = 15.sp,
                     modifier = Modifier.padding(top = 5.dp).clickable(
                         enabled = state.artist.isNotBlank(), onClick = onArtist), maxLines = 1)
             }
@@ -188,19 +189,24 @@ import kotlin.math.roundToInt
                 Row(Modifier.fillMaxWidth().height(104.dp), horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically) {
                     IconButton(playback::previous, Modifier.size(78.dp)) {
-                        Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), Modifier.size(68.dp))
+                        Icon(Icons.Default.FastRewind, stringResource(R.string.previous), Modifier.size(64.dp), tint = PlayerCream)
                     }
                     IconButton(playback::toggle, Modifier.size(78.dp)) {
                         Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(72.dp))
+                            stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(72.dp), tint = PlayerCream)
                     }
                     IconButton(playback::next, Modifier.size(78.dp)) {
-                        Icon(Icons.Default.SkipNext, stringResource(R.string.next), Modifier.size(68.dp))
+                        Icon(Icons.Default.FastForward, stringResource(R.string.next), Modifier.size(64.dp), tint = PlayerCream)
                     }
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
-                    IconButton(onClick = { sheets.tool = PlayerTool.Equalizer }) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
+                    IconButton(onClick = { sheets.tool = PlayerTool.Equalizer }) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Tune, stringResource(R.string.equalizer))
+                            if (state.equalizerEnabled) Text("ON", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     CurrentLyricChip(song, progress.first, { sheets.lyricsVisible = true }, Modifier.weight(1f))
                     IconButton(onClick = { sheets.queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
                 }
@@ -217,7 +223,7 @@ import kotlin.math.roundToInt
     ) else emptyList()
     PlayerSheetsHost(sheets, state, song, playback, progress, playlists, onCreatePlaylist,
         onAddToPlaylist, onDelete, onMetadataChanged, onEditComplete = back,
-        extraActions = playerOptionExtras)
+        extraActions = playerOptionExtras, videoScale = videoScale, onVideoScaleChange = onVideoScaleChange)
 }
 
 @Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel, scale: VideoScale) {
@@ -267,7 +273,7 @@ private fun Context.findActivity(): Activity? = when (this) {
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
     onVideoScaleChange: (VideoScale) -> Unit, videoControls: VideoControlSettings,
     onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null) {
+    onQueue: (() -> Unit)? = null, onSpeed: () -> Unit = {}) {
     val controls = rememberPlaybackControls(song.id, state.playing, autoHide = false)
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -285,38 +291,14 @@ private fun Context.findActivity(): Activity? = when (this) {
             }, onPrevious = playback::previous, onNext = playback::next,
         )
         if (controls.visible) {
-            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(onClick = close) { Icon(Icons.Default.Close, stringResource(R.string.close_player), tint = Color.White) }
-                Text(song.title, Modifier.weight(1f), color = Color.White, fontWeight = FontWeight.Bold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
-                    showLabel = false)
-                IconButton(onClick = { onAudioOnly(song) }) {
-                    Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
-                }
-                if (onOptions != null) IconButton(onClick = onOptions) {
-                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
-                }
-            }
-            VideoTransportControls(state, progress, playback, Modifier.align(Alignment.Center))
-            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .background(Color(0x990D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
-                VideoTimeline(song, progress, playback)
-                VideoActionRow(
-                    controls = videoControls,
-                    onAudioOnly = { onAudioOnly(song) },
-                    onOptions = onOptions,
-                    onQueue = onQueue,
-                    onScaleToggle = {
-                        onVideoScaleChange(videoScale.next())
-                    },
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+            VideoTopBar(song, state, close, onSpeed = onSpeed, onOptions = onOptions,
+                modifier = Modifier.align(Alignment.TopCenter))
+            VideoBottomControls(song, state, progress, playback, landscape = true, controls = videoControls,
+                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
+                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0xCC000000)))))
         }
     }
 }
@@ -326,7 +308,7 @@ private fun Context.findActivity(): Activity? = when (this) {
     onOptions: () -> Unit, onQueue: () -> Unit,
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
     onVideoScaleChange: (VideoScale) -> Unit,
-    videoControls: VideoControlSettings) {
+    videoControls: VideoControlSettings, onSpeed: () -> Unit = {}) {
     val controls = rememberPlaybackControls(song.id, state.playing, autoHide = false)
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, false, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -344,42 +326,14 @@ private fun Context.findActivity(): Activity? = when (this) {
             }, onPrevious = playback::previous, onNext = playback::next,
         )
         if (controls.visible) {
-            Row(Modifier.fillMaxWidth().align(Alignment.TopCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(onClick = back) { Icon(Icons.Default.ArrowBack, stringResource(R.string.close_player), tint = Color.White) }
-                Column(Modifier.weight(1f)) {
-                    Text(song.title, color = Color.White, fontWeight = FontWeight.Bold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${song.folder} · ${duration(progress.second)}", color = Color(0xFFCCC8D2),
-                        fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                SleepTimerIndicator(state.sleepMinutes, endAtMillis = state.sleepEndAtMs,
-                    showLabel = false)
-                IconButton(onClick = { onAudioOnly(song) }) {
-                    Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
-                }
-                IconButton(onClick = onOptions) {
-                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
-                }
-            }
-            VideoTransportControls(state, progress, playback, Modifier.align(Alignment.Center))
-            Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .background(Color(0xAA0D0C11)).padding(horizontal = 18.dp, vertical = 12.dp)) {
-                VideoTimeline(song, progress, playback)
-                VideoActionRow(
-                    controls = videoControls,
-                    onAudioOnly = { onAudioOnly(song) },
-                    onOptions = onOptions,
-                    onQueue = onQueue,
-                    onScaleToggle = {
-                        onVideoScaleChange(videoScale.next())
-                    },
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+            VideoTopBar(song, state, back, onSpeed = onSpeed, onOptions = onOptions,
+                modifier = Modifier.align(Alignment.TopCenter))
+            VideoBottomControls(song, state, progress, playback, landscape = false, controls = videoControls,
+                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
+                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
+                        listOf(Color.Transparent, Color(0xCC000000)))))
         }
     }
 }
@@ -399,36 +353,11 @@ private data class VideoControlsState(val visible: Boolean, val toggle: () -> Un
     return VideoControlsState(visible, { visible = !visible }, { visible = true })
 }
 
-@Composable private fun VideoTransportControls(state: PlaybackState, progress: Pair<Long, Long>,
-    playback: PlaybackViewModel, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        IconButton(onClick = { seekVideoBy(playback, progress, -10_000L) }) {
-            Icon(Icons.Default.Replay10, "Retroceder 10 segundos", tint = Color.White, modifier = Modifier.size(32.dp))
-        }
-        IconButton(onClick = playback::previous) {
-            Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), tint = Color.White, modifier = Modifier.size(34.dp))
-        }
-        FilledIconButton(onClick = playback::toggle, modifier = Modifier.size(68.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = StonePalette.Yellow, contentColor = StonePalette.Background)) {
-            Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                stringResource(if (state.playing) R.string.pause else R.string.play), modifier = Modifier.size(38.dp))
-        }
-        IconButton(onClick = { seekVideoBy(playback, progress, 10_000L) }) {
-            Icon(Icons.Default.Forward10, "Avanzar 10 segundos", tint = Color.White, modifier = Modifier.size(32.dp))
-        }
-        IconButton(onClick = playback::next) {
-            Icon(Icons.Default.SkipNext, stringResource(R.string.next), tint = Color.White, modifier = Modifier.size(34.dp))
-        }
-    }
-}
-
-private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>, deltaMs: Long) {
+internal fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>, deltaMs: Long) {
     if (progress.second > 0) playback.seek((progress.first + deltaMs).coerceIn(0L, progress.second))
 }
 
-@Composable private fun VideoTimeline(song: Song, progress: Pair<Long, Long>, playback: PlaybackViewModel) {
+@Composable internal fun VideoTimeline(song: Song, progress: Pair<Long, Long>, playback: PlaybackViewModel) {
     var framesVisible by remember(song.id, progress.second) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         if (framesVisible) {
@@ -443,23 +372,7 @@ private fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>,
     }
 }
 
-@Composable private fun VideoActionRow(modifier: Modifier = Modifier,
-    controls: VideoControlSettings,
-    onAudioOnly: () -> Unit, onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null,
-    onScaleToggle: (() -> Unit)? = null,
-    ) {
-    VideoControlRow(
-        controls = controls.visibleIds,
-        modifier = modifier,
-        onAudioOnly = onAudioOnly,
-        onOptions = onOptions,
-        onQueue = onQueue,
-        onScaleToggle = onScaleToggle,
-    )
-}
-
-private fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
+internal fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
     var red = 0L; var green = 0L; var blue = 0L; var count = 0L
     val stepX = (bitmap.width / 24).coerceAtLeast(1)
     val stepY = (bitmap.height / 24).coerceAtLeast(1)
@@ -741,84 +654,6 @@ private fun setWindowBrightness(context: Context, value: Float) {
     }
 }
 
-@Composable private fun LandscapeAudioPlayer(state: PlaybackState, song: Song?,
-    progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    controls: VideoControlsState,
-    onOptions: () -> Unit, onLyrics: () -> Unit, onEqualizer: () -> Unit, onQueue: () -> Unit) {
-    Row(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)
-        .padding(horizontal = 18.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(.9f).fillMaxHeight().padding(8.dp), contentAlignment = Alignment.Center
-        ) {
-            if (song != null) LandscapeRecord(song, state.playing,
-                Modifier.fillMaxHeight().aspectRatio(1f).pointerInput(song.id) {
-                    detectTapGestures { controls.show() }
-                })
-        }
-        Column(Modifier.weight(1.1f).fillMaxHeight().padding(start = 18.dp, end = 14.dp, top = 4.dp, bottom = 2.dp),
-            verticalArrangement = Arrangement.SpaceBetween) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = back) { Icon(Icons.Default.KeyboardArrowDown,
-                    stringResource(R.string.close_player), Modifier.size(32.dp)) }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.player_now), color = StonePalette.Muted,
-                        fontSize = 11.sp, letterSpacing = 1.5.sp)
-                    Text(state.artist.uppercase(), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-                IconButton(onClick = onOptions) { Icon(Icons.Default.MoreVert,
-                    stringResource(R.string.more_options)) }
-            }
-            Column(Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(state.title, fontSize = 24.sp, fontWeight = FontWeight.Black,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(state.artist, color = StonePalette.Muted, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis)
-                    }
-                    IconToggleButton(state.favorite, { playback.toggleFavorite() }) {
-                        Icon(if (state.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            stringResource(R.string.favorite), tint = if (state.favorite) StonePalette.Yellow else StonePalette.Secondary)
-                    }
-                }
-                CurrentLandscapeLyric(song, progress.first)
-            }
-            AnimatedVisibility(controls.visible) {
-                Column(Modifier.fillMaxWidth()) {
-                    PlayerProgress(progress, playback)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(playback::previous) { Icon(Icons.Default.SkipPrevious,
-                            stringResource(R.string.previous), Modifier.size(42.dp)) }
-                        FilledIconButton(playback::toggle, Modifier.size(58.dp)) {
-                            Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(36.dp))
-                        }
-                        IconButton(playback::next) { Icon(Icons.Default.SkipNext,
-                            stringResource(R.string.next), Modifier.size(42.dp)) }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onEqualizer) { Icon(Icons.Default.Tune, stringResource(R.string.equalizer)) }
-                        FilledTonalButton(onClick = onLyrics) { Icon(Icons.Default.ChatBubbleOutline, null); Text(stringResource(R.string.lyrics)) }
-                        IconButton(onClick = onQueue) { Icon(Icons.Default.QueueMusic, stringResource(R.string.queue)) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable private fun CurrentLandscapeLyric(song: Song?, positionMs: Long) {
-    val lyric = rememberCurrentLyric(song, positionMs).second
-    Text(lyric.ifBlank { stringResource(R.string.no_lyrics) },
-        Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
-        color = if (lyric.isBlank()) StonePalette.Muted else Color(0xFFD8E5E3),
-        fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2,
-        overflow = TextOverflow.Ellipsis, lineHeight = 23.sp)
-}
-
 @Composable private fun rememberCurrentLyric(song: Song?, positionMs: Long): Pair<Int, String> {
     val context = LocalContext.current.applicationContext
     val overrides = remember(context) { LyricsOverrides(context) }
@@ -863,22 +698,4 @@ private fun setWindowBrightness(context: Context, value: Float) {
     }
 }
 
-@Composable private fun LandscapeRecord(song: Song, playing: Boolean, modifier: Modifier = Modifier) {
-    val angle = remember { Animatable(0f) }
-    LaunchedEffect(playing) {
-        if (playing) while (true) angle.animateTo(angle.value + 360f,
-            animationSpec = tween(18_000, easing = LinearEasing))
-    }
-    val rotation = angle.value
-    Box(modifier.graphicsLayer { rotationZ = if (playing) rotation else 0f }
-        .clip(CircleShape).background(Brush.radialGradient(listOf(
-            Color(0xFF285D58), Color(0xFF123B38), Color(0xFF092A29), Color(0xFF071C1C))))
-        .padding(12.dp), contentAlignment = Alignment.Center) {
-        repeat(5) { index ->
-            Box(Modifier.fillMaxSize().padding((index * 9 + 4).dp)
-                .border(1.dp, Color(0x337FA8A1), CircleShape))
-        }
-        StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxSize(.54f).clip(CircleShape))
-        Box(Modifier.fillMaxSize(.045f).clip(CircleShape).background(Color(0xFF101719)))
-    }
-}
+private val PlayerCream = Color(0xFFF1E3CC)

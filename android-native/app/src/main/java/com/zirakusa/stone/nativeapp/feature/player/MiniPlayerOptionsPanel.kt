@@ -39,7 +39,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
                     .then(if (immersive) Modifier else
                         Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical))),
                 shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
-                color = Color(0xFF62393B),
+                color = rememberSongTint(song),
                 tonalElevation = 8.dp
             ) {
                 Column(Modifier.fillMaxSize()) {

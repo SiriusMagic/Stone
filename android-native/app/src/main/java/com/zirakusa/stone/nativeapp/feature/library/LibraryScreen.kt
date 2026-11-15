@@ -173,7 +173,7 @@ private val legacyDefinitions = listOf(
             onHome = { tab = LibraryTab.Songs; collection = null; query = ""; searchVisible = false; onHome() },
             onAction = dispatchQuickAction, onEqualizer = onEqualizer,
             onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
-    }, player = { showPanel -> playerContent(showPanel, tab == LibraryTab.Videos) }) {
+    }, player = { showPanel -> playerContent(showPanel, tab.isVideo) }) {
         val fixedChrome = Modifier.fillMaxWidth().zIndex(1f).background(StonePalette.Background)
         if (layout.sidebar) Box(fixedChrome) {
             LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,

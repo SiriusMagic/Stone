@@ -23,8 +23,23 @@ import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 enum class LibraryTab(val label: Int) {
-    Videos(R.string.videos), Songs(R.string.songs), Playlists(R.string.playlists),
-    Folders(R.string.folders), Artists(R.string.artists), Albums(R.string.albums)
+    Videos(R.string.videos), Shorts(R.string.shorts), Movies(R.string.movies), Songs(R.string.songs),
+    Playlists(R.string.playlists), Folders(R.string.folders), Artists(R.string.artists), Albums(R.string.albums);
+
+    val isVideo: Boolean get() = this == Videos || this == Shorts || this == Movies
+
+    /** Which videos belong to this tab: Shorts < 1:30, Movies > 1 h, Videos in between. */
+    fun accepts(song: com.zirakusa.stone.core.Song): Boolean = when (this) {
+        Videos -> song.isVideo && song.durationMs !in 1 until SHORT_MAX_MS && song.durationMs <= MOVIE_MIN_MS
+        Shorts -> song.isVideo && song.durationMs in 1 until SHORT_MAX_MS
+        Movies -> song.isVideo && song.durationMs > MOVIE_MIN_MS
+        else -> !song.isVideo
+    }
+
+    companion object {
+        const val SHORT_MAX_MS = 90_000L
+        const val MOVIE_MIN_MS = 3_600_000L
+    }
 }
 
 @Composable fun LibraryTabs(selected: LibraryTab, landscape: Boolean = false, onSelect: (LibraryTab) -> Unit) {
@@ -41,7 +56,7 @@ enum class LibraryTab(val label: Int) {
                 .semantics(mergeDescendants = true) { selectedSemantics = active }
                 .padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (tab == LibraryTab.Videos) StoneIcon(StoneGlyph.Video,
+                if (tab.isVideo) StoneIcon(StoneGlyph.Video,
                     color = if (active) activeText else StonePalette.Muted, size = 16)
                 Text(stringResource(tab.label), modifier = Modifier
                     .selectable(active, role = Role.Tab, onClick = { onSelect(tab) })

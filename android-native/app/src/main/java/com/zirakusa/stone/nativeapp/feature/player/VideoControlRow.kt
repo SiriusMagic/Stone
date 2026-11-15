@@ -21,10 +21,12 @@ import androidx.compose.ui.unit.dp
     onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
     onScaleToggle: (() -> Unit)? = null,
+    onRotate: (() -> Unit)? = null,
+    arrangement: Arrangement.Horizontal = Arrangement.SpaceEvenly,
 ) {
     Row(
         modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = arrangement,
     ) {
         controls.forEach { id ->
             val definition = VideoControlRegistry.definition(id)
@@ -33,10 +35,11 @@ import androidx.compose.ui.unit.dp
                 VideoControlId.Options -> onOptions
                 VideoControlId.Queue -> onQueue
                 VideoControlId.Scale -> onScaleToggle
+                VideoControlId.Rotate -> onRotate
             }
             action?.let {
                 IconButton(onClick = it, modifier = Modifier.size(48.dp)) {
-                    Icon(definition.icon, stringResource(definition.label))
+                    Icon(definition.icon, stringResource(definition.label), tint = androidx.compose.ui.graphics.Color.White)
                 }
             }
         }

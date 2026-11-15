@@ -26,7 +26,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             if (tab == LibraryTab.Songs) Text(pluralStringResource(R.plurals.song_count, songCount, songCount),
                 color = StonePalette.Muted, style = MaterialTheme.typography.bodySmall)
         }
-        if (tab != LibraryTab.Videos) {
+        if (!tab.isVideo) {
             IconButton(onClick = onFolder, enabled = !scanning) {
                 Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_folder), tint = StonePalette.Secondary)
             }

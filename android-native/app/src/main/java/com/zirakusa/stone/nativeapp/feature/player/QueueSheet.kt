@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -46,14 +47,15 @@ private val QueueBrown = Color(0xFF5A3436)
 private val QueueDark = Color(0xFF4A292B)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable fun QueueSheet(state: PlaybackState, playback: PlaybackViewModel, onClose: () -> Unit) {
+@Composable fun QueueSheet(state: PlaybackState, playback: PlaybackViewModel, tint: Color = QueueBrown,
+    onClose: () -> Unit) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var clearDialog by remember { mutableStateOf(false) }
     val swipeState = remember { mutableStateMapOf<String, Float>() }
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = QueueBrown,
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = tint,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF7A5759)) }) {
         ImmersiveWindowEffect()
@@ -104,7 +106,7 @@ private val QueueDark = Color(0xFF4A292B)
                             tint = Color.White, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 26.dp))
                     val swipeOffset = swipeState[item.id] ?: 0f
                     Row(Modifier.fillMaxSize().offset { IntOffset(swipeOffset.roundToInt(), 0) }
-                        .background(if (index == state.index) Color(0xFF684041) else QueueBrown,
+                        .background(if (index == state.index) Color.White.copy(alpha = .08f).compositeOver(tint) else tint,
                             RoundedCornerShape(14.dp))
                         .clickable { if (swipeOffset != 0f) swipeState.remove(item.id) else playback.playAt(index) }
                         .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
@@ -14,7 +15,8 @@ enum class VideoControlId(val key: String) {
     /** Retired from the action row: options now live in the ⋮ button of the top bar. */
     Options("options"),
     Queue("queue"),
-    Scale("scale")
+    Scale("scale"),
+    Rotate("rotate")
 }
 
 data class VideoControlDefinition(
@@ -28,6 +30,7 @@ object VideoControlRegistry {
         VideoControlDefinition(VideoControlId.AudioOnly, Icons.Default.Headphones, R.string.audio_only),
         VideoControlDefinition(VideoControlId.Queue, Icons.Default.QueueMusic, R.string.queue),
         VideoControlDefinition(VideoControlId.Scale, Icons.Default.Crop, R.string.video_scale_toggle),
+        VideoControlDefinition(VideoControlId.Rotate, Icons.Default.ScreenRotation, R.string.video_rotate),
     )
 
     val defaultIds = definitions.map { it.id }

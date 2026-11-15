@@ -1,11 +1,13 @@
 package com.zirakusa.stone.nativeapp
 
+import com.zirakusa.stone.nativeapp.feature.library.components.LibraryTab
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.feature.player.VideoControlId
 import com.zirakusa.stone.nativeapp.feature.player.VideoControlSettings
+import org.junit.Assert.assertFalse
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,11 +39,11 @@ class HorizontalSettingsTest {
 
         val settings = VideoControlSettings.from(StoneSettingsStore(context))
         assertEquals(
-            listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Scale),
+            listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Scale, VideoControlId.Rotate),
             settings.order,
         )
         assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,
-            VideoControlId.Scale), settings.visibleIds)
+            VideoControlId.Scale, VideoControlId.Rotate), settings.visibleIds)
     }
 
     @Test fun videoLayoutAndImmersivePreferencesHaveSafeDefaultsAndPersist() {
@@ -61,5 +63,15 @@ class HorizontalSettingsTest {
         // Do not leak this test's preference changes into other persistence tests.
         store.setVideoLibraryLayout("grid")
         store.setImmersiveEnabled(true)
+    }
+
+    @Test fun videoTabsSplitByDuration() {
+        fun video(ms: Long) = com.zirakusa.stone.core.Song("content://v/$ms.mp4", "v", "a", "", "f", ms, 1, 1, isVideo = true)
+        assertTrue(LibraryTab.Shorts.accepts(video(60_000)))
+        assertTrue(LibraryTab.Videos.accepts(video(90_000)))
+        assertTrue(LibraryTab.Videos.accepts(video(3_600_000)))
+        assertTrue(LibraryTab.Movies.accepts(video(3_700_000)))
+        assertTrue(LibraryTab.Videos.accepts(video(0)))
+        assertFalse(LibraryTab.Videos.accepts(video(60_000)))
     }
 }

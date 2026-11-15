@@ -267,4 +267,19 @@
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
     <string name="volume_sleepy_chip" formatted="false">Sleepy · max 10%</string>
     <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
+    <string name="shorts">Shorts</string>
+    <string name="movies">Movies</string>
+    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="other">%1$d shorts</item></plurals>
+    <string name="video_rotate">Rotate screen</string>
+    <string name="play_mode">Play mode</string>
+    <string name="subtitles">Subtitles/CC</string>
+    <string name="audio_track">Audio track</string>
+    <string name="track_off">Off</string>
+    <string name="track_none">This video has no tracks of this kind.</string>
+    <string name="information">Information</string>
+    <string name="video_scale_short_auto">Auto</string>
+    <string name="video_scale_short_fit">Original</string>
+    <string name="video_scale_short_zoom">Fill</string>
+    <string name="video_scale_short_fill">Stretch</string>
+    <string name="repeat_off">No repeat</string>
 </resources>

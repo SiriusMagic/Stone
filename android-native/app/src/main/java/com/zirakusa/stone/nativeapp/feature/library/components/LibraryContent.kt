@@ -60,8 +60,12 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
         else -> { _ -> "" }
     }
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
-    val mediaSongs = songs.filter { if (tab == LibraryTab.Videos) it.isVideo else !it.isVideo }
-    if (tab == LibraryTab.Videos) {
+    val mediaSongs = songs.filter(tab::accepts)
+    if (tab == LibraryTab.Shorts) {
+        ShortsGrid(mediaSongs, state, currentId, modifier, onPlay, onVideoOptions)
+        return
+    }
+    if (tab.isVideo) {
         VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder,
             compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions)
         return
@@ -123,7 +127,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
             }
             if (visible.isEmpty() && !state.scanning) item {
                 if (searching) Text(stringResource(R.string.no_results), Modifier.padding(vertical = 32.dp), color = StonePalette.Muted)
-                else LibraryEmptyState(videos = tab == LibraryTab.Videos)
+                else LibraryEmptyState(videos = tab.isVideo)
             }
             if (grouped && collection == null) {
                 items(mediaSongs.groupBy(groupKey).toList(), key = { it.first }) { (name, tracks) ->

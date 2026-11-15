@@ -77,7 +77,7 @@ private fun qualityLabel(frame: ArtworkLoader.VideoFrame): String? {
 
 @Composable
 internal fun VideoThumbnail(song: Song, selected: Boolean, modifier: Modifier = Modifier,
-    showPlay: Boolean = true, onOptions: (() -> Unit)? = null) {
+    showPlay: Boolean = true, onOptions: (() -> Unit)? = null, fill: Boolean = false) {
     val frame = rememberVideoFrame(song)
     Box(modifier.clip(VideoShape).background(Color(0xFF17161D)).border(
         if (selected) 2.dp else 0.dp,
@@ -90,7 +90,7 @@ internal fun VideoThumbnail(song: Song, selected: Boolean, modifier: Modifier = 
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 // Portrait sources stay centered in the 16:9 tile instead of being stretched.
-                contentScale = if (frame.height > frame.width) ContentScale.Fit else ContentScale.Crop
+                contentScale = if (!fill && frame.height > frame.width) ContentScale.Fit else ContentScale.Crop
             )
         } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             StoneIcon(StoneGlyph.Video, color = Color(0xFF85828E), size = 32)

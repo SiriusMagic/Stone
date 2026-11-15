@@ -1,5 +1,14 @@
 # Stone Kotlin 1.6.0
 
+- Modo Dormilón: volumen máximo al 10 % (-20 dB) para escuchar en la cama sin molestar.
+- Editores de etiquetas: escriben en el archivo original (MP3, FLAC, M4A, MP4) con portada,
+  y Android vuelve a indexarlo para que otros reproductores vean el cambio.
+- Vídeos: pestañas Shorts (< 1:30) y Películas (> 1 h); controles nuevos (barra superior con
+  velocidad y ⋮, acciones, progreso y transporte; botón de rotar) y menú ⋮ de vídeo con
+  escala, modo de reproducción, subtítulos y pista de audio (panel lateral en horizontal).
+- Audio horizontal: disco de vinilo que gira; girarlo con el dedo avanza o retrocede la canción.
+- La Fila y el menú ⋮ toman el color de la portada de la canción.
+- Carpetas: encabezado con número de carpetas y botón para añadir carpeta.
 - Sonido: offload real al DSP en modo Ahorro, salida en coma flotante para PCM de alta resolución,
   la salida sigue siempre la ruta activa (auriculares/Bluetooth/USB) y los diagnósticos de audio ya
   no se ejecutan en las versiones optimizadas.

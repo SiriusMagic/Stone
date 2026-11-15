@@ -334,4 +334,19 @@
     <string name="audio_mode_sleepy_info" formatted="false">Para escuchar en la cama sin molestar: el volumen máximo queda en el 10&#160;% y hasta el nivel más bajo suena suave. Ahorra batería.</string>
     <string name="volume_sleepy_chip" formatted="false">Dormilón · máx. 10&#160;%</string>
     <plurals name="folder_count"><item quantity="one">%1$d carpeta</item><item quantity="other">%1$d carpetas</item></plurals>
+    <string name="shorts">Shorts</string>
+    <string name="movies">Películas</string>
+    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="other">%1$d shorts</item></plurals>
+    <string name="video_rotate">Rotar pantalla</string>
+    <string name="play_mode">Modo de reproducción</string>
+    <string name="subtitles">Subtítulos/CC</string>
+    <string name="audio_track">Pista de audio</string>
+    <string name="track_off">Desactivados</string>
+    <string name="track_none">Este vídeo no tiene pistas de este tipo.</string>
+    <string name="information">Información</string>
+    <string name="video_scale_short_auto">Automático</string>
+    <string name="video_scale_short_fit">Original</string>
+    <string name="video_scale_short_zoom">Llenar</string>
+    <string name="video_scale_short_fill">Estirar</string>
+    <string name="repeat_off">Sin repetir</string>
 </resources>

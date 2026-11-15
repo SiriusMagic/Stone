@@ -74,14 +74,15 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable internal fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
-    onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
+    onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList(),
+    tint: Color = Color(0xFF62393B)) {
     // In landscape the sheet would otherwise stretch to Material's 640 dp maximum and
     // cover most of the screen; half the window keeps the library visible beside it.
     val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
     val density = androidx.compose.ui.platform.LocalDensity.current
     val landscape = window.width > window.height
     val maxWidth = if (landscape) with(density) { (window.width / 2).toDp() } else BottomSheetDefaults.SheetMaxWidth
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B),
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = tint,
         sheetMaxWidth = maxWidth, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = landscape)) {
         ImmersiveWindowEffect()
         PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect)
@@ -123,6 +124,9 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
             }
         }
         items(visibleRows) { row ->
+            // Groups like the reference: playlist/share | tools | delete.
+            if (row.tool == PlayerTool.Speed || row.tool == PlayerTool.Delete)
+                HorizontalDivider(Modifier.padding(vertical = 6.dp), color = Color(0x22FFFFFF))
             Row(Modifier.fillMaxWidth().height(64.dp).clickable { onSelect(row.tool) },
                 verticalAlignment = Alignment.CenterVertically) {
                 Icon(row.icon, null, Modifier.size(28.dp))
