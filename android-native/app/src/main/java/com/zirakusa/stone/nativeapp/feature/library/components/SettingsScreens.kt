@@ -107,13 +107,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     )),
                     SettingsMenuSection(R.string.settings_section_playback, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
-                            "reproducción audio sonido modos salida diagnóstico", { onPage("playback") }),
-                        SettingsMenuItem(Icons.Default.Speaker, stringResource(R.string.audio_output), "",
-                            "reproducción audio salida altavoz bluetooth usb", { onPage("audio-output") }),
+                            "reproducción audio sonido modos salida altavoz bluetooth usb notificaciones avisos diagnóstico", { onPage("playback") }),
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
-                        SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_notifications), "",
-                            "reproducción notificaciones avisos", { onPage("notifications") }),
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
                             "reproducción vídeo video inmersivo pantalla horizontal controles", { onPage("video") }),
                         SettingsMenuItem(Icons.Default.Tune, stringResource(R.string.video_controls), "",
@@ -175,16 +171,21 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
                     "library-scan" -> LibraryScanSettings(store)
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
-                    "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
-                        { onPage("hardware-acceleration") })
+                    "playback" -> {
+                        PlaybackDetail(store, playback, { onPage("audio-mode") },
+                            { onPage("hardware-acceleration") })
+                        // Former "Salida de audio" and "Notificaciones" pages, now one section.
+                        Text(stringResource(R.string.settings_output_and_alerts), color = StonePalette.Yellow,
+                            fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+                        AudioOutputDetail()
+                        NotificationDetail(store)
+                    }
                     "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange)
                     "video-controls" -> VideoControlSettingsDetail(store, onVideoControlChange)
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
-                    "audio-output" -> AudioOutputDetail()
                     "feedback" -> FeedbackDetail(shakeToReport, onShakeToReportChange)
                     "about" -> AboutDetail()
-                    "notifications" -> NotificationDetail(store)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
                     "system-diagnostics", "audio-diagnostics" -> SystemDiagnosticsDetail(playback)
                 }
@@ -207,9 +208,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "video" -> R.string.video_settings
     "video-controls" -> R.string.video_controls
     "hardware-acceleration" -> R.string.hardware_acceleration
-    "audio-output" -> R.string.audio_output
     "feedback" -> R.string.feedback_title; "about" -> R.string.about_stone
-    "notifications" -> R.string.settings_notifications
     "sleep" -> R.string.sleep_timer
     "system-diagnostics", "audio-diagnostics" -> R.string.system_diagnostics; else -> R.string.settings
 })
@@ -385,7 +384,13 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     val context = LocalContext.current
     val route = remember(context) {
         val manager = context.getSystemService(android.media.AudioManager::class.java)
-        val device = manager?.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull()
+        val devices = manager?.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS).orEmpty()
+        val external = setOf(android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES, android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            android.media.AudioDeviceInfo.TYPE_USB_DEVICE, android.media.AudioDeviceInfo.TYPE_USB_HEADSET)
+        val device = devices.firstOrNull { it.type in external }
+            ?: devices.firstOrNull { it.type == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            ?: devices.firstOrNull()
         device?.productName?.toString()?.takeIf { it.isNotBlank() } ?: when (device?.type) {
             android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
             android.media.AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth"
@@ -402,7 +407,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
     Button(onClick = {
         runCatching { context.startActivity(Intent(android.provider.Settings.ACTION_SOUND_SETTINGS)) }
-    }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+    }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 12.dp)) {
         Icon(Icons.Default.Settings, null)
         Spacer(Modifier.width(8.dp))
         Text(stringResource(R.string.audio_output_open_settings))

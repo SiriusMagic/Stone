@@ -77,7 +77,7 @@
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="immersive_screen">Immersive screen</string>
     <string name="immersive_screen_hint">Hides system bars across the entire app: home, library, players, videos, playlists and settings. Android can show them temporarily with a gesture.</string>
-    <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
+    <string name="settings_playback">Playback settings</string>
     <string name="video_settings">Video</string>
     <string name="video_settings_hint">Landscape videos open in immersive mode and fill the screen without distortion. You can change the framing from the player controls.</string>
     <string name="video_controls">Video controls</string>
@@ -159,7 +159,7 @@
     <string name="audio_diagnostics_intro">These metrics are read only when this screen is open. Stone does not keep a background monitor.</string>
     <string name="refresh_metrics">Refresh metrics</string>
     <string name="ram_available">RAM available</string><string name="process_heap">Stone memory</string><string name="battery_level">Battery</string>
-    <string name="audio_output">Audio output</string>
+    
     <string name="audio_output_intro">See the output Android is currently using. Advanced selection depends on the system and connected device.</string>
     <string name="audio_output_current">Current output</string>
     <string name="audio_output_open_settings">Open system sound settings</string>
@@ -282,4 +282,5 @@
     <string name="video_scale_short_zoom">Fill</string>
     <string name="video_scale_short_fill">Stretch</string>
     <string name="repeat_off">No repeat</string>
+    <string name="settings_output_and_alerts">Output and alerts</string>
 </resources>

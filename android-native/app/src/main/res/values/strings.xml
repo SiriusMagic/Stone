@@ -222,7 +222,7 @@
     <string name="audio_mode_hifi_info">Calidad prioritaria y aceleración completa cuando el dispositivo lo permite.</string>
     <string name="quick_action_activated">%1$s activado</string>
     <string name="quick_action_confirmed">Acceso ejecutado: %1$s</string>
-    <string name="settings_notifications">Configuración de notificaciones</string>
+    
     <string name="about_stone">Sobre Stone</string>
     <string name="feedback_title">Opiniones y sugerencias</string>
     <string name="feedback_report_bug">Reportar error</string>
@@ -278,7 +278,7 @@
     <string name="push_notifications">Notificación push</string>
     <string name="push_notifications_hint">Las recomendaciones musicales aún no están disponibles.</string>
     <string name="notifications_unavailable">Las notificaciones locales de nuevos archivos aún no están disponibles.</string>
-    <string name="audio_output">Salida de audio</string>
+    
     <string name="audio_output_intro">Consulta la salida que Android está usando actualmente. La selección avanzada depende del sistema y del dispositivo conectado.</string>
     <string name="audio_output_current">Salida actual</string>
     <string name="audio_output_open_settings">Abrir ajustes de sonido del sistema</string>
@@ -349,4 +349,5 @@
     <string name="video_scale_short_zoom">Llenar</string>
     <string name="video_scale_short_fill">Estirar</string>
     <string name="repeat_off">Sin repetir</string>
+    <string name="settings_output_and_alerts">Salida y avisos</string>
 </resources>
