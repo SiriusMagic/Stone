@@ -276,6 +276,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         onOptions = onOptions,
                         onQueue = onQueue,
                         onScaleToggle = onScaleToggle,
+                        playback = playback, state = state,
                     )
                 }
             }

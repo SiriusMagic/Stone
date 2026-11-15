@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +37,8 @@ import kotlin.math.roundToInt
  * is +50 % of Stone amplification allowed by the current mode (Balanceado 150 %, Cine 300 %).
  * In Dormilón the label shows the real output (at most 10 %).
  */
-@Composable fun VolumeOverlay(state: StonePlaybackService.VolumeUiState, modifier: Modifier = Modifier) {
+@Composable fun VolumeOverlay(state: StonePlaybackService.VolumeUiState, modifier: Modifier = Modifier,
+    onDismiss: () -> Unit = {}) {
     val gain = StonePlaybackService.currentModeGain
     val boosted = state.percent > 100
     val accent = StonePalette.Yellow
@@ -44,9 +46,20 @@ import kotlin.math.roundToInt
     val percent = dragging ?: state.percent
     val shown = if (gain < 1f) String.format(Locale.US, if (percent * gain < 10) "%.1f" else "%.0f", percent * gain)
         else percent.toString()
-    Surface(modifier.fillMaxWidth().padding(horizontal = 16.dp), color = Color(0xF0121116),
+    val dismiss by rememberUpdatedState(onDismiss)
+    Surface(modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        // Swipe up anywhere on the card closes it at once.
+        .pointerInput(Unit) {
+            var travelled = 0f
+            var closed = false
+            detectVerticalDragGestures(onDragStart = { travelled = 0f; closed = false }) { _, amount ->
+                travelled += amount
+                if (!closed && travelled < -20.dp.toPx()) { closed = true; dismiss() }
+            }
+        }, color = Color(0xF0121116),
         shape = RoundedCornerShape(26.dp), shadowElevation = 12.dp) {
-        Column(Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
+        Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
                 Icon(when {
@@ -88,6 +101,9 @@ import kotlin.math.roundToInt
                         .clickable { StonePlaybackService.setVolumePercent(level) })
                 }
             }
+            // Discreet handle: hints that the card can be swiped up to close.
+            Box(Modifier.padding(top = 10.dp).size(width = 36.dp, height = 4.dp)
+                .clip(RoundedCornerShape(2.dp)).background(Color(0xFFB9B9C2)))
         }
     }
 }

@@ -48,7 +48,7 @@ class LibraryScreenTest {
             StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(), true, { folderRequests++ }, { _, _ -> }, Modifier.fillMaxSize()) } }
         }
         compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
-        compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
+        compose.onNodeWithContentDescription(text(R.string.search)).assertExists()
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
         compose.onNodeWithContentDescription(text(R.string.choose_folder)).performClick()
@@ -143,12 +143,13 @@ class LibraryScreenTest {
                 { _, tracks -> queue = tracks }, Modifier.fillMaxSize()) } }
         }
         compose.onRoot().captureRoboImage("build/screenshots/stone-home-songs.png")
-        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
+        // The search bar is fixed under the header; there is no magnifier to open it.
+        compose.onNodeWithContentDescription(text(R.string.search_toggle)).assertDoesNotExist()
         compose.onNodeWithContentDescription(text(R.string.search)).performTextInput("Mr.Kitty")
         compose.onNodeWithText("Courtesy Call").assertDoesNotExist()
         compose.onNodeWithText("After Dark").performClick()
         assertEquals(listOf(songs.first()), queue)
-        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.clear_search)).performClick()
         compose.onNodeWithText("Courtesy Call").assertIsDisplayed()
     }
 

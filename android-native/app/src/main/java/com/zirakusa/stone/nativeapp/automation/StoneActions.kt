@@ -163,5 +163,5 @@ internal object StoneActions {
             }
             host().refreshLibrary(); ok("Tags written to the file")
         },
-    ) + StoneLookActions.all()
+    ) + StoneMediaActions.all() + StoneLookActions.all() + StoneGuide.action
 }

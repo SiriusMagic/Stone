@@ -10,14 +10,15 @@ data class QuickActionDefinition(val id: String, val label: String, val descript
 /** Single source of truth for home shortcuts. Unavailable actions stay out of the operational UI. */
 object QuickActionRegistry {
     /** Actions that stay at the front of every preset profile. Custom can reorder or hide them. */
-    val pinnedIds = listOf("search", "sort")
+    val pinnedIds = listOf("sort")
 
     /** Actions that have a real destination or operation in the current app. */
     private val available = setOf(
-        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi", "audio_mode_sleepy", "diagnostics"
+        "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi", "audio_mode_sleepy", "diagnostics",
+        "shuffle_all", "favorites", "equalizer", "sleep_timer", "api_mode"
     )
 
-    /** Default playback shortcuts; search and legacy actions are added by LibraryScreen. */
+    /** Default playback shortcuts; "sort" is added by LibraryScreen. */
     val preferredIds = listOf(
         "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi", "audio_mode_sleepy"
     )
@@ -33,6 +34,11 @@ object QuickActionRegistry {
         QuickActionDefinition("audio_mode_sleepy", "Dormilón",
             "Volumen máximo al 10 % para dormir", Icons.Default.Bedtime, true),
         QuickActionDefinition("diagnostics", "Diagnóstico de rendimiento", "CPU, RAM y audio", Icons.Default.Memory, true),
+        QuickActionDefinition("shuffle_all", "Mezclar todo", "Reproduce toda la música en orden aleatorio", Icons.Default.Shuffle, true),
+        QuickActionDefinition("favorites", "Favoritos", "Abre tus canciones favoritas", Icons.Default.Favorite, true),
+        QuickActionDefinition("equalizer", "Ecualizador", "Bandas y preajustes de sonido", Icons.Default.Tune, true),
+        QuickActionDefinition("sleep_timer", "Temporizador", "Pausa la música al dormir", Icons.Default.Timer, true),
+        QuickActionDefinition("api_mode", "Modo API", "Conecta un asistente de IA", Icons.Default.Hub, true),
     )
     val operational = definitions.filter { it.available && it.id in available }
 }

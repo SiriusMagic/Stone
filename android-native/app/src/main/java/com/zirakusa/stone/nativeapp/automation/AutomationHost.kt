@@ -35,4 +35,28 @@ interface AutomationHost {
     fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean)
     fun extendSleepTimer(minutes: Int)
     fun setLauncherIcon(key: String)
+
+    // Added in 1.6.7. Defaults keep older hosts (tests) compiling.
+    val favoriteIds: Set<String> get() = emptySet()
+    /** Sort key (LibrarySort name in lowercase) and whether it is descending. */
+    val librarySort: Pair<String, Boolean> get() = "title" to false
+    val videoScale: String get() = "auto"
+    fun setShuffle(enabled: Boolean) {}
+    /** 0 off, 1 one, 2 all (Media3 repeat modes). */
+    fun setRepeat(mode: Int) {}
+    fun playQueueIndex(index: Int) {}
+    fun moveQueue(from: Int, to: Int) {}
+    fun removeFromQueue(index: Int) {}
+    fun clearQueue() {}
+    fun toggleFavorite() {}
+    fun setEqualizerEnabled(enabled: Boolean) {}
+    fun setEqualizerBand(index: Int, value: Int) {}
+    fun setEqualizerPreset(name: String, values: List<Int>) {}
+    fun removeFromPlaylist(playlistId: String, song: Song) {}
+    fun sortLibrary(key: String, descending: Boolean) {}
+    fun setVideoScale(key: String) {}
+    /** Window brightness 2-100, or null to follow the system again. False when no screen is available. */
+    fun setScreenBrightness(percent: Int?): Boolean = false
+    /** portrait, landscape or auto. */
+    fun setOrientation(key: String): Boolean = false
 }

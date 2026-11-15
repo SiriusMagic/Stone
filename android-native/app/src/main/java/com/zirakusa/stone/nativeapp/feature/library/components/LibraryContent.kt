@@ -332,9 +332,12 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     var createVisible by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var coverTarget by remember { mutableStateOf<String?>(null) }
+    // Kept apart from the dialog target (and saved): closing the dialog must not forget which
+    // playlist the gallery result belongs to.
+    var coverPickTarget by rememberSaveable { mutableStateOf<String?>(null) }
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        val target = coverTarget
-        coverTarget = null
+        val target = coverPickTarget
+        coverPickTarget = null
         if (target != null && uri != null) onSetPlaylistCover(target, uri)
     }
     val audio = state.songs.filterNot { it.isVideo }
@@ -405,7 +408,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
             title = { ImmersiveWindowEffect(); Text(stringResource(R.string.playlist_cover_title)) },
             text = { Text(stringResource(R.string.playlist_cover_message)) },
             confirmButton = {
-                TextButton(onClick = { coverTarget = null; coverPicker.launch("image/*") }) {
+                TextButton(onClick = { coverPickTarget = target; coverTarget = null; coverPicker.launch("image/*") }) {
                     Text(stringResource(R.string.choose_cover))
                 }
             },

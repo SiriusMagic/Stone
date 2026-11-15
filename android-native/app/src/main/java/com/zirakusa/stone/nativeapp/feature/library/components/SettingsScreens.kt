@@ -85,7 +85,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onShakeToReportChange: (Boolean) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
-    BackHandler(enabled = page != null, onBack = { onPage(null) })
+    BackHandler(enabled = page != null, onBack = { onPage(if (page in legalPages) "about" else null) })
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         ImmersiveWindowEffect()
@@ -144,7 +144,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback_title), "",
                             "ayuda opinión sugerencias", { onPage("feedback") }),
                         SettingsMenuItem(Icons.Default.Info, stringResource(R.string.about_stone), "",
-                            "ayuda acerca versión información", { onPage("about") })
+                            "ayuda acerca versión información calificar privacidad términos licencias legal", { onPage("about") })
                     ))
                 )
                 val normalizedQuery = settingsQuery.trim()
@@ -168,7 +168,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 }
             } else {
                 Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { onPage(null) }) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) }
+                    IconButton(onClick = { onPage(if (page in legalPages) "about" else null) }) {
+                        Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) }
                     Text(pageTitle(page), fontSize = 24.sp, fontWeight = FontWeight.Black)
                 }
                 when (page) {
@@ -208,7 +209,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "feedback" -> FeedbackDetail(shakeToReport, onShakeToReportChange)
-                    "about" -> AboutDetail()
+                    "about" -> AboutDetail { onPage(it) }
+                    "privacy", "terms", "licenses" -> LegalDocument(page)
                     "sleep" -> SleepDetail(playback, onClose = { onPage(null) })
                     "system-diagnostics", "audio-diagnostics" -> SystemDiagnosticsDetail(playback)
                 }
@@ -216,6 +218,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         }
     }
 }
+
+/** Pages opened from "Sobre Stone"; back returns there instead of the settings root. */
+private val legalPages = setOf("privacy", "terms", "licenses")
 
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
     "light" -> R.string.theme_light; "gray" -> R.string.theme_gray
@@ -237,6 +242,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "video", "video-controls" -> R.string.video_settings
     "hardware-acceleration" -> R.string.hardware_acceleration
     "feedback" -> R.string.feedback_title; "about" -> R.string.about_stone
+    "privacy" -> R.string.privacy_policy; "terms" -> R.string.terms_service
+    "licenses" -> R.string.open_source_licenses
     "sleep" -> R.string.sleep_timer
     "system-diagnostics", "audio-diagnostics" -> R.string.system_diagnostics; else -> R.string.settings
 })
@@ -245,7 +252,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 @Composable private fun HomeShortcutDetail(store: StoneSettingsStore?,
     onChange: (String, Boolean) -> Unit) {
     val legacy = listOf(
-        QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
         QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true))
     val legacyIds = remember { legacy.map { it.id } }
     val defaultVisibleIds = legacyIds.toSet() + QuickActionRegistry.defaultVisibleIds
@@ -385,7 +391,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     }
 }
 
-@Composable private fun AboutDetail() {
+@Composable private fun AboutDetail(onPage: (String) -> Unit) {
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(18.dp))
@@ -395,12 +401,12 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         Text(stringResource(R.string.version_label, BuildConfig.VERSION_NAME), color = StonePalette.Muted,
             modifier = Modifier.padding(top = 10.dp))
         SettingsGroup {
-            SettingsRow(Icons.Default.ThumbUp, R.string.rate_stone, "") { }
+            SettingsRow(Icons.Default.ThumbUp, R.string.rate_stone, "") { openStoneRepository(context) }
         }
         SettingsGroup {
-            SettingsRow(Icons.Default.Policy, R.string.privacy_policy, "") { }
-            SettingsRow(Icons.Default.Description, R.string.terms_service, "") { }
-            SettingsRow(Icons.Default.Verified, R.string.open_source_licenses, "") { }
+            SettingsRow(Icons.Default.Policy, R.string.privacy_policy, "") { onPage("privacy") }
+            SettingsRow(Icons.Default.Description, R.string.terms_service, "") { onPage("terms") }
+            SettingsRow(Icons.Default.Verified, R.string.open_source_licenses, "") { onPage("licenses") }
         }
         Text(stringResource(R.string.copyright_stone), color = StonePalette.Muted,
             fontSize = 12.sp, modifier = Modifier.padding(vertical = 18.dp))

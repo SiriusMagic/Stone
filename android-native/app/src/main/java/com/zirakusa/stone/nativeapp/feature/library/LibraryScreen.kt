@@ -31,12 +31,11 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
-private val homeShortcutKeys = listOf("search", "sort")
+private val homeShortcutKeys = listOf("sort")
 private val defaultVisibleHomeShortcutKeys = homeShortcutKeys.toSet() + QuickActionRegistry.defaultVisibleIds
 private val allQuickActionIds = homeShortcutKeys + QuickActionRegistry.preferredIds +
     QuickActionRegistry.operational.map { it.id }.filterNot { it in homeShortcutKeys || it in QuickActionRegistry.preferredIds }
 private val legacyDefinitions = listOf(
-    QuickActionDefinition("search", "Buscar", "Buscar en la biblioteca", Icons.Default.Search, true),
     QuickActionDefinition("sort", "Ordenar", "Ordenar biblioteca", Icons.Default.Sort, true)
 )
 
@@ -75,12 +74,11 @@ private val legacyDefinitions = listOf(
     shakeToReport: Boolean = true,
     onShakeToReportChange: (Boolean) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
-    var searchVisible by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(LibraryTab.Songs) }
     var collection by rememberSaveable { mutableStateOf<String?>(null) }
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
-    var sort by rememberSaveable { mutableStateOf(LibrarySort.Title) }
-    var descending by rememberSaveable { mutableStateOf(false) }
+    var sort by LibraryViewState::sort
+    var descending by LibraryViewState::descending
     var moreQuickActions by rememberSaveable { mutableStateOf(false) }
     var feedbackQuickActionId by remember { mutableStateOf<String?>(null) }
     var shortcutRevision by remember { mutableIntStateOf(0) }
@@ -117,7 +115,9 @@ private val legacyDefinitions = listOf(
             AudioMode.HIFI -> "audio_mode_hifi"
             AudioMode.SLEEPY -> "audio_mode_sleepy"
             AudioMode.CUSTOM, null -> null
-        }
+        },
+        "equalizer".takeIf { playbackState?.equalizerEnabled == true },
+        "sleep_timer".takeIf { (playbackState?.sleepEndAtMs ?: 0L) > 0L }
     )
     LaunchedEffect(feedbackQuickActionId) {
         val id = feedbackQuickActionId ?: return@LaunchedEffect
@@ -143,8 +143,14 @@ private val legacyDefinitions = listOf(
         feedbackQuickActionId = id
         showQuickActionConfirmation(id)
         when (id) {
-            "search" -> { searchVisible = true }
             "sort" -> sheet = "sort"
+            "shuffle_all" -> state.songs.filterNot { it.isVideo }.shuffled().let { mix ->
+                if (mix.isNotEmpty()) onPlay(mix.first(), mix)
+            }
+            "favorites" -> { tab = LibraryTab.Playlists; collection = "favorites" }
+            "equalizer" -> onEqualizer()
+            "sleep_timer" -> { onOpenSettings(); onSettingsPage("sleep"); onSettingsSheetVisible(true) }
+            "api_mode" -> { onOpenSettings(); onSettingsPage("api-mode"); onSettingsSheetVisible(true) }
             "audio_mode_battery" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
             }
@@ -164,15 +170,17 @@ private val legacyDefinitions = listOf(
         moreQuickActions = false
     }
     val songs = rememberLibrarySongs(state, query, sort, descending)
-    BackHandler(enabled = collection != null || searchVisible) {
-        if (collection != null) collection = null else { searchVisible = false; query = "" }
+    BackHandler(enabled = collection != null || query.isNotEmpty()) {
+        if (collection != null) collection = null else query = ""
     }
     LibraryLayoutFrame(layout, modifier, sidebar = {
         HomeNavigationRail(
-            if (settingsStore == null) legacyDefinitions.filter { shortcuts[it.id] != false } else quickActions,
+            // The rail has its own equalizer entry.
+            (if (settingsStore == null) legacyDefinitions.filter { shortcuts[it.id] != false } else quickActions)
+                .filterNot { it.id == "equalizer" },
             highlightedQuickActionIds + if (playbackState?.equalizerEnabled == true) setOf("equalizer") else emptySet(),
             expanded = layout.sidebarWidthDp >= 160f,
-            onHome = { tab = LibraryTab.Songs; collection = null; query = ""; searchVisible = false; onHome() },
+            onHome = { tab = LibraryTab.Songs; collection = null; query = ""; onHome() },
             onAction = dispatchQuickAction, onEqualizer = onEqualizer,
             onSettings = { onOpenSettings(); onSettingsSheetVisible(true) })
     }, player = { showPanel -> playerContent(showPanel, tab.isVideo) }) {
@@ -181,17 +189,17 @@ private val legacyDefinitions = listOf(
             LandscapeLibraryHeading(tab, songs.count { !it.isVideo }, state.scanning,
                 onFolder, { tab = LibraryTab.Folders; collection = null })
         } else Box(fixedChrome) {
-            LibraryHeader(state.scanning, { searchVisible = !searchVisible; if (!searchVisible) query = "" },
-                onFolder, { sheet = "sort" }, {
+            LibraryHeader(state.scanning, {}, onFolder, { sheet = "sort" }, {
                     onOpenSettings(); onSettingsSheetVisible(true)
                 },
-                showSearch = shortcuts["search"] != false, showFolder = false,
+                showSearch = false, showFolder = false,
                 showSort = shortcuts["sort"] != false, showEqualizer = false,
                 quickActions = quickActions,
                 onQuickAction = dispatchQuickAction, onMoreQuickActions = { moreQuickActions = true },
                 activeQuickActionIds = highlightedQuickActionIds)
         }
-        if (searchVisible) Box(fixedChrome) { LibrarySearch(query) { query = it } }
+        // Search is always on screen, so the header no longer carries a magnifier.
+        Box(fixedChrome) { LibrarySearch(query) { query = it } }
         Box(fixedChrome) { LibraryTabs(tab, landscape = layout.sidebar) { tab = it; collection = null } }
         if (state.scanning) Box(fixedChrome) { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         if (state.failed) Box(fixedChrome) {

@@ -38,12 +38,12 @@ class HorizontalSettingsTest {
         store.setVideoControlVisible("options", false)
 
         val settings = VideoControlSettings.from(StoneSettingsStore(context))
-        assertEquals(
-            listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Scale, VideoControlId.Rotate),
-            settings.order,
-        )
-        assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,
-            VideoControlId.Scale, VideoControlId.Rotate), settings.visibleIds)
+        // The saved order comes first; controls added later (1.6.7) follow in their default order.
+        val expected = listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Scale, VideoControlId.Rotate,
+            VideoControlId.Rewind, VideoControlId.Forward, VideoControlId.Repeat, VideoControlId.Subtitles,
+            VideoControlId.FloatingWindow, VideoControlId.Mute)
+        assertEquals(expected, settings.order)
+        assertEquals(expected, settings.visibleIds)
     }
 
     @Test fun videoLayoutAndImmersivePreferencesHaveSafeDefaultsAndPersist() {

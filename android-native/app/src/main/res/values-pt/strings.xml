@@ -358,6 +358,9 @@
     <string name="movies">Filmes</string>
     <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="many">%1$d shorts</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Girar tela</string>
+    <string name="video_rewind_10">Voltar 10 s</string>
+    <string name="video_forward_10">Avançar 10 s</string>
+    <string name="video_mute">Silenciar</string>
     <string name="play_mode">Modo de reprodução</string>
     <string name="subtitles">Legendas/CC</string>
     <string name="audio_track">Faixa de áudio</string>

@@ -86,7 +86,9 @@ import kotlinx.coroutines.delay
     val player by playback.state.collectAsStateWithLifecycle()
     AutomationBridge(playback, library, state, player, theme, language,
         onTheme = { theme = it; settingsStore.setTheme(it) },
-        onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() })
+        onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() },
+        videoScale = videoScale.key,
+        onVideoScale = { videoScale = VideoScale.fromKey(it); settingsStore.setVideoScale(videoScale.key) })
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
     var playerOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -390,12 +392,17 @@ import kotlinx.coroutines.delay
             immersive = immersiveRequest
         )
     }
-        if (volumeUi.visible) {
+        androidx.compose.animation.AnimatedVisibility(volumeUi.visible,
+            Modifier.align(Alignment.TopCenter).padding(top = 38.dp),
+            enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)) +
+                androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(150)) { -it / 2 },
+            exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150)) +
+                androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(150)) { -it }) {
             LaunchedEffect(volumeUi.revision) {
                 delay(1800)
                 StonePlaybackService.hideVolumeOverlay(volumeUi.revision)
             }
-            VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
+            VolumeOverlay(volumeUi, onDismiss = { StonePlaybackService.hideVolumeOverlay(volumeUi.revision) })
         }
         if (!onboardingDone) com.zirakusa.stone.nativeapp.feature.onboarding.OnboardingScreen(language,
             onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() }) {

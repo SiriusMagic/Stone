@@ -28,12 +28,15 @@ class PlaylistCoverStore(context: Context) {
     }
 
     fun clear(playlistId: String) {
-        fileFor(playlistId).delete()
+        filesFor(playlistId).forEach { it.delete() }
     }
 
     private fun save(playlistId: String, bitmap: Bitmap): String {
-        val target = fileFor(playlistId)
-        val temporary = File(target.parentFile, ".${target.name}.tmp")
+        // A new name per cover: the artwork cache is keyed by URI, so reusing the same file
+        // would keep showing the previous image.
+        val previous = filesFor(playlistId)
+        val target = File(root, "${digest(playlistId)}-${System.currentTimeMillis()}.jpg")
+        val temporary = File(root, ".${target.name}.tmp")
         try {
             FileOutputStream(temporary).use { output ->
                 check(bitmap.compress(Bitmap.CompressFormat.JPEG, 88, output)) {
@@ -41,10 +44,8 @@ class PlaylistCoverStore(context: Context) {
                 }
                 output.fd.sync()
             }
-            if (!temporary.renameTo(target)) {
-                target.delete()
-                check(temporary.renameTo(target)) { "No se pudo reemplazar la portada" }
-            }
+            check(temporary.renameTo(target)) { "No se pudo guardar la portada" }
+            previous.forEach { it.delete() }
             return target.toUri().toString()
         } finally {
             temporary.delete()
@@ -52,11 +53,14 @@ class PlaylistCoverStore(context: Context) {
         }
     }
 
-    private fun fileFor(playlistId: String): File {
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(playlistId.toByteArray(Charsets.UTF_8))
-            .joinToString("") { "%02x".format(it) }
-        return File(root, "$digest.jpg")
+    private fun digest(playlistId: String) = MessageDigest.getInstance("SHA-256")
+        .digest(playlistId.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+
+    /** Every stored cover of the playlist (also the single-file name used before 1.6.7). */
+    private fun filesFor(playlistId: String): List<File> {
+        val prefix = digest(playlistId)
+        return root.listFiles { file -> file.name.startsWith(prefix) }?.toList().orEmpty()
     }
 
     private fun calculateSample(width: Int, height: Int): Int {

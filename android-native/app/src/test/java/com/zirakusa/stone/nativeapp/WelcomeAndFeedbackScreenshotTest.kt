@@ -38,6 +38,19 @@ class WelcomeAndFeedbackScreenshotTest {
         onView(isRoot()).captureRoboImage("build/screenshots/stone-welcome-language.png")
     }
 
+    @Test fun volumeOverlayAndLegalText() {
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 24.dp)) {
+                com.zirakusa.stone.nativeapp.ui.VolumeOverlay(
+                    com.zirakusa.stone.nativeapp.playback.StonePlaybackService.VolumeUiState(20, 1, true, 150))
+                Column(Modifier.padding(24.dp)) {
+                    com.zirakusa.stone.nativeapp.feature.library.components.LegalDocument("privacy")
+                }
+            }
+        } } }
+        onView(isRoot()).captureRoboImage("build/screenshots/stone-volume-legal.png")
+    }
+
     @Test fun feedbackForm() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp)) { FeedbackDetail(true) {} }

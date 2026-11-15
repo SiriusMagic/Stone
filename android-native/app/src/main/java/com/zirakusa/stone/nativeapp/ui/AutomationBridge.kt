@@ -1,5 +1,10 @@
 package com.zirakusa.stone.nativeapp.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
+import android.view.WindowManager
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,6 +22,8 @@ import com.zirakusa.stone.nativeapp.automation.AutomationHost
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.feature.library.LibraryViewModel
+import com.zirakusa.stone.nativeapp.feature.library.LibraryViewState
+import com.zirakusa.stone.nativeapp.feature.library.components.LibrarySort
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
@@ -27,8 +34,12 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
  */
 @Composable internal fun AutomationBridge(playback: PlaybackViewModel, library: LibraryViewModel,
     libraryState: LibraryState, playbackState: PlaybackState, theme: String, language: String,
-    onTheme: (String) -> Unit, onLanguage: (String) -> Unit) {
+    onTheme: (String) -> Unit, onLanguage: (String) -> Unit,
+    videoScale: String = "auto", onVideoScale: (String) -> Unit = {}) {
+    val activity = LocalContext.current.findActivity()
     val context = LocalContext.current.applicationContext
+    val currentVideoScale by rememberUpdatedState(videoScale)
+    val setVideoScale by rememberUpdatedState(onVideoScale)
     val currentLibrary by rememberUpdatedState(libraryState)
     val currentPlayback by rememberUpdatedState(playbackState)
     val currentTheme by rememberUpdatedState(theme)
@@ -62,6 +73,42 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             }
             override fun extendSleepTimer(minutes: Int) = playback.extendSleepTimer(minutes)
             override fun setLauncherIcon(key: String) = LauncherIcon.apply(context, LauncherIcon.from(key))
+            override val favoriteIds get() = currentLibrary.favoriteIds
+            override val librarySort get() = LibraryViewState.sort.name.lowercase() to LibraryViewState.descending
+            override val videoScale get() = currentVideoScale
+            override fun setShuffle(enabled: Boolean) = playback.setShuffle(enabled)
+            override fun setRepeat(mode: Int) = playback.setRepeat(mode)
+            override fun playQueueIndex(index: Int) = playback.playAt(index)
+            override fun moveQueue(from: Int, to: Int) = playback.move(from, to)
+            override fun removeFromQueue(index: Int) = playback.removeAt(index)
+            override fun clearQueue() = playback.clearQueue()
+            override fun toggleFavorite() { playback.toggleFavorite(); library.syncFavorites() }
+            override fun setEqualizerEnabled(enabled: Boolean) = playback.setEqualizerEnabled(enabled)
+            override fun setEqualizerBand(index: Int, value: Int) = playback.setEqualizerBand(index, value)
+            override fun setEqualizerPreset(name: String, values: List<Int>) = playback.setEqualizerPreset(name, values)
+            override fun removeFromPlaylist(playlistId: String, song: Song) = library.removeFromPlaylist(playlistId, song)
+            override fun sortLibrary(key: String, descending: Boolean) {
+                LibrarySort.entries.firstOrNull { it.name.equals(key, ignoreCase = true) }?.let { LibraryViewState.sort = it }
+                LibraryViewState.descending = descending
+            }
+            override fun setVideoScale(key: String) = setVideoScale(key)
+            override fun setScreenBrightness(percent: Int?): Boolean {
+                val window = activity?.window ?: return false
+                window.attributes = window.attributes.apply {
+                    screenBrightness = percent?.let { (it / 100f).coerceIn(.02f, 1f) }
+                        ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                }
+                return true
+            }
+            override fun setOrientation(key: String): Boolean {
+                val target = activity ?: return false
+                target.requestedOrientation = when (key) {
+                    "portrait" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                    "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+                return true
+            }
         }
         StoneAutomation.host = host
         onDispose { if (StoneAutomation.host === host) StoneAutomation.host = null }
@@ -76,4 +123,10 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             dismissButton = { TextButton(onClick = { StoneAutomation.answer(request, false) }) {
                 Text(stringResource(R.string.api_confirm_deny)) } })
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

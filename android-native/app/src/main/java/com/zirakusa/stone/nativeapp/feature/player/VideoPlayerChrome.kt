@@ -71,7 +71,8 @@ private val Glass = Color(0x99121116)
         .padding(horizontal = 16.dp, vertical = 10.dp)) {
         if (!landscape) {
             VideoControlRow(actions, Modifier.background(Glass, RoundedCornerShape(28.dp)).padding(vertical = 4.dp),
-                onAudioOnly = onAudioOnly, onQueue = onQueue, onScaleToggle = onScaleToggle, onRotate = rotate)
+                onAudioOnly = onAudioOnly, onQueue = onQueue, onScaleToggle = onScaleToggle, onRotate = rotate,
+                playback = playback, state = state)
             Spacer(Modifier.height(10.dp))
             VideoTimeline(song, progress, playback)
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center,
@@ -81,7 +82,7 @@ private val Glass = Color(0x99121116)
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 val sideActions = actions.filter { it != VideoControlId.Rotate }
                 VideoControlRow(sideActions, Modifier.weight(1f), onAudioOnly = onAudioOnly, onQueue = onQueue,
-                    onScaleToggle = onScaleToggle, arrangement = Arrangement.Start)
+                    onScaleToggle = onScaleToggle, arrangement = Arrangement.Start, playback = playback, state = state)
                 Transport(state, playback)
                 Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                     if (VideoControlId.Rotate in actions) RoundButton(rotate, stringResource(R.string.video_rotate)) {

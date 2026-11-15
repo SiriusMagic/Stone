@@ -9,8 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
@@ -24,16 +22,15 @@ import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @Composable fun LibrarySearch(query: String, onChange: (String) -> Unit) {
-    val focus = remember { FocusRequester() }
+    // Always visible under the header: it must not grab the keyboard on its own.
     val label = stringResource(R.string.search)
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    Surface(Modifier.padding(horizontal = 20.dp).fillMaxWidth()
+    Surface(Modifier.padding(horizontal = 20.dp).padding(bottom = 6.dp).fillMaxWidth()
         .border(1.dp, StonePalette.Border, RoundedCornerShape(14.dp)),
         shape = RoundedCornerShape(14.dp), color = StonePalette.Chip) {
         Row(Modifier.heightIn(min = 44.dp).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             StoneIcon(StoneGlyph.Search, color = StonePalette.Muted, size = 18)
             Spacer(Modifier.width(8.dp))
-            BasicTextField(query, onChange, Modifier.weight(1f).focusRequester(focus)
+            BasicTextField(query, onChange, Modifier.weight(1f)
                 .semantics { contentDescription = label }, singleLine = true,
                 cursorBrush = SolidColor(StonePalette.Yellow), textStyle = TextStyle(color = Color.White, fontSize = 15.sp),
                 decorationBox = { field ->

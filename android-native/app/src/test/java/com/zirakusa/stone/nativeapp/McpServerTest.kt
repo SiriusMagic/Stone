@@ -137,6 +137,65 @@ class McpServerTest {
         }
     }
 
+    /** Plain GET the way a browser or a non-MCP agent does it. */
+    private fun get(path: String, accept: String? = null): Pair<Int, String> {
+        val call = CompletableFuture.supplyAsync {
+            val connection = URL("http://127.0.0.1:${McpServer.DEFAULT_PORT}$path").openConnection(Proxy.NO_PROXY) as HttpURLConnection
+            accept?.let { connection.setRequestProperty("Accept", it) }
+            val code = connection.responseCode
+            code to ((if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.readText() ?: "")
+        }
+        while (!call.isDone) { shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(5) }
+        return call.get()
+    }
+
+    @Test fun plainGetExplainsHowToConnectInsteadOfFailing() {
+        val (code, text) = get("${McpServer.PATH}?token=$token")
+        assertEquals(200, code)
+        val guide = JSONObject(text)
+        assertEquals("Stone", guide.getString("server"))
+        assertTrue(guide.getJSONObject("howToConnect").has("withoutMcp"))
+        assertTrue(guide.getJSONArray("tools").length() > 40)
+        // MCP clients probing for a server stream still get the 405 the protocol expects.
+        assertEquals(405, get("${McpServer.PATH}?token=$token", accept = "text/event-stream").first)
+    }
+
+    @Test fun healthNeedsNoTokenAndRevealsNothing() {
+        val (code, text) = get("/health")
+        assertEquals(200, code)
+        assertEquals("ok", JSONObject(text).getString("status"))
+        assertFalse(text.contains(token))
+        assertEquals(401, get("/tools").first)
+        assertTrue(get("${McpServer.PATH}?token=wrong").second.contains("wrong or revoked"))
+    }
+
+    @Test fun plainBridgeListsAndCallsTools() {
+        val tools = JSONObject(get("/tools?token=$token").second)
+        assertEquals(tools.getInt("total"), tools.getJSONArray("tools").length())
+        val (code, text) = get("${McpServer.PATH}/call/library_search?token=$token&query=adele&limit=5")
+        assertEquals(200, code)
+        assertEquals("Skyfall", JSONObject(text).getJSONObject("result").getJSONArray("results").getJSONObject(0).getString("title"))
+        val (badCode, bad) = get("/call/player_set_speed?token=$token&speed=9")
+        assertEquals(400, badCode)
+        assertFalse(JSONObject(bad).getBoolean("ok"))
+        assertEquals(404, get("/call/nope?token=$token").first)
+    }
+
+    @Test fun helpFindsToolsByIntentionAndUnknownToolsAreProtocolErrors() {
+        val help = rpc("tools/call", JSONObject().put("name", "stone_help")
+            .put("arguments", JSONObject().put("query", "brightness"))).getJSONObject("result").getJSONObject("structuredContent")
+        val names = help.getJSONArray("tools").let { found -> (0 until found.length()).map { found.getJSONObject(it).getString("name") } }
+        assertTrue("video_set_brightness" in names)
+        val unknown = rpc("tools/call", JSONObject().put("name", "player_fly"))
+        assertEquals(-32602, unknown.getJSONObject("error").getInt("code"))
+        val band = rpc("tools/call", JSONObject().put("name", "equalizer_set_band")
+            .put("arguments", JSONObject().put("band", 12).put("value", 3))).getJSONObject("result")
+        assertTrue(band.getBoolean("isError"))
+        val bands = rpc("tools/call", JSONObject().put("name", "equalizer_set_bands")
+            .put("arguments", JSONObject().put("values", "5,4,2,0,0,0,1,2,3,4"))).getJSONObject("result")
+        assertFalse(bands.getBoolean("isError"))
+    }
+
     @Test fun selfTestRecognisesStone() {
         val url = "http://127.0.0.1:${McpServer.DEFAULT_PORT}${McpServer.PATH}"
         val results = kotlinx.coroutines.runBlocking { McpSelfTest.run(listOf(url), token) }

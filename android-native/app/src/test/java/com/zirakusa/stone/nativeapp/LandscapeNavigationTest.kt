@@ -38,7 +38,6 @@ class LandscapeNavigationTest {
                         false, LandscapeLayoutMode.ALWAYS))
             } }
         }
-        compose.onNodeWithContentDescription(label(R.string.search_toggle)).performClick()
         compose.onNodeWithContentDescription(label(R.string.search)).performTextInput("Song")
         compose.onNodeWithTag("library-list").performScrollToIndex(20)
         compose.onNodeWithText("Song 21").assertIsDisplayed()

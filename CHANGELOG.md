@@ -1,3 +1,24 @@
+# Stone Kotlin 1.6.7
+
+- Panel de volumen: barrita discreta (36 × 4 dp, gris claro) bajo el volumen, se cierra al
+  deslizar hacia arriba y aparece/desaparece en 150 ms.
+- Listas: elegir una portada desde la galería ahora sí la cambia (el diálogo olvidaba la lista
+  al abrir la galería y la portada anterior quedaba en caché).
+- Inicio: la barra de búsqueda queda fija bajo los iconos y se retira la lupa. Nuevos accesos
+  opcionales en Ajustes › Accesos de inicio: Mezclar todo, Favoritos, Ecualizador, Temporizador
+  y Modo API.
+- Video: el carrusel de controles suma Retroceder 10 s, Avanzar 10 s, Repetir, Subtítulos,
+  Ventana flotante y Silenciar (se ordenan y ocultan en Ajustes › Vídeo).
+- Sobre Stone: "Calificarnos" abre el repositorio en GitHub, y Política de privacidad, Términos
+  de servicio y Licencias de código abierto muestran su texto (español e inglés).
+- Modo API (MCP): 26 herramientas nuevas (cola, aleatorio/repetir, favoritos, ecualizador por
+  banda y preajustes, brillo/escala/orientación de video, ordenar y explorar la biblioteca,
+  letras, canciones de una lista) y `stone_help` para buscarlas por intención.
+- Modo API, conexión: un GET al enlace ya no devuelve solo "405": responde una guía con la lista
+  de herramientas. Para agentes que no hablan MCP hay `GET /tools`, `GET /call/HERRAMIENTA` y
+  `GET /health` (sin token). Los errores distinguen token ausente, token incorrecto y
+  herramienta desconocida. Guía en `docs/MCP.md`.
+
 # Stone Kotlin 1.6.6
 
 - Los botones físicos de volumen vuelven a mostrar el panel de volumen de Stone dentro de la
