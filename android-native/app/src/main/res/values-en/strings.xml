@@ -402,4 +402,7 @@
     <string name="api_read_only_hint">The agent can only look at your library and what is playing: it cannot play or change anything.</string>
     <string name="api_write">Allow editing (write)</string>
     <string name="api_write_hint">Edit titles, artists, albums, genres, lyrics and covers (also from a URL) of songs and videos. Every change asks for your approval.</string>
+    <string name="api_tools_hint">Tick the tools the agent may use. Unticked tools disappear for it.</string>
+    <string name="api_tools_all">Select all</string>
+    <string name="api_tools_none">Clear all</string>
 </resources>

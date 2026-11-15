@@ -59,4 +59,11 @@ interface AutomationHost {
     fun setScreenBrightness(percent: Int?): Boolean = false
     /** portrait, landscape or auto. */
     fun setOrientation(key: String): Boolean = false
+
+    // Added in 1.6.8.
+    fun setFavorite(songId: String, favorite: Boolean) {}
+    fun renamePlaylist(playlistId: String, name: String) {}
+    fun deletePlaylist(playlistId: String) {}
+    fun setHardwareAcceleration(key: String) {}
+    fun setPlayWithOthers(enabled: Boolean) {}
 }

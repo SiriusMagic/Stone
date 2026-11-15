@@ -40,6 +40,7 @@ class McpServerTest {
     private var playlistsCreated = listOf<String>()
     private var sleepMinutes = 0
     private var launcherIcon = "penguin"
+    private var liked = setOf<String>()
 
     @Before fun start() {
         StoneAutomation.host = object : AutomationHost {
@@ -67,6 +68,7 @@ class McpServerTest {
             override fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean) { sleepMinutes = minutes }
             override fun extendSleepTimer(minutes: Int) { sleepMinutes += minutes }
             override fun setLauncherIcon(key: String) { launcherIcon = key }
+            override fun setFavorite(songId: String, favorite: Boolean) { liked = if (favorite) liked + songId else liked - songId }
         }
         assertTrue(McpServer.start(token, localNetwork = false))
     }
@@ -261,6 +263,23 @@ class McpServerTest {
             ApiMode.restrictToReading(false)
             ApiMode.allowWrite(true)
         }
+    }
+
+    @Test fun likesAnySongAndSingleToolsCanBeSwitchedOff() {
+        fun call(name: String, args: JSONObject = JSONObject()) =
+            rpc("tools/call", JSONObject().put("name", name).put("arguments", args)).getJSONObject("result")
+        val like = call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", true))
+        assertFalse(like.getBoolean("isError"))
+        assertEquals(setOf(songs[1].id), liked)
+        try {
+            ApiMode.allowTool("library_set_favorite", false)
+            val names = rpc("tools/list").getJSONObject("result").getJSONArray("tools")
+                .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
+            assertFalse("library_set_favorite" in names)
+            assertTrue(names.containsAll(listOf("audio_set_level", "settings_set_transitions", "playlist_rename")))
+            assertTrue(call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", false)).getBoolean("isError"))
+            assertEquals(setOf(songs[1].id), liked)
+        } finally { ApiMode.allowTool("library_set_favorite", true) }
     }
 
     @Test fun customisationAndSleepTimerTools() {

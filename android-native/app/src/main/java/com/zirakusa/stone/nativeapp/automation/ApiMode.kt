@@ -47,6 +47,7 @@ object ApiMode {
         localNetwork = store.look("api.lan", "false").toBoolean()
         readOnly = store.look("api.readOnly", "false").toBoolean()
         writeAccess = store.look("api.write", "true").toBoolean()
+        disabledTools = store.look("api.disabled", "").split(',').filter { it.isNotBlank() }.toSet()
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         token = store.look("api.token", "").ifBlank { newToken().also { store.setLook("api.token", it) } }
@@ -59,6 +60,22 @@ object ApiMode {
     fun allowLocalNetwork(value: Boolean) { localNetwork = value; store?.setLook("api.lan", value.toString()); apply() }
     fun restrictToReading(value: Boolean) { readOnly = value; store?.setLook("api.readOnly", value.toString()) }
     fun allowWrite(value: Boolean) { writeAccess = value; store?.setLook("api.write", value.toString()) }
+
+    /** Tools the user switched off one by one (MCP names). */
+    var disabledTools by mutableStateOf(emptySet<String>())
+        private set
+
+    fun allowTool(toolName: String, allowed: Boolean) {
+        disabledTools = if (allowed) disabledTools - toolName else disabledTools + toolName
+        store?.setLook("api.disabled", disabledTools.sorted().joinToString(","))
+    }
+    fun allowAllTools(allowed: Boolean, toolNames: List<String>) {
+        disabledTools = if (allowed) emptySet() else toolNames.toSet() - "stone_help"
+        store?.setLook("api.disabled", disabledTools.sorted().joinToString(","))
+    }
+
+    /** Whether the link may use [action]: its risk level is allowed and the tool is not switched off. */
+    fun permits(action: StoneAction): Boolean = permits(action.risk) && action.toolName !in disabledTools
 
     /** Whether the current link's permissions let an agent use an action of [risk]. */
     fun permits(risk: ActionRisk): Boolean = when (risk) {

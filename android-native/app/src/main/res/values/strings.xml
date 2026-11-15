@@ -468,4 +468,7 @@
     <string name="api_read_only_hint">El agente solo puede consultar tu biblioteca y lo que suena: no reproduce ni cambia nada.</string>
     <string name="api_write">Permitir edición (escritura)</string>
     <string name="api_write_hint">Editar títulos, artistas, álbumes, géneros, letras y portadas (también desde URL) de canciones y vídeos. Cada cambio pide tu aprobación.</string>
+    <string name="api_tools_hint">Marca las herramientas que el agente puede usar. Las desmarcadas desaparecen para él.</string>
+    <string name="api_tools_all">Marcar todas</string>
+    <string name="api_tools_none">Desmarcar todas</string>
 </resources>

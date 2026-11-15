@@ -25,6 +25,7 @@ import com.zirakusa.stone.nativeapp.feature.library.LibraryViewModel
 import com.zirakusa.stone.nativeapp.feature.library.LibraryViewState
 import com.zirakusa.stone.nativeapp.feature.library.components.LibrarySort
 import com.zirakusa.stone.nativeapp.playback.AudioMode
+import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
 import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 
@@ -100,6 +101,15 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
                 }
                 return true
             }
+            override fun setFavorite(songId: String, favorite: Boolean) {
+                playback.setFavorite(songId, favorite); library.syncFavorites()
+            }
+            override fun renamePlaylist(playlistId: String, name: String) = library.renamePlaylist(playlistId, name)
+            override fun deletePlaylist(playlistId: String) = library.deletePlaylist(playlistId)
+            override fun setHardwareAcceleration(key: String) {
+                HardwareAcceleration.entries.firstOrNull { it.key == key }?.let(playback::setHardwareAcceleration)
+            }
+            override fun setPlayWithOthers(enabled: Boolean) = playback.setPlayWithOthers(enabled)
             override fun setOrientation(key: String): Boolean {
                 val target = activity ?: return false
                 target.requestedOrientation = when (key) {

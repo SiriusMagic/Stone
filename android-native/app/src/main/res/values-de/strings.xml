@@ -505,4 +505,7 @@
     <string name="api_read_only_hint">Der Agent kann nur deine Bibliothek und die aktuelle Wiedergabe ansehen: Er spielt nichts ab und ändert nichts.</string>
     <string name="api_write">Bearbeiten erlauben (schreiben)</string>
     <string name="api_write_hint">Titel, Interpreten, Alben, Genres, Songtexte und Cover (auch per URL) von Songs und Videos bearbeiten. Jede Änderung braucht deine Zustimmung.</string>
+    <string name="api_tools_hint">Markiere die Werkzeuge, die der Agent nutzen darf. Nicht markierte sind für ihn unsichtbar.</string>
+    <string name="api_tools_all">Alle auswählen</string>
+    <string name="api_tools_none">Alle abwählen</string>
 </resources>

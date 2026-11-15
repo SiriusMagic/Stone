@@ -130,6 +130,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
     fun removeFromPlaylist(playlistId: String, song: Song) { userStore.remove(playlistId, song.id)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
+    fun renamePlaylist(playlistId: String, name: String) { if (name.isNotBlank()) { userStore.rename(playlistId, name)
+        mutable.update { it.copy(playlists = userStore.playlists()) } } }
+    fun deletePlaylist(playlistId: String) { userStore.delete(playlistId)
+        mutable.update { it.copy(playlists = userStore.playlists()) } }
 
     fun setPlaylistCoverFromUri(playlistId: String, source: Uri) {
         viewModelScope.launch(Dispatchers.IO) {

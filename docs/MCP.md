@@ -66,8 +66,11 @@ curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
 - **metadata**: `get` (canciones y vídeos, con letra), `update` (título, artista, álbum, género, portada desde
   `coverUrl`; en vídeos también descripción, fecha y palabras clave), `update_many` (muchos elementos con una sola
   aprobación; `changes` es un array JSON) y `set_lyrics` (texto o LRC; vacío borra). Todas piden aprobación en el teléfono.
-- **appearance / settings**: `get`, `set_theme`, `set_accent`, `set_look`, `reset_look`,
-  `set_language`, `set_audio_mode`.
+- **appearance**: `get`, `set_theme`, `set_accent`, `set_look`, `reset_look`.
+- **audio**: `get_levels`, `set_level` (techo de volumen y ganancia de cada modo), `reset_levels`.
+- **settings**: `get`, `set_language`, `set_audio_mode`, `set_transitions`, `set_hardware_acceleration`,
+  `set_play_with_others`, `set_option`.
+- **library / playlist (extra)**: `library_set_favorite`, `playlist_rename`, `playlist_delete`.
 
 El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
@@ -90,6 +93,8 @@ En Stone › Ajustes › Modo API › Opciones avanzadas › Permisos del enlace
 - **Solo lectura**: el agente solo ve herramientas de consulta (buscar, estado, etiquetas, letras).
 - **Permitir edición (escritura)**: activa las herramientas `metadata_update*` y `metadata_set_lyrics`.
   Si está apagada, el agente puede reproducir y cambiar ajustes, pero no tocar archivos.
+
+Además, cada herramienta tiene su casilla: las desmarcadas no se ofrecen al agente.
 
 `tools/list` solo muestra lo permitido; llamar a una herramienta bloqueada devuelve `isError: true` con el motivo.
 

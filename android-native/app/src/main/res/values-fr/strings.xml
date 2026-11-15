@@ -505,4 +505,7 @@
     <string name="api_read_only_hint">L’agent peut seulement consulter ta bibliothèque et ce qui joue : il ne lit ni ne modifie rien.</string>
     <string name="api_write">Autoriser la modification (écriture)</string>
     <string name="api_write_hint">Modifier titres, artistes, albums, genres, paroles et pochettes (aussi depuis une URL) des chansons et vidéos. Chaque changement demande ton accord.</string>
+    <string name="api_tools_hint">Coche les outils que l’agent peut utiliser. Les outils décochés disparaissent pour lui.</string>
+    <string name="api_tools_all">Tout cocher</string>
+    <string name="api_tools_none">Tout décocher</string>
 </resources>

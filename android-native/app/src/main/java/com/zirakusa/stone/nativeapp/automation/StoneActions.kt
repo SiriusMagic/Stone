@@ -123,5 +123,5 @@ internal object StoneActions {
             targets.forEach { host().addToPlaylist(playlist.id, it) }
             ok("${targets.size} song(s) added to '${playlist.name}'")
         },
-    ) + StoneMediaActions.all() + StoneMetadataActions.all() + StoneLookActions.all() + StoneGuide.action
+    ) + StoneMediaActions.all() + StoneMetadataActions.all() + StoneSettingsActions.all() + StoneLookActions.all() + StoneGuide.action
 }

@@ -23,6 +23,9 @@ class LibraryUserStore(context: Context) {
         it.copy(songIds = (it.songIds + songId).distinct()) else it })
     fun remove(playlistId: String, songId: String) = savePlaylists(playlists().map { if (it.id == playlistId)
         it.copy(songIds = it.songIds - songId) else it })
+    fun rename(playlistId: String, name: String) = savePlaylists(playlists().map { if (it.id == playlistId)
+        it.copy(name = name.trim()) else it })
+    fun delete(playlistId: String) = savePlaylists(playlists().filterNot { it.id == playlistId })
     fun recordPlay(songId: String) {
         val recent = recentIds().toMutableList().apply { remove(songId); add(0, songId) }.take(100)
         database.putString("library.recent", JSONArray(recent).toString())

@@ -505,4 +505,7 @@
     <string name="api_read_only_hint">L’agente può solo consultare la libreria e ciò che è in riproduzione: non riproduce né modifica nulla.</string>
     <string name="api_write">Consenti modifica (scrittura)</string>
     <string name="api_write_hint">Modifica titoli, artisti, album, generi, testi e copertine (anche da URL) di brani e video. Ogni modifica chiede la tua approvazione.</string>
+    <string name="api_tools_hint">Seleziona gli strumenti che l’agente può usare. Quelli non selezionati spariscono per lui.</string>
+    <string name="api_tools_all">Seleziona tutti</string>
+    <string name="api_tools_none">Deseleziona tutti</string>
 </resources>

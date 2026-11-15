@@ -1,4 +1,11 @@
-# Sin publicar
+# Stone Kotlin 1.6.8
+
+- Modo API: casilla por herramienta en Opciones avanzadas (agrupadas por categoría, con
+  "Marcar todas" / "Desmarcar todas"). Las desmarcadas desaparecen para el agente.
+- Modo API: nuevas herramientas `library_set_favorite` (me gusta a cualquier canción o vídeo),
+  `playlist_rename`, `playlist_delete`, `audio_get_levels`, `audio_set_level`,
+  `audio_reset_levels`, `settings_get`, `settings_set_transitions` (sin pausas / crossfade),
+  `settings_set_hardware_acceleration`, `settings_set_play_with_others` y `settings_set_option`.
 
 - Modo API (MCP): permisos del enlace en Opciones avanzadas: "Solo lectura" (solo consultas) y
   "Permitir edición (escritura)". `tools/list` muestra solo lo permitido y las llamadas

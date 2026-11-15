@@ -392,6 +392,11 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             if (from != target) player.moveMediaItem(from, target)
         }
     }
+    /** Favourite on/off for any song, not only the one playing. */
+    fun setFavorite(id: String, value: Boolean) {
+        if ((id in data.favorites()) != value) data.toggleFavorite(id)
+        publish()
+    }
     fun toggleFavorite() {
         val id = controller?.currentMediaItem?.mediaId.orEmpty()
         if (id.isEmpty()) return

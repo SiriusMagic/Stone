@@ -14,11 +14,12 @@ internal object StoneGuide {
         "player" to "Playback, queue, volume, speed, shuffle/repeat, sleep timer",
         "equalizer" to "Ten-band equalizer and presets",
         "video" to "Video scale, screen brightness, orientation",
-        "library" to "Search, browse, sort, favourites, lyrics, rescan",
+        "library" to "Search, browse, sort, like/favourites, lyrics, rescan",
         "playlist" to "Playlists and their songs",
         "metadata" to "Tags, lyrics and covers of songs and videos (titles, artists, albums, external cover URLs)",
         "appearance" to "Theme, colours, sizes, home icon",
-        "settings" to "Language and audio mode",
+        "audio" to "Volume ceiling and gain of each audio mode (Niveles de audio)",
+        "settings" to "Language, audio mode, gapless/crossfade, hardware acceleration and other switches",
         "stone" to "Help and tool search")
 
     private fun StoneAction.brief() = JSONObject().put("name", toolName).put("description", description)

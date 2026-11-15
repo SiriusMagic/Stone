@@ -12,16 +12,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.automation.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
@@ -66,17 +63,7 @@ import java.util.Locale
             ApiModeConnect(::copy)
         }
         Header(R.string.api_tools)
-        Text(stringResource(R.string.api_risk_hint), color = StonePalette.Muted, fontSize = 12.sp)
-        StoneAutomation.actions.forEach { action ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Text(when (action.risk) { ActionRisk.READ -> "○"; ActionRisk.REVERSIBLE -> "◐"; ActionRisk.PERSISTENT -> "●" },
-                    color = when (action.risk) { ActionRisk.PERSISTENT -> StonePalette.Yellow; else -> StonePalette.Muted },
-                    modifier = Modifier.width(22.dp))
-                Text(action.toolName, fontFamily = FontFamily.Monospace, fontSize = 13.sp,
-                    color = if (ApiMode.permits(action.risk)) Color.Unspecified else StonePalette.Muted,
-                    textDecoration = if (ApiMode.permits(action.risk)) null else TextDecoration.LineThrough)
-            }
-        }
+        ApiModeToolList()
     }
     if (history.isNotEmpty()) {
         Header(R.string.api_activity)
