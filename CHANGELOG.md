@@ -1,5 +1,19 @@
 # Stone Kotlin 1.6.0
 
+- Bienvenida en el primer inicio: "Elige tu idioma" y Empezar; después los permisos de música y
+  vídeos (el escaneo arranca en cuanto se conceden, con la biblioteca cargándose debajo) y de
+  notificaciones. Quien ya usaba Stone no la ve.
+- Idiomas: portugués, francés, italiano y alemán completos, además de español e inglés. El primer
+  inicio usa el idioma del teléfono si Stone lo tiene.
+- Mascotas: pingüino, panda, koala y zorro. La elegida en Personalizado se ve dentro de Stone y
+  como icono de la pantalla de inicio (icono adaptativo, con versión monocroma para temas).
+- Reproducción sin pausas y Crossfade funcionan: sin pausas salta el silencio al principio y al
+  final de cada canción; crossfade baja y sube el volumen entre canciones (1 a 12 s). Ambos en
+  Ajustes de reproducción.
+- Ajustes: Vídeo y Controles de vídeo están en una sola sección.
+- Selector de vista (compacta, lista, grande): solo iconos.
+- Opiniones y sugerencias rediseñado: tarjetas de tipo, contador de caracteres, botón punteado
+  para capturas y envío según el tipo.
 - Personalizado: acento libre ("Mío") con deslizadores de tono, saturación y brillo o código hex;
   colores naranja y turquesa nuevos; icono de inicio en 11 colores (el pingüino sobre fondo de
   color, cambia en la pantalla de inicio y en el cajón de apps).

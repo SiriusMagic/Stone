@@ -50,6 +50,15 @@ class StoneEcoEngine(context: Context) {
         applyPowerPolicy(player)
     }
 
+    private var gaplessRequired = true
+
+    /** With Reproducción sin pausas on, offload is used only where the DSP keeps songs joined. */
+    fun setGaplessRequired(value: Boolean, player: Player) {
+        if (gaplessRequired == value) return
+        gaplessRequired = value
+        applyPowerPolicy(player)
+    }
+
     fun applyHardwareAcceleration(mode: HardwareAcceleration, player: Player) {
         acceleration = mode
         applyPowerPolicy(player)
@@ -73,7 +82,7 @@ class StoneEcoEngine(context: Context) {
                 if (offload) TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
                 else TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
             )
-            .setIsGaplessSupportRequired(false)
+            .setIsGaplessSupportRequired(gaplessRequired)
             .setIsSpeedChangeSupportRequired(false)
             .build()
         runCatching {

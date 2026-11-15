@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.library.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
@@ -15,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.roundToInt
 
@@ -62,5 +66,26 @@ internal fun Color.luminanceIsLight() = (red * .299f + green * .587f + blue * .1
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilledTonalButton(onClick = pick) { Text(stringResource(R.string.custom_pick_image)) }
         if (hasImage) OutlinedButton(onClick = remove) { Text(stringResource(R.string.custom_remove_image)) }
+    }
+}
+
+/** Four mascot tiles; the chosen one is outlined with the accent colour. */
+@Composable internal fun MascotPicker(selected: LauncherIcon, onSelect: (LauncherIcon) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        LauncherIcon.entries.forEach { mascot ->
+            val active = mascot == selected
+            Column(Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).clickable { onSelect(mascot) },
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(16.dp))
+                    .background(StonePalette.Chip)
+                    .border(2.dp, if (active) StonePalette.Yellow else StonePalette.Border, RoundedCornerShape(16.dp))
+                    .padding(6.dp), contentAlignment = Alignment.Center) {
+                    Image(painterResource(mascot.drawable), stringResource(mascot.label), Modifier.fillMaxSize())
+                }
+                Text(stringResource(mascot.label), fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp),
+                    color = if (active) StonePalette.Yellow else StonePalette.Secondary,
+                    fontWeight = if (active) FontWeight.Bold else FontWeight.Normal)
+            }
+        }
     }
 }

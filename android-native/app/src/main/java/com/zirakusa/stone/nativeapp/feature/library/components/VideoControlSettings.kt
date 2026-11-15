@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.feature.player.VideoControlRegistry
@@ -29,13 +28,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     Text(
         stringResource(R.string.video_controls_hint),
         color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 12.dp),
-    )
-    Text(
-        stringResource(R.string.video_controls_future),
-        color = StonePalette.Yellow,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(bottom = 12.dp),
     )
     OutlinedButton(

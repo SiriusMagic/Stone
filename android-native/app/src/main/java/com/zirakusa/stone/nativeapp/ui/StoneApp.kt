@@ -122,18 +122,11 @@ import kotlinx.coroutines.delay
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
     }
-    // First launch: ask once for media access so the whole device is indexed like any
-    // music player. Folders chosen with the picker keep working without it.
-    val mediaPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()) {
-        com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.tryEmit(Unit)
-    }
-    LaunchedEffect(Unit) {
-        if (settingsStore.read().deviceScan && !settingsStore.mediaPermissionAsked() &&
-            !com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.audioGranted(context)) {
-            settingsStore.setMediaPermissionAsked()
-            mediaPermission.launch(com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.permissions())
-        }
+    // First launch shows the welcome (language, then permissions) over the app, so the
+    // library underneath loads and scans as soon as media access is granted.
+    // Earlier versions asked for media access directly: those users skip the welcome.
+    var onboardingDone by rememberSaveable {
+        mutableStateOf(settingsStore.onboardingDone() || settingsStore.mediaPermissionAsked())
     }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, library) {
@@ -403,6 +396,13 @@ import kotlinx.coroutines.delay
                 StonePlaybackService.hideVolumeOverlay(volumeUi.revision)
             }
             VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
+        }
+        if (!onboardingDone) com.zirakusa.stone.nativeapp.feature.onboarding.OnboardingScreen(language,
+            onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() }) {
+            settingsStore.setLanguage(language)
+            settingsStore.setMediaPermissionAsked()
+            settingsStore.setOnboardingDone()
+            onboardingDone = true
         }
     } } } }
 }

@@ -32,11 +32,23 @@ data class StoneSettings(
     val shakeToReport: Boolean = true,
 )
 
+/** Languages with a complete translation in res/values-xx (Spanish is the default). */
+object StoneLanguages {
+    val all = listOf("es" to "Español", "en" to "English", "pt" to "Português",
+        "fr" to "Français", "it" to "Italiano", "de" to "Deutsch")
+    val codes = all.map { it.first }.toSet()
+
+    /** Phone language when Stone has it, else Spanish; used until the user picks one. */
+    fun deviceDefault(): String = runCatching {
+        android.content.res.Resources.getSystem().configuration.locales[0].language
+    }.getOrNull()?.takeIf { it in codes } ?: "es"
+}
+
 class StoneSettingsStore(context: Context) {
     private val db = StoneDatabase.get(context)
     fun read() = StoneSettings(
         theme = db.setting("theme", "dark").takeIf { it in StoneThemeSpec.keys } ?: "dark",
-        language = db.setting("language", "es").takeIf { it in setOf("es", "en") } ?: "es",
+        language = db.setting("language", StoneLanguages.deviceDefault()).takeIf { it in StoneLanguages.codes } ?: "es",
         playWithOthers = db.setting("playWithOthers", "false").toBoolean(),
         gapless = db.setting("gapless", "true").toBoolean(),
         crossfade = db.setting("crossfade", "false").toBoolean(),
@@ -63,7 +75,7 @@ class StoneSettingsStore(context: Context) {
     )
     fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in StoneThemeSpec.keys } ?: "dark")
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
-    fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in setOf("es", "en") } ?: "es")
+    fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in StoneLanguages.codes } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())
     /** Personalizado values (colours, sizes, images, name, custom audio level). */
     fun look(key: String, fallback: String) = db.setting("look.$key", fallback)
@@ -100,6 +112,8 @@ class StoneSettingsStore(context: Context) {
     fun setDeviceScan(value: Boolean) = db.setSetting("deviceScan", value.toString())
     fun setAutoRescan(value: Boolean) = db.setSetting("autoRescan", value.toString())
     /** True once Stone asked for the media permission on first launch. */
+    fun onboardingDone() = db.setting("onboardingDone", "false").toBoolean()
+    fun setOnboardingDone() = db.setSetting("onboardingDone", "true")
     fun mediaPermissionAsked() = db.setting("mediaPermissionAsked", "false").toBoolean()
     fun setMediaPermissionAsked() = db.setSetting("mediaPermissionAsked", "true")
     fun setImmersiveEnabled(value: Boolean) = db.setSetting("immersiveMode", value.toString())

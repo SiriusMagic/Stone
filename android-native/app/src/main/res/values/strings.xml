@@ -85,8 +85,7 @@
     <string name="set_ringtone">Establecer como tono de llamada</string>
     <string name="sleep_timer">Temporizador para dormir</string>
     <string name="sleep_timer_active">Temporizador activo</string>
-    <string name="sleep_timer_until">Hasta las %1$s</string>
-    <string name="floating_window">Ventana flotante</string>
+        <string name="floating_window">Ventana flotante</string>
     <string name="delete">Borrar</string>
     <string name="manage">Administrar</string>
     <string name="delete_album">Eliminar álbum</string>
@@ -172,8 +171,7 @@
     <string name="video_settings_hint">Los vídeos horizontales se abren en modo inmersivo y llenan la pantalla sin deformarse. Puedes cambiar el encuadre desde los controles del reproductor.</string>
     <string name="video_controls">Controles de vídeo</string>
     <string name="video_controls_hint">Elige y ordena los iconos que aparecen debajo de la vista previa y en el reproductor de vídeo.</string>
-    <string name="video_controls_future">Se agregarán más funciones próximamente.</string>
-    <string name="video_preview_empty">Vista previa de vídeo</string>
+        <string name="video_preview_empty">Vista previa de vídeo</string>
     <string name="video_preview_empty_hint">Elige un vídeo para comenzar. Stone conservará aquí el último que reproduzcas.</string>
     <string name="move_up">Subir</string>
     <string name="move_down">Bajar</string>
@@ -231,7 +229,6 @@
     <string name="feedback_remove_attachment">Quitar adjunto</string>
     <string name="feedback_include_technical">Incluir versión, Android y pantalla actual (opcional)</string>
     <string name="feedback_review_before_share">Nada se envía automáticamente. Tú eliges la aplicación para compartirlo.</string>
-    <string name="feedback_share">Revisar y compartir</string>
     <string name="feedback_share_title">Compartir reporte de Stone</string>
     <string name="feedback_subject">Reporte de Stone</string>
     <string name="feedback_no_share_app">No hay una aplicación disponible para compartir el reporte.</string>
@@ -243,12 +240,11 @@
     <string name="feedback_current_screen">Pantalla: %1$s</string>
     <string name="feedback_shake_title">Agitar para reportar</string>
     <string name="feedback_shake_hint">Abre el formulario al detectar una sacudida deliberada.</string>
-    <string name="penguin_mascot_description">Mascota de Stone</string>
-    <string name="feedback_intro">Cuéntanos el problema</string><string name="feedback_lyrics">Letras</string>
+        <string name="feedback_lyrics">Letras</string>
     <string name="feedback_ads">Anuncios</string><string name="feedback_missing_file">Archivo no encontrado</string>
     <string name="feedback_unplayable">El archivo no se puede reproducir</string><string name="feedback_stops">Se detiene la música</string>
     <string name="feedback_slow">Aplicación lenta</string><string name="feedback_other">Otros</string>
-    <string name="feedback_details">Detalles *</string><string name="feedback_details_hint">Describe el problema con detalle</string>
+    <string name="feedback_details">Detalles *</string><string name="feedback_details_hint">Describe tu opinión, sugerencia o problema…</string>
     <string name="feedback_attachments">Capturas de pantalla o videos (opcional)</string>
     <string name="music_reminders">Recordatorios musicales</string>
     <string name="music_reminders_hint">Recibe hasta dos invitaciones para escuchar música al día.</string>
@@ -268,9 +264,9 @@
     <string name="play_with_others">Reproduce junto con otras aplicaciones</string>
     <string name="play_with_others_hint">Permite mezclar el audio de Stone con otras aplicaciones.</string>
     <string name="gapless">Reproducción sin pausas</string>
-    <string name="gapless_hint">Media3 gestiona automáticamente las transiciones sin pausas.</string>
+    <string name="gapless_hint">Une las canciones sin silencio entre ellas y salta el silencio grabado al principio y al final de cada archivo.</string>
     <string name="crossfade">Crossfade</string>
-    <string name="crossfade_hint">La mezcla gradual entre pistas aún no está disponible.</string>
+    <string name="crossfade_hint">Baja el volumen al final de cada canción y lo sube al empezar la siguiente.</string>
     <string name="notify_new_files">Notificación de nuevos archivos</string>
     <string name="notify_new_files_hint">Avisar cuando se detecten archivos nuevos al escanear.</string>
     <string name="push_notifications">Notificación push</string>
@@ -375,7 +371,7 @@
     <string name="custom_font_size">Tamaño de letra</string>
     <string name="custom_icon_size">Tamaño de iconos</string>
     <string name="custom_background">Imagen de fondo</string>
-    <string name="custom_avatar">Imagen en lugar del pingüino</string>
+    <string name="custom_avatar">Tu propia imagen (solo dentro de Stone)</string>
     <string name="custom_pick_image">Elegir de la galería</string>
     <string name="custom_remove_image">Quitar</string>
     <string name="custom_app_name">Nombre de la app</string>
@@ -392,10 +388,7 @@
     <string name="audio_levels_intro">Ajusta el volumen máximo y la ganancia de cada modo. La ganancia baja o sube el sonido por encima del volumen de Android.</string>
     <string name="audio_levels_battery" formatted="false">Ahorro de batería usa siempre el 100 % de Android, sin efectos.</string>
     <string name="audio_levels_reset">Restablecer niveles</string>
-    <string name="layout_large">Grande</string>
-    <string name="layout_list">Lista</string>
-    <string name="layout_compact">Compacta</string>
-    <string name="layout_compact_action">Cambiar a lista compacta</string>
+                <string name="layout_compact_action">Cambiar a lista compacta</string>
     <string name="theme_ocean">Océano</string>
     <string name="theme_forest">Bosque</string>
     <string name="theme_wine">Vino</string>
@@ -429,12 +422,23 @@
     <string name="custom_saturation">Saturación</string>
     <string name="custom_brightness">Brillo</string>
     <string name="custom_color_hint">Mueve los deslizadores o escribe un color como #3FA7FF.</string>
-    <string name="custom_launcher_icon">Icono de inicio</string>
-    <string name="custom_launcher_icon_hint">Cambia el color del icono de Stone en tu pantalla de inicio y en el cajón de apps. Algunos lanzadores tardan unos segundos en refrescarlo.</string>
-    <string name="launcher_original">Original</string>
-    <string name="sleep_timer_remaining">Quedan %1$s · hasta las %2$s</string>
+    <string name="custom_launcher_icon">Mascota e icono de inicio</string>
+    <string name="custom_launcher_icon_hint">La mascota elegida aparece dentro de Stone y como icono en tu pantalla de inicio. Algunos lanzadores tardan unos segundos en actualizarlo.</string>
+        <string name="sleep_timer_remaining">Quedan %1$s · hasta las %2$s</string>
     <string name="sleep_add_minutes">+%1$d min</string>
     <string name="sleep_fade_out">Bajar el volumen poco a poco al final</string>
     <string name="sleep_fade_out_hint">Durante el último medio minuto el sonido se apaga suavemente.</string>
     <string name="sleep_end_of_track">Al terminar esta canción</string>
+    <string name="crossfade_seconds">%1$d s</string>
+    <string name="mascot_penguin">Pingüino</string>
+    <string name="mascot_panda">Panda</string>
+    <string name="mascot_koala">Koala</string>
+    <string name="mascot_fox">Zorro</string>
+    <string name="feedback_header_hint">Cuéntanos tu sugerencia, idea o problema para ayudarnos a mejorar la app.</string>
+    <string name="feedback_send_report">Enviar reporte</string>
+    <string name="feedback_send_suggestion">Enviar sugerencia</string>
+    <string name="onboarding_choose_language">Elige tu idioma</string>
+    <string name="onboarding_start">Empezar</string>
+    <string name="onboarding_permission_title">Para reproducir tu música y tus vídeos</string>
+    <string name="onboarding_permission_hint">Permite que Stone acceda a la música y los vídeos de este teléfono. La búsqueda empieza en cuanto lo permites, para que al entrar ya estén listos.</string>
 </resources>
