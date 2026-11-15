@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
     onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
     onScaleToggle: (() -> Unit)? = null,
-    onLock: (() -> Unit)? = null,
 ) {
     Row(
         modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.dp
                 VideoControlId.Options -> onOptions
                 VideoControlId.Queue -> onQueue
                 VideoControlId.Scale -> onScaleToggle
-                VideoControlId.Lock -> onLock
             }
             action?.let {
                 IconButton(onClick = it, modifier = Modifier.size(48.dp)) {

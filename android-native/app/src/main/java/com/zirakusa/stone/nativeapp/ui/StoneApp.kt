@@ -59,14 +59,10 @@ import kotlinx.coroutines.delay
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
     var landscapeMode by rememberSaveable { mutableStateOf(initialSettings.landscapeLayoutMode) }
     var videoScale by rememberSaveable { mutableStateOf(VideoScale.fromKey(initialSettings.videoScale)) }
-    var videoUnlockMethod by rememberSaveable {
-        mutableStateOf(VideoUnlockMethod.fromKey(initialSettings.videoUnlockMethod))
-    }
     var videoLibraryLayout by rememberSaveable {
         mutableStateOf(VideoLibraryLayout.fromKey(initialSettings.videoLibraryLayout))
     }
-    var immersivePlayers by rememberSaveable { mutableStateOf(initialSettings.immersivePlayers) }
-    var immersiveLibrary by rememberSaveable { mutableStateOf(initialSettings.immersiveLibrary) }
+    var immersiveEnabled by rememberSaveable { mutableStateOf(initialSettings.immersiveEnabled) }
     var shakeToReport by rememberSaveable { mutableStateOf(initialSettings.shakeToReport) }
     var shakeReportVisible by rememberSaveable { mutableStateOf(false) }
     var videoControlRevision by remember { mutableIntStateOf(0) }
@@ -160,8 +156,10 @@ import kotlinx.coroutines.delay
         (windowOrientation == Configuration.ORIENTATION_UNDEFINED && configurationLandscape)
     val layout = homeLayout(maxWidth.value, landscape, playerOpen, currentSong?.isVideo == true,
         isPictureInPicture, landscapeMode)
-    val immersive = if (layout.fullPlayer) immersivePlayers else immersiveLibrary
-    val immersiveRequest = immersive && !isPictureInPicture
+    // One global setting controls the Activity, library, players, settings and
+    // every registered Compose window. It must not depend on the current tab
+    // or player layout.
+    val immersiveRequest = immersiveEnabled && !isPictureInPicture
     LaunchedEffect(systemBarsController, immersiveRequest) {
         systemBarsController?.setImmersiveEnabled(immersiveRequest)
     }
@@ -198,7 +196,6 @@ import kotlinx.coroutines.delay
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
                 }, sheets = playerSheets, videoScale = videoScale,
-                videoUnlockMethod = videoUnlockMethod,
                 videoControls = videoControls,
                 onVideoScaleChange = {
                     videoScale = it
@@ -248,26 +245,16 @@ import kotlinx.coroutines.delay
                     videoScale = it
                     settingsStore.setVideoScale(it.key)
                 },
-                videoUnlockMethod = videoUnlockMethod,
-                onVideoUnlockMethodChange = {
-                    videoUnlockMethod = it
-                    settingsStore.setVideoUnlockMethod(it.key)
-                },
                 onVideoControlChange = { videoControlRevision++ },
                 videoLibraryLayout = videoLibraryLayout,
                 onVideoLibraryLayoutChange = {
                     videoLibraryLayout = it
                     settingsStore.setVideoLibraryLayout(it.key)
                 },
-                immersivePlayers = immersivePlayers,
-                onImmersivePlayersChange = {
-                    immersivePlayers = it
-                    settingsStore.setImmersivePlayers(it)
-                },
-                immersiveLibrary = immersiveLibrary,
-                onImmersiveLibraryChange = {
-                    immersiveLibrary = it
-                    settingsStore.setImmersiveLibrary(it)
+                immersiveEnabled = immersiveEnabled,
+                onImmersiveEnabledChange = {
+                    immersiveEnabled = it
+                    settingsStore.setImmersiveEnabled(it)
                 },
                 onHome = { playerOpen = false },
                 onEqualizer = { playerSheets.tool = PlayerTool.Equalizer },
@@ -298,7 +285,7 @@ import kotlinx.coroutines.delay
         }
         if (layout.showMiniPlayer) {
             val miniContainerModifier = Modifier.fillMaxSize().then(
-                if (immersive) Modifier else Modifier.navigationBarsPadding()
+                if (immersiveRequest) Modifier else Modifier.navigationBarsPadding()
             )
             Box(miniContainerModifier) {
                 MiniPlayer(
@@ -364,7 +351,7 @@ import kotlinx.coroutines.delay
                     settingsVisible = true
                 })
             },
-            immersive = immersive
+            immersive = immersiveRequest
         )
     }
         if (volumeUi.visible) {

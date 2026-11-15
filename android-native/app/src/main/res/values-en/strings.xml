@@ -75,14 +75,10 @@
     <string name="hardware_acceleration_note">Hardware decoding and audio offload are not equivalent. Android may use a conventional fallback path.</string>
     <string name="settings_theme">Theme</string><string name="settings_language">Language</string>
     <string name="immersive_screen">Immersive screen</string>
-    <string name="immersive_screen_hint">Temporarily hides system bars and uses the available screen without changing playback.</string>
-    <string name="immersive_players">Immersive screen in players</string>
-    <string name="immersive_players_hint">Use immersive mode when opening a music or video player.</string>
-    <string name="immersive_library">Immersive screen in library</string>
-    <string name="immersive_library_hint">Hide system bars in the library while keeping Stone navigation visible.</string>
+    <string name="immersive_screen_hint">Hides system bars across the entire app: home, library, players, videos, playlists and settings. Android can show them temporarily with a gesture.</string>
     <string name="settings_playback">Playback settings</string><string name="settings_notifications">Notification settings</string>
     <string name="video_settings">Video</string>
-    <string name="video_settings_hint">Landscape videos open in immersive mode and fill the screen without distortion. You can change the framing and unlock method.</string>
+    <string name="video_settings_hint">Landscape videos open in immersive mode and fill the screen without distortion. You can change the framing from the player controls.</string>
     <string name="video_controls">Video controls</string>
     <string name="video_controls_hint">Choose and reorder the icons shown below the preview and in the video player.</string>
     <string name="video_controls_future">More functions will be added soon.</string>
@@ -94,12 +90,6 @@
     <string name="video_scale_fit">Fit (no crop)</string>
     <string name="video_scale_zoom">Fill (ZOOM, preserves aspect ratio)</string>
     <string name="video_scale_fill">Stretch (FILL, may distort)</string>
-    <string name="video_unlock_method">Control unlock method</string>
-    <string name="video_unlock_button">Side button</string>
-    <string name="video_unlock_double_tap">Double tap</string>
-    <string name="video_unlock_swipe_up">Swipe up from the bottom</string>
-    <string name="video_lock">Lock controls</string>
-    <string name="video_unlock">Unlock controls</string>
     <string name="video_scale_toggle">Change framing</string>
     <string name="settings_section_system">System</string>
     <string name="theme_dark">Black</string>

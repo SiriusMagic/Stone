@@ -20,10 +20,9 @@ data class StoneSettings(
     val musicReminders: Boolean = false,
     val landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
     val videoScale: String = "auto",
-    val videoUnlockMethod: String = "button",
     val videoLibraryLayout: String = "grid",
-    val immersivePlayers: Boolean = true,
-    val immersiveLibrary: Boolean = false,
+    /** One global policy for every Stone screen and player window. */
+    val immersiveEnabled: Boolean = true,
     val shakeToReport: Boolean = true,
 )
 
@@ -48,12 +47,9 @@ class StoneSettingsStore(context: Context) {
         landscapeLayoutMode = LandscapeLayoutMode.fromKey(db.setting("landscapeLayoutMode", "always")),
         videoScale = db.setting("videoScale", "auto")
             .takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto",
-        videoUnlockMethod = db.setting("videoUnlockMethod", "button")
-            .takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button",
         videoLibraryLayout = db.setting("videoLibraryLayout", "grid")
             .takeIf { it in setOf("grid", "list") } ?: "grid",
-        immersivePlayers = db.setting("immersivePlayers", "true").toBoolean(),
-        immersiveLibrary = db.setting("immersiveLibrary", "false").toBoolean(),
+        immersiveEnabled = db.setting("immersiveMode", legacyImmersiveDefault(db)).toBoolean(),
         shakeToReport = db.setting("shakeToReport", "true").toBoolean(),
     )
     fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in setOf("dark", "gray") } ?: "dark")
@@ -87,12 +83,9 @@ class StoneSettingsStore(context: Context) {
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
     fun setVideoScale(value: String) = db.setSetting("videoScale",
         value.takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto")
-    fun setVideoUnlockMethod(value: String) = db.setSetting("videoUnlockMethod",
-        value.takeIf { it in setOf("button", "double_tap", "swipe_up") } ?: "button")
     fun setVideoLibraryLayout(value: String) = db.setSetting("videoLibraryLayout",
         value.takeIf { it in setOf("grid", "list") } ?: "grid")
-    fun setImmersivePlayers(value: Boolean) = db.setSetting("immersivePlayers", value.toString())
-    fun setImmersiveLibrary(value: Boolean) = db.setSetting("immersiveLibrary", value.toString())
+    fun setImmersiveEnabled(value: Boolean) = db.setSetting("immersiveMode", value.toString())
     fun setShakeToReport(value: Boolean) = db.setSetting("shakeToReport", value.toString())
     fun videoControlVisible(key: String, fallback: Boolean = true) =
         db.setting("video.control.$key", fallback.toString()).toBoolean()
@@ -108,4 +101,12 @@ class StoneSettingsStore(context: Context) {
         db.setSetting("video.control.order", JSONArray(order.distinct()).toString())
     fun lastVideoPreviewId() = db.setting("video.lastPreviewId", "")
     fun setLastVideoPreviewId(id: String) = db.setSetting("video.lastPreviewId", id)
+
+    private fun legacyImmersiveDefault(database: StoneDatabase): String {
+        // Migrate the two retired switches without changing a user's previous
+        // choice. New installs keep the former player default (enabled).
+        val players = database.setting("immersivePlayers", "true").toBoolean()
+        val library = database.setting("immersiveLibrary", "false").toBoolean()
+        return (players || library).toString()
+    }
 }

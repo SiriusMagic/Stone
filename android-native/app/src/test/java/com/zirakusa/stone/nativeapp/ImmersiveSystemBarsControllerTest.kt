@@ -53,7 +53,9 @@ class ImmersiveSystemBarsControllerTest {
     @Test fun resumeAndConfigurationReapplyTheRequestedModeWithoutAConstantLoop() {
         dispatchInsets(systemBarsVisible = false)
         controller.onStop()
-        assertTrue(controller.systemBarsVisible)
+        // Backgrounding must not restore bars and flash them on the next
+        // resume while the global preference remains enabled.
+        assertFalse(controller.systemBarsVisible)
 
         controller.onResume()
         controller.onWindowFocusChanged(true)

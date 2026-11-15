@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
@@ -129,10 +128,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     onScaleToggle: () -> Unit,
 ) {
     var controlsVisible by remember(song.id) { mutableStateOf(true) }
-    var locked by remember(song.id) { mutableStateOf(false) }
     val currentSelect by rememberUpdatedState(onSelectVideo)
     val currentOpen by rememberUpdatedState(onOpenFullscreen)
-    val currentToggle = rememberUpdatedState { if (active) playback.toggle() else currentSelect(song) }
+    val currentPlaybackToggle = rememberUpdatedState { if (active) playback.toggle() else currentSelect(song) }
     val context = LocalContext.current.applicationContext
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     var frame by remember(song.uri, song.modifiedMs) {
@@ -198,20 +196,19 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 }
             }
             Box(
-                Modifier.matchParentSize().pointerInput(song.id, active, locked) {
+                Modifier.matchParentSize().pointerInput(song.id, active) {
                     detectTapGestures(
-                        onTap = { currentToggle.value() },
+                        onTap = { controlsVisible = !controlsVisible },
                         onDoubleTap = {
                             if (!active) currentSelect(song)
                             currentOpen()
                         },
-                        onLongPress = { if (!locked) controlsVisible = !controlsVisible },
                     )
                 }
             )
-            if (!active || !state.playing) {
+            if (controlsVisible && (!active || !state.playing)) {
                 FilledIconButton(
-                    onClick = { currentToggle.value() },
+                    onClick = { currentPlaybackToggle.value() },
                     modifier = Modifier.size(58.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = StonePalette.Yellow,
@@ -223,15 +220,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         stringResource(if (active && state.playing) R.string.pause else R.string.play),
                         Modifier.size(32.dp),
                     )
-                }
-            }
-            if (locked) {
-                IconButton(
-                    onClick = { locked = false; controlsVisible = true },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(6.dp)
-                        .background(Color(0xCC111017), RoundedCornerShape(12.dp)),
-                ) {
-                    Icon(Icons.Default.Lock, stringResource(R.string.video_unlock), tint = StonePalette.Yellow)
                 }
             }
         }
@@ -263,7 +251,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous), Modifier.size(34.dp))
                     }
                     FilledIconButton(
-                        onClick = { currentToggle.value() },
+                        onClick = { currentPlaybackToggle.value() },
                         enabled = active || song.isVideo,
                         modifier = Modifier.size(54.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -288,7 +276,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         onOptions = onOptions,
                         onQueue = onQueue,
                         onScaleToggle = onScaleToggle,
-                        onLock = { locked = true; controlsVisible = false },
                     )
                 }
             }

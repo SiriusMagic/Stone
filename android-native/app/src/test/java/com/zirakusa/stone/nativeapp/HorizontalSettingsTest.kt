@@ -38,11 +38,11 @@ class HorizontalSettingsTest {
         val settings = VideoControlSettings.from(StoneSettingsStore(context))
         assertEquals(
             listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Options,
-                VideoControlId.Scale, VideoControlId.Lock),
+                VideoControlId.Scale),
             settings.order,
         )
         assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,
-            VideoControlId.Scale, VideoControlId.Lock), settings.visibleIds)
+            VideoControlId.Scale), settings.visibleIds)
     }
 
     @Test fun videoLayoutAndImmersivePreferencesHaveSafeDefaultsAndPersist() {
@@ -51,20 +51,16 @@ class HorizontalSettingsTest {
         val defaults = store.read()
         assertEquals("auto", defaults.videoScale)
         assertEquals("grid", defaults.videoLibraryLayout)
-        assertTrue(defaults.immersivePlayers)
-        assertFalse(defaults.immersiveLibrary)
+        assertTrue(defaults.immersiveEnabled)
 
         store.setVideoLibraryLayout("list")
-        store.setImmersivePlayers(false)
-        store.setImmersiveLibrary(true)
+        store.setImmersiveEnabled(false)
         val reopened = StoneSettingsStore(context).read()
         assertEquals("list", reopened.videoLibraryLayout)
-        assertFalse(reopened.immersivePlayers)
-        assertTrue(reopened.immersiveLibrary)
+        assertFalse(reopened.immersiveEnabled)
 
         // Do not leak this test's preference changes into other persistence tests.
         store.setVideoLibraryLayout("grid")
-        store.setImmersivePlayers(true)
-        store.setImmersiveLibrary(false)
+        store.setImmersiveEnabled(true)
     }
 }

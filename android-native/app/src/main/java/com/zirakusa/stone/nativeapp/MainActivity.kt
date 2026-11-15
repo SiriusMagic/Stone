@@ -33,7 +33,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // ImmersiveSystemBarsController is the single owner of edge-to-edge and
         // system-bar visibility for the Activity and its Compose windows.
-        immersiveSystemBars.attach()
+        // Seed the window policy before Compose draws the first frame so an
+        // enabled global preference does not briefly expose system bars.
+        val immersiveEnabled = runCatching {
+            StoneSettingsStore(applicationContext).read().immersiveEnabled
+        }.getOrDefault(true)
+        immersiveSystemBars.attach(immersiveEnabled)
         pictureInPicture = isInPictureInPictureMode
         windowOrientation = resources.configuration.orientation
         AudioDiagnostics.log(this, "MainActivity.onCreate", state = StonePlaybackService.diagnosticState(),

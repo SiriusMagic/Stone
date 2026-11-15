@@ -41,7 +41,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.SleepTimerContent
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
-import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.AudioDiagnostics
@@ -76,13 +75,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onLandscapeLayoutChange: (LandscapeLayoutMode) -> Unit = {},
     videoScale: VideoScale = VideoScale.AUTO,
     onVideoScaleChange: (VideoScale) -> Unit = {},
-    videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
-    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
     onVideoControlChange: () -> Unit = {},
-    immersivePlayers: Boolean = true,
-    onImmersivePlayersChange: (Boolean) -> Unit = {},
-    immersiveLibrary: Boolean = false,
-    onImmersiveLibraryChange: (Boolean) -> Unit = {},
+    immersiveEnabled: Boolean = true,
+    onImmersiveEnabledChange: (Boolean) -> Unit = {},
     shakeToReport: Boolean = true,
     onShakeToReportChange: (Boolean) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
@@ -178,13 +173,11 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
-                    "immersive" -> ImmersiveSettingsDetail(immersivePlayers, onImmersivePlayersChange,
-                        immersiveLibrary, onImmersiveLibraryChange)
+                    "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "horizontal-layout" -> HorizontalLayoutSettings(landscapeLayoutMode, onLandscapeLayoutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
                         { onPage("hardware-acceleration") })
-                    "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange,
-                        videoUnlockMethod, onVideoUnlockMethodChange)
+                    "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange)
                     "video-controls" -> VideoControlSettingsDetail(store, onVideoControlChange)
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
@@ -453,8 +446,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 }
 
 @Composable private fun VideoSettingsDetail(scale: VideoScale,
-    onScaleChange: (VideoScale) -> Unit, unlockMethod: VideoUnlockMethod,
-    onUnlockMethodChange: (VideoUnlockMethod) -> Unit) {
+    onScaleChange: (VideoScale) -> Unit) {
     Text(stringResource(R.string.video_settings_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 14.dp))
     Text(stringResource(R.string.video_scale), color = StonePalette.Yellow,
@@ -473,32 +465,15 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
             onScaleChange(VideoScale.FILL)
         }
     }
-    Text(stringResource(R.string.video_unlock_method), color = StonePalette.Yellow,
-        fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 4.dp))
-    SettingsGroup {
-        SettingsChoice(R.string.video_unlock_button, unlockMethod == VideoUnlockMethod.BUTTON) {
-            onUnlockMethodChange(VideoUnlockMethod.BUTTON)
-        }
-        SettingsChoice(R.string.video_unlock_double_tap,
-            unlockMethod == VideoUnlockMethod.DOUBLE_TAP) {
-            onUnlockMethodChange(VideoUnlockMethod.DOUBLE_TAP)
-        }
-        SettingsChoice(R.string.video_unlock_swipe_up,
-            unlockMethod == VideoUnlockMethod.SWIPE_UP) {
-            onUnlockMethodChange(VideoUnlockMethod.SWIPE_UP)
-        }
-    }
 }
 
-@Composable private fun ImmersiveSettingsDetail(players: Boolean,
-    onPlayersChange: (Boolean) -> Unit, library: Boolean, onLibraryChange: (Boolean) -> Unit) {
+@Composable private fun ImmersiveSettingsDetail(enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit) {
     Text(stringResource(R.string.immersive_screen_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 14.dp))
     SettingsGroup {
-        ToggleSetting(R.string.immersive_players, R.string.immersive_players_hint,
-            players, onPlayersChange)
-        ToggleSetting(R.string.immersive_library, R.string.immersive_library_hint,
-            library, onLibraryChange)
+        ToggleSetting(R.string.immersive_screen, R.string.immersive_screen_hint,
+            enabled, onEnabledChange)
     }
 }
 

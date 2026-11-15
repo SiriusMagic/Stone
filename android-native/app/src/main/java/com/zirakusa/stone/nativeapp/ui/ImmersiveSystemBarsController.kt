@@ -46,6 +46,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         var pendingHide = false
         var userRevealedTransientBars = false
         var lastSystemBarsVisible: Boolean? = null
+        var lastImeVisible: Boolean? = null
         var systemBarsVisible = true
         var configuredForImmersive = false
         var baseBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
@@ -72,9 +73,10 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     var imeVisible by mutableStateOf(false)
         private set
 
-    fun attach() {
+    fun attach(initialImmersive: Boolean = false) {
         if (attached) return
         attached = true
+        requested = initialImmersive
         root = registerWindowInternal(rootWindow, root = true)
         // Configure edge-to-edge once. Immersive mode changes visibility and cutout policy,
         // but never delegates those decisions to individual screens.
@@ -137,7 +139,11 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         hasActivityFocus = false
         root?.hasFocus = false
         resetTransientRevealState()
-        restoreAll()
+        // Keep the global policy configured while the Activity is merely in
+        // the background. Restoring bars here caused a visible flash when
+        // returning to Stone; dispose() still restores every window when the
+        // Activity is actually destroyed or the preference is disabled.
+        if (!requested) restoreAll()
     }
 
     fun onWindowFocusChanged(focused: Boolean) {
@@ -232,16 +238,23 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         val barsVisible = insets.isVisible(WindowInsetsCompat.Type.systemBars())
         val keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
         val wasVisible = managed.lastSystemBarsVisible
+        val wasKeyboardVisible = managed.lastImeVisible
         if (managed.pendingHide && !barsVisible) managed.pendingHide = false
         if (!barsVisible && managed.userRevealedTransientBars) {
             managed.userRevealedTransientBars = false
             log("system bars hidden after transient reveal window=${windowId(managed.window)}")
         }
         managed.lastSystemBarsVisible = barsVisible
+        managed.lastImeVisible = keyboardVisible
         managed.systemBarsVisible = barsVisible
+        val keyboardJustClosed = wasKeyboardVisible == true && !keyboardVisible
         if (requested && !managed.applying && !managed.pendingHide &&
-            wasVisible == false && barsVisible) {
-            if (managed.systemBarsAnimationRunning) {
+            barsVisible && (wasVisible == false || keyboardJustClosed)) {
+            if (keyboardVisible) {
+                // The IME owns its temporary window/insets. Do not fight it by
+                // hiding system bars while a text field is active.
+                log("keyboard active; leaving system bars to Android window=${windowId(managed.window)}")
+            } else if (managed.systemBarsAnimationRunning) {
                 // A real system-edge gesture animates the system-bar insets. Leave those bars
                 // transiently visible and let Android dismiss them according to its policy.
                 managed.userRevealedTransientBars = true
@@ -321,6 +334,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             managed.configuredForImmersive = false
             managed.systemBarsVisible = true
             managed.lastSystemBarsVisible = true
+            managed.lastImeVisible = false
             if (managed.root) systemBarsVisible = true
         }
     }

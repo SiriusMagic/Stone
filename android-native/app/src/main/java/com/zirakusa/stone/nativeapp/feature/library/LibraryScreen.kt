@@ -27,7 +27,6 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
-import com.zirakusa.stone.nativeapp.feature.player.VideoUnlockMethod
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -62,17 +61,13 @@ private val legacyDefinitions = listOf(
     playerContent: @Composable (Boolean, Boolean) -> Unit = { _, _ -> },
     videoScale: VideoScale = VideoScale.AUTO,
     onVideoScaleChange: (VideoScale) -> Unit = {},
-    videoUnlockMethod: VideoUnlockMethod = VideoUnlockMethod.BUTTON,
-    onVideoUnlockMethodChange: (VideoUnlockMethod) -> Unit = {},
     onVideoControlChange: () -> Unit = {},
     videoLibraryLayout: VideoLibraryLayout = VideoLibraryLayout.GRID,
     onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit = {},
     onSetPlaylistCover: (String, Uri) -> Unit = { _, _ -> },
     onRestorePlaylistCover: (String) -> Unit = {},
-    immersivePlayers: Boolean = true,
-    onImmersivePlayersChange: (Boolean) -> Unit = {},
-    immersiveLibrary: Boolean = false,
-    onImmersiveLibraryChange: (Boolean) -> Unit = {},
+    immersiveEnabled: Boolean = true,
+    onImmersiveEnabledChange: (Boolean) -> Unit = {},
     shakeToReport: Boolean = true,
     onShakeToReportChange: (Boolean) -> Unit = {}) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -218,13 +213,10 @@ private val legacyDefinitions = listOf(
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) },
         { sheet = it }, playbackViewModel, landscapeLayoutMode = landscapeLayoutMode,
         onLandscapeLayoutChange = onLandscapeLayoutChange, videoScale = videoScale,
-        onVideoScaleChange = onVideoScaleChange, videoUnlockMethod = videoUnlockMethod,
-        onVideoUnlockMethodChange = onVideoUnlockMethodChange,
+        onVideoScaleChange = onVideoScaleChange,
         onVideoControlChange = onVideoControlChange,
-        immersivePlayers = immersivePlayers,
-        onImmersivePlayersChange = onImmersivePlayersChange,
-        immersiveLibrary = immersiveLibrary,
-        onImmersiveLibraryChange = onImmersiveLibraryChange,
+        immersiveEnabled = immersiveEnabled,
+        onImmersiveEnabledChange = onImmersiveEnabledChange,
         shakeToReport = shakeToReport,
         onShakeToReportChange = onShakeToReportChange) { key, visible ->
         shortcuts = shortcuts + (key to visible)

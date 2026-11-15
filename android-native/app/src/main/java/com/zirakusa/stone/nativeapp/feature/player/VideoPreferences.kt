@@ -43,7 +43,6 @@ enum class VideoScale(val key: String) {
         fun fromKey(value: String?): VideoScale = entries.firstOrNull { it.key == value } ?: AUTO
     }
 }
-
 /** Updates automatic framing when Media3 reports the actual source dimensions. */
 @Composable
 internal fun rememberResolvedVideoScale(player: Player?, requested: VideoScale,
@@ -64,16 +63,4 @@ internal fun rememberResolvedVideoScale(player: Player?, requested: VideoScale,
         }
     }
     return requested.resolve(dimensions.first, dimensions.second, horizontalFallback)
-}
-
-/** The single gesture/action used to unlock the immersive video controls. */
-enum class VideoUnlockMethod(val key: String) {
-    BUTTON("button"),
-    DOUBLE_TAP("double_tap"),
-    SWIPE_UP("swipe_up");
-
-    companion object {
-        fun fromKey(value: String?): VideoUnlockMethod =
-            entries.firstOrNull { it.key == value } ?: BUTTON
-    }
 }

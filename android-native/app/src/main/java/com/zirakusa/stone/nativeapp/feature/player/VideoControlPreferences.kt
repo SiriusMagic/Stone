@@ -3,7 +3,6 @@ package com.zirakusa.stone.nativeapp.feature.player
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -15,8 +14,7 @@ enum class VideoControlId(val key: String) {
     AudioOnly("audio_only"),
     Options("options"),
     Queue("queue"),
-    Scale("scale"),
-    Lock("lock")
+    Scale("scale")
 }
 
 data class VideoControlDefinition(
@@ -31,7 +29,6 @@ object VideoControlRegistry {
         VideoControlDefinition(VideoControlId.Options, Icons.Default.Tune, R.string.more_options),
         VideoControlDefinition(VideoControlId.Queue, Icons.Default.QueueMusic, R.string.queue),
         VideoControlDefinition(VideoControlId.Scale, Icons.Default.Crop, R.string.video_scale_toggle),
-        VideoControlDefinition(VideoControlId.Lock, Icons.Default.Lock, R.string.video_lock),
     )
 
     val defaultIds = definitions.map { it.id }
