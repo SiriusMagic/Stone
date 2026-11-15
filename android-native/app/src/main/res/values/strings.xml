@@ -401,12 +401,12 @@
     <string name="api_lan">Permitir red local (Wi-Fi)</string>
     <string name="api_lan_hint">Apagado: solo desde este teléfono. Encendido: otros equipos de tu Wi-Fi con el token.</string>
     <string name="api_running">Servidor activo</string>
-    <string name="api_failed">No se pudo iniciar (¿puerto 8765 ocupado?)</string>
+    <string name="api_failed">No se pudo iniciar: el puerto está ocupado por otro programa. Prueba otro puerto.</string>
     <string name="api_address">Dirección (toca para copiar)</string>
     <string name="api_token">Token de acceso</string>
     <string name="api_copy_token">Copiar token</string>
     <string name="api_new_token">Generar otro</string>
-    <string name="api_header_hint">El agente debe enviar la cabecera «Authorization: Bearer TOKEN». Generar otro token revoca el acceso anterior.</string>
+    <string name="api_header_hint">El agente puede enviar el token como cabecera «Authorization: Bearer TOKEN» o al final del enlace (?token=TOKEN). Generar otro token revoca el acceso anterior.</string>
     <string name="api_tools">Herramientas disponibles</string>
     <string name="api_risk_hint">○ solo lectura · ◐ cambio reversible · ● modifica archivos: pide tu confirmación en pantalla.</string>
     <string name="api_activity">Actividad reciente</string>
@@ -441,4 +441,16 @@
     <string name="onboarding_start">Empezar</string>
     <string name="onboarding_permission_title">Para reproducir tu música y tus vídeos</string>
     <string name="onboarding_permission_hint">Permite que Stone acceda a la música y los vídeos de este teléfono. La búsqueda empieza en cuanto lo permites, para que al entrar ya estén listos.</string>
+    <string name="api_port">Puerto</string>
+    <string name="api_port_apply">Aplicar</string>
+    <string name="api_test">Probar conexión</string>
+    <string name="api_test_running">Probando…</string>
+    <string name="api_test_ok">Stone responde en %1$s</string>
+    <string name="api_test_other">En %1$s responde otro programa, no Stone. Cambia el puerto de Stone o cierra ese programa.</string>
+    <string name="api_test_down">Sin respuesta en %1$s (%2$s)</string>
+    <string name="api_clients_hint">Funciona con clientes MCP que se ejecutan en este teléfono o en un ordenador de tu misma Wi-Fi (Claude Code, Claude Desktop, Cursor, VS Code, LM Studio…). Las apps de IA en la nube (ChatGPT, claude.ai, Gemini) no pueden entrar en tu red local. Escribe siempre http://, no https://.</string>
+    <string name="api_copy_url">Copiar enlace con token</string>
+    <string name="api_copy_sse">Copiar enlace SSE (apps antiguas)</string>
+    <string name="api_copy_json">Copiar configuración JSON</string>
+    <string name="api_copy_cli">Copiar comando de Claude Code</string>
 </resources>

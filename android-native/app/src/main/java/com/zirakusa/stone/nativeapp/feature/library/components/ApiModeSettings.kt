@@ -54,6 +54,7 @@ import java.util.Locale
         }
         Text(stringResource(R.string.api_header_hint), color = StonePalette.Muted, fontSize = 12.sp,
             modifier = Modifier.padding(top = 8.dp))
+        ApiModeConnect(::copy)
     }
     Header(R.string.api_tools)
     Text(stringResource(R.string.api_risk_hint), color = StonePalette.Muted, fontSize = 12.sp)

@@ -5,44 +5,52 @@ import com.zirakusa.stone.nativeapp.BuildConfig
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedInputStream
-import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.security.MessageDigest
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
- * Model Context Protocol server (Streamable HTTP, JSON responses) exposing [StoneAutomation]
- * actions as tools. Deliberately small: one POST endpoint, JSON-RPC 2.0, no sessions.
+ * Model Context Protocol server exposing [StoneAutomation] actions as tools. Two transports,
+ * so it works with as many clients as possible:
+ * - Streamable HTTP: `POST /mcp` (JSON responses, optional `Mcp-Session-Id`).
+ * - Legacy HTTP+SSE: `GET /sse` opens the stream, `POST /messages?sessionId=…` sends requests.
  *
- * Security: every request needs `Authorization: Bearer <token>`; requests carrying a browser
- * `Origin` header are refused (DNS-rebinding/CSRF); it listens on loopback unless the user
- * enables local-network access.
+ * Security: every request needs the token, as `Authorization: Bearer <token>`, `X-Api-Key` or
+ * `?token=` (for clients that only take a URL). It listens on loopback unless the user enables
+ * the local network. Each response carries `X-Stone-Server` so a different program using the
+ * same port is easy to spot.
  */
 object McpServer {
-    const val PORT = 8765
+    const val DEFAULT_PORT = 8765
     const val PATH = "/mcp"
     private const val TAG = "StoneMcp"
-    private const val MAX_BODY = 1 shl 20
-    private val protocolVersions = listOf("2025-06-18", "2025-03-26", "2024-11-05")
+    private val protocolVersions = listOf("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
+    val identity: String get() = "Stone ${BuildConfig.VERSION_NAME} (${BuildConfig.APPLICATION_ID})"
 
     @Volatile private var socket: ServerSocket? = null
     @Volatile private var token: String = ""
+    @Volatile var port: Int = DEFAULT_PORT; private set
     private var workers: ExecutorService? = null
+    /** Open legacy SSE streams by session id. */
+    private val streams = ConcurrentHashMap<String, OutputStream>()
 
     val running: Boolean get() = socket?.isClosed == false
 
-    @Synchronized fun start(token: String, localNetwork: Boolean): Boolean {
+    @Synchronized fun start(token: String, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean {
         stop()
         this.token = token
+        this.port = port
         return runCatching {
             val address = if (localNetwork) InetAddress.getByName("0.0.0.0") else InetAddress.getLoopbackAddress()
-            val server = ServerSocket(PORT, 16, address)
+            val server = ServerSocket(port, 32, address)
             socket = server
-            val pool = Executors.newFixedThreadPool(4).also { workers = it }
+            val pool = Executors.newFixedThreadPool(8).also { workers = it }
             Thread({
                 while (!server.isClosed) {
                     val client = runCatching { server.accept() }.getOrNull() ?: break
@@ -50,54 +58,85 @@ object McpServer {
                 }
             }, "stone-mcp").apply { isDaemon = true }.start()
             true
-        }.onFailure { Log.w(TAG, "could not start", it) }.getOrDefault(false)
+        }.onFailure { Log.w(TAG, "could not start on port $port", it) }.getOrDefault(false)
     }
 
     @Synchronized fun stop() {
         runCatching { socket?.close() }
         socket = null
+        streams.values.forEach { runCatching { it.close() } }
+        streams.clear()
         workers?.shutdownNow()
         workers = null
     }
 
     private fun serve(client: Socket) {
         client.soTimeout = 15_000
-        val input = BufferedInputStream(client.getInputStream())
-        val requestLine = readLine(input) ?: return
-        val parts = requestLine.split(' ')
-        if (parts.size < 2) return respond(client, 400, error(null, -32700, "Bad request"))
-        val headers = HashMap<String, String>()
-        while (true) {
-            val line = readLine(input) ?: break
-            if (line.isEmpty()) break
-            val colon = line.indexOf(':')
-            if (colon > 0) headers[line.substring(0, colon).trim().lowercase()] = line.substring(colon + 1).trim()
+        val request = McpRequest.read(client) ?: return
+        val out = client.getOutputStream()
+        if (request.method == "OPTIONS") return McpHttp.respond(out, 204, null)
+        val session = request.query["sessionId"]?.takeIf { streams.containsKey(it) }
+        if (!authorized(request) && session == null) return McpHttp.respond(out, 401,
+            error(null, -32001, "Stone: missing or wrong token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."),
+            listOf("WWW-Authenticate: Bearer"))
+        when {
+            request.path == "/sse" && request.method == "GET" -> openStream(client, out, request)
+            request.path == "/messages" && request.method == "POST" -> postToStream(out, request, session)
+            request.path == PATH || request.path == "/" -> streamableHttp(out, request)
+            else -> McpHttp.respond(out, 404, error(null, -32601, "Stone: use POST $PATH (or GET /sse)"))
         }
-        val path = parts[1].substringBefore('?')
-        if (headers.containsKey("origin")) return respond(client, 403, error(null, -32000, "Browser origins are not allowed"))
-        if (!authorized(headers["authorization"])) return respond(client, 401, error(null, -32001, "Missing or wrong token"),
-            "WWW-Authenticate: Bearer")
-        if (path != PATH) return respond(client, 404, error(null, -32601, "Use POST $PATH"))
-        if (parts[0] != "POST") return respond(client, 405, error(null, -32601, "Only POST is supported"), "Allow: POST")
-        val length = headers["content-length"]?.toIntOrNull() ?: 0
-        if (length !in 1..MAX_BODY) return respond(client, 400, error(null, -32700, "Body required (max 1 MB)"))
-        val body = ByteArray(length)
-        var read = 0
-        while (read < length) {
-            val count = input.read(body, read, length - read)
-            if (count < 0) break
-            read += count
+    }
+
+    /** Streamable HTTP: one POST per JSON-RPC message or batch; GET has no server stream here. */
+    private fun streamableHttp(out: OutputStream, request: McpRequest) {
+        when (request.method) {
+            "POST" -> {
+                val (reply, initialized) = dispatch(request.body)
+                val headers = if (initialized) listOf("Mcp-Session-Id: ${UUID.randomUUID()}") else emptyList()
+                if (reply == null) McpHttp.respond(out, 202, null, headers) else McpHttp.respond(out, 200, reply, headers)
+            }
+            "DELETE" -> McpHttp.respond(out, 200, null)
+            else -> McpHttp.respond(out, 405, error(null, -32000, "Stone: use POST for MCP requests"), listOf("Allow: POST, DELETE"))
         }
-        val text = String(body, 0, read, Charsets.UTF_8).trim()
-        val reply: Any? = try {
-            if (text.startsWith("[")) {
-                val batch = JSONArray(text)
-                JSONArray((0 until batch.length()).mapNotNull { handle(batch.getJSONObject(it)) }).takeIf { it.length() > 0 }
-            } else handle(JSONObject(text))
-        } catch (parse: org.json.JSONException) {
-            error(null, -32700, "Invalid JSON")
+    }
+
+    /** Legacy SSE transport: announce where to post, then keep the stream alive until it closes. */
+    private fun openStream(client: Socket, out: OutputStream, request: McpRequest) {
+        val id = UUID.randomUUID().toString()
+        client.soTimeout = 0
+        McpHttp.startEventStream(out)
+        val tokenSuffix = request.query["token"]?.let { "&token=$it" }.orEmpty()
+        McpHttp.event(out, "endpoint", "/messages?sessionId=$id$tokenSuffix")
+        streams[id] = out
+        try {
+            while (running && streams.containsKey(id)) {
+                Thread.sleep(15_000)
+                McpHttp.event(out, null, "") // keep-alive; throws once the client is gone
+            }
+        } catch (_: Exception) {
+        } finally { streams.remove(id) }
+    }
+
+    private fun postToStream(out: OutputStream, request: McpRequest, session: String?) {
+        val stream = session?.let { streams[it] }
+            ?: return McpHttp.respond(out, 404, error(null, -32000, "Stone: unknown or closed SSE session"))
+        McpHttp.respond(out, 202, null)
+        val (reply, _) = dispatch(request.body)
+        if (reply != null) runCatching { McpHttp.event(stream, "message", reply.toString()) }
+    }
+
+    /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
+    private fun dispatch(text: String): Pair<Any?, Boolean> = try {
+        if (text.startsWith("[")) {
+            val batch = JSONArray(text)
+            val messages = (0 until batch.length()).map { batch.getJSONObject(it) }
+            JSONArray(messages.mapNotNull(::handle)).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
+        } else {
+            val message = JSONObject(text)
+            handle(message) to (message.optString("method") == "initialize")
         }
-        if (reply == null) respond(client, 202, null) else respond(client, 200, reply)
+    } catch (parse: org.json.JSONException) {
+        error(null, -32700, "Invalid JSON") to false
     }
 
     /** Returns the JSON-RPC response, or null for notifications. */
@@ -122,6 +161,10 @@ object McpServer {
                             .put("destructiveHint", action.risk == ActionRisk.PERSISTENT))
                 }))
                 "tools/call" -> callTool(params)
+                // Optional lists some clients request at start-up; Stone has none of these.
+                "resources/list" -> JSONObject().put("resources", JSONArray())
+                "resources/templates/list" -> JSONObject().put("resourceTemplates", JSONArray())
+                "prompts/list" -> JSONObject().put("prompts", JSONArray())
                 else -> return error(id, -32601, "Method not found: $method")
             }
             JSONObject().put("jsonrpc", "2.0").put("id", id).put("result", result)
@@ -144,36 +187,12 @@ object McpServer {
         }
     }
 
-    private fun authorized(header: String?): Boolean {
-        val given = header?.takeIf { it.startsWith("Bearer ", ignoreCase = true) }?.substring(7)?.trim() ?: return false
+    private fun authorized(request: McpRequest): Boolean {
+        val bearer = request.header("authorization")?.takeIf { it.startsWith("Bearer ", ignoreCase = true) }?.substring(7)?.trim()
+        val given = bearer ?: request.header("x-api-key")?.trim() ?: request.query["token"]?.trim() ?: return false
         return token.isNotEmpty() && MessageDigest.isEqual(given.toByteArray(), token.toByteArray())
     }
 
     private fun error(id: Any?, code: Int, message: String) = JSONObject().put("jsonrpc", "2.0")
         .put("id", id ?: JSONObject.NULL).put("error", JSONObject().put("code", code).put("message", message))
-
-    private fun respond(client: Socket, status: Int, body: Any?, extraHeader: String? = null) {
-        val bytes = body?.toString()?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
-        val reason = when (status) { 200 -> "OK"; 202 -> "Accepted"; 400 -> "Bad Request"; 401 -> "Unauthorized"
-            403 -> "Forbidden"; 404 -> "Not Found"; 405 -> "Method Not Allowed"; else -> "Error" }
-        val head = buildString {
-            append("HTTP/1.1 $status $reason\r\n")
-            if (bytes.isNotEmpty()) append("Content-Type: application/json\r\n")
-            append("Content-Length: ${bytes.size}\r\nConnection: close\r\n")
-            extraHeader?.let { append(it).append("\r\n") }
-            append("\r\n")
-        }
-        client.getOutputStream().apply { write(head.toByteArray(Charsets.US_ASCII)); write(bytes); flush() }
-    }
-
-    private fun readLine(input: InputStream): String? {
-        val line = StringBuilder()
-        while (true) {
-            val byte = input.read()
-            if (byte < 0) return if (line.isEmpty()) null else line.toString()
-            if (byte == '\n'.code) return line.toString().trimEnd('\r')
-            if (line.length > 8192) return null
-            line.append(byte.toChar())
-        }
-    }
 }

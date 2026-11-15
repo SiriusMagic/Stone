@@ -1,5 +1,11 @@
 # Stone Kotlin 1.6.0
 
+- Modo API más compatible: token por cabecera, `X-Api-Key` o `?token=` en el enlace; CORS para
+  clientes en navegador; transporte SSE antiguo (`/sse` + `/messages`) además de `POST /mcp`;
+  puerto configurable; cada respuesta se identifica con `X-Stone-Server`. Botón "Probar conexión"
+  que distingue si responde Stone u otro programa en el puerto, y botones para copiar el enlace con
+  token, el enlace SSE, la configuración JSON y el comando de Claude Code. Comprobado con el SDK
+  oficial de MCP por los tres caminos.
 - Bienvenida en el primer inicio: "Elige tu idioma" y Empezar; después los permisos de música y
   vídeos (el escaneo arranca en cuanto se conceden, con la biblioteca cargándose debajo) y de
   notificaciones. Quien ya usaba Stone no la ve.
