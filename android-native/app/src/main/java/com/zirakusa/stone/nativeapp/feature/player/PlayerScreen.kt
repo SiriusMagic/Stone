@@ -496,6 +496,12 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
             adjustment = null
         }
     }
+    var fastHold by remember { mutableStateOf(false) }
+    var speedBeforeHold by remember { mutableFloatStateOf(1f) }
+    val currentHold = rememberUpdatedState { start: Boolean ->
+        if (start) { speedBeforeHold = state.speed; playback.setSpeed(2f) } else playback.setSpeed(speedBeforeHold)
+        fastHold = start
+    }
     val currentTap = rememberUpdatedState(onTap)
     val currentDoubleTap = rememberUpdatedState(onDoubleTap)
     val currentAdjustment = rememberUpdatedState(newValue = { leftSide: Boolean, delta: Float ->
@@ -517,10 +523,18 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
             onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) },
             onHorizontalSwipe = { deltaX ->
                 if (deltaX < 0f) onNext() else onPrevious()
-            }
+            },
+            onHold = { start -> currentHold.value(start) }
         )
     }) {
         adjustment?.let { VideoAdjustmentIndicator(it, Modifier.fillMaxSize()) }
+        if (fastHold) Row(Modifier.align(Alignment.TopCenter).padding(top = 90.dp)
+            .background(Color(0xB3000000), RoundedCornerShape(10.dp)).padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.FastForward, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Text(" 2.0X ", color = Color(0xFF4CD2A8), fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.hold_speed_banner), color = Color.White)
+        }
     }
 }
 
@@ -559,20 +573,27 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
 private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
     onDoubleTap: (leftSide: Boolean) -> Unit,
     onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit,
-    onHorizontalSwipe: (Float) -> Unit) {
+    onHorizontalSwipe: (Float) -> Unit, onHold: (Boolean) -> Unit = {}) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
         var totalY = 0f
         var moved = false
         var horizontalTriggered = false
+        var holding = false
         while (true) {
-            val event = awaitPointerEvent()
+            // Holding still past the long-press timeout plays at 2x until the finger lifts.
+            val waitMs = viewConfiguration.longPressTimeoutMillis -
+                (android.os.SystemClock.uptimeMillis() - down.uptimeMillis)
+            val event = if (!moved && !holding) withTimeoutOrNull(waitMs.coerceAtLeast(1)) { awaitPointerEvent() }
+                else awaitPointerEvent()
+            if (event == null) { holding = true; onHold(true); continue }
             val change = event.changes.firstOrNull() ?: break
             if (!change.pressed) break
             val delta = change.positionChange()
             totalX += delta.x
             totalY += delta.y
+            if (holding) { change.consume(); continue }
             if (!moved && maxOf(abs(totalX), abs(totalY)) > viewConfiguration.touchSlop) moved = true
             if (moved) {
                 if (abs(totalY) >= abs(totalX)) {
@@ -587,6 +608,7 @@ private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
                 change.consume()
             }
         }
+        if (holding) { onHold(false); return@awaitEachGesture }
         if (!moved) {
             // Waiting briefly for a second pointer-down lets a double tap remain a seek gesture
             // without making a single tap impossible.

@@ -118,6 +118,31 @@ object MediaFileIo {
         }
     }
 
+    /** Human readable location (/storage/...) for the editor's "Ruta del archivo". */
+    fun displayPath(context: Context, value: String): String {
+        val uri = value.toUri()
+        if (uri.authority == MediaStore.AUTHORITY) runCatching {
+            @Suppress("DEPRECATION")
+            context.contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.DATA), null, null, null)?.use {
+                if (it.moveToFirst()) return it.getString(0) ?: value
+            }
+        }
+        return filePath(uri) ?: Uri.decode(value)
+    }
+
+    private fun filePath(uri: Uri): String? = when {
+        uri.scheme == "file" -> uri.path
+        uri.authority == "com.android.externalstorage.documents" -> runCatching {
+            val id = DocumentsContract.getDocumentId(uri)
+            val volume = id.substringBefore(':')
+            @Suppress("DEPRECATION")
+            val root = if (volume.equals("primary", true)) Environment.getExternalStorageDirectory().path
+                else "/storage/$volume"
+            "$root/${id.substringAfter(':', "")}"
+        }.getOrNull()
+        else -> null
+    }
+
     /** Ask Android to re-read the file so MediaStore (and every other player) sees the edit. */
     fun rescan(context: Context, value: String) {
         val uri = value.toUri()

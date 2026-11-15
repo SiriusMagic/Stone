@@ -46,7 +46,8 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     videoLibraryLayout: VideoLibraryLayout = VideoLibraryLayout.GRID,
     onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit = {},
     onSetPlaylistCover: (String, Uri) -> Unit = { _, _ -> },
-    onRestorePlaylistCover: (String) -> Unit = {}) {
+    onRestorePlaylistCover: (String) -> Unit = {},
+    selectionActions: LibrarySelectionActions = LibrarySelectionActions()) {
     if (tab == LibraryTab.Playlists) {
         PlaylistLibrary(state, collection, select, canPlay, currentId, onPlay, modifier,
             onCreatePlaylist, onRemoveFromPlaylist, compact,
@@ -62,12 +63,12 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
     val mediaSongs = songs.filter(tab::accepts)
     if (tab == LibraryTab.Shorts) {
-        ShortsGrid(mediaSongs, state, currentId, modifier, onPlay, onVideoOptions)
+        ShortsGrid(mediaSongs, state, currentId, modifier, onPlay, onVideoOptions, onDelete, selectionActions.onTagsSaved)
         return
     }
     if (tab.isVideo) {
         VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder,
-            compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions)
+            compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions, onDelete, selectionActions.onTagsSaved)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -75,6 +76,10 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     var selectedIds by remember(collection) { mutableStateOf<Set<String>>(emptySet()) }
     var menuVisible by remember(collection) { mutableStateOf(false) }
     var deleteConfirmVisible by remember(collection) { mutableStateOf(false) }
+    var pickPlaylist by remember { mutableStateOf(false) }
+    var tagSong by remember { mutableStateOf<Song?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.activity.compose.BackHandler(enabled = managing) { managing = false; selectedIds = emptySet() }
     Column(modifier.fillMaxWidth()) {
     LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("library-list"), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)) {
         run {
@@ -103,33 +108,25 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                     }
                 }
             }
-            if (collection != null) item {
+            if (managing) item {
+                SelectionHeader(selectedIds.size, visible.size, onExit = { managing = false; selectedIds = emptySet() },
+                    onToggleAll = {
+                        selectedIds = if (selectedIds.size == visible.size) emptySet() else visible.map { it.id }.toSet()
+                    })
+            } else if (collection != null) item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (managing) {
-                        StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), {
-                            managing = false; selectedIds = emptySet()
-                        })
-                        Text(pluralStringResource(R.plurals.selected_count, selectedIds.size, selectedIds.size), fontWeight = FontWeight.Bold)
-                    } else {
-                        StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), { select(null) })
-                        Text(collection, Modifier.weight(1f))
-                        IconButton(onClick = { menuVisible = true }) {
-                            Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
-                        }
+                    StoneIconButton(StoneGlyph.Back, stringResource(R.string.back), { select(null) })
+                    Text(collection, Modifier.weight(1f))
+                    IconButton(onClick = { menuVisible = true }) {
+                        Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
                     }
-                }
-                if (managing) Row(Modifier.fillMaxWidth().clickable {
-                    selectedIds = if (selectedIds.size == visible.size) emptySet() else visible.map { it.id }.toSet()
-                }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selectedIds.size == visible.size && visible.isNotEmpty(), null)
-                    Text(stringResource(R.string.select_all), color = StonePalette.Yellow, fontWeight = FontWeight.Bold)
                 }
             }
             if (visible.isEmpty() && !state.scanning) item {
                 if (searching) Text(stringResource(R.string.no_results), Modifier.padding(vertical = 32.dp), color = StonePalette.Muted)
                 else LibraryEmptyState(videos = tab.isVideo)
             }
-            if (grouped && collection == null) {
+            if (grouped && collection == null && !managing) {
                 items(mediaSongs.groupBy(groupKey).toList(), key = { it.first }) { (name, tracks) ->
                     if (tab == LibraryTab.Albums) {
                         AlbumCard(name, tracks) { select(name) }
@@ -156,22 +153,25 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 if (managing) Row(Modifier.fillMaxWidth().clickable {
                     selectedIds = if (song.id in selectedIds) selectedIds - song.id else selectedIds + song.id
                 }, verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(song.id in selectedIds, null)
+                    RadioButton(song.id in selectedIds, null,
+                        colors = RadioButtonDefaults.colors(selectedColor = StonePalette.Blue))
                     Box(Modifier.weight(1f)) {
-                        LibrarySongRow(song, song.id == currentId, false, compact = compact) { }
+                        LibrarySongRow(song, song.id == currentId, false, compact = compact,
+                            trailing = if (selectedIds.size == 1 && song.id in selectedIds) {
+                                { EditTagsButton { tagSong = song } }
+                            } else null) { }
                     }
-                } else LibrarySongRow(song, song.id == currentId, canPlay, compact = compact) { onPlay(song, visible) }
+                } else LibrarySongRow(song, song.id == currentId, canPlay, compact = compact,
+                    onLongClick = { managing = true; selectedIds = setOf(song.id) }) { onPlay(song, visible) }
             }
         }
     }
-    if (managing) Surface(color = StonePalette.Surface, tonalElevation = 8.dp) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            TextButton(enabled = selectedIds.isNotEmpty(), onClick = { deleteConfirmVisible = true }) {
-                Icon(Icons.Default.Delete, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.delete))
-            }
-        }
-    }
+    val selectedSongs = visible.filter { it.id in selectedIds }
+    if (managing) SelectionActionBar(videos = false, enabled = selectedIds.isNotEmpty(),
+        onAddTo = { pickPlaylist = true },
+        onPlayNext = { selectionActions.onPlayNext(selectedSongs); managing = false; selectedIds = emptySet() },
+        onShare = { runCatching { com.zirakusa.stone.nativeapp.data.library.SongActions.shareMany(context, selectedSongs) } },
+        onDelete = { deleteConfirmVisible = true })
     }
     if (menuVisible) ModalBottomSheet(onDismissRequest = { menuVisible = false }) {
         ImmersiveWindowEffect()
@@ -185,6 +185,12 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 Icon(Icons.Default.Delete, null); Spacer(Modifier.width(12.dp)); Text(stringResource(R.string.delete_album))
             }
         }
+    }
+    if (pickPlaylist) MultiPlaylistPicker(state.playlists, visible.filter { it.id in selectedIds },
+        selectionActions.onAddToPlaylist) { pickPlaylist = false; managing = false; selectedIds = emptySet() }
+    tagSong?.let { song ->
+        com.zirakusa.stone.nativeapp.feature.player.TagEditorSheet(song, close = { tagSong = null },
+            saved = { tagSong = null; managing = false; selectedIds = emptySet(); selectionActions.onTagsSaved() })
     }
     if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },
         title = { ImmersiveWindowEffect(); Text(stringResource(R.string.delete)) },
@@ -203,13 +209,19 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     compact: Boolean, videoLibraryLayout: VideoLibraryLayout,
     onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit,
-    onVideoOptions: (Song) -> Unit) {
+    onVideoOptions: (Song) -> Unit, onDelete: (Song) -> Unit, onTagsSaved: () -> Unit) {
+    val selection = remember { VideoSelectionState() }
     var folderBrowser by rememberSaveable { mutableStateOf(false) }
     var selectedFolder by rememberSaveable { mutableStateOf<String?>(null) }
     val visible = selectedFolder?.let { folder -> videos.filter { it.folder == folder } } ?: videos
     val effectiveLayout = if (compact) VideoLibraryLayout.GRID else videoLibraryLayout
+    VideoSelectionDialogs(selection, visible, onDelete, onTagsSaved)
     Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        if (selection.active) Box(Modifier.padding(horizontal = 12.dp)) {
+            SelectionHeader(selection.ids.size, visible.size, onExit = selection::exit, onToggleAll = {
+                selection.ids = if (selection.ids.size == visible.size) emptySet() else visible.map { it.id }.toSet()
+            })
+        } else Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically) {
             if (selectedFolder != null) IconButton(onClick = { selectedFolder = null; folderBrowser = true }) {
                 Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
@@ -264,7 +276,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
             visible.isNotEmpty() && effectiveLayout == VideoLibraryLayout.GRID ->
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(170.dp),
-                    modifier = Modifier.fillMaxSize().testTag("video-grid"),
+                    modifier = Modifier.weight(1f).fillMaxWidth().testTag("video-grid"),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
                         top = 4.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -272,19 +284,23 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 ) {
                     items(visible, key = { it.id }) { video ->
                         VideoGridCard(video, selected = video.id == currentId,
-                            play = { onPlay(video, visible) },
-                            onOptions = { onVideoOptions(video) })
+                            play = { selection.click(video) { onPlay(video, visible) } },
+                            onOptions = { onVideoOptions(video) }, checked = selection.checked(video),
+                            onLongClick = { if (!selection.active) selection.start(video) },
+                            onEdit = if (selection.editable(video)) { { selection.editing = video } } else null)
                     }
                 }
             visible.isNotEmpty() && effectiveLayout == VideoLibraryLayout.LIST ->
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().testTag("video-list"),
+                    modifier = Modifier.weight(1f).fillMaxWidth().testTag("video-list"),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp)
                 ) {
                     items(visible, key = { it.id }) { video ->
                         VideoListRow(video, selected = video.id == currentId,
-                            play = { onPlay(video, visible) },
-                            onOptions = { onVideoOptions(video) })
+                            play = { selection.click(video) { onPlay(video, visible) } },
+                            onOptions = { onVideoOptions(video) }, checked = selection.checked(video),
+                            onLongClick = { if (!selection.active) selection.start(video) },
+                            onEdit = if (selection.editable(video)) { { selection.editing = video } } else null)
                     }
                 }
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp)) {
@@ -293,6 +309,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 }
             }
         }
+        VideoSelectionBar(selection, visible)
     }
 }
 
@@ -442,3 +459,10 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
         }
     }
 }
+
+/** Callbacks used by long-press selection in the library lists. */
+class LibrarySelectionActions(
+    val onAddToPlaylist: (String, Song) -> Unit = { _, _ -> },
+    val onPlayNext: (List<Song>) -> Unit = {},
+    val onTagsSaved: () -> Unit = {},
+)

@@ -1,5 +1,11 @@
 # Stone Kotlin 1.6.0
 
+- Biblioteca: mantener pulsado selecciona (canciones, vídeos y shorts) con "Seleccionar todos",
+  lápiz para editar etiquetas y acciones Agregar a, Reproducir a continuación, Compartir y Borrar.
+- Vídeo: mantener pulsado reproduce a 2.0X mientras se mantiene el dedo.
+- Editores de etiquetas a pantalla completa: sugerencia desde el nombre del archivo, portada al tocar,
+  ruta del archivo; en vídeo además duración, tamaño y "Más detalles".
+- Ajustes: "Salida de audio" y "Notificaciones" quedan juntos en Reproducción.
 - Modo Dormilón: volumen máximo al 10 % (-20 dB) para escuchar en la cama sin molestar.
 - Editores de etiquetas: escriben en el archivo original (MP3, FLAC, M4A, MP4) con portada,
   y Android vuelve a indexarlo para que otros reproductores vean el cambio.

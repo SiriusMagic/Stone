@@ -226,6 +226,10 @@ import kotlinx.coroutines.delay
                 library::removeFromPlaylist, library::restoreDeleted,
                 onDeletePermanently = library::deletePermanently,
                 onMarkPurged = library::markPurged,
+                selectionActions = remember(library, playback) {
+                    com.zirakusa.stone.nativeapp.feature.library.components.LibrarySelectionActions(
+                        library::addToPlaylist, playback::playNext, { library.refresh() })
+                },
                 onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)

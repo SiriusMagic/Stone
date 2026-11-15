@@ -48,6 +48,8 @@ private val legacyDefinitions = listOf(
     onRestoreDeleted: (Song) -> Unit = {},
     onDeletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit = { _, _ -> },
     onMarkPurged: (List<Song>) -> Unit = {},
+    selectionActions: com.zirakusa.stone.nativeapp.feature.library.components.LibrarySelectionActions =
+        com.zirakusa.stone.nativeapp.feature.library.components.LibrarySelectionActions(),
     theme: String = "dark", onThemeChange: (String) -> Unit = {}, language: String = "es",
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
@@ -208,7 +210,8 @@ private val legacyDefinitions = listOf(
             videoLibraryLayout = videoLibraryLayout,
             onVideoLibraryLayoutChange = onVideoLibraryLayoutChange,
             onSetPlaylistCover = onSetPlaylistCover,
-            onRestorePlaylistCover = onRestorePlaylistCover)
+            onRestorePlaylistCover = onRestorePlaylistCover,
+            selectionActions = selectionActions)
         }
         }
     }

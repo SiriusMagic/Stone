@@ -1,8 +1,11 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -22,7 +25,8 @@ import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @Composable fun LibrarySongRow(song: Song, current: Boolean, enabled: Boolean,
-    compact: Boolean = false, play: () -> Unit) {
+    compact: Boolean = false, onLongClick: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null, play: () -> Unit) {
     val hasLyrics = !song.isVideo && (song.lyrics.any { it.isNotBlank() } ||
         song.syncedLyrics.any { it.text.isNotBlank() })
     val rowShape = RoundedCornerShape(16.dp)
@@ -31,7 +35,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         .clip(rowShape)
         .background(if (current) StonePalette.Yellow.copy(alpha = .12f) else StonePalette.Surface)
         .then(if (current) Modifier.border(1.dp, StonePalette.Yellow.copy(alpha = .45f), rowShape) else Modifier)
-    Row(Modifier.fillMaxWidth().then(rowStyle).clickable(enabled = enabled, onClick = play)
+    Row(Modifier.fillMaxWidth().then(rowStyle)
+        .combinedClickable(enabled = enabled || onLongClick != null, onLongClick = onLongClick,
+            onClick = { if (enabled) play() })
         .padding(horizontal = if (compact) 8.dp else 0.dp, vertical = if (compact) 8.dp else 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp)) {
         if (song.isVideo) LibraryCover(glyph = StoneGlyph.Video)
@@ -51,6 +57,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     overflow = TextOverflow.Ellipsis, letterSpacing = 0.sp)
             }
         }
+        trailing?.invoke()
     }
 }
 

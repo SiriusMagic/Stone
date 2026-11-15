@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.core.net.toUri
@@ -5,9 +7,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -77,7 +81,8 @@ private fun qualityLabel(frame: ArtworkLoader.VideoFrame): String? {
 
 @Composable
 internal fun VideoThumbnail(song: Song, selected: Boolean, modifier: Modifier = Modifier,
-    showPlay: Boolean = true, onOptions: (() -> Unit)? = null, fill: Boolean = false) {
+    showPlay: Boolean = true, onOptions: (() -> Unit)? = null, fill: Boolean = false,
+    checked: Boolean? = null) {
     val frame = rememberVideoFrame(song)
     Box(modifier.clip(VideoShape).background(Color(0xFF17161D)).border(
         if (selected) 2.dp else 0.dp,
@@ -111,7 +116,8 @@ internal fun VideoThumbnail(song: Song, selected: Boolean, modifier: Modifier = 
                 Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
             }
         }
-        qualityLabel(frame)?.let { quality ->
+        if (checked != null) SelectionCheck(checked, Modifier.align(Alignment.TopStart).padding(8.dp))
+        else qualityLabel(frame)?.let { quality ->
             Surface(
                 Modifier.align(Alignment.TopStart).padding(7.dp),
                 shape = RoundedCornerShape(6.dp),
@@ -131,23 +137,28 @@ internal fun VideoThumbnail(song: Song, selected: Boolean, modifier: Modifier = 
 
 @Composable
 fun VideoGridCard(song: Song, selected: Boolean = false, play: () -> Unit,
-    onOptions: () -> Unit = {}) {
-    Column(Modifier.fillMaxWidth().clickable(onClick = play)) {
+    onOptions: () -> Unit = {}, checked: Boolean? = null, onLongClick: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null) {
+    Column(Modifier.fillMaxWidth().combinedClickable(onLongClick = onLongClick, onClick = play)) {
         VideoThumbnail(
             song = song,
             selected = selected,
             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-            onOptions = onOptions
+            onOptions = onOptions.takeIf { checked == null },
+            checked = checked
         )
-        Text(
-            videoDisplayTitle(song),
-            Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            minLines = 1
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                videoDisplayTitle(song),
+                Modifier.weight(1f).padding(start = 4.dp, top = 8.dp),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                minLines = 1
+            )
+            if (onEdit != null) EditTagsButton(onEdit)
+        }
         Text(
             stringResource(R.string.video_details, "—", formatVideoDuration(song.durationMs)),
             Modifier.padding(start = 4.dp, top = 3.dp, bottom = 10.dp),
@@ -160,16 +171,18 @@ fun VideoGridCard(song: Song, selected: Boolean = false, play: () -> Unit,
 
 @Composable
 fun VideoListRow(song: Song, selected: Boolean = false, play: () -> Unit,
-    onOptions: () -> Unit = {}) {
+    onOptions: () -> Unit = {}, checked: Boolean? = null, onLongClick: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = play).padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().combinedClickable(onLongClick = onLongClick, onClick = play).padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         VideoThumbnail(
             song = song,
             selected = selected,
             modifier = Modifier.width(132.dp).aspectRatio(16f / 9f),
-            onOptions = null
+            onOptions = null,
+            checked = checked
         )
         Column(Modifier.weight(1f).padding(start = 12.dp)) {
             Text(
@@ -188,8 +201,19 @@ fun VideoListRow(song: Song, selected: Boolean = false, play: () -> Unit,
                 overflow = TextOverflow.Ellipsis
             )
         }
-        IconButton(onClick = onOptions) {
+        if (onEdit != null) EditTagsButton(onEdit)
+        else if (checked == null) IconButton(onClick = onOptions) {
             Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
         }
+    }
+}
+
+/** Round check used on selected cards. */
+@Composable internal fun SelectionCheck(checked: Boolean, modifier: Modifier = Modifier) {
+    Box(modifier.size(28.dp).clip(androidx.compose.foundation.shape.CircleShape)
+        .background(if (checked) StonePalette.Blue else Color(0x66000000))
+        .border(2.dp, if (checked) StonePalette.Blue else Color(0xCCFFFFFF), androidx.compose.foundation.shape.CircleShape),
+        contentAlignment = Alignment.Center) {
+        if (checked) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(18.dp))
     }
 }

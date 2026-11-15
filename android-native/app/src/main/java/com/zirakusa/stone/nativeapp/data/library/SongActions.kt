@@ -36,6 +36,25 @@ object SongActions {
         context.startActivity(Intent.createChooser(send, "Compartir canción"))
     }
 
+    /** Shares several songs or videos in one chooser. */
+    fun shareMany(context: Context, songs: List<com.zirakusa.stone.core.Song>) {
+        if (songs.size == 1) return share(context, songs.first().uri, songs.first().title)
+        val uris = ArrayList(songs.map { song ->
+            val source = song.uri.toUri()
+            if (source.scheme == "content") source
+            else FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(source.path!!))
+        })
+        val send = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            type = if (songs.all { it.isVideo }) "video/*" else if (songs.none { it.isVideo }) "audio/*" else "*/*"
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+            clipData = ClipData.newUri(context.contentResolver, "Stone", uris.first()).apply {
+                uris.drop(1).forEach { addItem(ClipData.Item(it)) }
+            }
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(send, "Compartir"))
+    }
+
     fun requestWriteSettings(context: Context) {
         context.startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
             "package:${context.packageName}".toUri()))

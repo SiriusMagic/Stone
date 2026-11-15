@@ -38,7 +38,7 @@
     <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string><string name="sleep_timer_until">Until %1$s</string>
     <string name="delete">Delete</string>
     <string name="default_value">Default</string><string name="off">Off</string><string name="manage">Manage</string><string name="delete_album">Delete album</string><string name="select_all">Select all</string><plurals name="selected_count"><item quantity="one">%1$d selected</item><item quantity="other">%1$d selected</item></plurals><plurals name="delete_selected_message"><item quantity="one">Delete %1$d selected song?</item><item quantity="other">Delete %1$d selected songs?</item></plurals><string name="video_scale">Adjust scale</string><plurals name="minutes_later"><item quantity="one">In %1$d minute</item><item quantity="other">In %1$d minutes</item></plurals>
-    <string name="finish_current_track">Finish current track</string><string name="title">Title</string><string name="artist">Artist</string>
+    <string name="finish_current_track">Finish current track</string><string name="artist">Artist</string>
     <string name="custom_sleep_time">Custom time</string><string name="hours">Hours</string>
     <string name="minutes_short">Min</string><string name="set_sleep_timer">Set timer</string>
     <string name="custom">Custom</string><string name="set_custom">Set</string>
@@ -216,7 +216,6 @@
     <string name="start_diagnostics">Start diagnostics</string>
     <string name="stone_consumption">Stone consumption</string>
     <string name="stone_consumption_hint">Only Stone process metrics; they do not represent total phone usage.</string>
-    <string name="tags">Tags</string>
     <string name="thermal_status">Thermal status</string>
     <string name="playlist_cover_title">Playlist cover</string>
     <string name="playlist_cover_message">Choose a custom cover or restore the automatic artwork mosaic.</string>
@@ -225,28 +224,19 @@
     <string name="playlist_cover_options">Cover options</string>
     <string name="playing">Playing</string>
     <string name="empty_playlist">Empty playlist</string>
-    <string name="video_metadata_title">Video editor</string>
     <string name="video_metadata_description">Description or comment</string>
     <string name="video_metadata_author">Author or creator</string>
     <string name="video_metadata_date">Date</string>
     <string name="video_metadata_genre">Genre</string>
-    <string name="video_metadata_thumbnail">Video thumbnail</string>
     <string name="video_metadata_frame">Use current frame</string>
-    <string name="video_metadata_gallery">Choose image from gallery</string>
-    <string name="video_metadata_format">Format: %1$s</string>
     <string name="video_metadata_native_status">Compatible fields are written to the file without recompressing it.</string>
     <string name="video_metadata_internal_status">This format or location cannot be written safely; Stone will store the changes.</string>
     <string name="video_metadata_saved_native">Metadata was written to the file and saved in Stone.</string>
     <string name="video_metadata_saved_internal">Metadata was saved in Stone; the original file was not changed.</string>
     <string name="video_metadata_native_failed">The file could not be modified. Changes were saved in Stone.</string>
-    <string name="video_metadata_details">Details</string>
-    <string name="video_metadata_group_main">Identity</string>
-    <string name="video_metadata_group_classification">Classification</string>
     <string name="video_metadata_keywords">Tags (keywords)</string>
     <string name="video_metadata_keywords_hint">concert, live, 2024</string>
     <string name="video_metadata_date_hint">YYYY or YYYY-MM-DD</string>
-    <string name="video_metadata_clear">Clear field</string>
-    <string name="video_metadata_frame_pick">Pick a frame</string>
     <string name="video_metadata_remove_cover">Remove thumbnail</string>
     <string name="video_metadata_image_failed">The image could not be saved</string>
     <string name="video_metadata_save_failed">The metadata could not be saved</string>
@@ -261,7 +251,6 @@
     <string name="device_scan_grant">Grant permission</string>
     <string name="device_scan_open_settings">Open app settings</string>
     <string name="tags_saved_in_file">Tags saved in the original file.</string>
-    <string name="tags_write_original">Changes are written to the original file (MP3, FLAC, M4A); other players will see them.</string>
     <string name="tags_format_unsupported">This format can\'t be tagged yet (supported: MP3, FLAC, M4A).</string>
     <string name="audio_mode_sleepy">Sleepy</string>
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
@@ -283,4 +272,22 @@
     <string name="video_scale_short_fill">Stretch</string>
     <string name="repeat_off">No repeat</string>
     <string name="settings_output_and_alerts">Output and alerts</string>
+    <string name="hold_speed_banner">playback speed</string>
+    <string name="selection_add_to">Add to</string>
+    <string name="selection_play_next">Play next</string>
+    <string name="selection_no_playlists">No playlists yet. Create one in the Playlists tab.</string>
+    <string name="close">Close</string>
+    <string name="tags_edit_title">Edit tags</string>
+    <string name="video_edit_title">Edit video info</string>
+    <string name="tags_suggestion">Suggested song information</string>
+    <string name="tags_suggestion_name">Name: %1$s</string>
+    <string name="tags_suggestion_artist">Artist: %1$s</string>
+    <string name="tags_replace">Replace</string>
+    <string name="tags_name">Name</string>
+    <string name="tags_artist_hint">Type the artist name</string>
+    <string name="tags_change">Change</string>
+    <string name="tags_path">File path</string>
+    <string name="tags_duration">Duration</string>
+    <string name="tags_size">Size</string>
+    <string name="video_more_details">More details</string>
 </resources>

@@ -494,6 +494,15 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         requestSystemArtwork()
     }
 
+    /** Inserts [songs] right after the current item ("Reproducir a continuación"). */
+    fun playNext(songs: List<Song>) {
+        val c = controller ?: return
+        if (songs.isEmpty()) return
+        if (c.mediaItemCount == 0) { play(songs.first(), songs); return }
+        prepareSystemArtworkSources(songs)
+        c.addMediaItems(c.currentMediaItemIndex + 1, songs.map(::mediaItem))
+    }
+
     private fun mediaItem(song: Song): MediaItem {
         val metadata = MediaMetadata.Builder().setTitle(song.title).setArtist(song.artist)
             .setAlbumTitle(song.album)

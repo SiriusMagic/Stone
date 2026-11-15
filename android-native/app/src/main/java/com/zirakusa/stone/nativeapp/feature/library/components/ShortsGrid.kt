@@ -1,7 +1,10 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -26,8 +29,17 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 /** Short videos (< 1:30) as tall 9:16 cards, two per row like a shorts feed. */
 @Composable internal fun ShortsGrid(shorts: List<Song>, state: LibraryState, currentId: String,
-    modifier: Modifier, onPlay: (Song, List<Song>) -> Unit, onOptions: (Song) -> Unit) {
-    LazyVerticalGrid(GridCells.Adaptive(150.dp), modifier.fillMaxSize().testTag("shorts-grid"),
+    modifier: Modifier, onPlay: (Song, List<Song>) -> Unit, onOptions: (Song) -> Unit,
+    onDelete: (Song) -> Unit = {}, onTagsSaved: () -> Unit = {}) {
+    val selection = remember { VideoSelectionState() }
+    VideoSelectionDialogs(selection, shorts, onDelete, onTagsSaved)
+    Column(modifier.fillMaxSize()) {
+    if (selection.active) Box(Modifier.padding(horizontal = 12.dp)) {
+        SelectionHeader(selection.ids.size, shorts.size, onExit = selection::exit, onToggleAll = {
+            selection.ids = if (selection.ids.size == shorts.size) emptySet() else shorts.map { it.id }.toSet()
+        })
+    }
+    LazyVerticalGrid(GridCells.Adaptive(150.dp), Modifier.weight(1f).fillMaxWidth().testTag("shorts-grid"),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
@@ -38,9 +50,15 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             LibraryEmptyState(videos = true)
         }
         items(shorts, key = { it.id }) { short ->
-            Box(Modifier.fillMaxWidth().aspectRatio(9f / 16f).clickable { onPlay(short, shorts) }) {
+            Box(Modifier.fillMaxWidth().aspectRatio(9f / 16f).combinedClickable(
+                onLongClick = { if (!selection.active) selection.start(short) },
+                onClick = { selection.click(short) { onPlay(short, shorts) } })) {
                 VideoThumbnail(short, selected = short.id == currentId, modifier = Modifier.fillMaxSize(),
-                    showPlay = false, onOptions = { onOptions(short) }, fill = true)
+                    showPlay = false, onOptions = { onOptions(short) }.takeIf { !selection.active }, fill = true,
+                    checked = selection.checked(short))
+                if (selection.editable(short)) Box(Modifier.align(Alignment.TopEnd)) {
+                    EditTagsButton { selection.editing = short }
+                }
                 Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(8.dp)) {
                     Text(videoDisplayTitle(short), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -50,5 +68,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 }
             }
         }
+    }
+    VideoSelectionBar(selection, shorts)
     }
 }
