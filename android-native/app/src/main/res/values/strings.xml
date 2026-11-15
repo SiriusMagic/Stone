@@ -463,4 +463,9 @@
     <string name="api_relay_offline">Sin conexión a internet</string>
     <string name="api_relay_missing">Solo en este teléfono o tu Wi-Fi: esta versión no incluye enlace de internet.</string>
     <string name="api_advanced">Opciones avanzadas</string>
+    <string name="api_access">Permisos del enlace</string>
+    <string name="api_read_only">Solo lectura</string>
+    <string name="api_read_only_hint">El agente solo puede consultar tu biblioteca y lo que suena: no reproduce ni cambia nada.</string>
+    <string name="api_write">Permitir edición (escritura)</string>
+    <string name="api_write_hint">Editar títulos, artistas, álbumes, géneros, letras y portadas (también desde URL) de canciones y vídeos. Cada cambio pide tu aprobación.</string>
 </resources>

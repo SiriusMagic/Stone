@@ -500,4 +500,9 @@
     <string name="api_relay_offline">Pas de connexion Internet</string>
     <string name="api_relay_missing">Uniquement sur ce téléphone ou votre Wi-Fi : cette version n\'a pas de lien Internet.</string>
     <string name="api_advanced">Options avancées</string>
+    <string name="api_access">Autorisations du lien</string>
+    <string name="api_read_only">Lecture seule</string>
+    <string name="api_read_only_hint">L’agent peut seulement consulter ta bibliothèque et ce qui joue : il ne lit ni ne modifie rien.</string>
+    <string name="api_write">Autoriser la modification (écriture)</string>
+    <string name="api_write_hint">Modifier titres, artistes, albums, genres, paroles et pochettes (aussi depuis une URL) des chansons et vidéos. Chaque changement demande ton accord.</string>
 </resources>

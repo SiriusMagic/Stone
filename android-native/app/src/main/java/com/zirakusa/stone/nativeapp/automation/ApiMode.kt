@@ -22,6 +22,12 @@ object ApiMode {
         private set
     var running by mutableStateOf(false)
         private set
+    /** Read-only link: agents can only query; nothing is played or changed. */
+    var readOnly by mutableStateOf(false)
+        private set
+    /** Lets agents edit tags, lyrics and covers of songs and videos (each change is approved on the phone). */
+    var writeAccess by mutableStateOf(true)
+        private set
     /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
     var relayState by mutableStateOf(RelayClient.State.OFFLINE)
         private set
@@ -39,6 +45,8 @@ object ApiMode {
         this.store = store
         enabled = store.look("api.enabled", "false").toBoolean()
         localNetwork = store.look("api.lan", "false").toBoolean()
+        readOnly = store.look("api.readOnly", "false").toBoolean()
+        writeAccess = store.look("api.write", "true").toBoolean()
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         token = store.look("api.token", "").ifBlank { newToken().also { store.setLook("api.token", it) } }
@@ -49,6 +57,16 @@ object ApiMode {
 
     fun enable(value: Boolean) { enabled = value; store?.setLook("api.enabled", value.toString()); apply() }
     fun allowLocalNetwork(value: Boolean) { localNetwork = value; store?.setLook("api.lan", value.toString()); apply() }
+    fun restrictToReading(value: Boolean) { readOnly = value; store?.setLook("api.readOnly", value.toString()) }
+    fun allowWrite(value: Boolean) { writeAccess = value; store?.setLook("api.write", value.toString()) }
+
+    /** Whether the current link's permissions let an agent use an action of [risk]. */
+    fun permits(risk: ActionRisk): Boolean = when (risk) {
+        ActionRisk.READ -> true
+        ActionRisk.REVERSIBLE -> !readOnly
+        ActionRisk.PERSISTENT -> !readOnly && writeAccess
+    }
+
     /** Revokes every agent that knows the old token. */
     fun regenerateToken() { token = newToken(); store?.setLook("api.token", token); apply() }
 

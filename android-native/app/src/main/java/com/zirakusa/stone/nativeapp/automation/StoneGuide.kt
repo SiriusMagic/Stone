@@ -16,7 +16,7 @@ internal object StoneGuide {
         "video" to "Video scale, screen brightness, orientation",
         "library" to "Search, browse, sort, favourites, lyrics, rescan",
         "playlist" to "Playlists and their songs",
-        "metadata" to "Read and write tags inside audio files",
+        "metadata" to "Tags, lyrics and covers of songs and videos (titles, artists, albums, external cover URLs)",
         "appearance" to "Theme, colours, sizes, home icon",
         "settings" to "Language and audio mode",
         "stone" to "Help and tool search")
@@ -31,7 +31,7 @@ internal object StoneGuide {
     /** Tools whose name, description or parameters contain every word of [query]. */
     fun search(query: String, category: String?): JSONObject {
         val words = query.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }
-        val matches = StoneAutomation.actions.filter { action ->
+        val matches = StoneAutomation.available.filter { action ->
             val text = (action.name + " " + action.description + " " + action.params.joinToString(" ") { it.name + " " + it.description }).lowercase()
             (category == null || action.name.substringBefore('.') == category) && words.all { it in text }
         }
@@ -62,10 +62,17 @@ internal object StoneGuide {
                 "Examples: /call/player_state , /call/player_set_volume?percent=40 , /call/library_search?query=love&limit=5")
             .put("health", ".../health needs no token and only says whether Stone is running."))
         .put("firstSteps", JSONArray(listOf("stone_help", "player_state", "library_search")))
-        .put("tools", JSONArray(StoneAutomation.actions.map { JSONObject().put("name", it.toolName).put("description", it.description) }))
+        .put("access", access()).put("tools", JSONArray(StoneAutomation.available.map { JSONObject().put("name", it.toolName).put("description", it.description) }))
 
-    fun toolList(): JSONObject = JSONObject().put("total", StoneAutomation.actions.size)
-        .put("tools", JSONArray(StoneAutomation.actions.map { it.brief() }))
+    fun toolList(): JSONObject = StoneAutomation.available.let { tools ->
+        JSONObject().put("total", tools.size).put("access", access()).put("tools", JSONArray(tools.map { it.brief() }))
+    }
+
+    private fun access() = when {
+        ApiMode.readOnly -> "read-only"
+        !ApiMode.writeAccess -> "control (no file editing)"
+        else -> "full (file edits need approval on the phone)"
+    }
 
     /** Turns `?percent=40&enabled=true` into typed arguments following the tool's schema. */
     fun arguments(action: StoneAction, query: Map<String, String>): JSONObject {

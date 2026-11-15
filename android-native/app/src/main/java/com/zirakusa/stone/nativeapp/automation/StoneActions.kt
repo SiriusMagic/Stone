@@ -1,12 +1,6 @@
 package com.zirakusa.stone.nativeapp.automation
 
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
-import com.zirakusa.stone.nativeapp.data.library.AudioTags
-import com.zirakusa.stone.nativeapp.data.library.MediaFileIo
-import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -129,39 +123,5 @@ internal object StoneActions {
             targets.forEach { host().addToPlaylist(playlist.id, it) }
             ok("${targets.size} song(s) added to '${playlist.name}'")
         },
-        // ---- metadata ----
-        StoneAction("metadata.get", "Read the tags stored inside an audio file.", ActionRisk.READ,
-            listOf(ActionParam("songId", "string", "Id returned by library_search.", true))) { args ->
-            val target = song(args.getString("songId"))
-            val context = StonePlaybackService.instance ?: throw ActionException("Playback service not running; open Stone.")
-            val tags = withContext(Dispatchers.IO) { AudioTagEditor(context.applicationContext).read(target.uri) }
-            JSONObject().put("title", tags.title).put("artist", tags.artist).put("album", tags.album).put("genre", tags.genre)
-                .put("path", withContext(Dispatchers.IO) { MediaFileIo.displayPath(context, target.uri) })
-        },
-        StoneAction("metadata.update", "Write title, artist, album or genre into the ORIGINAL audio file (MP3, FLAC, M4A). " +
-            "Omitted fields keep their value. The user must approve on the phone.", ActionRisk.PERSISTENT, listOf(
-            ActionParam("songId", "string", "Id returned by library_search.", true),
-            ActionParam("title", "string", "New title."), ActionParam("artist", "string", "New artist."),
-            ActionParam("album", "string", "New album."), ActionParam("genre", "string", "New genre.")),
-            summary = { args ->
-                val changes = listOf("title", "artist", "album", "genre").filter(args::has).joinToString { "$it → ${args.getString(it)}" }
-                "Editar etiquetas del archivo: $changes"
-            }) { args ->
-            val target = song(args.getString("songId"))
-            if (target.isVideo) throw ActionException("metadata_update only edits audio files.")
-            val context = StonePlaybackService.instance?.applicationContext
-                ?: throw ActionException("Playback service not running; open Stone.")
-            if (MediaFileIo.needsWriteConsent(context, target.uri))
-                throw ActionException("Android requires the user to edit this file from Stone's tag editor once (system permission).")
-            withContext(Dispatchers.IO) {
-                val editor = AudioTagEditor(context)
-                if (!editor.supports(target.uri)) throw ActionException("This file format cannot be tagged (MP3, FLAC, M4A only).")
-                val current = editor.read(target.uri)
-                editor.write(target.uri, AudioTags(
-                    title = args.optString("title", current.title), artist = args.optString("artist", current.artist),
-                    album = args.optString("album", current.album), genre = args.optString("genre", current.genre)))
-            }
-            host().refreshLibrary(); ok("Tags written to the file")
-        },
-    ) + StoneMediaActions.all() + StoneLookActions.all() + StoneGuide.action
+    ) + StoneMediaActions.all() + StoneMetadataActions.all() + StoneLookActions.all() + StoneGuide.action
 }

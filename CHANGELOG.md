@@ -1,3 +1,13 @@
+# Sin publicar
+
+- Modo API (MCP): permisos del enlace en Opciones avanzadas: "Solo lectura" (solo consultas) y
+  "Permitir edición (escritura)". `tools/list` muestra solo lo permitido y las llamadas
+  bloqueadas devuelven el motivo.
+- Modo API: `metadata_get` y `metadata_update` ahora sirven para canciones y vídeos (título,
+  artista, álbum, género; en vídeos también descripción, fecha y palabras clave) y aceptan una
+  portada externa por URL (`coverUrl`). Nuevas `metadata_update_many` (muchos cambios con una
+  sola aprobación) y `metadata_set_lyrics` (guardar o borrar letras, texto o LRC).
+
 # Stone Kotlin 1.6.7
 
 - Panel de volumen: barrita discreta (36 × 4 dp, gris claro) bajo el volumen, se cierra al

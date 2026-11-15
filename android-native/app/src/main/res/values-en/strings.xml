@@ -397,4 +397,9 @@
     <string name="api_relay_offline">No internet connection</string>
     <string name="api_relay_missing">Only on this phone or your Wi-Fi: this version has no internet link.</string>
     <string name="api_advanced">Advanced options</string>
+    <string name="api_access">Link permissions</string>
+    <string name="api_read_only">Read only</string>
+    <string name="api_read_only_hint">The agent can only look at your library and what is playing: it cannot play or change anything.</string>
+    <string name="api_write">Allow editing (write)</string>
+    <string name="api_write_hint">Edit titles, artists, albums, genres, lyrics and covers (also from a URL) of songs and videos. Every change asks for your approval.</string>
 </resources>

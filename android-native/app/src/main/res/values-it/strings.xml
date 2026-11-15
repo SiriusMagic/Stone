@@ -500,4 +500,9 @@
     <string name="api_relay_offline">Nessuna connessione a Internet</string>
     <string name="api_relay_missing">Solo su questo telefono o sulla tua Wi-Fi: questa versione non include il link Internet.</string>
     <string name="api_advanced">Opzioni avanzate</string>
+    <string name="api_access">Permessi del link</string>
+    <string name="api_read_only">Sola lettura</string>
+    <string name="api_read_only_hint">L’agente può solo consultare la libreria e ciò che è in riproduzione: non riproduce né modifica nulla.</string>
+    <string name="api_write">Consenti modifica (scrittura)</string>
+    <string name="api_write_hint">Modifica titoli, artisti, album, generi, testi e copertine (anche da URL) di brani e video. Ogni modifica chiede la tua approvazione.</string>
 </resources>

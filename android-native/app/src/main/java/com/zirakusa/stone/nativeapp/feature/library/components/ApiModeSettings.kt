@@ -12,10 +12,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
@@ -43,6 +45,11 @@ import java.util.Locale
         Text(stringResource(R.string.api_advanced) + if (advanced) "  ▲" else "  ▼")
     }
     if (advanced) {
+        Header(R.string.api_access)
+        SettingsGroup {
+            ToggleSetting(R.string.api_read_only, R.string.api_read_only_hint, ApiMode.readOnly, ApiMode::restrictToReading)
+            if (!ApiMode.readOnly) ToggleSetting(R.string.api_write, R.string.api_write_hint, ApiMode.writeAccess, ApiMode::allowWrite)
+        }
         SettingsGroup { ToggleSetting(R.string.api_lan, R.string.api_lan_hint, ApiMode.localNetwork, ApiMode::allowLocalNetwork) }
         if (ApiMode.enabled) {
             Header(R.string.api_address)
@@ -65,7 +72,9 @@ import java.util.Locale
                 Text(when (action.risk) { ActionRisk.READ -> "○"; ActionRisk.REVERSIBLE -> "◐"; ActionRisk.PERSISTENT -> "●" },
                     color = when (action.risk) { ActionRisk.PERSISTENT -> StonePalette.Yellow; else -> StonePalette.Muted },
                     modifier = Modifier.width(22.dp))
-                Text(action.toolName, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+                Text(action.toolName, fontFamily = FontFamily.Monospace, fontSize = 13.sp,
+                    color = if (ApiMode.permits(action.risk)) Color.Unspecified else StonePalette.Muted,
+                    textDecoration = if (ApiMode.permits(action.risk)) null else TextDecoration.LineThrough)
             }
         }
     }

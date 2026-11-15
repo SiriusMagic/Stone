@@ -186,9 +186,11 @@ object McpServer {
                     .put("serverInfo", JSONObject().put("name", "stone").put("title", "Stone").put("version", BuildConfig.VERSION_NAME))
                     .put("instructions", "Controls the Stone music/video player on this phone. Call stone_help to find a tool by " +
                         "intention. Search the library first (library_search) to get song ids; player_state shows what is playing. " +
-                        "Tools that write files ask the user for confirmation on the phone (up to 60 s).")
+                        "Tools that write files ask the user for confirmation on the phone (up to 60 s). " +
+                        if (ApiMode.readOnly) "This link is READ-ONLY: only query tools are listed."
+                        else if (!ApiMode.writeAccess) "Editing files is disabled for this link." else "")
                 "ping" -> JSONObject()
-                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.actions.map { action ->
+                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available.map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)
                         .put("inputSchema", action.inputSchema())
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)

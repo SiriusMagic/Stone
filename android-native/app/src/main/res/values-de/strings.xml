@@ -500,4 +500,9 @@
     <string name="api_relay_offline">Keine Internetverbindung</string>
     <string name="api_relay_missing">Nur auf diesem Telefon oder in deinem WLAN: Diese Version hat keinen Internet-Link.</string>
     <string name="api_advanced">Erweiterte Optionen</string>
+    <string name="api_access">Berechtigungen des Links</string>
+    <string name="api_read_only">Nur lesen</string>
+    <string name="api_read_only_hint">Der Agent kann nur deine Bibliothek und die aktuelle Wiedergabe ansehen: Er spielt nichts ab und ändert nichts.</string>
+    <string name="api_write">Bearbeiten erlauben (schreiben)</string>
+    <string name="api_write_hint">Titel, Interpreten, Alben, Genres, Songtexte und Cover (auch per URL) von Songs und Videos bearbeiten. Jede Änderung braucht deine Zustimmung.</string>
 </resources>

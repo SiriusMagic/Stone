@@ -63,7 +63,9 @@ curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
 - **video**: `get`, `set_scale`, `set_brightness`, `set_orientation`.
 - **library**: `search`, `stats`, `rescan`, `get_sort`, `sort`, `browse`, `favorites`, `lyrics`.
 - **playlist**: `list`, `create`, `add_songs`, `songs`, `remove_songs`, `play`.
-- **metadata**: `get`, `update` (escribe etiquetas en el archivo; pide aprobación en el teléfono).
+- **metadata**: `get` (canciones y vídeos, con letra), `update` (título, artista, álbum, género, portada desde
+  `coverUrl`; en vídeos también descripción, fecha y palabras clave), `update_many` (muchos elementos con una sola
+  aprobación; `changes` es un array JSON) y `set_lyrics` (texto o LRC; vacío borra). Todas piden aprobación en el teléfono.
 - **appearance / settings**: `get`, `set_theme`, `set_accent`, `set_look`, `reset_look`,
   `set_language`, `set_audio_mode`.
 
@@ -80,6 +82,16 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | JSON-RPC `-32602` | Herramienta desconocida | `tools/list` o `stone_help`. |
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
 | Fallo de DNS o de red en el agente | El entorno del agente no puede salir a internet | No es un problema de Stone: usar un cliente con acceso a red. |
+
+## Permisos del enlace
+
+En Stone › Ajustes › Modo API › Opciones avanzadas › Permisos del enlace:
+
+- **Solo lectura**: el agente solo ve herramientas de consulta (buscar, estado, etiquetas, letras).
+- **Permitir edición (escritura)**: activa las herramientas `metadata_update*` y `metadata_set_lyrics`.
+  Si está apagada, el agente puede reproducir y cambiar ajustes, pero no tocar archivos.
+
+`tools/list` solo muestra lo permitido; llamar a una herramienta bloqueada devuelve `isError: true` con el motivo.
 
 ## Seguridad
 

@@ -27,12 +27,18 @@ object StoneAutomation {
 
     val actions: List<StoneAction> by lazy { StoneActions.all() }
 
+    /** Actions the current link may use (Ajustes › Modo API › permisos). */
+    val available: List<StoneAction> get() = actions.filter { ApiMode.permits(it.risk) }
+
     fun find(toolName: String) = actions.firstOrNull { it.toolName == toolName || it.name == toolName }
 
     /** Runs [toolName] with [arguments]; throws [ActionException] with a message for the agent. */
     suspend fun execute(toolName: String, arguments: JSONObject): Any {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName")
         return try {
+            if (!ApiMode.permits(action.risk)) throw ActionException(
+                if (ApiMode.readOnly) "This Stone link is read-only. The user can allow changes in Stone > Ajustes > Modo API > Opciones avanzadas."
+                else "Editing files is turned off for this Stone link. The user can enable it in Stone > Ajustes > Modo API > Opciones avanzadas.")
             validate(action, arguments)
             if (action.risk == ActionRisk.PERSISTENT && !confirm(action, arguments))
                 throw ActionException("The user did not approve this change on the phone.")

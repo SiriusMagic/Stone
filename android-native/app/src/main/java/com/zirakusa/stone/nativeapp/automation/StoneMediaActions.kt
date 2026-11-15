@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.automation
 
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -174,11 +175,11 @@ internal object StoneMediaActions {
             val favorites = host().favoriteIds
             JSONObject().put("songs", JSONArray(host().songs.filter { it.id in favorites }.map { it.json() }))
         },
-        StoneAction("library.lyrics", "Lyrics stored for a song (empty when it has none).", ActionRisk.READ,
+        StoneAction("library.lyrics", "Lyrics stored for a song or video (empty when it has none). metadata_set_lyrics changes them.", ActionRisk.READ,
             listOf(ActionParam("songId", "string", "Id returned by library_search.", true))) { args ->
             val target = song(args.getString("songId"))
             JSONObject().put("title", target.title).put("synced", target.syncedLyrics.isNotEmpty())
-                .put("lyrics", (target.lyrics.ifEmpty { target.syncedLyrics.map { it.text } }).joinToString("\n"))
+                .put("lyrics", StoneMetadataActions.lyrics(StonePlaybackService.instance?.applicationContext, target))
         },
         StoneAction("playlist.songs", "List the songs of a playlist in order.", ActionRisk.READ,
             listOf(ActionParam("playlistId", "string", "Id from playlist_list.", true))) { args ->

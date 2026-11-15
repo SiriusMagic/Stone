@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
 import com.zirakusa.stone.nativeapp.automation.McpCheck
 import com.zirakusa.stone.nativeapp.automation.McpSelfTest
@@ -235,6 +236,31 @@ class McpServerTest {
         val missing = rpc("tools/call", JSONObject().put("name", "player_seek")).getJSONObject("result")
         assertTrue(missing.getBoolean("isError"))
         assertEquals(-32601, rpc("nope").getJSONObject("error").getInt("code"))
+    }
+
+    @Test fun linkPermissionsLimitToolsAndCalls() {
+        fun names() = rpc("tools/list").getJSONObject("result").getJSONArray("tools")
+            .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
+        assertTrue(names().containsAll(listOf("metadata_update", "metadata_update_many", "metadata_set_lyrics")))
+        try {
+            ApiMode.allowWrite(false)
+            assertFalse("metadata_update" in names())
+            assertTrue("player_play" in names())
+            val denied = rpc("tools/call", JSONObject().put("name", "metadata_set_lyrics")
+                .put("arguments", JSONObject().put("songId", songs[0].id).put("lyrics", "x"))).getJSONObject("result")
+            assertTrue(denied.getBoolean("isError"))
+
+            ApiMode.restrictToReading(true)
+            assertFalse("player_play" in names())
+            assertTrue(names().containsAll(listOf("library_search", "metadata_get", "player_state")))
+            val blocked = rpc("tools/call", JSONObject().put("name", "player_play")).getJSONObject("result")
+            assertTrue(blocked.getBoolean("isError"))
+            assertEquals(0, toggles)
+            assertFalse(rpc("tools/call", JSONObject().put("name", "player_state")).getJSONObject("result").getBoolean("isError"))
+        } finally {
+            ApiMode.restrictToReading(false)
+            ApiMode.allowWrite(true)
+        }
     }
 
     @Test fun customisationAndSleepTimerTools() {
