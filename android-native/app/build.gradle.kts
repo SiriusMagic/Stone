@@ -11,8 +11,12 @@ android {
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.6.2"
+        versionCode = 27
+        versionName = "1.6.3"
+        // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
+        // Set it with -PstoneRelayUrl=https://… or stoneRelayUrl in gradle.properties.
+        val relayUrl = (project.findProperty("stoneRelayUrl") as String?).orEmpty().trimEnd('/')
+        buildConfigField("String", "RELAY_URL", "\"$relayUrl\"")
     }
     buildFeatures {
         compose = true
@@ -67,6 +71,8 @@ dependencies {
     implementation("androidx.media3:media3-session:1.6.1")
     implementation("androidx.media3:media3-ui:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // WebSocket to the Stone relay (fixed public link for the MCP server).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.compose.ui:ui-test-junit4")

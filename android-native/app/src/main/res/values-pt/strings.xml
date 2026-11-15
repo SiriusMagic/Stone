@@ -432,18 +432,16 @@
     <string name="theme_violet">Violeta</string>
     <string name="theme_slate">Ardósia</string>
     <string name="api_title">Modo API (agentes de IA)</string>
-    <string name="api_intro">Permite que um agente de IA compatível com MCP controle o Stone: reprodução, biblioteca, playlists, tags, temas e idioma. O Stone funciona igual sem isso; desativado por padrão.</string>
-    <string name="api_enable">Ativar servidor MCP</string>
-    <string name="api_enable_hint">Funciona enquanto o Stone estiver aberto.</string>
+    <string name="api_intro">Deixe uma IA como Claude ou ChatGPT controlar o Stone: tocar, buscar, criar playlists, mudar o tema e mais. Ative, copie seu link e cole no seu app de IA.</string>
+    <string name="api_enable">Ativar MCP</string>
+    <string name="api_enable_hint">Funciona enquanto o Stone estiver aberto ou tocando.</string>
     <string name="api_lan">Permitir rede local (Wi-Fi)</string>
     <string name="api_lan_hint">Desligado: só deste telefone. Ligado: outros aparelhos do seu Wi-Fi com o token.</string>
-    <string name="api_running">Servidor ativo</string>
-    <string name="api_failed">Não foi possível iniciar: outro programa usa a porta. Tente outra porta.</string>
+        <string name="api_failed">Não foi possível iniciar: outro programa usa a porta. Tente outra porta.</string>
     <string name="api_address">Endereço (toque para copiar)</string>
     <string name="api_token">Token de acesso</string>
     <string name="api_copy_token">Copiar token</string>
-    <string name="api_new_token">Gerar outro</string>
-    <string name="api_header_hint">O agente pode enviar o token no cabeçalho «Authorization: Bearer TOKEN» ou no fim do link (?token=TOKEN). Gerar outro token revoga o acesso anterior.</string>
+        <string name="api_header_hint">O agente pode enviar o token no cabeçalho «Authorization: Bearer TOKEN» ou no fim do link (?token=TOKEN). Gerar outro token revoga o acesso anterior.</string>
     <string name="api_tools">Ferramentas disponíveis</string>
     <string name="api_risk_hint">○ só leitura · ◐ mudança reversível · ● modifica arquivos: pede sua confirmação na tela.</string>
     <string name="api_activity">Atividade recente</string>
@@ -490,4 +488,13 @@
     <string name="api_copy_sse">Copiar link SSE (apps antigos)</string>
     <string name="api_copy_json">Copiar configuração JSON</string>
     <string name="api_copy_cli">Copiar comando do Claude Code</string>
+    <string name="api_link_title">Seu link</string>
+    <string name="api_copy_link">Copiar link</string>
+    <string name="api_change_link">Trocar link</string>
+    <string name="api_link_howto">Cole no Claude ou ChatGPT em Configurações › Conectores › Adicionar conector personalizado. Trocar o link desconecta quem tiver o anterior.</string>
+    <string name="api_relay_online">Conectado à internet</string>
+    <string name="api_relay_connecting">Conectando…</string>
+    <string name="api_relay_offline">Sem conexão com a internet</string>
+    <string name="api_relay_missing">Só neste telefone ou na sua Wi-Fi: esta versão não inclui link de internet.</string>
+    <string name="api_advanced">Opções avançadas</string>
 </resources>

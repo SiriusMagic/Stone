@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="home">Inicio</string>
     <string name="choose_song_to_play">Elige una canción para reproducir</string>
     <string name="open_player">Abrir reproductor</string>
@@ -32,7 +32,7 @@
     <string name="clear_search">Borrar búsqueda</string>
     <string name="no_songs">No hay canciones todavía</string>
     <string name="videos">Videos</string>
-    <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="other">%1$d videos</item></plurals>
+    <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="many">%1$d videos</item><item quantity="other">%1$d videos</item></plurals>
     <string name="video_details">%1$s | %2$s</string>
     <string name="audio_only">Solo audio</string>
     <string name="video_folders">Carpetas de videos</string>
@@ -48,7 +48,7 @@
     <string name="sort_lyrics">Letras</string>
     <string name="ascending">Ascendente</string>
     <string name="descending">Descendente</string>
-    <plurals name="song_count"><item quantity="one">%1$d canción</item><item quantity="other">%1$d canciones</item></plurals>
+    <plurals name="song_count"><item quantity="one">%1$d canción</item><item quantity="many">%1$d canciones</item><item quantity="other">%1$d canciones</item></plurals>
     <string name="tap_to_play">Toca para reproducir</string>
     <string name="player_now">REPRODUCIENDO AHORA</string>
     <string name="close_player">Cerrar reproductor</string>
@@ -90,12 +90,12 @@
     <string name="manage">Administrar</string>
     <string name="delete_album">Eliminar álbum</string>
     <string name="select_all">Seleccionar todos</string>
-    <plurals name="selected_count"><item quantity="one">%1$d seleccionada</item><item quantity="other">%1$d seleccionadas</item></plurals>
-    <plurals name="delete_selected_message"><item quantity="one">¿Borrar %1$d canción seleccionada?</item><item quantity="other">¿Borrar %1$d canciones seleccionadas?</item></plurals>
+    <plurals name="selected_count"><item quantity="one">%1$d seleccionada</item><item quantity="many">%1$d seleccionadas</item><item quantity="other">%1$d seleccionadas</item></plurals>
+    <plurals name="delete_selected_message"><item quantity="one">¿Borrar %1$d canción seleccionada?</item><item quantity="many">¿Borrar %1$d canciones seleccionadas?</item><item quantity="other">¿Borrar %1$d canciones seleccionadas?</item></plurals>
     <string name="video_scale">Ajustar escala</string>
     <string name="default_value">Por defecto</string>
     <string name="off">Apagar</string>
-    <plurals name="minutes_later"><item quantity="one">%1$d minuto más tarde</item><item quantity="other">%1$d minutos más tarde</item></plurals>
+    <plurals name="minutes_later"><item quantity="one">%1$d minuto más tarde</item><item quantity="many">%1$d minutos más tarde</item><item quantity="other">%1$d minutos más tarde</item></plurals>
     <string name="finish_current_track">Reproducir la última hasta el final</string>
     <string name="custom_sleep_time">Tiempo personalizado</string>
     <string name="hours">Hora</string>
@@ -146,8 +146,8 @@
     <string name="empty_trash">Vaciar</string>
     <string name="delete_forever">Eliminar para siempre</string>
     <string name="delete_forever_title">¿Eliminar para siempre?</string>
-    <plurals name="delete_forever_message"><item quantity="one">El archivo de %1$d canción se borrará del dispositivo. No se puede deshacer.</item><item quantity="other">Los archivos de %1$d canciones se borrarán del dispositivo. No se puede deshacer.</item></plurals>
-    <plurals name="delete_forever_failed"><item quantity="one">No se pudo borrar %1$d archivo. Comprueba el permiso de la carpeta.</item><item quantity="other">No se pudieron borrar %1$d archivos. Comprueba el permiso de la carpeta.</item></plurals>
+    <plurals name="delete_forever_message"><item quantity="one">El archivo de %1$d canción se borrará del dispositivo. No se puede deshacer.</item><item quantity="many">Los archivos de %1$d canciones se borrarán del dispositivo. No se puede deshacer.</item><item quantity="other">Los archivos de %1$d canciones se borrarán del dispositivo. No se puede deshacer.</item></plurals>
+    <plurals name="delete_forever_failed"><item quantity="one">No se pudo borrar %1$d archivo. Comprueba el permiso de la carpeta.</item><item quantity="many">No se pudieron borrar %1$d archivos. Comprueba el permiso de la carpeta.</item><item quantity="other">No se pudieron borrar %1$d archivos. Comprueba el permiso de la carpeta.</item></plurals>
     <string name="video_media">Video</string>
     <string name="no_videos">No hay videos todavía</string>
     <string name="choose_video_folder">Elegir carpeta de videos</string>
@@ -316,10 +316,10 @@
     <string name="tags_format_unsupported">Este formato aún no admite edición de etiquetas (compatibles: MP3, FLAC, M4A).</string>
     <string name="audio_mode_sleepy">Dormilón</string>
     <string name="audio_mode_sleepy_info" formatted="false">Para escuchar en la cama sin molestar: el volumen máximo queda en el 10&#160;% y hasta el nivel más bajo suena suave. Ahorra batería.</string>
-    <plurals name="folder_count"><item quantity="one">%1$d carpeta</item><item quantity="other">%1$d carpetas</item></plurals>
+    <plurals name="folder_count"><item quantity="one">%1$d carpeta</item><item quantity="many">%1$d carpetas</item><item quantity="other">%1$d carpetas</item></plurals>
     <string name="shorts">Shorts</string>
     <string name="movies">Películas</string>
-    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="other">%1$d shorts</item></plurals>
+    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="many">%1$d shorts</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Rotar pantalla</string>
     <string name="play_mode">Modo de reproducción</string>
     <string name="subtitles">Subtítulos/CC</string>
@@ -395,18 +395,16 @@
     <string name="theme_violet">Violeta</string>
     <string name="theme_slate">Pizarra</string>
     <string name="api_title">Modo API (agentes de IA)</string>
-    <string name="api_intro">Permite que un agente de IA compatible con MCP controle Stone: reproducción, biblioteca, listas, etiquetas, temas e idioma. Stone funciona igual sin esto; desactivado por defecto.</string>
-    <string name="api_enable">Activar servidor MCP</string>
-    <string name="api_enable_hint">Funciona mientras Stone esté abierto.</string>
+    <string name="api_intro">Deja que una IA como Claude o ChatGPT controle Stone: reproducir, buscar, crear listas, cambiar tema y más. Actívalo, copia tu enlace y pégalo en tu app de IA.</string>
+    <string name="api_enable">Activar MCP</string>
+    <string name="api_enable_hint">Funciona mientras Stone esté abierto o reproduciendo.</string>
     <string name="api_lan">Permitir red local (Wi-Fi)</string>
     <string name="api_lan_hint">Apagado: solo desde este teléfono. Encendido: otros equipos de tu Wi-Fi con el token.</string>
-    <string name="api_running">Servidor activo</string>
-    <string name="api_failed">No se pudo iniciar: el puerto está ocupado por otro programa. Prueba otro puerto.</string>
+        <string name="api_failed">No se pudo iniciar: el puerto está ocupado por otro programa. Prueba otro puerto.</string>
     <string name="api_address">Dirección (toca para copiar)</string>
     <string name="api_token">Token de acceso</string>
     <string name="api_copy_token">Copiar token</string>
-    <string name="api_new_token">Generar otro</string>
-    <string name="api_header_hint">El agente puede enviar el token como cabecera «Authorization: Bearer TOKEN» o al final del enlace (?token=TOKEN). Generar otro token revoca el acceso anterior.</string>
+        <string name="api_header_hint">El agente puede enviar el token como cabecera «Authorization: Bearer TOKEN» o al final del enlace (?token=TOKEN). Generar otro token revoca el acceso anterior.</string>
     <string name="api_tools">Herramientas disponibles</string>
     <string name="api_risk_hint">○ solo lectura · ◐ cambio reversible · ● modifica archivos: pide tu confirmación en pantalla.</string>
     <string name="api_activity">Actividad reciente</string>
@@ -453,4 +451,13 @@
     <string name="api_copy_sse">Copiar enlace SSE (apps antiguas)</string>
     <string name="api_copy_json">Copiar configuración JSON</string>
     <string name="api_copy_cli">Copiar comando de Claude Code</string>
+    <string name="api_link_title">Tu enlace</string>
+    <string name="api_copy_link">Copiar enlace</string>
+    <string name="api_change_link">Cambiar enlace</string>
+    <string name="api_link_howto">Pégalo en Claude o ChatGPT, en Ajustes › Conectores › Añadir conector personalizado. Cambiar el enlace desconecta a quien tenga el anterior.</string>
+    <string name="api_relay_online">Conectado a internet</string>
+    <string name="api_relay_connecting">Conectando…</string>
+    <string name="api_relay_offline">Sin conexión a internet</string>
+    <string name="api_relay_missing">Solo en este teléfono o tu Wi-Fi: esta versión no incluye enlace de internet.</string>
+    <string name="api_advanced">Opciones avanzadas</string>
 </resources>

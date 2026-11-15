@@ -329,18 +329,16 @@
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
     <string name="api_title">API mode (AI agents)</string>
-    <string name="api_intro">Lets an MCP-compatible AI agent control Stone: playback, library, playlists, tags, themes and language. Stone works the same without it; off by default.</string>
-    <string name="api_enable">Enable MCP server</string>
-    <string name="api_enable_hint">Works while Stone is open.</string>
+    <string name="api_intro">Let an AI such as Claude or ChatGPT control Stone: play, search, make playlists, change the theme and more. Turn it on, copy your link and paste it into your AI app.</string>
+    <string name="api_enable">Turn on MCP</string>
+    <string name="api_enable_hint">Works while Stone is open or playing.</string>
     <string name="api_lan">Allow local network (Wi-Fi)</string>
     <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
-    <string name="api_running">Server running</string>
-    <string name="api_failed">Could not start: another program is using the port. Try another port.</string>
+        <string name="api_failed">Could not start: another program is using the port. Try another port.</string>
     <string name="api_address">Address (tap to copy)</string>
     <string name="api_token">Access token</string>
     <string name="api_copy_token">Copy token</string>
-    <string name="api_new_token">Generate another</string>
-    <string name="api_header_hint">The agent can send the token as the header «Authorization: Bearer TOKEN» or at the end of the link (?token=TOKEN). A new token revokes the previous access.</string>
+        <string name="api_header_hint">The agent can send the token as the header «Authorization: Bearer TOKEN» or at the end of the link (?token=TOKEN). A new token revokes the previous access.</string>
     <string name="api_tools">Available tools</string>
     <string name="api_risk_hint">○ read only · ◐ reversible change · ● modifies files: asks for your confirmation on screen.</string>
     <string name="api_activity">Recent activity</string>
@@ -387,4 +385,13 @@
     <string name="api_copy_sse">Copy SSE link (older apps)</string>
     <string name="api_copy_json">Copy JSON configuration</string>
     <string name="api_copy_cli">Copy Claude Code command</string>
+    <string name="api_link_title">Your link</string>
+    <string name="api_copy_link">Copy link</string>
+    <string name="api_change_link">Change link</string>
+    <string name="api_link_howto">Paste it in Claude or ChatGPT under Settings › Connectors › Add custom connector. Changing the link disconnects anyone with the old one.</string>
+    <string name="api_relay_online">Connected to the internet</string>
+    <string name="api_relay_connecting">Connecting…</string>
+    <string name="api_relay_offline">No internet connection</string>
+    <string name="api_relay_missing">Only on this phone or your Wi-Fi: this version has no internet link.</string>
+    <string name="api_advanced">Advanced options</string>
 </resources>

@@ -1,0 +1,12 @@
+{
+  "name": "stone-relay",
+  "private": true,
+  "description": "Fixed public HTTPS link for Stone's MCP server (Cloudflare Worker).",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

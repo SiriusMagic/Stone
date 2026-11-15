@@ -8,8 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -25,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** Ajustes › Modo API: MCP server switch, address, token, tool list and recent activity. */
+/** Ajustes › Modo API: one switch and the link card; technical details folded under "Opciones avanzadas". */
 @Composable internal fun ApiModeSettings() {
     val context = LocalContext.current
     val history by StoneAutomation.history.collectAsState()
@@ -34,36 +36,37 @@ import java.util.Locale
         Toast.makeText(context, R.string.api_copied, Toast.LENGTH_SHORT).show()
     }
     Text(stringResource(R.string.api_intro), color = StonePalette.Muted)
-    SettingsGroup {
-        ToggleSetting(R.string.api_enable, R.string.api_enable_hint, ApiMode.enabled, ApiMode::enable)
-        ToggleSetting(R.string.api_lan, R.string.api_lan_hint, ApiMode.localNetwork, ApiMode::allowLocalNetwork)
+    SettingsGroup { ToggleSetting(R.string.api_enable, R.string.api_enable_hint, ApiMode.enabled, ApiMode::enable) }
+    if (ApiMode.enabled) ApiModeLinkCard(::copy)
+    var advanced by rememberSaveable { mutableStateOf(false) }
+    TextButton(onClick = { advanced = !advanced }, Modifier.padding(top = 12.dp)) {
+        Text(stringResource(R.string.api_advanced) + if (advanced) "  ▲" else "  ▼")
     }
-    if (ApiMode.enabled) {
-        Text(stringResource(if (ApiMode.running) R.string.api_running else R.string.api_failed),
-            color = if (ApiMode.running) Color(0xFF4CD27A) else MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
-        Header(R.string.api_address)
-        ApiMode.urls().forEach { url ->
-            TextButton(onClick = { copy("MCP", url) }) { Text(url, fontFamily = FontFamily.Monospace, fontSize = 13.sp) }
+    if (advanced) {
+        SettingsGroup { ToggleSetting(R.string.api_lan, R.string.api_lan_hint, ApiMode.localNetwork, ApiMode::allowLocalNetwork) }
+        if (ApiMode.enabled) {
+            Header(R.string.api_address)
+            ApiMode.urls().forEach { url ->
+                TextButton(onClick = { copy("MCP", url) }) { Text(url, fontFamily = FontFamily.Monospace, fontSize = 13.sp) }
+            }
+            Header(R.string.api_token)
+            Text(ApiMode.token, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+            FilledTonalButton(onClick = { copy("token", ApiMode.token) }, Modifier.padding(top = 6.dp)) {
+                Text(stringResource(R.string.api_copy_token))
+            }
+            Text(stringResource(R.string.api_header_hint), color = StonePalette.Muted, fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp))
+            ApiModeConnect(::copy)
         }
-        Header(R.string.api_token)
-        Text(ApiMode.token, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-            FilledTonalButton(onClick = { copy("token", ApiMode.token) }) { Text(stringResource(R.string.api_copy_token)) }
-            OutlinedButton(onClick = ApiMode::regenerateToken) { Text(stringResource(R.string.api_new_token)) }
-        }
-        Text(stringResource(R.string.api_header_hint), color = StonePalette.Muted, fontSize = 12.sp,
-            modifier = Modifier.padding(top = 8.dp))
-        ApiModeConnect(::copy)
-    }
-    Header(R.string.api_tools)
-    Text(stringResource(R.string.api_risk_hint), color = StonePalette.Muted, fontSize = 12.sp)
-    StoneAutomation.actions.forEach { action ->
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            Text(when (action.risk) { ActionRisk.READ -> "○"; ActionRisk.REVERSIBLE -> "◐"; ActionRisk.PERSISTENT -> "●" },
-                color = when (action.risk) { ActionRisk.PERSISTENT -> StonePalette.Yellow; else -> StonePalette.Muted },
-                modifier = Modifier.width(22.dp))
-            Text(action.toolName, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+        Header(R.string.api_tools)
+        Text(stringResource(R.string.api_risk_hint), color = StonePalette.Muted, fontSize = 12.sp)
+        StoneAutomation.actions.forEach { action ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Text(when (action.risk) { ActionRisk.READ -> "○"; ActionRisk.REVERSIBLE -> "◐"; ActionRisk.PERSISTENT -> "●" },
+                    color = when (action.risk) { ActionRisk.PERSISTENT -> StonePalette.Yellow; else -> StonePalette.Muted },
+                    modifier = Modifier.width(22.dp))
+                Text(action.toolName, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+            }
         }
     }
     if (history.isNotEmpty()) {

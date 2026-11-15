@@ -45,6 +45,17 @@ class WelcomeAndFeedbackScreenshotTest {
         onView(isRoot()).captureRoboImage("build/screenshots/stone-feedback.png")
     }
 
+    @Test fun apiModeLinkCard() {
+        com.zirakusa.stone.nativeapp.automation.ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
+            Column(Modifier.padding(24.dp)) {
+                com.zirakusa.stone.nativeapp.feature.library.components.ApiModeLinkCard { _, _ -> }
+            }
+        } } }
+        onView(isRoot()).captureRoboImage("build/screenshots/stone-api-link.png")
+        com.zirakusa.stone.nativeapp.automation.ApiMode.relayUrl = ""
+    }
+
     @Test fun mascotPickerAndLayoutSwitch() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             Column(Modifier.padding(24.dp)) {

@@ -4,6 +4,7 @@ import android.os.Looper
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
 import com.zirakusa.stone.nativeapp.automation.McpServer
+import com.zirakusa.stone.nativeapp.automation.RelayClient
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.playback.AudioMode
@@ -52,9 +53,14 @@ class McpLiveServerTest {
             override fun setLauncherIcon(key: String) = Unit
         }
         check(McpServer.start("live-token", localNetwork = false))
+        // With STONE_RELAY_URL set, Stone also dials the relay like the app does.
+        val relay = System.getenv("STONE_RELAY_URL")?.let { url ->
+            RelayClient(url, "livetestdevice01", "s".repeat(40), { McpServer.DEFAULT_PORT }) { println("RELAY_$it") }.also { it.start() }
+        }
         println("STONE_MCP_READY")
         val end = System.currentTimeMillis() + 90_000
         while (System.currentTimeMillis() < end) { shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(5) }
+        relay?.stop()
         McpServer.stop()
     }
 }

@@ -1,0 +1,13 @@
+# Stone relay. Deploy once with:  npx wrangler login  &&  npx wrangler deploy
+name = "stone-relay"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[durable_objects.bindings]]
+name = "DEVICES"
+class_name = "DeviceRelay"
+
+# SQLite-backed Durable Objects are available on Cloudflare's free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DeviceRelay"]

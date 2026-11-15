@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -21,7 +22,18 @@ object ApiMode {
         private set
     var running by mutableStateOf(false)
         private set
+    /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
+    var relayState by mutableStateOf(RelayClient.State.OFFLINE)
+        private set
     private var store: StoneSettingsStore? = null
+    private var relay: RelayClient? = null
+    private var device = ""
+    private var relaySecret = ""
+    /** Relay address; built in through BuildConfig, replaceable in tests. */
+    internal var relayUrl: String = BuildConfig.RELAY_URL
+
+    /** Whether this build has an internet relay (else only this phone / Wi-Fi). */
+    val relayAvailable: Boolean get() = relayUrl.isNotBlank()
 
     fun load(store: StoneSettingsStore) {
         this.store = store
@@ -30,6 +42,8 @@ object ApiMode {
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         token = store.look("api.token", "").ifBlank { newToken().also { store.setLook("api.token", it) } }
+        device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
+        relaySecret = store.look("api.relaySecret", "").ifBlank { newToken(32).also { store.setLook("api.relaySecret", it) } }
         apply()
     }
 
@@ -47,7 +61,13 @@ object ApiMode {
 
     private fun apply() {
         running = if (enabled) McpServer.start(token, localNetwork, port) else { McpServer.stop(); false }
+        if (enabled && running && relayAvailable) {
+            if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }) { relayState = it }.also { it.start() }
+        } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }
+
+    /** The one link users paste into Claude or ChatGPT; changing the token revokes the old one. */
+    fun publicLink(): String? = if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}?token=$token" else null
 
     /** Wi-Fi addresses of this phone (only when the local network is allowed). */
     fun lanHosts(): List<String> = if (!localNetwork) emptyList() else runCatching {
@@ -75,8 +95,8 @@ object ApiMode {
   }
 }"""
 
-    private fun newToken(): String {
-        val bytes = ByteArray(24).also(SecureRandom()::nextBytes)
+    private fun newToken(size: Int = 24): String {
+        val bytes = ByteArray(size).also(SecureRandom()::nextBytes)
         return bytes.joinToString("") { "%02x".format(it) }
     }
 

@@ -1,3 +1,14 @@
+# Stone Kotlin 1.6.3
+
+- Modo API en dos toques: "Activar MCP" y "Copiar enlace". El enlace es fijo, lleva el token
+  dentro y se pega en Claude o ChatGPT (Conectores › Añadir conector personalizado). "Cambiar
+  enlace" lo revoca. Lo técnico (red local, puerto, prueba, configuraciones) queda en "Opciones
+  avanzadas".
+- Relevo propio (`relay/`, Cloudflare Workers): el teléfono se conecta hacia fuera, así que
+  funciona en cualquier Wi-Fi o con datos, sin computadora. Se publica una vez y su dirección se
+  pone al compilar (`-PstoneRelayUrl=…`); sin ella, el modo API funciona solo en el teléfono o la Wi-Fi.
+- Comprobado de punta a punta con el SDK oficial de MCP a través del relevo.
+
 # Stone Kotlin 1.6.2
 
 - Corrige que Stone no se abriera tras actualizar (el lanzador llevaba a los ajustes de Android):

@@ -432,18 +432,16 @@
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Ardoise</string>
     <string name="api_title">Mode API (agents IA)</string>
-    <string name="api_intro">Permet à un agent IA compatible MCP de contrôler Stone : lecture, bibliothèque, playlists, tags, thèmes et langue. Stone fonctionne pareil sans cela ; désactivé par défaut.</string>
-    <string name="api_enable">Activer le serveur MCP</string>
-    <string name="api_enable_hint">Fonctionne tant que Stone est ouvert.</string>
+    <string name="api_intro">Laissez une IA comme Claude ou ChatGPT contrôler Stone : lire, chercher, créer des playlists, changer le thème et plus. Activez, copiez votre lien et collez-le dans votre appli d\'IA.</string>
+    <string name="api_enable">Activer MCP</string>
+    <string name="api_enable_hint">Fonctionne tant que Stone est ouvert ou en lecture.</string>
     <string name="api_lan">Autoriser le réseau local (Wi-Fi)</string>
     <string name="api_lan_hint">Désactivé : uniquement depuis ce téléphone. Activé : autres appareils de votre Wi-Fi avec le jeton.</string>
-    <string name="api_running">Serveur actif</string>
-    <string name="api_failed">Démarrage impossible : un autre programme utilise le port. Essayez un autre port.</string>
+        <string name="api_failed">Démarrage impossible : un autre programme utilise le port. Essayez un autre port.</string>
     <string name="api_address">Adresse (touchez pour copier)</string>
     <string name="api_token">Jeton d\'accès</string>
     <string name="api_copy_token">Copier le jeton</string>
-    <string name="api_new_token">En générer un autre</string>
-    <string name="api_header_hint">L\'agent peut envoyer le jeton dans l\'en-tête « Authorization: Bearer TOKEN » ou à la fin du lien (?token=TOKEN). Générer un autre jeton révoque l\'accès précédent.</string>
+        <string name="api_header_hint">L\'agent peut envoyer le jeton dans l\'en-tête « Authorization: Bearer TOKEN » ou à la fin du lien (?token=TOKEN). Générer un autre jeton révoque l\'accès précédent.</string>
     <string name="api_tools">Outils disponibles</string>
     <string name="api_risk_hint">○ lecture seule · ◐ changement réversible · ● modifie des fichiers : demande votre confirmation à l\'écran.</string>
     <string name="api_activity">Activité récente</string>
@@ -490,4 +488,13 @@
     <string name="api_copy_sse">Copier le lien SSE (anciennes applis)</string>
     <string name="api_copy_json">Copier la configuration JSON</string>
     <string name="api_copy_cli">Copier la commande Claude Code</string>
+    <string name="api_link_title">Votre lien</string>
+    <string name="api_copy_link">Copier le lien</string>
+    <string name="api_change_link">Changer de lien</string>
+    <string name="api_link_howto">Collez-le dans Claude ou ChatGPT, dans Paramètres › Connecteurs › Ajouter un connecteur personnalisé. Changer de lien déconnecte quiconque a l\'ancien.</string>
+    <string name="api_relay_online">Connecté à Internet</string>
+    <string name="api_relay_connecting">Connexion…</string>
+    <string name="api_relay_offline">Pas de connexion Internet</string>
+    <string name="api_relay_missing">Uniquement sur ce téléphone ou votre Wi-Fi : cette version n\'a pas de lien Internet.</string>
+    <string name="api_advanced">Options avancées</string>
 </resources>
