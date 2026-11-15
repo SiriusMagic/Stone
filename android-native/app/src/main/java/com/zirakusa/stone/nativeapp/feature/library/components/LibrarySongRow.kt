@@ -25,10 +25,12 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     compact: Boolean = false, play: () -> Unit) {
     val hasLyrics = !song.isVideo && (song.lyrics.any { it.isNotBlank() } ||
         song.syncedLyrics.any { it.text.isNotBlank() })
-    val rowStyle = if (compact) Modifier.padding(vertical = 3.dp).clip(RoundedCornerShape(16.dp))
+    val rowShape = RoundedCornerShape(16.dp)
+    val rowStyle = Modifier
+        .padding(vertical = if (compact) 3.dp else 2.dp)
+        .clip(rowShape)
         .background(if (current) StonePalette.Yellow.copy(alpha = .12f) else StonePalette.Surface)
-        .then(if (current) Modifier.border(1.dp, StonePalette.Yellow.copy(alpha = .45f), RoundedCornerShape(16.dp)) else Modifier)
-        else Modifier
+        .then(if (current) Modifier.border(1.dp, StonePalette.Yellow.copy(alpha = .45f), rowShape) else Modifier)
     Row(Modifier.fillMaxWidth().then(rowStyle).clickable(enabled = enabled, onClick = play)
         .padding(horizontal = if (compact) 8.dp else 0.dp, vertical = if (compact) 8.dp else 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp)) {

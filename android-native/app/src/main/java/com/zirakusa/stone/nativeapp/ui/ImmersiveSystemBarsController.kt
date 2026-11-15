@@ -45,8 +45,6 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         var applying = false
         var pendingHide = false
         var userRevealedTransientBars = false
-        var lastSystemBarsVisible: Boolean? = null
-        var lastImeVisible: Boolean? = null
         var systemBarsVisible = true
         var configuredForImmersive = false
         var baseBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
@@ -157,7 +155,6 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         log("configuration changed requested=$requested")
         resetTransientRevealState()
         windows.values.toList().forEach { managed ->
-            managed.lastSystemBarsVisible = null
             managed.configuredForImmersive = false
             ViewCompat.requestApplyInsets(managed.decorView)
         }
@@ -237,19 +234,14 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     private fun onInsets(managed: ManagedWindow, insets: WindowInsetsCompat) {
         val barsVisible = insets.isVisible(WindowInsetsCompat.Type.systemBars())
         val keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-        val wasVisible = managed.lastSystemBarsVisible
-        val wasKeyboardVisible = managed.lastImeVisible
         if (managed.pendingHide && !barsVisible) managed.pendingHide = false
         if (!barsVisible && managed.userRevealedTransientBars) {
             managed.userRevealedTransientBars = false
             log("system bars hidden after transient reveal window=${windowId(managed.window)}")
         }
-        managed.lastSystemBarsVisible = barsVisible
-        managed.lastImeVisible = keyboardVisible
         managed.systemBarsVisible = barsVisible
-        val keyboardJustClosed = wasKeyboardVisible == true && !keyboardVisible
-        if (requested && !managed.applying && !managed.pendingHide &&
-            barsVisible && (wasVisible == false || keyboardJustClosed)) {
+        if (requested && !managed.applying && !managed.pendingHide && barsVisible &&
+            !managed.userRevealedTransientBars) {
             if (keyboardVisible) {
                 // The IME owns its temporary window/insets. Do not fight it by
                 // hiding system bars while a text field is active.
@@ -310,7 +302,6 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             controller.hide(WindowInsetsCompat.Type.systemBars())
             managed.applying = false
             managed.systemBarsVisible = false
-            managed.lastSystemBarsVisible = false
         }
     }
 
@@ -333,8 +324,6 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             }
             managed.configuredForImmersive = false
             managed.systemBarsVisible = true
-            managed.lastSystemBarsVisible = true
-            managed.lastImeVisible = false
             if (managed.root) systemBarsVisible = true
         }
     }
