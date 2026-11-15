@@ -76,14 +76,27 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 @Composable internal fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
     onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList(),
     tint: Color = Color(0xFF62393B)) {
-    // In landscape the sheet would otherwise stretch to Material's 640 dp maximum and
-    // cover most of the screen; half the window keeps the library visible beside it.
     val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val landscape = window.width > window.height
-    val maxWidth = if (landscape) with(density) { (window.width / 2).toDp() } else BottomSheetDefaults.SheetMaxWidth
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = tint,
-        sheetMaxWidth = maxWidth, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = landscape)) {
+    if (window.width > window.height) {
+        // Landscape: right side panel like the video menu, the player stays visible.
+        androidx.compose.ui.window.Dialog(onDismissRequest = onClose,
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false)) {
+            ImmersiveWindowEffect()
+            Row(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxHeight().clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null, onClick = onClose))
+                Surface(Modifier.fillMaxHeight().widthIn(min = 300.dp, max = 400.dp).fillMaxWidth(.40f), color = tint,
+                    shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp)) {
+                    PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect,
+                        modifier = Modifier.padding(top = 16.dp))
+                }
+            }
+        }
+        return
+    }
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = tint) {
         ImmersiveWindowEffect()
         PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect)
     }

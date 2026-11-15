@@ -62,7 +62,7 @@ private val PanelColor = Color(0xFF0E0D12)
                     contentAlignment = Alignment.CenterEnd) {
                     Icon(Icons.Default.ChevronRight, null, tint = Color(0x99FFFFFF), modifier = Modifier.size(40.dp))
                 }
-                Box(Modifier.fillMaxHeight().fillMaxWidth(.42f).background(PanelColor)
+                Box(Modifier.fillMaxHeight().widthIn(min = 300.dp, max = 400.dp).fillMaxWidth(.40f).background(PanelColor)
                     .windowInsetsPadding(WindowInsets.displayCutout)) { content() }
             }
         }

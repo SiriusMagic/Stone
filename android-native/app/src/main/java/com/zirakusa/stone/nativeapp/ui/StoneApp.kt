@@ -196,7 +196,7 @@ import kotlinx.coroutines.delay
     LaunchedEffect(landscape, layout.fullPlayer, playerSheets.optionsSidePanel) {
         if (layout.fullPlayer || (!landscape && playerSheets.optionsSidePanel)) closeMiniOptions()
     }
-    Scaffold(containerColor = Color.Transparent, contentWindowInsets = if (useSystemInsets)
+    Scaffold(containerColor = Color.Transparent, contentColor = Color.White, contentWindowInsets = if (useSystemInsets)
         WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)
         else WindowInsets(0, 0, 0, 0)) { padding ->
         Box(Modifier.fillMaxSize()) {

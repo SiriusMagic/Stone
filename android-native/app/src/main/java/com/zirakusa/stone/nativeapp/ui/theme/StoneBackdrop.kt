@@ -22,14 +22,14 @@ fun Modifier.stoneBackdrop(): Modifier = drawWithCache {
     val base = StonePalette.Background
     val textured = StonePalette.Textured
     val glow = Brush.radialGradient(
-        listOf(StonePalette.Glow.copy(alpha = .10f), Color.Transparent),
+        listOf(StonePalette.Glow.copy(alpha = .06f), Color.Transparent),
         center = Offset(size.width * .15f, 0f), radius = maxOf(size.width, size.height) * .75f)
     val grain = ShaderBrush(ImageShader(GrainTile.bitmap, TileMode.Repeated, TileMode.Repeated))
     onDrawBehind {
         drawRect(base)
         if (textured) {
             drawRect(glow)
-            drawRect(grain, alpha = .05f)
+            drawRect(grain, alpha = .03f)
         }
     }
 }

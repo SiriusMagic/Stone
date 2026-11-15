@@ -33,8 +33,8 @@ object StonePalette {
 /** Visual themes. Keys are persisted; keep them stable. */
 enum class StoneThemeSpec(val key: String, val background: Color, val surface: Color, val chip: Color,
     val border: Color, val glow: Color, val textured: Boolean) {
-    DARK("dark", Color(0xFF0A0A0E), Color(0xFF15151B), Color(0xFF15151B), Color(0xFF22222B), Color(0xFFF5C518), true),
-    GRAY("gray", Color(0xFF24242A), Color(0xFF303038), Color(0xFF2C2C33), Color(0xFF3A3A44), Color(0xFFF5C518), true),
+    DARK("dark", Color(0xFF0A0A0E), Color(0xFF15151B), Color(0xFF15151B), Color(0xFF22222B), Color(0xFF8E9AB8), true),
+    GRAY("gray", Color(0xFF24242A), Color(0xFF303038), Color(0xFF2C2C33), Color(0xFF3A3A44), Color(0xFFB8BCC8), true),
     MIDNIGHT("midnight", Color(0xFF070B16), Color(0xFF111A2E), Color(0xFF0F1729), Color(0xFF1E2A44), Color(0xFF339CFF), true),
     AMOLED("amoled", Color(0xFF000000), Color(0xFF0C0C0F), Color(0xFF0C0C0F), Color(0xFF1A1A20), Color(0xFFF5C518), false);
 

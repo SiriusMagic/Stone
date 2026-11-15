@@ -25,7 +25,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
     immersive: Boolean = false) {
     BackHandler(onBack = onClose)
     Box(Modifier.fillMaxSize().zIndex(10f)) {
-        Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .58f))
+        Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = .30f))
             .clickable(onClick = onClose))
         AnimatedVisibility(
             visible = true,
@@ -33,9 +33,10 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackState
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn()
         ) {
             Surface(
+                // Narrow right panel (~40 %): the rest of the screen stays visible.
                 modifier = Modifier.fillMaxHeight()
-                    .fillMaxWidth(.82f)
-                    .widthIn(max = 420.dp)
+                    .widthIn(min = 300.dp, max = 400.dp)
+                    .fillMaxWidth(.40f)
                     .then(if (immersive) Modifier else
                         Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical))),
                 shape = RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp),
