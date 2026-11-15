@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,27 +32,26 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
-import com.zirakusa.stone.nativeapp.ui.components.PenguinReportMascot
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-internal enum class FeedbackKind(val label: Int) {
-    BUG(R.string.feedback_report_bug),
-    FEATURE(R.string.feedback_suggest_feature),
-    OPINION(R.string.feedback_send_opinion),
+internal enum class FeedbackKind(val label: Int, val icon: ImageVector, val send: Int) {
+    BUG(R.string.feedback_report_bug, Icons.Outlined.BugReport, R.string.feedback_send_report),
+    FEATURE(R.string.feedback_suggest_feature, Icons.Outlined.Lightbulb, R.string.feedback_send_suggestion),
+    OPINION(R.string.feedback_send_opinion, Icons.Outlined.Chat, R.string.feedback_send_opinion),
 }
 
 @Composable
 internal fun FeedbackDetail(shakeToReport: Boolean, onShakeToReportChange: (Boolean) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.feedback_intro), color = StonePalette.Muted,
-            modifier = Modifier.padding(bottom = 14.dp))
-        Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {
-                Text(stringResource(R.string.feedback_shake_title), fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.feedback_shake_hint), color = StonePalette.Muted, fontSize = 13.sp)
+                Text(stringResource(R.string.feedback_shake_title), color = StonePalette.Yellow,
+                    fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(stringResource(R.string.feedback_shake_hint), color = StonePalette.Muted, fontSize = 14.sp)
             }
             Switch(shakeToReport, onShakeToReportChange)
         }
+        HorizontalDivider(color = StonePalette.Border)
         FeedbackForm(initialKind = FeedbackKind.OPINION, screenLabel = "Ajustes > Opiniones y sugerencias",
             scrollable = false)
     }
@@ -88,25 +90,11 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
     } else {
         modifier
     }
-    Column(formModifier
-        .padding(top = 16.dp, bottom = 24.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            PenguinReportMascot(Modifier.size(58.dp))
-            Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(stringResource(R.string.feedback_title), fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Text(stringResource(R.string.feedback_review_before_share), color = StonePalette.Muted,
-                    fontSize = 13.sp)
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FeedbackKind.entries.forEach { option ->
-                FilterChip(selected = kind == option, onClick = { kind = option },
-                    label = { Text(stringResource(option.label)) })
-            }
-        }
+    Column(formModifier.padding(top = 16.dp, bottom = 24.dp)) {
+        FeedbackHeader(kind)
+        FeedbackKindCards(kind) { kind = it }
         if (kind == FeedbackKind.BUG) {
-            Text(stringResource(R.string.feedback_category), fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+            FeedbackSectionLabel(R.string.feedback_category)
             Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 bugCategories.forEach { option ->
@@ -115,55 +103,34 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
                 }
             }
         }
-        Text(stringResource(R.string.feedback_details), fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-        if (attachments.isNotEmpty()) AttachmentThumbnails(attachments) { attachments = attachments - it }
+        FeedbackSectionLabel(R.string.feedback_details)
         OutlinedTextField(value = details, onValueChange = { details = it.take(MAX_DETAILS) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp), minLines = 5,
-            supportingText = { Text("${details.length} / $MAX_DETAILS") },
+            shape = RoundedCornerShape(18.dp),
             placeholder = { Text(stringResource(R.string.feedback_details_hint)) })
-        Text(stringResource(R.string.feedback_attachments), fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-        OutlinedButton(onClick = { picker.launch("image/*") }) {
-            Icon(Icons.Default.AttachFile, null)
-            Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.feedback_add_attachment))
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
-            Checkbox(checked = includeTechnical, onCheckedChange = { includeTechnical = it })
-            Text(stringResource(R.string.feedback_include_technical), color = StonePalette.Muted,
-                fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp))
+        Text("${details.length} / $MAX_DETAILS", Modifier.fillMaxWidth().padding(top = 6.dp),
+            color = StonePalette.Muted, fontSize = 13.sp, textAlign = TextAlign.End)
+        FeedbackSectionLabel(R.string.feedback_attachments, Icons.Outlined.Image)
+        if (attachments.isNotEmpty()) AttachmentThumbnails(attachments) { attachments = attachments - it }
+        if (attachments.size < 4) DashedAddButton { picker.launch("image/*") }
+        TechnicalInfoRow(includeTechnical, { includeTechnical = it }) {
+            Toast.makeText(context, R.string.feedback_review_before_share, Toast.LENGTH_LONG).show()
         }
         Button(onClick = {
             val sent = shareFeedback(context, kind, category, details, attachments,
                 includeTechnical, screenLabel)
             if (!sent) Toast.makeText(context, R.string.feedback_no_share_app,
                 Toast.LENGTH_LONG).show() else onShared()
-        }, enabled = details.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            Text(stringResource(R.string.feedback_share))
+        }, enabled = details.isNotBlank(), shape = RoundedCornerShape(28.dp),
+            modifier = Modifier.fillMaxWidth().height(58.dp).padding(top = 4.dp)) {
+            Icon(Icons.AutoMirrored.Outlined.Send, null)
+            Spacer(Modifier.width(10.dp))
+            Text(stringResource(kind.send), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         }
     }
 }
 
 private const val MAX_DETAILS = 2000
-
-/** Screenshot/attachment previews with a remove button, shown above the description. */
-@Composable private fun AttachmentThumbnails(items: List<Uri>, remove: (Uri) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState())
-        .padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items.forEach { uri ->
-            Box(Modifier.size(width = 84.dp, height = 112.dp)) {
-                com.zirakusa.stone.nativeapp.ui.components.StoneArtwork(uri.toString(), 0L,
-                    Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)))
-                IconButton(onClick = { remove(uri) }, modifier = Modifier.align(Alignment.TopEnd)
-                    .padding(4.dp).size(28.dp).background(androidx.compose.ui.graphics.Color(0xCC000000), CircleShape)) {
-                    Icon(Icons.Default.Close, stringResource(R.string.feedback_remove_attachment),
-                        tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(16.dp))
-                }
-            }
-        }
-    }
-}
 
 private fun shareFeedback(context: Context, kind: FeedbackKind, category: Int, details: String,
     attachments: List<Uri>, includeTechnical: Boolean, screenLabel: String): Boolean {

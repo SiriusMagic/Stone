@@ -35,8 +35,7 @@
     <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
     <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
-    <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string><string name="sleep_timer_until">Until %1$s</string>
-    <string name="delete">Delete</string>
+    <string name="set_ringtone">Set as ringtone</string><string name="sleep_timer">Sleep timer</string>    <string name="delete">Delete</string>
     <string name="default_value">Default</string><string name="off">Off</string><string name="manage">Manage</string><string name="delete_album">Delete album</string><string name="select_all">Select all</string><plurals name="selected_count"><item quantity="one">%1$d selected</item><item quantity="other">%1$d selected</item></plurals><plurals name="delete_selected_message"><item quantity="one">Delete %1$d selected song?</item><item quantity="other">Delete %1$d selected songs?</item></plurals><string name="video_scale">Adjust scale</string><plurals name="minutes_later"><item quantity="one">In %1$d minute</item><item quantity="other">In %1$d minutes</item></plurals>
     <string name="finish_current_track">Finish current track</string><string name="artist">Artist</string>
     <string name="custom_sleep_time">Custom time</string><string name="hours">Hours</string>
@@ -82,8 +81,7 @@
     <string name="video_settings_hint">Landscape videos open in immersive mode and fill the screen without distortion. You can change the framing from the player controls.</string>
     <string name="video_controls">Video controls</string>
     <string name="video_controls_hint">Choose and reorder the icons shown below the preview and in the video player.</string>
-    <string name="video_controls_future">More functions will be added soon.</string>
-    <string name="video_preview_empty">Video preview</string>
+        <string name="video_preview_empty">Video preview</string>
     <string name="video_preview_empty_hint">Choose a video to begin. Stone will keep the last one you played here.</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
@@ -104,7 +102,6 @@
     <string name="feedback_remove_attachment">Remove attachment</string>
     <string name="feedback_include_technical">Include app version, Android and current screen (optional)</string>
     <string name="feedback_review_before_share">Nothing is sent automatically. You choose the app used to share it.</string>
-    <string name="feedback_share">Review and share</string>
     <string name="feedback_share_title">Share Stone report</string>
     <string name="feedback_subject">Stone report</string>
     <string name="feedback_no_share_app">No app is available to share this report.</string>
@@ -116,12 +113,11 @@
     <string name="feedback_current_screen">Screen: %1$s</string>
     <string name="feedback_shake_title">Shake to report</string>
     <string name="feedback_shake_hint">Open the form after detecting a deliberate shake.</string>
-    <string name="penguin_mascot_description">Stone mascot</string>
-    <string name="feedback_intro">Tell us about the problem</string><string name="feedback_lyrics">Lyrics</string>
+        <string name="feedback_lyrics">Lyrics</string>
     <string name="feedback_ads">Ads</string><string name="feedback_missing_file">File not found</string>
     <string name="feedback_unplayable">File cannot be played</string><string name="feedback_stops">Music stops</string>
     <string name="feedback_slow">App is slow</string><string name="feedback_other">Other</string>
-    <string name="feedback_details">Details *</string><string name="feedback_details_hint">Describe the problem in detail</string>
+    <string name="feedback_details">Details *</string><string name="feedback_details_hint">Describe your feedback, suggestion or problem…</string>
     <string name="feedback_attachments">Screenshots or videos (optional)</string>
     <string name="music_reminders">Music reminders</string><string name="music_reminders_hint">Receive up to two invitations to listen to music each day.</string>
     <string name="morning_reminder">Morning</string><string name="morning_reminder_time">Between 8:00 and 9:00</string>
@@ -142,8 +138,8 @@
     <string name="theme_midnight">Midnight</string>
     <string name="theme_amoled">AMOLED (pure black, saves battery)</string>
     <string name="play_with_others">Play alongside other apps</string><string name="play_with_others_hint">Let Stone audio mix with audio from other apps.</string>
-    <string name="gapless">Gapless playback</string><string name="gapless_hint">Media3 handles gapless transitions automatically.</string>
-    <string name="crossfade">Crossfade</string><string name="crossfade_hint">Crossfade between tracks is not available yet.</string>
+    <string name="gapless">Gapless playback</string><string name="gapless_hint">Joins songs with no silence between them and skips the silence recorded at the start and end of each file.</string>
+    <string name="crossfade">Crossfade</string><string name="crossfade_hint">Fades the volume out at the end of each song and back in as the next one starts.</string>
     <string name="notify_new_files">New file notifications</string>
     <string name="notify_new_files_hint">Notify when new files are found during a scan.</string>
     <string name="push_notifications">Push notifications</string><string name="push_notifications_hint">Music recommendations are not available yet.</string>
@@ -309,7 +305,7 @@
     <string name="custom_font_size">Text size</string>
     <string name="custom_icon_size">Icon size</string>
     <string name="custom_background">Background image</string>
-    <string name="custom_avatar">Image instead of the penguin</string>
+    <string name="custom_avatar">Your own image (inside Stone only)</string>
     <string name="custom_pick_image">Pick from gallery</string>
     <string name="custom_remove_image">Remove</string>
     <string name="custom_app_name">App name</string>
@@ -326,28 +322,23 @@
     <string name="audio_levels_intro">Set each mode\'s maximum volume and gain. Gain lowers or raises the sound on top of Android\'s volume.</string>
     <string name="audio_levels_battery" formatted="false">Battery saver always uses Android\'s plain 100 %, with no effects.</string>
     <string name="audio_levels_reset">Reset levels</string>
-    <string name="layout_large">Large</string>
-    <string name="layout_list">List</string>
-    <string name="layout_compact">Compact</string>
-    <string name="layout_compact_action">Switch to compact list</string>
+                <string name="layout_compact_action">Switch to compact list</string>
     <string name="theme_ocean">Ocean</string>
     <string name="theme_forest">Forest</string>
     <string name="theme_wine">Wine</string>
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
     <string name="api_title">API mode (AI agents)</string>
-    <string name="api_intro">Lets an MCP-compatible AI agent control Stone: playback, library, playlists, tags, themes and language. Stone works the same without it; off by default.</string>
-    <string name="api_enable">Enable MCP server</string>
-    <string name="api_enable_hint">Works while Stone is open.</string>
+    <string name="api_intro">Let an AI such as Claude or ChatGPT control Stone: play, search, make playlists, change the theme and more. Turn it on, copy your link and paste it into your AI app.</string>
+    <string name="api_enable">Turn on MCP</string>
+    <string name="api_enable_hint">Works while Stone is open or playing.</string>
     <string name="api_lan">Allow local network (Wi-Fi)</string>
     <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
-    <string name="api_running">Server running</string>
-    <string name="api_failed">Could not start (port 8765 in use?)</string>
+        <string name="api_failed">Could not start: another program is using the port. Try another port.</string>
     <string name="api_address">Address (tap to copy)</string>
     <string name="api_token">Access token</string>
     <string name="api_copy_token">Copy token</string>
-    <string name="api_new_token">Generate another</string>
-    <string name="api_header_hint">The agent must send the header «Authorization: Bearer TOKEN». A new token revokes the previous access.</string>
+        <string name="api_header_hint">The agent can send the token as the header «Authorization: Bearer TOKEN» or at the end of the link (?token=TOKEN). A new token revokes the previous access.</string>
     <string name="api_tools">Available tools</string>
     <string name="api_risk_hint">○ read only · ◐ reversible change · ● modifies files: asks for your confirmation on screen.</string>
     <string name="api_activity">Recent activity</string>
@@ -363,12 +354,44 @@
     <string name="custom_saturation">Saturation</string>
     <string name="custom_brightness">Brightness</string>
     <string name="custom_color_hint">Move the sliders or type a colour such as #3FA7FF.</string>
-    <string name="custom_launcher_icon">Home icon</string>
-    <string name="custom_launcher_icon_hint">Changes the colour of Stone\'s icon on your home screen and app drawer. Some launchers take a few seconds to refresh it.</string>
-    <string name="launcher_original">Original</string>
-    <string name="sleep_timer_remaining">%1$s left · until %2$s</string>
+    <string name="custom_launcher_icon">Mascot and home icon</string>
+    <string name="custom_launcher_icon_hint">The chosen mascot appears inside Stone and as the icon on your home screen. Some launchers take a few seconds to update it.</string>
+        <string name="sleep_timer_remaining">%1$s left · until %2$s</string>
     <string name="sleep_add_minutes">+%1$d min</string>
     <string name="sleep_fade_out">Lower the volume gradually at the end</string>
     <string name="sleep_fade_out_hint">During the last half minute the sound fades out softly.</string>
     <string name="sleep_end_of_track">When this song ends</string>
+    <string name="crossfade_seconds">%1$d s</string>
+    <string name="mascot_penguin">Penguin</string>
+    <string name="mascot_panda">Panda</string>
+    <string name="mascot_koala">Koala</string>
+    <string name="mascot_fox">Fox</string>
+    <string name="feedback_header_hint">Tell us your suggestion, idea or problem to help us improve the app.</string>
+    <string name="feedback_send_report">Send report</string>
+    <string name="feedback_send_suggestion">Send suggestion</string>
+    <string name="onboarding_choose_language">Choose your language</string>
+    <string name="onboarding_start">Start</string>
+    <string name="onboarding_permission_title">To play your music and videos</string>
+    <string name="onboarding_permission_hint">Allow Stone to access the music and videos on this phone. The search starts as soon as you allow it, so they are ready when you get in.</string>
+    <string name="api_port">Port</string>
+    <string name="api_port_apply">Apply</string>
+    <string name="api_test">Test connection</string>
+    <string name="api_test_running">Testing…</string>
+    <string name="api_test_ok">Stone answers at %1$s</string>
+    <string name="api_test_other">Another program, not Stone, answers at %1$s. Change Stone\'s port or close that program.</string>
+    <string name="api_test_down">No answer at %1$s (%2$s)</string>
+    <string name="api_clients_hint">Works with MCP clients running on this phone or on a computer on the same Wi-Fi (Claude Code, Claude Desktop, Cursor, VS Code, LM Studio…). Cloud AI apps (ChatGPT, claude.ai, Gemini) cannot reach your local network. Always type http://, not https://.</string>
+    <string name="api_copy_url">Copy link with token</string>
+    <string name="api_copy_sse">Copy SSE link (older apps)</string>
+    <string name="api_copy_json">Copy JSON configuration</string>
+    <string name="api_copy_cli">Copy Claude Code command</string>
+    <string name="api_link_title">Your link</string>
+    <string name="api_copy_link">Copy link</string>
+    <string name="api_change_link">Change link</string>
+    <string name="api_link_howto">Paste it in Claude or ChatGPT under Settings › Connectors › Add custom connector. Changing the link disconnects anyone with the old one.</string>
+    <string name="api_relay_online">Connected to the internet</string>
+    <string name="api_relay_connecting">Connecting…</string>
+    <string name="api_relay_offline">No internet connection</string>
+    <string name="api_relay_missing">Only on this phone or your Wi-Fi: this version has no internet link.</string>
+    <string name="api_advanced">Advanced options</string>
 </resources>

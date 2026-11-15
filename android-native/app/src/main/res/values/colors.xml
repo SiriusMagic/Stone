@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Backgrounds of the selectable home-screen icons (Personalizado › Icono de inicio). -->
-    <color name="launcher_gold">#F5C518</color>
-    <color name="launcher_orange">#FF8A3D</color>
-    <color name="launcher_blue">#2F7FD6</color>
-    <color name="launcher_teal">#1FA9AD</color>
-    <color name="launcher_green">#2E9E5B</color>
-    <color name="launcher_red">#D63A4A</color>
-    <color name="launcher_purple">#7E57C2</color>
-    <color name="launcher_pink">#E05A9A</color>
-    <color name="launcher_white">#F2F2F5</color>
-    <color name="launcher_coffee">#8B5E3C</color>
+    <!-- Background behind the mascot in every home-screen icon. -->
+    <color name="launcher_background">#16161C</color>
 </resources>

@@ -21,6 +21,7 @@ import androidx.media3.session.MediaSessionService
 import androidx.media3.common.util.UnstableApi
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.MainActivity
+import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -148,8 +149,7 @@ class StonePlaybackService : MediaSessionService() {
             }
             // At zero the player itself is muted too: this never depends on how the device's
             // audio path applies the stream volume.
-            val playerVolume = if (volumePercent <= 0) 0f else modeGain
-            if (activePlayer?.volume != playerVolume) activePlayer?.volume = playerVolume
+            applyPlayerVolume()
             service?.let { live -> activePlayer?.let { live.ecoEngine?.setMuted(volumePercent <= 0, it) } }
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
@@ -213,6 +213,25 @@ class StonePlaybackService : MediaSessionService() {
             }
         }
 
+        /** Crossfade multiplier (0..1) set by [TrackTransitions]. */
+        @Volatile private var transitionFade: Float = 1f
+        /** Sleep-timer fade multiplier (0..1) set by the view model. */
+        @Volatile private var sleepFade: Float = 1f
+
+        /** The one place that writes the player's volume: mode gain × fades, or 0 when muted. */
+        fun applyPlayerVolume() {
+            val target = if (volumePercent <= 0) 0f else modeGain * transitionFade * sleepFade
+            activePlayer?.let { if (it.volume != target) it.volume = target }
+        }
+
+        fun setSleepFade(value: Float) { sleepFade = value.coerceIn(0f, 1f); applyPlayerVolume() }
+
+        /** Applies the Reproducción sin pausas / Crossfade switches to the running player. */
+        fun configureTransitions(gapless: Boolean, crossfade: Boolean, seconds: Int) {
+            instance?.transitions?.configure(gapless, crossfade, seconds)
+            instance?.ecoEngine?.let { engine -> activePlayer?.let { engine.setGaplessRequired(gapless, it) } }
+        }
+
         fun hasActivePlayback(): Boolean = activePlayer?.mediaItemCount?.let { it > 0 } == true
 
         fun hideVolumeOverlay(forRevision: Long) {
@@ -222,6 +241,7 @@ class StonePlaybackService : MediaSessionService() {
     }
     private var session: MediaSession? = null
     private var ecoEngine: StoneEcoEngine? = null
+    private var transitions: TrackTransitions? = null
     private val audioDeviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
             logAudio("AudioManager.onAudioDevicesAdded(count=${addedDevices.size})", includeSystemEffects = true)
@@ -348,6 +368,12 @@ class StonePlaybackService : MediaSessionService() {
             it.apply(AudioMode.BALANCED, player)
         }
         logAudio("service.eco-engine-applied", player = player)
+        val saved = StoneSettingsStore(this).read()
+        transitionFade = 1f; sleepFade = 1f
+        transitions = TrackTransitions(player) { fade -> transitionFade = fade; applyPlayerVolume() }.also {
+            it.configure(saved.gapless, saved.crossfade, saved.crossfadeSeconds)
+        }
+        ecoEngine?.setGaplessRequired(saved.gapless, player)
         volumeBoost = PlaybackVolumeBoost().apply { attach(playbackAudioSessionId) }
         setVolumePercent(volumePercent, showOverlay = false)
         if (diagnosticBoostDisabled) volumeBoost?.disableForDiagnostics()
@@ -377,6 +403,8 @@ class StonePlaybackService : MediaSessionService() {
     override fun onDestroy() {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = true)
         unregisterAudioDiagnostics()
+        transitions?.release()
+        transitions = null
         session?.run { player.release(); release() }
         session = null
         activePlayer = null
@@ -394,7 +422,7 @@ class StonePlaybackService : MediaSessionService() {
     fun applyAudioMode(mode: AudioMode) {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = false)
         modeGain = mode.gain
-        session?.player?.volume = if (volumePercent <= 0) 0f else mode.gain
+        applyPlayerVolume()
         setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }
         logAudio("service.applyAudioMode(${mode.key})", before, player = session?.player)

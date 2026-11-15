@@ -125,8 +125,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private var sleepFadeOut = settings.read().sleepFadeOut
     private var sleepCustomMinutes = settings.read().sleepMinutes.takeIf { it > 0 } ?: 30
     private var sleepJob: Job? = null
-    /** Volume the player had before a sleep fade started; restored after the pause. */
-    private var volumeBeforeFade: Float? = null
+    /** True while the sleep timer is lowering the volume; restored after the pause. */
+    private var fading = false
     private var systemArtworkJob: Job? = null
     private var systemArtworkGeneration = 0L
     private val systemArtworkSources = mutableMapOf<String, ArtworkSource>()
@@ -502,18 +502,18 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         }
         publish()
     }
+    /** Lowers the volume through the service's single volume path (combines with crossfade). */
     private suspend fun fadeOut(fadeMs: Long) {
-        val player = controller ?: return
-        val start = player.volume.also { volumeBeforeFade = it }
+        fading = true
         val steps = 30
         repeat(steps) { step ->
             delay(fadeMs / steps)
-            player.volume = start * (1f - (step + 1f) / steps)
+            StonePlaybackService.setSleepFade(1f - (step + 1f) / steps)
         }
     }
     private fun restoreVolumeAfterFade() {
-        volumeBeforeFade?.let { controller?.volume = it }
-        volumeBeforeFade = null
+        if (fading) StonePlaybackService.setSleepFade(1f)
+        fading = false
     }
     private suspend fun waitForTrackEnd() {
         val player = controller ?: return

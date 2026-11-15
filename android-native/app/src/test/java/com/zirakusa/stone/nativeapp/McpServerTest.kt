@@ -3,6 +3,8 @@ package com.zirakusa.stone.nativeapp
 import android.os.Looper
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.McpCheck
+import com.zirakusa.stone.nativeapp.automation.McpSelfTest
 import com.zirakusa.stone.nativeapp.automation.McpServer
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
@@ -36,7 +38,7 @@ class McpServerTest {
     private var toggles = 0
     private var playlistsCreated = listOf<String>()
     private var sleepMinutes = 0
-    private var launcherIcon = "default"
+    private var launcherIcon = "penguin"
 
     @Before fun start() {
         StoneAutomation.host = object : AutomationHost {
@@ -73,7 +75,7 @@ class McpServerTest {
     private fun post(body: String, auth: String? = "Bearer $token", origin: String? = null): Pair<Int, String> {
         // Actions run on the main looper, which Robolectric only advances when asked.
         val call = CompletableFuture.supplyAsync {
-            val connection = URL("http://127.0.0.1:${McpServer.PORT}${McpServer.PATH}")
+            val connection = URL("http://127.0.0.1:${McpServer.DEFAULT_PORT}${McpServer.PATH}")
                 .openConnection(Proxy.NO_PROXY) as HttpURLConnection
             connection.requestMethod = "POST"
             connection.doOutput = true
@@ -95,19 +97,52 @@ class McpServerTest {
         return JSONObject(text)
     }
 
-    @Test fun rejectsRequestsWithoutTokenOrFromBrowsers() {
-        val request = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
-        assertEquals(401, post(request, auth = null).first)
-        assertEquals(401, post(request, auth = "Bearer wrong").first)
-        // HttpURLConnection drops the restricted Origin header, so this case uses a raw socket.
-        val raw = java.net.Socket("127.0.0.1", McpServer.PORT).use { socket ->
-            socket.getOutputStream().write(("POST ${McpServer.PATH} HTTP/1.1\r\nHost: 127.0.0.1\r\n" +
-                "Authorization: Bearer $token\r\nOrigin: https://evil.example\r\n" +
-                "Content-Length: ${request.length}\r\n\r\n$request").toByteArray())
-            socket.getInputStream().bufferedReader().readLine()
+    /** Raw HTTP exchange; returns the whole response (HttpURLConnection hides Origin and OPTIONS details). */
+    private fun raw(request: String): String = java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { socket ->
+        socket.getOutputStream().write(request.toByteArray())
+        socket.getInputStream().bufferedReader().readText()
+    }
+
+    @Test fun requiresTheTokenButAcceptsItInEveryForm() {
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        assertEquals(401, post(ping, auth = null).first)
+        assertEquals(401, post(ping, auth = "Bearer wrong").first)
+        assertEquals(200, post(ping).first)
+        val viaQuery = raw("POST ${McpServer.PATH}?token=$token HTTP/1.1\r\nHost: x\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(viaQuery.startsWith("HTTP/1.1 200"))
+        val viaApiKey = raw("POST ${McpServer.PATH} HTTP/1.1\r\nX-Api-Key: $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(viaApiKey.startsWith("HTTP/1.1 200"))
+        // Browser clients: CORS preflight answers, and a request with Origin works when it carries the token.
+        val preflight = raw("OPTIONS ${McpServer.PATH} HTTP/1.1\r\nOrigin: http://localhost:6274\r\n\r\n")
+        assertTrue(preflight.startsWith("HTTP/1.1 204") && preflight.contains("Access-Control-Allow-Origin: *"))
+        val withOrigin = raw("POST ${McpServer.PATH} HTTP/1.1\r\nAuthorization: Bearer $token\r\n" +
+            "Origin: http://localhost:6274\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(withOrigin.startsWith("HTTP/1.1 200") && withOrigin.contains("X-Stone-Server: Stone"))
+    }
+
+    @Test fun legacySseTransportDeliversReplies() {
+        java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { stream ->
+            stream.soTimeout = 5_000
+            stream.getOutputStream().write("GET /sse?token=$token HTTP/1.1\r\nAccept: text/event-stream\r\n\r\n".toByteArray())
+            val reader = stream.getInputStream().bufferedReader()
+            assertTrue(reader.readLine().startsWith("HTTP/1.1 200"))
+            val endpoint = generateSequence { reader.readLine() }.first { it.startsWith("data: /messages") }.removePrefix("data: ")
+            val init = """{"jsonrpc":"2.0","id":7,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}"""
+            // The session id alone is enough: some clients only put the token in the SSE URL.
+            val posted = raw("POST ${endpoint.substringBefore("&token")} HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
+            assertTrue(posted.startsWith("HTTP/1.1 202"))
+            val message = generateSequence { reader.readLine() }.first { it.startsWith("data: {") }
+            assertEquals("stone", JSONObject(message.removePrefix("data: ")).getJSONObject("result")
+                .getJSONObject("serverInfo").getString("name"))
         }
-        assertTrue(raw.startsWith("HTTP/1.1 403"))
-        assertEquals(200, post(request).first)
+    }
+
+    @Test fun selfTestRecognisesStone() {
+        val url = "http://127.0.0.1:${McpServer.DEFAULT_PORT}${McpServer.PATH}"
+        val results = kotlinx.coroutines.runBlocking { McpSelfTest.run(listOf(url), token) }
+        assertTrue(results.single() is McpCheck.Ok)
+        val wrong = kotlinx.coroutines.runBlocking { McpSelfTest.run(listOf(url), "nope") }
+        assertTrue(wrong.single() is McpCheck.NoAnswer)
     }
 
     @Test fun initializeAndListTools() {
@@ -150,14 +185,14 @@ class McpServerTest {
 
         val look = rpc("tools/call", JSONObject().put("name", "appearance_set_look").put("arguments",
             JSONObject().put("accentHex", "#3FA7FF").put("textColor", "soft").put("fontScale", 1.2)
-                .put("appTitle", "Mi música").put("launcherIcon", "blue"))).getJSONObject("result")
+                .put("appTitle", "Mi música").put("launcherIcon", "panda"))).getJSONObject("result")
         assertFalse(look.getBoolean("isError"))
         assertEquals("custom", StoneLook.accent.key)
         assertEquals("#3FA7FF", StoneLook.hex(StoneLook.customAccent))
         assertEquals(StoneInk.SOFT, StoneLook.textInk)
         assertEquals(1.2f, StoneLook.fontScale)
         assertEquals("Mi música", StoneLook.appTitle)
-        assertEquals("blue", launcherIcon)
+        assertEquals("panda", launcherIcon)
         val state = rpc("tools/call", JSONObject().put("name", "appearance_get")).getJSONObject("result").getJSONObject("structuredContent")
         assertEquals("#3FA7FF", state.getString("accentHex"))
 

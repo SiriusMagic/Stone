@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,9 +77,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     }
 
     LookSection(R.string.custom_launcher_icon)
-    Swatches(LauncherIcon.entries.map { it.color to it.label }, LauncherIcon.current.ordinal, content = {
-        Icon(painterResource(R.drawable.ic_penguin), null, Modifier.size(40.dp), tint = androidx.compose.ui.graphics.Color.Unspecified)
-    }) { LauncherIcon.apply(context, LauncherIcon.entries[it]); store?.setLook("launcherIcon", LauncherIcon.current.key) }
+    MascotPicker(LauncherIcon.current) { LauncherIcon.apply(context, it) }
     Text(stringResource(R.string.custom_launcher_icon_hint), color = StonePalette.Muted, fontSize = 12.sp,
         modifier = Modifier.padding(top = 6.dp))
 
@@ -105,7 +102,7 @@ private fun pinShortcut(context: android.content.Context): Boolean {
     if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) return false
     val label = StoneLook.appTitle.ifBlank { context.getString(R.string.app_name) }
     val bitmap = LookImages.load(StoneLook.avatarImage, 256)
-    val icon = bitmap?.let(IconCompat::createWithBitmap) ?: IconCompat.createWithResource(context, R.drawable.stone_penguin)
+    val icon = bitmap?.let(IconCompat::createWithBitmap) ?: IconCompat.createWithResource(context, LauncherIcon.current.drawable)
     val intent = Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN)
     val shortcut = ShortcutInfoCompat.Builder(context, "stone-custom-${System.currentTimeMillis()}")
         .setShortLabel(label).setLongLabel(label).setIcon(icon).setIntent(intent).build()

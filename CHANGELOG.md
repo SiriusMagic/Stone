@@ -1,5 +1,42 @@
-# Stone Kotlin 1.6.0
+# Stone Kotlin 1.6.3
 
+- Modo API en dos toques: "Activar MCP" y "Copiar enlace". El enlace es fijo, lleva el token
+  dentro y se pega en Claude o ChatGPT (Conectores › Añadir conector personalizado). "Cambiar
+  enlace" lo revoca. Lo técnico (red local, puerto, prueba, configuraciones) queda en "Opciones
+  avanzadas".
+- Relevo propio (`relay/`, Cloudflare Workers): el teléfono se conecta hacia fuera, así que
+  funciona en cualquier Wi-Fi o con datos, sin computadora. Se publica una vez y su dirección se
+  pone al compilar (`-PstoneRelayUrl=…`); sin ella, el modo API funciona solo en el teléfono o la Wi-Fi.
+- Comprobado de punta a punta con el SDK oficial de MCP a través del relevo.
+
+# Stone Kotlin 1.6.2
+
+- Corrige que Stone no se abriera tras actualizar (el lanzador llevaba a los ajustes de Android):
+  si en la 1.6.0 se eligió un icono de color, la 1.6.1 quedaba sin ninguna entrada de inicio
+  activa. Las entradas de inicio tienen nombres nuevos y el pingüino vuelve a estar activo.
+
+# Stone Kotlin 1.6.1
+
+- Modo API más compatible: token por cabecera, `X-Api-Key` o `?token=` en el enlace; CORS para
+  clientes en navegador; transporte SSE antiguo (`/sse` + `/messages`) además de `POST /mcp`;
+  puerto configurable; cada respuesta se identifica con `X-Stone-Server`. Botón "Probar conexión"
+  que distingue si responde Stone u otro programa en el puerto, y botones para copiar el enlace con
+  token, el enlace SSE, la configuración JSON y el comando de Claude Code. Comprobado con el SDK
+  oficial de MCP por los tres caminos.
+- Bienvenida en el primer inicio: "Elige tu idioma" y Empezar; después los permisos de música y
+  vídeos (el escaneo arranca en cuanto se conceden, con la biblioteca cargándose debajo) y de
+  notificaciones. Quien ya usaba Stone no la ve.
+- Idiomas: portugués, francés, italiano y alemán completos, además de español e inglés. El primer
+  inicio usa el idioma del teléfono si Stone lo tiene.
+- Mascotas: pingüino, panda, koala y zorro. La elegida en Personalizado se ve dentro de Stone y
+  como icono de la pantalla de inicio (icono adaptativo, con versión monocroma para temas).
+- Reproducción sin pausas y Crossfade funcionan: sin pausas salta el silencio al principio y al
+  final de cada canción; crossfade baja y sube el volumen entre canciones (1 a 12 s). Ambos en
+  Ajustes de reproducción.
+- Ajustes: Vídeo y Controles de vídeo están en una sola sección.
+- Selector de vista (compacta, lista, grande): solo iconos.
+- Opiniones y sugerencias rediseñado: tarjetas de tipo, contador de caracteres, botón punteado
+  para capturas y envío según el tipo.
 - Personalizado: acento libre ("Mío") con deslizadores de tono, saturación y brillo o código hex;
   colores naranja y turquesa nuevos; icono de inicio en 11 colores (el pingüino sobre fondo de
   color, cambia en la pantalla de inicio y en el cajón de apps).

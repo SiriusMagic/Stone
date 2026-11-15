@@ -84,5 +84,5 @@ internal object StoneLookActions {
     }
 
     /** Languages Stone ships translations for. */
-    val SUPPORTED_LANGUAGES = listOf("es", "en")
+    val SUPPORTED_LANGUAGES = com.zirakusa.stone.nativeapp.data.persistence.StoneLanguages.all.map { it.first }
 }

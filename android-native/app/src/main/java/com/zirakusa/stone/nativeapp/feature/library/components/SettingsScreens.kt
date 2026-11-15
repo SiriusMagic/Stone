@@ -42,6 +42,7 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.SleepTimerContent
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
+import com.zirakusa.stone.nativeapp.data.persistence.StoneLanguages
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.AudioDiagnostics
@@ -61,7 +62,8 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
 
 private data class Language(val code: String, val label: String)
-private val languages = listOf(Language("es", "Español"), Language("en", "English"))
+/** Languages Stone ships complete translations for (names in their own language). */
+private val languages = StoneLanguages.all.map { Language(it.first, it.second) }
 
 private data class SettingsMenuItem(val icon: ImageVector, val label: String, val value: String,
     val keywords: String, val action: () -> Unit)
@@ -115,9 +117,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
-                            "reproducción vídeo video inmersivo pantalla horizontal controles", { onPage("video") }),
-                        SettingsMenuItem(Icons.Default.Tune, stringResource(R.string.video_controls), "",
-                            "reproducción vídeo video iconos controles personalizar", { onPage("video-controls") })
+                            "reproducción vídeo video inmersivo pantalla horizontal encuadre escala controles iconos personalizar",
+                            { onPage("video") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
                         SettingsMenuItem(Icons.Default.Hub, stringResource(R.string.api_title), "",
@@ -197,8 +198,13 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         AudioOutputDetail()
                         NotificationDetail(store)
                     }
-                    "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange)
-                    "video-controls" -> VideoControlSettingsDetail(store, onVideoControlChange)
+                    // Framing and the icon row live together in one Vídeo section.
+                    "video", "video-controls" -> {
+                        VideoSettingsDetail(videoScale, onVideoScaleChange)
+                        Text(stringResource(R.string.video_controls), color = StonePalette.Yellow,
+                            fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 22.dp, bottom = 6.dp))
+                        VideoControlSettingsDetail(store, onVideoControlChange)
+                    }
                     "audio-mode" -> AudioModeDetail(playback)
                     "hardware-acceleration" -> HardwareAccelerationDetail(playback)
                     "feedback" -> FeedbackDetail(shakeToReport, onShakeToReportChange)
@@ -228,8 +234,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "audio-levels" -> R.string.audio_levels_title
     "api-mode" -> R.string.api_title
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
-    "video" -> R.string.video_settings
-    "video-controls" -> R.string.video_controls
+    "video", "video-controls" -> R.string.video_settings
     "hardware-acceleration" -> R.string.hardware_acceleration
     "feedback" -> R.string.feedback_title; "about" -> R.string.about_stone
     "sleep" -> R.string.sleep_timer
@@ -464,12 +469,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         ToggleSetting(R.string.play_with_others, R.string.play_with_others_hint, config?.playWithOthers == true) {
             playback?.setPlayWithOthers(it); config = store?.read()
         }
-        Text(stringResource(R.string.gapless), fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 14.dp))
-        Text(stringResource(R.string.gapless_hint), color = StonePalette.Muted)
-        Text(stringResource(R.string.crossfade), fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 14.dp))
-        Text(stringResource(R.string.crossfade_hint), color = StonePalette.Muted)
+        TransitionSettings(store)
     }
 }
 
