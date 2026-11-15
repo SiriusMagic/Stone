@@ -7,9 +7,9 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.Proxy
-import java.net.URL
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -84,33 +84,42 @@ class RelayClient(
         backoffSeconds = (backoffSeconds * 2).coerceAtMost(30)
     }
 
-    /** Replays one forwarded request against the local MCP server and packs its answer. */
+    /**
+     * Replays one forwarded request against the local MCP server and packs its answer.
+     * Uses a plain socket: Android's cleartext policy blocks HttpURLConnection to 127.0.0.1.
+     */
     private fun answer(message: JSONObject): JSONObject {
         val reply = JSONObject().put("t", "res").put("id", message.optString("id"))
         return try {
-            val target = URL("http://127.0.0.1:${localPort()}${message.optString("path", "/")}${message.optString("query")}")
-            val connection = target.openConnection(Proxy.NO_PROXY) as HttpURLConnection
-            connection.connectTimeout = 3_000
-            connection.readTimeout = 70_000
-            connection.requestMethod = message.optString("method", "POST").let { if (it == "OPTIONS") "POST" else it }
-            message.optJSONObject("headers")?.let { headers -> headers.keys().forEach { connection.setRequestProperty(it, headers.getString(it)) } }
-            val body = message.optString("body")
-            if (body.isNotEmpty()) {
-                connection.doOutput = true
-                connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            val method = message.optString("method", "POST").let { if (it == "OPTIONS") "POST" else it }
+            val body = message.optString("body").toByteArray(Charsets.UTF_8)
+            val head = StringBuilder("$method ${message.optString("path", "/")}${message.optString("query")} HTTP/1.1\r\n")
+                .append("Host: 127.0.0.1\r\nConnection: close\r\nContent-Length: ${body.size}\r\n")
+            message.optJSONObject("headers")?.let { headers ->
+                headers.keys().forEach { head.append(it).append(": ").append(headers.getString(it).replace(Regex("[\r\n]"), " ")).append("\r\n") }
             }
-            val status = connection.responseCode
-            val text = (if (status < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.readText().orEmpty()
+            val raw = Socket().use { local ->
+                local.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), localPort()), 3_000)
+                local.soTimeout = 70_000
+                local.getOutputStream().apply { write(head.append("\r\n").toString().toByteArray(Charsets.UTF_8)); write(body); flush() }
+                local.getInputStream().readBytes().toString(Charsets.UTF_8)
+            }
+            val lines = raw.substringBefore("\r\n\r\n").split("\r\n")
+            val status = lines.first().split(" ").getOrNull(1)?.toIntOrNull() ?: 502
             val headers = JSONObject()
-            listOf("Content-Type", "Mcp-Session-Id", "X-Stone-Server", "WWW-Authenticate").forEach { name ->
-                connection.getHeaderField(name)?.let { headers.put(name, it) }
+            lines.drop(1).forEach { line ->
+                val name = line.substringBefore(":").trim()
+                PASSED_BACK.firstOrNull { it.equals(name, ignoreCase = true) }?.let { headers.put(it, line.substringAfter(":").trim()) }
             }
-            connection.disconnect()
-            reply.put("status", status).put("headers", headers).put("body", text)
+            reply.put("status", status).put("headers", headers).put("body", raw.substringAfter("\r\n\r\n", ""))
         } catch (failure: Exception) {
             reply.put("status", 502).put("headers", JSONObject().put("Content-Type", "application/json"))
                 .put("body", JSONObject().put("jsonrpc", "2.0").put("id", JSONObject.NULL).put("error",
                     JSONObject().put("code", -32000).put("message", "Stone: local server not reachable (${failure.message})")).toString())
         }
+    }
+
+    private companion object {
+        val PASSED_BACK = listOf("Content-Type", "Mcp-Session-Id", "X-Stone-Server", "WWW-Authenticate")
     }
 }

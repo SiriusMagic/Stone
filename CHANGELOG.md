@@ -1,3 +1,10 @@
+# Stone Kotlin 1.6.5
+
+- Corrige el enlace público del Modo API en el teléfono: Android bloqueaba la llamada interna de
+  Stone a su propio servidor ("Cleartext HTTP traffic to 127.0.0.1 not permitted") y el agente
+  recibía un error 502. El relevo ahora habla con el servidor local por un socket directo, y
+  "Probar conexión" tiene permitido HTTP solo hacia el propio teléfono.
+
 # Stone Kotlin 1.6.4
 
 - El enlace del Modo API ya es público: el relevo está publicado y su dirección viene dentro de
