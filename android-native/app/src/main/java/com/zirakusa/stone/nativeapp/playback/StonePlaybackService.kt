@@ -159,6 +159,27 @@ class StonePlaybackService : MediaSessionService() {
             }
         }
 
+        /**
+         * Physical volume key while Stone is in the foreground: one Android level per press up
+         * to 100 %, then 10 % of Stone amplification per press. Shows Stone's own overlay, so
+         * the Activity consumes the key and Android's panel never appears. Returns false when
+         * the service is not alive, letting Android handle the key as usual.
+         */
+        fun handleVolumeKey(up: Boolean): Boolean {
+            val service = instance ?: return false
+            val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val range = audioManager.streamMusicRange()
+            val level = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val current = volumePercent
+            val target = when {
+                up && level >= range.maxLevel -> current.coerceAtLeast(100) + 10
+                !up && current > 100 -> (current - 10).coerceAtLeast(100)
+                else -> range.levelToPercent(level + if (up) 1 else -1)
+            }
+            setVolumePercent(target)
+            return true
+        }
+
         /** Reconciles Stone with Android after the user changed media volume outside Stone. */
         fun syncWithAndroidVolume(reason: String = "external") {
             val service = instance ?: return
