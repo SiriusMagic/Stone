@@ -1,4 +1,4 @@
-# Stone Kotlin 1.6.0
+# Stone Kotlin 1.6.1
 
 - Modo API más compatible: token por cabecera, `X-Api-Key` o `?token=` en el enlace; CORS para
   clientes en navegador; transporte SSE antiguo (`/sse` + `/messages`) además de `POST /mcp`;
