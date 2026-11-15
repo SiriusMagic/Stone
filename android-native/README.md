@@ -24,6 +24,8 @@ La prueba usa `com.zirakusa.stone.kotlin.preview` y el nombre **Stone Kotlin · 
 La última versión generada es `1.5.13` (versionCode 23). El APK final de este cambio incluye
 la distribución horizontal configurable y fuerza la actualización al girar la ventana; consulta
 [`DISENO-HORIZONTAL.md`](DISENO-HORIZONTAL.md). `lintDebug` debe terminar con 0 avisos.
+El contexto de continuidad y las decisiones de la entrega están en
+[`../docs/STONE-CONTEXTO-ACTUAL.md`](../docs/STONE-CONTEXTO-ACTUAL.md).
 En Git también se conserva `Stone-1.5.13-optimized.apk`: es la misma app con R8 y recursos
 reducidos (aprox. 3,3 MB). `app-debug.apk` es el paquete de diagnóstico sin reducción
 (aprox. 21,6 MB), preferible para comprobar una instalación cuando se sospecha de un APK
@@ -66,6 +68,6 @@ reemplaza el índice anterior. Al pasar a segundo plano se solicita cancelar el 
 una lectura del proveedor ya iniciada puede terminar antes de observar la cancelación.
 Solo la barra de progreso del reproductor visible se actualiza cada segundo durante reproducción.
 
-**Esta es una primera versión de prueba, no la migración completa.** Consulta
-[`../docs/MIGRACION-KOTLIN.md`](../docs/MIGRACION-KOTLIN.md) para equivalencia, pruebas y pendientes.
-El detalle de la recuperación visual está en [`../docs/INICIO-PREVIEW02.md`](../docs/INICIO-PREVIEW02.md).
+**Esta es una primera versión de prueba, no la migración completa.** Consulta el contexto de
+continuidad y [`DISENO-HORIZONTAL.md`](DISENO-HORIZONTAL.md) para el estado, equivalencia,
+pruebas y pendientes.
