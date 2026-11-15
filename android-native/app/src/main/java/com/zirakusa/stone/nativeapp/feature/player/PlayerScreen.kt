@@ -111,12 +111,15 @@ import kotlin.math.roundToInt
         return
     }
     val progress = rememberPlayerProgress(state, playback)
-    val audioControls = rememberPlaybackControls(song?.id.orEmpty(), state.playing)
+    val audioControls = rememberPlaybackControls(song?.id.orEmpty())
     val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
         detectTrackSwipe(playback::previous, playback::next)
     } else Modifier
     BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
-    val landscape = maxWidth > maxHeight
+    // Decide by the window, not this box: while the player animates closed the box becomes
+    // wide and short, which used to flash the landscape vinyl inside the mini player.
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    val landscape = window.width > window.height && maxWidth > maxHeight && maxHeight > 220.dp
     if (landscape && song?.isVideo == true) {
         FullscreenVideoPlayer(song, state, progress, playback, close = back,
             onAudioOnly = onAudioOnly, videoScale = videoScale,
@@ -274,7 +277,7 @@ private fun Context.findActivity(): Activity? = when (this) {
     onVideoScaleChange: (VideoScale) -> Unit, videoControls: VideoControlSettings,
     onOptions: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null, onSpeed: () -> Unit = {}) {
-    val controls = rememberPlaybackControls(song.id, state.playing, autoHide = false)
+    val controls = rememberPlaybackControls(song.id)
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
@@ -309,7 +312,7 @@ private fun Context.findActivity(): Activity? = when (this) {
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
     onVideoScaleChange: (VideoScale) -> Unit,
     videoControls: VideoControlSettings, onSpeed: () -> Unit = {}) {
-    val controls = rememberPlaybackControls(song.id, state.playing, autoHide = false)
+    val controls = rememberPlaybackControls(song.id)
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, false, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { context ->
@@ -341,15 +344,9 @@ private fun Context.findActivity(): Activity? = when (this) {
 private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit,
     val show: () -> Unit)
 
-@Composable private fun rememberPlaybackControls(songId: String, playing: Boolean,
-    autoHide: Boolean = true): VideoControlsState {
+/** Controls stay visible; only a tap on the video toggles them (no automatic hiding). */
+@Composable private fun rememberPlaybackControls(songId: String): VideoControlsState {
     var visible by remember(songId) { mutableStateOf(true) }
-    LaunchedEffect(visible, playing, autoHide) {
-        if (autoHide && visible && playing) {
-            delay(3_000)
-            visible = false
-        }
-    }
     return VideoControlsState(visible, { visible = !visible }, { visible = true })
 }
 

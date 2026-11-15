@@ -32,9 +32,12 @@ enum class StoneGlyph(val character: String) {
 private val StoneIconFont = FontFamily(Font(R.font.stone_icons))
 
 @Composable fun StoneIcon(glyph: StoneGlyph, modifier: Modifier = Modifier,
-    color: Color = StonePalette.Yellow, size: Int = 22) {
+    color: Color = StonePalette.IconTint, size: Int = 22) {
+    // Icon glyphs follow "tamaño de iconos", not the text size, so undo the font scale.
+    val scaled = size * com.zirakusa.stone.nativeapp.ui.theme.StoneLook.iconScale /
+        com.zirakusa.stone.nativeapp.ui.theme.StoneLook.fontScale
     Text(glyph.character, modifier.clearAndSetSemantics { }, color = color,
-        style = TextStyle(fontFamily = StoneIconFont, fontSize = size.sp, lineHeight = size.sp,
+        style = TextStyle(fontFamily = StoneIconFont, fontSize = scaled.sp, lineHeight = scaled.sp,
             platformStyle = PlatformTextStyle(includeFontPadding = false)))
 }
 
@@ -44,6 +47,6 @@ private val StoneIconFont = FontFamily(Font(R.font.stone_icons))
         onClick = onClick).then(Modifier.semantics(mergeDescendants = true) {
             contentDescription = label
         }), contentAlignment = Alignment.Center) {
-        StoneIcon(glyph, color = if (enabled) StonePalette.Yellow else StonePalette.Muted)
+        StoneIcon(glyph, color = if (enabled) StonePalette.IconTint else StonePalette.Muted)
     }
 }

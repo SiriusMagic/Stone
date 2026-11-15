@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp.ui
 
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
 import com.zirakusa.stone.nativeapp.ui.theme.stoneBackdrop
 import android.app.Activity
@@ -54,7 +55,11 @@ import kotlinx.coroutines.delay
     val systemBarsController = (context as? MainActivity)?.immersiveSystemBars
     val settingsStore = remember(context) { StoneSettingsStore(context.applicationContext) }
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
-    val initialSettings = remember(settingsStore) { settingsStore.read() }
+    val initialSettings = remember(settingsStore) {
+        com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
+        com.zirakusa.stone.nativeapp.playback.CustomAudioLevel.load(settingsStore)
+        settingsStore.read()
+    }
     var theme by rememberSaveable { mutableStateOf(initialSettings.theme) }
     var language by rememberSaveable { mutableStateOf(initialSettings.language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -190,7 +195,14 @@ import kotlinx.coroutines.delay
             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
         else Modifier
     )
-    Box(Modifier.fillMaxSize().stoneBackdrop().then(appContentModifier)) {
+    val backgroundImage by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null,
+        com.zirakusa.stone.nativeapp.ui.theme.StoneLook.backgroundImage) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.zirakusa.stone.nativeapp.data.persistence.LookImages.load(
+                com.zirakusa.stone.nativeapp.ui.theme.StoneLook.backgroundImage, 1600)?.asImageBitmap()
+        }
+    }
+    Box(Modifier.fillMaxSize().stoneBackdrop(backgroundImage).then(appContentModifier)) {
     var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
     val miniPlayerHeight = with(LocalDensity.current) { miniPlayerHeightPx.toDp() }
     LaunchedEffect(landscape, layout.fullPlayer, playerSheets.optionsSidePanel) {

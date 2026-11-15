@@ -116,7 +116,7 @@ private val legacyDefinitions = listOf(
             AudioMode.BALANCED -> "audio_mode_balanced"
             AudioMode.HIFI -> "audio_mode_hifi"
             AudioMode.SLEEPY -> "audio_mode_sleepy"
-            null -> null
+            AudioMode.CUSTOM, null -> null
         }
     )
     LaunchedEffect(feedbackQuickActionId) {

@@ -29,6 +29,11 @@ class MainActivity : ComponentActivity() {
         super.attachBaseContext(newBase.createConfigurationContext(configuration))
     }
 
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        immersiveSystemBars.onUserInteraction()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // ImmersiveSystemBarsController is the single owner of edge-to-edge and

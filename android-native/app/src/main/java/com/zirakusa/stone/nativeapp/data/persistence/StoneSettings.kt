@@ -42,7 +42,7 @@ class StoneSettingsStore(context: Context) {
         pushNotifications = db.setting("pushNotifications", "false").toBoolean(),
         sleepMinutes = db.setting("sleepMinutes", "0").toIntOrNull()?.coerceAtLeast(0) ?: 0,
         audioMode = db.setting("audioMode", "balanced")
-            .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced",
+            .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy", "custom") } ?: "balanced",
         autoRescan = db.setting("autoRescan", "true").toBoolean(),
         deviceScan = db.setting("deviceScan", "true").toBoolean(),
         hardwareAcceleration = db.setting("hardwareAcceleration", "automatic")
@@ -60,6 +60,9 @@ class StoneSettingsStore(context: Context) {
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
     fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in setOf("es", "en") } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())
+    /** Personalizado values (colours, sizes, images, name, custom audio level). */
+    fun look(key: String, fallback: String) = db.setting("look.$key", fallback)
+    fun setLook(key: String, value: String) = db.setSetting("look.$key", value)
     fun shortcutVisible(key: String, fallback: Boolean = true) =
         db.setting("home.shortcut.$key", fallback.toString()).toBoolean()
     fun setShortcutVisible(key: String, value: Boolean) =
@@ -82,7 +85,7 @@ class StoneSettingsStore(context: Context) {
     fun setCrossfadeSeconds(value: Int) = db.setSetting("crossfadeSeconds", value.coerceIn(0, 12).toString())
     fun setSleepMinutes(value: Int) = db.setSetting("sleepMinutes", value.coerceAtLeast(0).toString())
     fun setAudioMode(value: String) = db.setSetting("audioMode",
-        value.takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced")
+        value.takeIf { it in setOf("battery", "balanced", "hifi", "sleepy", "custom") } ?: "balanced")
     fun setHardwareAcceleration(value: String) = db.setSetting("hardwareAcceleration",
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
     fun setVideoScale(value: String) = db.setSetting("videoScale",

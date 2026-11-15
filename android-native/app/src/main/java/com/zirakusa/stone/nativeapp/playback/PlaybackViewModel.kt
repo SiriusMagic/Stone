@@ -31,9 +31,29 @@ data class QueueEntry(val id: String, val title: String, val artist: String, val
  * (-20 dB): the whole volume range maps to 0-10 % of the normal output, so even Android's
  * lowest step becomes quiet enough for listening in bed next to someone sleeping.
  */
-enum class AudioMode(val key: String, val maxVolumePercent: Int, val gain: Float = 1f) {
+enum class AudioMode(val key: String, private val baseMaxPercent: Int, private val baseGain: Float = 1f) {
     BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300),
-    SLEEPY("sleepy", 100, gain = 0.1f)
+    SLEEPY("sleepy", 100, baseGain = 0.1f),
+    /** The user's own level from Ajustes › Personalizado. */
+    CUSTOM("custom", 150);
+
+    val maxVolumePercent: Int get() = if (this == CUSTOM) CustomAudioLevel.maxPercent else baseMaxPercent
+    val gain: Float get() = if (this == CUSTOM) CustomAudioLevel.gain else baseGain
+}
+
+/** Values of the "Personalizado" audio mode. */
+object CustomAudioLevel {
+    @Volatile var maxPercent: Int = 150
+    @Volatile var gain: Float = 1f
+
+    fun load(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore) {
+        maxPercent = store.look("audioMax", "150").toIntOrNull()?.coerceIn(10, 300) ?: 150
+        gain = store.look("audioGain", "1").toFloatOrNull()?.coerceIn(.05f, 1f) ?: 1f
+    }
+
+    fun save(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore) {
+        store.setLook("audioMax", maxPercent.toString()); store.setLook("audioGain", gain.toString())
+    }
 }
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")

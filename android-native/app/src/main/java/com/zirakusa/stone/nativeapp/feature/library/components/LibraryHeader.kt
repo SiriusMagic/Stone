@@ -28,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.components.*
 import kotlinx.coroutines.launch
@@ -46,7 +48,7 @@ import kotlinx.coroutines.launch
     val scope = rememberCoroutineScope()
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Image(painterResource(R.drawable.stone_penguin), stringResource(R.string.stone),
+        StoneAvatar(
             Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).clickable {
                 onPenguinClick()
                 scope.launch {
@@ -57,7 +59,7 @@ import kotlinx.coroutines.launch
             }.graphicsLayer {
                 rotationZ = (penguinMotion.value * 8f) - 4f
                 translationY = (kotlin.math.sin(penguinMotion.value * Math.PI) * -3.5f).toFloat()
-            }, contentScale = ContentScale.Fit)
+            }, stringResource(R.string.stone))
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -66,24 +68,25 @@ import kotlinx.coroutines.launch
                     val active = action.id in activeQuickActionIds
                     IconButton(
                         onClick = { onQuickAction(action.id) },
-                        modifier = Modifier.size(44.dp).then(
-                            if (active) Modifier.background(Color(0xFFF5C518), CircleShape)
+                        modifier = Modifier.size(44.dp * StoneLook.iconScale).then(
+                            if (active) Modifier.background(StonePalette.Yellow, CircleShape)
                             else Modifier
                         )
                     ) {
                         Icon(action.icon, if (active) "${action.label} (Activado)" else action.label,
-                            tint = if (active) Color(0xFF0A0A0E) else Color(0xFFF5C518))
+                            tint = if (active) Color(0xFF0A0A0E) else StonePalette.IconTint,
+                            modifier = Modifier.size(24.dp * StoneLook.iconScale))
                     }
                 }
                 if (quickActions.size > 8) IconButton(onClick = onMoreQuickActions, modifier = Modifier.size(44.dp)) {
-                    Icon(Icons.Default.MoreHoriz, stringResource(R.string.more_options), tint = Color(0xFFF5C518))
+                    Icon(Icons.Default.MoreHoriz, stringResource(R.string.more_options), tint = StonePalette.IconTint)
                 }
             } else {
                 if (showSearch) StoneIconButton(StoneGlyph.Search, stringResource(R.string.search_toggle), onSearch)
                 if (showFolder) StoneIconButton(StoneGlyph.Folder, stringResource(R.string.choose_folder), onFolder, enabled = !scanning)
                 if (showSort) StoneIconButton(StoneGlyph.Sort, stringResource(R.string.sort), onSort)
                 if (showEqualizer) IconButton(onClick = onEqualizer, modifier = Modifier.size(44.dp)) {
-                    Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = Color(0xFFF5C518))
+                    Icon(Icons.Default.GraphicEq, stringResource(R.string.equalizer), tint = StonePalette.IconTint)
                 }
             }
         }

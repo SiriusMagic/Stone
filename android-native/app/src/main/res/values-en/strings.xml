@@ -14,7 +14,7 @@
     <string name="play">Play</string><string name="pause">Pause</string><string name="next">Next</string>
     <string name="previous">Previous</string><string name="back">Back</string><string name="shuffle">Shuffle</string>
     <string name="repeat">Repeat</string><string name="queue">Up next</string><string name="now_playing">Now playing</string>
-    <string name="volume">Volume</string><string name="boost">BOOST</string><string name="native_volume">NATIVE</string>
+    <string name="volume">Volume</string>
     <string name="seek">Playback position</string>
     <string name="search_toggle">Search</string><string name="clear_search">Clear search</string>
     <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="other">%1$d videos</item></plurals><string name="video_details">%1$s | %2$s</string>
@@ -254,7 +254,6 @@
     <string name="tags_format_unsupported">This format can\'t be tagged yet (supported: MP3, FLAC, M4A).</string>
     <string name="audio_mode_sleepy">Sleepy</string>
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
-    <string name="volume_sleepy_chip" formatted="false">Sleepy · max 10%</string>
     <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
     <string name="shorts">Shorts</string>
     <string name="movies">Movies</string>
@@ -290,4 +289,40 @@
     <string name="tags_duration">Duration</string>
     <string name="tags_size">Size</string>
     <string name="video_more_details">More details</string>
+    <string name="color_gold">Gold</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_white">White</string>
+    <string name="color_coffee">Coffee</string>
+    <string name="color_green">Green</string>
+    <string name="color_red">Red</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_soft">Soft gray</string>
+    <string name="color_accent">Same as accent</string>
+    <string name="theme_coffee">Coffee</string>
+    <string name="theme_golden">Dark gold</string>
+    <string name="custom_title">Custom</string>
+    <string name="custom_intro">Change Stone\'s colours, sizes, images and name. Changes apply instantly.</string>
+    <string name="custom_accent">Accent colour (lines, highlights, active icons)</string>
+    <string name="custom_text_color">Text colour</string>
+    <string name="custom_icon_color">Icon colour</string>
+    <string name="custom_font_size">Text size</string>
+    <string name="custom_icon_size">Icon size</string>
+    <string name="custom_background">Background image</string>
+    <string name="custom_avatar">Image instead of the penguin</string>
+    <string name="custom_pick_image">Pick from gallery</string>
+    <string name="custom_remove_image">Remove</string>
+    <string name="custom_app_name">App name</string>
+    <string name="custom_app_name_hint">Shown inside Stone and on the shortcut.</string>
+    <string name="custom_shortcut">Create a shortcut with this name and image</string>
+    <string name="custom_shortcut_hint">Android doesn\'t let an app change its own drawer icon or name; the shortcut appears on your home screen with the image and name you choose.</string>
+    <string name="custom_shortcut_unsupported">Your launcher doesn\'t support pinned shortcuts.</string>
+    <string name="custom_reset">Reset customisation</string>
+    <string name="custom_audio">Custom audio level</string>
+    <string name="custom_audio_max">Maximum volume: %1$d%%</string>
+    <string name="custom_audio_gain">Gain: %1$d%%</string>
+    <string name="custom_audio_hint">Used by the «Custom» playback mode.</string>
+    <string name="audio_mode_custom">Custom</string>
+    <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Custom).</string>
+    <string name="custom_audio_use">Use the Custom mode</string>
 </resources>

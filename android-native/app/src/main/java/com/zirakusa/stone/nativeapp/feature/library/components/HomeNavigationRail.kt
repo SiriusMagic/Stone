@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
@@ -36,7 +37,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onHome)
             .semantics(mergeDescendants = true) { role = Role.Button; contentDescription = homeLabel },
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.stone_penguin), null, Modifier.size(44.dp))
+            StoneAvatar(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)))
             if (expanded) Text(homeLabel, Modifier.padding(start = 8.dp), maxLines = 1)
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {

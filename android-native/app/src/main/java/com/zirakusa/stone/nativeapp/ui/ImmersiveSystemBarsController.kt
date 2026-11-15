@@ -152,6 +152,22 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         if (!requested) restoreAll()
     }
 
+    private var lastInteractionHideMs = 0L
+
+    /**
+     * Some OEM skins (MIUI/HyperOS) leave swipe-revealed "transient" bars on screen without
+     * reporting them as visible insets, so nothing re-hides them. Re-requesting the hide on
+     * the user's next touch is idempotent and throttled.
+     */
+    fun onUserInteraction() {
+        val managed = root ?: return
+        if (!attached || !requested || !resumed || !hasActivityFocus || managed.keyboardVisible) return
+        val now = android.os.SystemClock.uptimeMillis()
+        if (now - lastInteractionHideMs < 2_000L) return
+        lastInteractionHideMs = now
+        WindowCompat.getInsetsController(managed.window, managed.decorView).hide(WindowInsetsCompat.Type.systemBars())
+    }
+
     fun onWindowFocusChanged(focused: Boolean) {
         log("activity focus=$focused requested=$requested")
         hasActivityFocus = focused
