@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -265,7 +266,12 @@ class StonePlaybackService : MediaSessionService() {
             Log.w(AudioDiagnostics.TAG, "service.onCreate found an existing active player=" +
                 System.identityHashCode(activePlayer))
         }
-        val player = ExoPlayer.Builder(this).build()
+        // Float output keeps 24/32-bit PCM (hi-res FLAC/WAV) intact instead of
+        // truncating it to 16 bits; 16-bit sources keep the regular path.
+        val renderers = DefaultRenderersFactory(this)
+            .setEnableAudioFloatOutput(true)
+            .setEnableDecoderFallback(true)
+        val player = ExoPlayer.Builder(this, renderers).build()
         player.addListener(object : Player.Listener {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 reportedAudioSessionId = audioSessionId
@@ -397,7 +403,7 @@ class StonePlaybackService : MediaSessionService() {
             audioManager.registerAudioDeviceCallback(audioDeviceCallback, Handler(Looper.getMainLooper()))
         }.onFailure { Log.w(AudioDiagnostics.TAG, "No se pudo registrar AudioDeviceCallback", it) }
         runCatching {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            if (AudioDiagnostics.enabled) {
                 audioManager.registerAudioPlaybackCallback(audioPlaybackCallback,
                     Handler(Looper.getMainLooper()))
             }
@@ -412,9 +418,7 @@ class StonePlaybackService : MediaSessionService() {
         val audioManager = getSystemService(AudioManager::class.java)
         runCatching { audioManager?.unregisterAudioDeviceCallback(audioDeviceCallback) }
         runCatching {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                audioManager?.unregisterAudioPlaybackCallback(audioPlaybackCallback)
-            }
+            audioManager?.unregisterAudioPlaybackCallback(audioPlaybackCallback)
         }
         runCatching { contentResolver.unregisterContentObserver(volumeObserver) }
     }

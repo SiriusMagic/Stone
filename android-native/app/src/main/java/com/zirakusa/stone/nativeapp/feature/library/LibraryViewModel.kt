@@ -84,6 +84,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun restoreDeleted(song: Song) { repository.restoreDeleted(song); mutable.update {
         it.copy(songs = (it.songs + song).distinctBy { item -> item.id }, deletedSongs = it.deletedSongs - song) } }
+    /** Deletes files for good; [done] receives how many could not be removed. */
+    fun deletePermanently(songs: List<Song>, done: (Int) -> Unit = {}) {
+        viewModelScope.launch {
+            val removed = withContext(Dispatchers.IO) {
+                songs.filter { song -> runCatching { repository.deletePermanently(song) }.getOrDefault(false) }
+            }
+            val ids = removed.mapTo(mutableSetOf()) { it.id }
+            mutable.update { it.copy(deletedSongs = it.deletedSongs.filterNot { song -> song.id in ids }) }
+            done(songs.size - removed.size)
+        }
+    }
     fun recordPlay(song: Song) { userStore.recordPlay(song.id); mutable.update { it.copy(
         recentIds = userStore.recentIds(), playCounts = it.playCounts + (song.id to userStore.playCount(song.id))) } }
     fun syncFavorites() { mutable.update { it.copy(favoriteIds = userStore.favoriteIds()) } }

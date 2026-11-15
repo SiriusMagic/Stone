@@ -1,203 +1,168 @@
 package com.zirakusa.stone.nativeapp.data.library
 
 import android.content.Context
+import android.net.Uri
+import android.os.ParcelFileDescriptor
+import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import java.nio.channels.FileChannel
 import java.util.Locale
 
 /**
- * Minimal, defensive MP4 atom editor. It rewrites only the metadata atom tree and copies
- * the media bytes unchanged; it never decodes or recompresses audio/video. It deliberately
- * limits itself to local files small enough to process without a second large native buffer.
+ * Streams an MP4/M4V edit without loading the media into memory. Only `moov` is read and
+ * rebuilt by [Mp4Atoms]; media bytes are copied with the kernel's channel transfer.
+ *
+ * - `moov` at the end of the file (camera videos): rewritten in place and truncated.
+ * - `moov` before `mdat` (fast-start downloads): the file is rebuilt in a temporary copy
+ *   with shifted chunk offsets, then replaced. Works for plain files and SAF documents.
  */
-internal object Mp4MetadataWriter {
-    private const val MAX_BYTES = 64L * 1024L * 1024L
-    private val textTypes = listOf("©nam", "©cmt", "©ART", "©day", "©gen")
+object Mp4MetadataWriter {
+    private const val MAX_MOOV = 64L * 1024L * 1024L
+    private val extensions = setOf("mp4", "m4v")
+
+    private class Box(val type: String, val offset: Long, val size: Long)
 
     fun canWrite(context: Context, value: String): Boolean {
+        val extension = Uri.decode(value).substringBefore('?').substringAfterLast('.', "").lowercase(Locale.ROOT)
+        if (extension !in extensions) return false
         val uri = value.toUri()
-        if (uri.scheme != "file") return false
-        val file = File(uri.path ?: return false)
-        val extension = value.substringBefore('?').substringAfterLast('.', "").lowercase(Locale.ROOT)
-        return extension in setOf("mp4", "m4v") && file.isFile && file.canRead() && file.canWrite() &&
-            file.length() in 1..MAX_BYTES
+        return when (uri.scheme) {
+            "file" -> File(uri.path ?: return false).let { it.isFile && it.canRead() && it.canWrite() }
+            "content" -> runCatching {
+                context.contentResolver.query(uri, arrayOf(DocumentsContract.Document.COLUMN_FLAGS),
+                    null, null, null)?.use { cursor ->
+                    cursor.moveToFirst() &&
+                        cursor.getInt(0) and DocumentsContract.Document.FLAG_SUPPORTS_WRITE != 0
+                } == true
+            }.getOrDefault(false)
+            else -> false
+        }
     }
 
-    fun write(context: Context, value: String, draft: VideoMetadataDraft,
-        cover: ByteArray?, removeCover: Boolean) {
-        val file = File(value.toUri().path ?: error("Ruta MP4 no válida"))
-        require(file.isFile && file.length() <= MAX_BYTES) { "El MP4 es demasiado grande para editarlo de forma segura" }
-        val source = FileInputStream(file).use { input ->
-            val bytes = input.readBytes()
-            require(bytes.size.toLong() == file.length()) { "El archivo cambió durante la lectura" }
-            bytes
+    /** Reads iTunes text tags (`©nam`, `©ART`, `desc`…) or an empty map when unavailable. */
+    fun readTags(context: Context, value: String): Map<String, String> = runCatching {
+        open(context, value.toUri(), "r").use { input ->
+            val channel = input.channel
+            val moov = boxes(channel).firstOrNull { it.type == "moov" } ?: return emptyMap()
+            Mp4Atoms.readTags(read(channel, moov))
         }
-        val rewritten = rewrite(source, draft, cover, removeCover)
-        val temporary = File(file.parentFile, ".${file.name}.stone-metadata.tmp")
-        try {
-            FileOutputStream(temporary).use { output ->
-                output.write(rewritten)
-                output.fd.sync()
+    }.getOrDefault(emptyMap())
+
+    fun write(context: Context, value: String, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean) {
+        val uri = value.toUri()
+        val (layout, moovBytes) = open(context, uri, "r").use { input ->
+            val boxes = boxes(input.channel)
+            val moov = boxes.firstOrNull { it.type == "moov" } ?: error("El archivo no contiene un átomo moov válido")
+            boxes to read(input.channel, moov)
+        }
+        val moov = layout.first { it.type == "moov" }
+        val mediaAfter = layout.any { it.offset > moov.offset && it.type == "mdat" }
+        if (!mediaAfter && layout.last() === moov) {
+            val rebuilt = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover)
+            openWritable(context, uri).use { output ->
+                val buffer = ByteBuffer.wrap(rebuilt)
+                while (buffer.hasRemaining()) output.write(buffer, moov.offset + buffer.position())
+                output.truncate(moov.offset + rebuilt.size)
+                output.force(true)
             }
-            try {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING)
-            } catch (_: Exception) {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            return
+        }
+        // The new moov size decides how far later media moves; offsets only move when
+        // media follows moov. Rebuilding twice keeps the size calculation exact.
+        val probe = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover)
+        val shift = if (mediaAfter) probe.size - moov.size else 0L
+        val rebuilt = if (shift == 0L) probe else Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover, shift)
+        check(rebuilt.size == probe.size) { "No se pudo recalcular el MP4" }
+        replaceWithRebuilt(context, uri, layout, moov, rebuilt)
+    }
+
+    private fun replaceWithRebuilt(context: Context, uri: Uri, layout: List<Box>, moov: Box, rebuilt: ByteArray) {
+        val local = uri.scheme == "file"
+        val directory = if (local) File(uri.path!!).parentFile!! else context.cacheDir
+        val temporary = File.createTempFile(".stone-metadata-", ".mp4", directory)
+        try {
+            var expected = 0L
+            open(context, uri, "r").use { input ->
+                FileOutputStream(temporary).use { output ->
+                    layout.forEach { box ->
+                        if (box === moov) output.write(rebuilt)
+                        else copy(input.channel, box.offset, box.size, output.channel)
+                        expected += if (box === moov) rebuilt.size.toLong() else box.size
+                    }
+                    output.fd.sync()
+                }
+            }
+            check(temporary.length() == expected) { "La copia temporal del MP4 está incompleta" }
+            if (local) {
+                check(temporary.renameTo(File(uri.path!!))) { "No se pudo reemplazar el archivo" }
+            } else {
+                openWritable(context, uri).use { output ->
+                    output.position(0)
+                    FileInputStream(temporary).use { input -> copy(input.channel, 0, expected, output) }
+                    output.truncate(expected)
+                    output.force(true)
+                }
             }
         } finally {
             temporary.delete()
         }
     }
 
-    private data class Atom(val type: String, val bytes: ByteArray, val headerSize: Int) {
-        val payload: ByteArray get() = bytes.copyOfRange(headerSize, bytes.size)
-    }
-
-    private fun rewrite(source: ByteArray, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean): ByteArray {
-        val atoms = parse(source, 0, source.size)
-        val moovIndex = atoms.indexOfFirst { it.type == "moov" }
-        require(moovIndex >= 0) { "El archivo no contiene un átomo moov válido" }
-        val updatedMoov = updateMoov(atoms[moovIndex], draft, cover, removeCover)
-        return ByteArrayOutputStreamCompat(source.size + 4096).apply {
-            atoms.forEachIndexed { index, atom -> write(if (index == moovIndex) updatedMoov else atom.bytes) }
-        }.toByteArray()
-    }
-
-    private fun updateMoov(moov: Atom, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean): ByteArray {
-        val children = parse(moov.payload, 0, moov.payload.size)
-        val udtaIndex = children.indexOfFirst { it.type == "udta" }
-        val updatedUdta = if (udtaIndex >= 0) updateUdta(children[udtaIndex], draft, cover, removeCover)
-        else atom("udta", metaAtom(ilstAtom(emptyList(), draft, cover, removeCover)).bytes).bytes
-        val output = ByteArrayOutputStreamCompat(moov.bytes.size + 4096)
-        children.forEachIndexed { index, child -> output.write(if (index == udtaIndex) updatedUdta else child.bytes) }
-        if (udtaIndex < 0) output.write(updatedUdta)
-        return atom("moov", output.toByteArray()).bytes
-    }
-
-    private fun updateUdta(udta: Atom, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean): ByteArray {
-        val children = parse(udta.payload, 0, udta.payload.size)
-        val metaIndex = children.indexOfFirst { it.type == "meta" }
-        val updatedMeta = if (metaIndex >= 0) updateMeta(children[metaIndex], draft, cover, removeCover)
-        else metaAtom(ilstAtom(emptyList(), draft, cover, removeCover)).bytes
-        val output = ByteArrayOutputStreamCompat(udta.bytes.size + 4096)
-        children.forEachIndexed { index, child -> output.write(if (index == metaIndex) updatedMeta else child.bytes) }
-        if (metaIndex < 0) output.write(updatedMeta)
-        return atom("udta", output.toByteArray()).bytes
-    }
-
-    private fun updateMeta(meta: Atom, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean): ByteArray {
-        require(meta.payload.size >= 4) { "El átomo meta no es válido" }
-        val flags = meta.payload.copyOfRange(0, 4)
-        val children = parse(meta.payload, 4, meta.payload.size)
-        val ilstIndex = children.indexOfFirst { it.type == "ilst" }
-        val existing = if (ilstIndex >= 0) parse(children[ilstIndex].payload, 0, children[ilstIndex].payload.size)
-        else emptyList()
-        val updatedIlst = ilstAtom(existing, draft, cover, removeCover).bytes
-        val output = ByteArrayOutputStreamCompat(meta.bytes.size + 4096).apply { write(flags) }
-        children.forEachIndexed { index, child -> output.write(if (index == ilstIndex) updatedIlst else child.bytes) }
-        if (ilstIndex < 0) output.write(updatedIlst)
-        return atom("meta", output.toByteArray()).bytes
-    }
-
-    private fun metaAtom(ilst: Atom): Atom = atom("meta", byteArrayOf(0, 0, 0, 0) + ilst.bytes)
-
-    private fun ilstAtom(existing: List<Atom>, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean): Atom {
-        val replacements = linkedMapOf(
-            "©nam" to draft.title.trim(),
-            "©cmt" to draft.description.trim(),
-            "©ART" to draft.author.trim(),
-            "©day" to draft.date.trim(),
-            "©gen" to draft.genre.trim(),
-        )
-        val output = ByteArrayOutputStreamCompat(4096)
-        val written = mutableSetOf<String>()
-        existing.forEach { item ->
-            when {
-                item.type in replacements -> {
-                    val text = replacements.getValue(item.type)
-                    // A blank value from MediaMetadataRetriever means "not exposed", not
-                    // necessarily "delete". Preserve the existing atom to avoid data loss
-                    // when the user edits a different field.
-                    output.write(if (text.isNotBlank()) textItem(item.type, text) else item.bytes)
-                    written += item.type
-                }
-                item.type == "covr" && (removeCover || cover != null) -> Unit
-                else -> output.write(item.bytes)
+    private fun boxes(channel: FileChannel): List<Box> {
+        val result = mutableListOf<Box>()
+        val size = channel.size()
+        val header = ByteBuffer.allocate(16).order(ByteOrder.BIG_ENDIAN)
+        var offset = 0L
+        while (offset + 8 <= size) {
+            header.clear().limit(16)
+            channel.read(header, offset)
+            val declared = header.getInt(0).toLong() and 0xFFFFFFFFL
+            val type = String(header.array(), 4, 4, Charsets.ISO_8859_1)
+            val length = when (declared) {
+                0L -> size - offset
+                1L -> header.getLong(8)
+                else -> declared
             }
+            require(length >= 8 && offset + length <= size) { "Átomo MP4 fuera de límites" }
+            result += Box(type, offset, length)
+            offset += length
         }
-        replacements.forEach { (type, text) -> if (text.isNotBlank() && type !in written) output.write(textItem(type, text)) }
-        if (cover != null && cover.isNotEmpty()) output.write(coverItem(cover))
-        return atom("ilst", output.toByteArray())
-    }
-
-    private fun textItem(type: String, value: String): ByteArray {
-        val valueBytes = value.toByteArray(Charsets.UTF_8)
-        val dataPayload = byteArrayOf(0, 0, 0, 0) + intBytes(1) + byteArrayOf(0, 0, 0, 0) + valueBytes
-        return atom(type, atom("data", dataPayload).bytes).bytes
-    }
-
-    private fun coverItem(bytes: ByteArray): ByteArray {
-        val png = bytes.size >= 8 && bytes[0] == 0x89.toByte() && bytes[1] == 0x50.toByte() &&
-            bytes[2] == 0x4e.toByte() && bytes[3] == 0x47.toByte()
-        val dataType = if (png) 14 else 13
-        val dataPayload = byteArrayOf(0, 0, 0, 0) + intBytes(dataType) + byteArrayOf(0, 0, 0, 0) + bytes
-        return atom("covr", atom("data", dataPayload).bytes).bytes
-    }
-
-    private fun parse(bytes: ByteArray, start: Int, end: Int): List<Atom> {
-        val result = mutableListOf<Atom>()
-        var offset = start
-        while (offset + 8 <= end) {
-            val declared = readU32(bytes, offset)
-            val type = String(bytes, offset + 4, 4, Charsets.ISO_8859_1)
-            val header = if (declared == 1L) 16 else 8
-            val size = if (declared == 0L) (end - offset).toLong()
-            else if (declared == 1L) readU64(bytes, offset + 8)
-            else declared
-            require(size >= header && size <= (end - offset).toLong()) { "Átomo MP4 fuera de límites" }
-            require(size <= Int.MAX_VALUE) { "Átomo MP4 demasiado grande" }
-            result += Atom(type, bytes.copyOfRange(offset, offset + size.toInt()), header)
-            offset += size.toInt()
-        }
-        require(offset == end) { "Estructura MP4 incompleta" }
+        require(result.isNotEmpty()) { "Estructura MP4 incompleta" }
         return result
     }
 
-    private fun atom(type: String, payload: ByteArray): Atom {
-        val bytes = intBytes(payload.size + 8) + fourCc(type) + payload
-        return Atom(type, bytes, 8)
+    private fun read(channel: FileChannel, box: Box): ByteArray {
+        require(box.size <= MAX_MOOV) { "El índice del MP4 es demasiado grande" }
+        val buffer = ByteBuffer.allocate(box.size.toInt())
+        while (buffer.hasRemaining()) {
+            if (channel.read(buffer, box.offset + buffer.position()) < 0) error("Lectura MP4 incompleta")
+        }
+        return buffer.array()
     }
 
-    private fun fourCc(type: String): ByteArray = when (type) {
-        "©nam" -> byteArrayOf(0xA9.toByte(), 'n'.code.toByte(), 'a'.code.toByte(), 'm'.code.toByte())
-        "©cmt" -> byteArrayOf(0xA9.toByte(), 'c'.code.toByte(), 'm'.code.toByte(), 't'.code.toByte())
-        "©ART" -> byteArrayOf(0xA9.toByte(), 'A'.code.toByte(), 'R'.code.toByte(), 'T'.code.toByte())
-        "©day" -> byteArrayOf(0xA9.toByte(), 'd'.code.toByte(), 'a'.code.toByte(), 'y'.code.toByte())
-        "©gen" -> byteArrayOf(0xA9.toByte(), 'g'.code.toByte(), 'e'.code.toByte(), 'n'.code.toByte())
-        else -> type.toByteArray(Charsets.ISO_8859_1).also { require(it.size == 4) }
+    private fun copy(source: FileChannel, offset: Long, length: Long, target: FileChannel) {
+        var done = 0L
+        while (done < length) {
+            val moved = source.transferTo(offset + done, length - done, target)
+            check(moved > 0) { "Copia MP4 interrumpida" }
+            done += moved
+        }
     }
 
-    private fun readU32(bytes: ByteArray, offset: Int): Long =
-        ((bytes[offset].toLong() and 0xff) shl 24) or
-            ((bytes[offset + 1].toLong() and 0xff) shl 16) or
-            ((bytes[offset + 2].toLong() and 0xff) shl 8) or
-            (bytes[offset + 3].toLong() and 0xff)
+    private fun open(context: Context, uri: Uri, mode: String): FileInputStream =
+        if (uri.scheme == "file") FileInputStream(File(uri.path!!))
+        else ParcelFileDescriptor.AutoCloseInputStream(context.contentResolver.openFileDescriptor(uri, mode)
+            ?: error("No se pudo abrir el vídeo"))
 
-    private fun readU64(bytes: ByteArray, offset: Int): Long =
-        ByteBuffer.wrap(bytes, offset, 8).order(ByteOrder.BIG_ENDIAN).long
-
-    private fun intBytes(value: Int) = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(value).array()
-
-    private class ByteArrayOutputStreamCompat(initial: Int) {
-        private val out = java.io.ByteArrayOutputStream(initial)
-        fun write(value: ByteArray) { out.write(value) }
-        fun toByteArray(): ByteArray = out.toByteArray()
-    }
+    /** Positional writer; never opened in append mode so `moov` can be replaced in place. */
+    private fun openWritable(context: Context, uri: Uri): FileChannel =
+        if (uri.scheme == "file") RandomAccessFile(File(uri.path!!), "rw").channel
+        else ParcelFileDescriptor.AutoCloseOutputStream(context.contentResolver.openFileDescriptor(uri, "rw")
+            ?: error("No se pudo abrir el vídeo para escribir")).channel
 }

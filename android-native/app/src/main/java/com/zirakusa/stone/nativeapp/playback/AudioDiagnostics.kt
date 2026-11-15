@@ -62,7 +62,11 @@ object AudioDiagnostics {
         val effects: String = "no inspeccionados",
     )
 
-    fun capture(context: Context, state: State = State(), includeSystemEffects: Boolean = false): AudioDiagnosticSnapshot {
+    /** Release builds skip every snapshot: each one queries several system services. */
+    val enabled: Boolean get() = com.zirakusa.stone.nativeapp.BuildConfig.AUDIO_DIAGNOSTICS_ENABLED
+
+    fun capture(context: Context, state: State = State(), includeSystemEffects: Boolean = false): AudioDiagnosticSnapshot? {
+        if (!enabled) return null
         val audio = context.getSystemService(AudioManager::class.java)
         val streamVolume = runCatching { audio?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: -1 }.getOrDefault(-1)
         val streamMax = runCatching { audio?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: -1 }.getOrDefault(-1)
@@ -112,8 +116,8 @@ object AudioDiagnostics {
         before: AudioDiagnosticSnapshot? = null,
         state: State = State(),
         includeSystemEffects: Boolean = false,
-    ): AudioDiagnosticSnapshot {
-        val after = capture(context, state, includeSystemEffects)
+    ): AudioDiagnosticSnapshot? {
+        val after = capture(context, state, includeSystemEffects) ?: return null
         val previous = before ?: synchronized(lock) { lastSnapshot }
         Log.i(TAG, "event=$event\n  before=${format(previous)}\n  after=${format(after)}")
         synchronized(lock) { lastSnapshot = after }
@@ -173,7 +177,6 @@ object AudioDiagnostics {
     }
 
     private fun activePlaybackConfigurations(audio: AudioManager?): String {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return "no_disponible"
         val configurations = runCatching { audio?.getActivePlaybackConfigurations().orEmpty() }
             .getOrDefault(emptyList())
         return configurations.takeIf { it.isNotEmpty() }?.mapIndexed { index, configuration ->

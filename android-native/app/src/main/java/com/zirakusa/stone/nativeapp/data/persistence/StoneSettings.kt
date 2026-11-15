@@ -1,5 +1,6 @@
 package com.zirakusa.stone.nativeapp.data.persistence
 
+import com.zirakusa.stone.nativeapp.ui.theme.StoneThemeSpec
 import android.content.Context
 import org.json.JSONArray
 import com.zirakusa.stone.core.LandscapeLayoutMode
@@ -29,7 +30,7 @@ data class StoneSettings(
 class StoneSettingsStore(context: Context) {
     private val db = StoneDatabase.get(context)
     fun read() = StoneSettings(
-        theme = db.setting("theme", "dark").takeIf { it in setOf("dark", "gray") } ?: "dark",
+        theme = db.setting("theme", "dark").takeIf { it in StoneThemeSpec.keys } ?: "dark",
         language = db.setting("language", "es").takeIf { it in setOf("es", "en") } ?: "es",
         playWithOthers = db.setting("playWithOthers", "false").toBoolean(),
         gapless = db.setting("gapless", "true").toBoolean(),
@@ -52,7 +53,7 @@ class StoneSettingsStore(context: Context) {
         immersiveEnabled = db.setting("immersiveMode", legacyImmersiveDefault(db)).toBoolean(),
         shakeToReport = db.setting("shakeToReport", "true").toBoolean(),
     )
-    fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in setOf("dark", "gray") } ?: "dark")
+    fun setTheme(value: String) = db.setSetting("theme", value.takeIf { it in StoneThemeSpec.keys } ?: "dark")
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
     fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in setOf("es", "en") } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())

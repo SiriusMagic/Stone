@@ -9,6 +9,9 @@ class SongDispositionStore(context: Context) {
     fun deletedIds(): Set<String> = ids("deleted")
     fun delete(id: String) = add("deleted", id)
     fun restoreDeleted(id: String) = remove("deleted", id)
+    /** Ids whose file was removed from the device; hidden until a rescan drops them. */
+    fun purgedIds(): Set<String> = ids("purged")
+    fun purge(id: String) { remove("deleted", id); add("purged", id) }
 
     private fun values(key: String): MutableList<String> = runCatching {
         JSONArray(database.getString("disposition.$key") ?: "[]").let { array ->

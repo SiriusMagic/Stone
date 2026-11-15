@@ -37,6 +37,9 @@ data class VideoMetadataDraft(
     val author: String = "",
     val date: String = "",
     val genre: String = "",
+    val album: String = "",
+    /** Comma separated keywords, stored as the MP4 `keyw` tag. */
+    val keywords: String = "",
     val thumbnailUri: String = "",
     /** True only when the user explicitly selected or removed the thumbnail. */
     val thumbnailChanged: Boolean = false,
@@ -60,6 +63,8 @@ class VideoMetadataStore(context: Context) {
                 author = json.optString("author"),
                 date = json.optString("date"),
                 genre = json.optString("genre"),
+                album = json.optString("album"),
+                keywords = json.optString("keywords"),
                 thumbnailUri = json.optString("thumbnailUri"),
             ),
             nativeFileWritten = json.optBoolean("nativeFileWritten"),
@@ -73,6 +78,8 @@ class VideoMetadataStore(context: Context) {
             .put("author", draft.author.trim())
             .put("date", draft.date.trim())
             .put("genre", draft.genre.trim())
+            .put("album", draft.album.trim())
+            .put("keywords", draft.keywords.trim())
             .put("thumbnailUri", draft.thumbnailUri)
             .put("nativeFileWritten", nativeFileWritten)
             .put("updatedAt", System.currentTimeMillis())
@@ -168,7 +175,7 @@ class VideoArtworkStore(context: Context) {
 /**
  * Metadata facade used by the editor. Android exposes reliable metadata reading for all
  * common containers, but it does not expose a general metadata writer. MP4/M4V files are
- * handled by the small, no-reencode writer when the provider is a writable local file;
+ * edited in place by the no-reencode streaming writer (local files and SAF documents);
  * everything else is kept safely in Stone's database.
  */
 class VideoMetadataEditor(private val context: Context) {
@@ -186,6 +193,9 @@ class VideoMetadataEditor(private val context: Context) {
                 author = draft.author.ifBlank { native.author },
                 date = draft.date.ifBlank { native.date },
                 genre = draft.genre.ifBlank { native.genre },
+                description = draft.description.ifBlank { native.description },
+                album = draft.album.ifBlank { native.album },
+                keywords = draft.keywords.ifBlank { native.keywords },
             ),
             container = VideoContainer.fromUri(value),
             nativeRead = native.read,
@@ -227,9 +237,28 @@ class VideoMetadataEditor(private val context: Context) {
         val author: String = "",
         val date: String = "",
         val genre: String = "",
+        val description: String = "",
+        val album: String = "",
+        val keywords: String = "",
     )
 
     private fun readNative(value: String): NativeFields {
+        val isoMedia = VideoContainer.fromUri(value) in setOf(VideoContainer.MP4, VideoContainer.M4V, VideoContainer.MOV)
+        val tags = if (isoMedia) Mp4MetadataWriter.readTags(context, value) else emptyMap()
+        val base = readRetriever(value)
+        if (tags.isEmpty()) return base
+        return base.copy(
+            title = tags["©nam"] ?: base.title,
+            author = tags["©ART"] ?: base.author,
+            date = tags["©day"] ?: base.date,
+            genre = tags["©gen"] ?: base.genre,
+            description = tags["desc"] ?: tags["©cmt"].orEmpty(),
+            album = tags["©alb"].orEmpty(),
+            keywords = tags["keyw"].orEmpty(),
+        )
+    }
+
+    private fun readRetriever(value: String): NativeFields {
         val retriever = MediaMetadataRetriever()
         return try {
             retriever.setDataSource(context, value.toUri())
@@ -242,6 +271,7 @@ class VideoMetadataEditor(private val context: Context) {
                 },
                 date = text(MediaMetadataRetriever.METADATA_KEY_DATE),
                 genre = text(MediaMetadataRetriever.METADATA_KEY_GENRE),
+                album = text(MediaMetadataRetriever.METADATA_KEY_ALBUM),
             )
         } catch (_: RuntimeException) {
             NativeFields()

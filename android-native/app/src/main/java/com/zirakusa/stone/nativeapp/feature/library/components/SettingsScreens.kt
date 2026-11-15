@@ -165,8 +165,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     Text(pageTitle(page), fontSize = 24.sp, fontWeight = FontWeight.Black)
                 }
                 when (page) {
-                    "theme" -> listOf("gray" to R.string.theme_gray,
-                        "dark" to R.string.theme_dark).forEach { (value, label) ->
+                    "theme" -> listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
+                        "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled).forEach { (value, label) ->
                         SettingsChoice(label, theme == value) { onTheme(value) }
                     }
                     "language" -> languages.forEach { item ->
@@ -194,7 +194,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 }
 
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
-    "light" -> R.string.theme_light; "gray" -> R.string.theme_gray; else -> R.string.theme_dark
+    "light" -> R.string.theme_light; "gray" -> R.string.theme_gray
+    "midnight" -> R.string.theme_midnight; "amoled" -> R.string.theme_amoled; else -> R.string.theme_dark
 })
 
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {

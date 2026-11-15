@@ -1,5 +1,7 @@
 package com.zirakusa.stone.nativeapp.ui
 
+import androidx.compose.ui.graphics.Color
+import com.zirakusa.stone.nativeapp.ui.theme.stoneBackdrop
 import android.app.Activity
 import android.content.res.Configuration
 import android.hardware.Sensor
@@ -171,13 +173,13 @@ import kotlinx.coroutines.delay
             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
         else Modifier
     )
-    Box(appContentModifier) {
+    Box(Modifier.fillMaxSize().stoneBackdrop().then(appContentModifier)) {
     var miniPlayerHeightPx by remember { mutableIntStateOf(0) }
     val miniPlayerHeight = with(LocalDensity.current) { miniPlayerHeightPx.toDp() }
     LaunchedEffect(landscape, layout.fullPlayer, playerSheets.optionsSidePanel) {
         if (layout.fullPlayer || (!landscape && playerSheets.optionsSidePanel)) closeMiniOptions()
     }
-    Scaffold(contentWindowInsets = if (useSystemInsets)
+    Scaffold(containerColor = Color.Transparent, contentWindowInsets = if (useSystemInsets)
         WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical)
         else WindowInsets(0, 0, 0, 0)) { padding ->
         Box(Modifier.fillMaxSize()) {
@@ -205,6 +207,7 @@ import kotlinx.coroutines.delay
             LibraryScreen(state, player.ready, { picker.launch(null) },
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreDeleted,
+                onDeletePermanently = library::deletePermanently,
                 onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)

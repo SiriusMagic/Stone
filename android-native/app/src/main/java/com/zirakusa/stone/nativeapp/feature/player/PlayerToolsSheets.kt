@@ -72,7 +72,13 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable internal fun PlayerOptionsSheet(state: PlaybackState, song: Song?, onClose: () -> Unit,
     onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B)) {
+    // In landscape the sheet would otherwise stretch to Material's 640 dp maximum and
+    // cover most of the screen; half the window keeps the library visible beside it.
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val landscape = configuration.screenWidthDp > configuration.screenHeightDp
+    val maxWidth = if (landscape) (configuration.screenWidthDp / 2).dp else BottomSheetDefaults.SheetMaxWidth
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B),
+        sheetMaxWidth = maxWidth, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = landscape)) {
         ImmersiveWindowEffect()
         PlayerOptionsContent(state, song, extraActions = extraActions, onSelect = onSelect)
     }
@@ -417,134 +423,6 @@ private fun verticalBandValue(y: Float, height: Float): Int =
                         item { TagField(R.string.genre, tags.genre) { tags = tags.copy(genre = it) } }
                         item { Text(stringResource(R.string.mp3_tags_only), color = StonePalette.Muted, fontSize = 12.sp) }
                     }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun VideoTagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val editor = remember { VideoMetadataEditor(context.applicationContext) }
-    var document by remember(song.id) { mutableStateOf<com.zirakusa.stone.nativeapp.data.library.VideoMetadataDocument?>(null) }
-    var draft by remember(song.id) { mutableStateOf(VideoMetadataDraft(title = song.title, author = song.artist)) }
-    var framePosition by remember(song.id) { mutableLongStateOf(0L) }
-    var frame by remember(song.id) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
-    var tab by remember(song.id) { mutableIntStateOf(1) }
-    var busy by remember(song.id) { mutableStateOf(true) }
-    var error by remember(song.id) { mutableStateOf<String?>(null) }
-    var message by remember(song.id) { mutableStateOf<String?>(null) }
-    LaunchedEffect(song.id) {
-        val loaded = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrNull() }
-        document = loaded
-        loaded?.let { draft = it.draft }
-        busy = false
-    }
-    LaunchedEffect(song.id, framePosition) {
-        if (song.durationMs > 0L) {
-            frame = ArtworkLoader.loadVideoFrameAt(context.applicationContext, song.uri,
-                song.modifiedMs, framePosition, maxDimension = 640)
-        }
-    }
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) scope.launch {
-            busy = true
-            val result = withContext(Dispatchers.IO) { runCatching { editor.saveImageFromGallery(song.uri, uri) } }
-            result.onSuccess { path ->
-                draft = draft.copy(thumbnailUri = path, thumbnailChanged = true)
-                error = null
-            }.onFailure { error = it.message ?: "No se pudo guardar la imagen" }
-            busy = false
-        }
-    }
-    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        ImmersiveWindowEffect()
-        Column(Modifier.fillMaxHeight(.94f).padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.video_metadata_title), Modifier.weight(1f),
-                    fontSize = 25.sp, fontWeight = FontWeight.Black)
-                Button(enabled = !busy, onClick = { scope.launch {
-                    busy = true
-                    val result = withContext(Dispatchers.IO) { runCatching { editor.save(song.uri, draft) } }
-                    result.onSuccess { outcome ->
-                        message = if (outcome.nativeFileWritten) {
-                            context.getString(R.string.video_metadata_saved_native)
-                        } else if (outcome.nativeFailureMessage != null) {
-                            context.getString(R.string.video_metadata_native_failed)
-                        } else context.getString(R.string.video_metadata_saved_internal)
-                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                        saved()
-                    }.onFailure { error = it.message ?: "No se pudieron guardar los metadatos" }
-                    busy = false
-                } }) { Text(stringResource(R.string.save)) }
-            }
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            TabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
-                listOf(R.string.cover, R.string.tags).forEachIndexed { index, label ->
-                    Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(label)) })
-                }
-            }
-            document?.let { info ->
-                Text(stringResource(R.string.video_metadata_format,
-                    info.container.extension.ifBlank { "desconocido" }.uppercase()),
-                    color = StonePalette.Muted, fontSize = 12.sp)
-                Text(
-                    stringResource(if (info.nativeWriteAvailable) R.string.video_metadata_native_status
-                        else R.string.video_metadata_internal_status),
-                    color = StonePalette.Muted, fontSize = 12.sp
-                )
-            }
-            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)) {
-                if (tab == 0) {
-                    item {
-                        Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
-                            val cover = draft.thumbnailUri
-                            val bitmap = frame?.bitmap
-                            if (cover.isNotBlank()) StoneArtwork(cover, 0L, Modifier.fillMaxSize())
-                            else if (bitmap != null) Image(bitmap.asImageBitmap(), null, Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop)
-                            else StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxSize())
-                        }
-                    }
-                    item {
-                        Text(stringResource(R.string.video_metadata_thumbnail), fontWeight = FontWeight.Bold)
-                        if (song.durationMs > 0) {
-                            Slider(value = framePosition.toFloat(), onValueChange = {
-                                framePosition = it.toLong().coerceIn(0L, song.durationMs)
-                            }, valueRange = 0f..song.durationMs.toFloat())
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(enabled = frame?.bitmap != null && !busy, onClick = {
-                                val copy = frame?.bitmap?.copy(Bitmap.Config.ARGB_8888, false)
-                                if (copy != null) scope.launch {
-                                    busy = true
-                                    val result = withContext(Dispatchers.IO) {
-                                        runCatching { editor.saveVideoFrame(song.uri, copy) }
-                                    }
-                                    result.onSuccess { path ->
-                                        draft = draft.copy(thumbnailUri = path, thumbnailChanged = true)
-                                    }.onFailure { error = it.message }
-                                    busy = false
-                                }
-                            }) { Text(stringResource(R.string.video_metadata_frame)) }
-                            OutlinedButton(enabled = !busy, onClick = { imagePicker.launch("image/*") }) {
-                                Text(stringResource(R.string.video_metadata_gallery))
-                            }
-                        }
-                    }
-                } else {
-                    item { TagField(R.string.title, draft.title) { draft = draft.copy(title = it) } }
-                    item { TagField(R.string.video_metadata_description, draft.description, multiline = true) {
-                        draft = draft.copy(description = it)
-                    } }
-                    item { TagField(R.string.video_metadata_author, draft.author) { draft = draft.copy(author = it) } }
-                    item { TagField(R.string.video_metadata_date, draft.date) { draft = draft.copy(date = it) } }
-                    item { TagField(R.string.video_metadata_genre, draft.genre) { draft = draft.copy(genre = it) } }
                 }
             }
         }

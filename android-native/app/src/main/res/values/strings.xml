@@ -152,6 +152,13 @@
     <string name="no_playlists">Crea una playlist primero</string>
     <string name="recently_deleted">Eliminado recientemente</string>
     <string name="restore">Restaurar</string>
+    <string name="recently_deleted_hint">Restaura una canción o bórrala del dispositivo para siempre.</string>
+    <string name="trash_empty">La papelera está vacía.</string>
+    <string name="empty_trash">Vaciar</string>
+    <string name="delete_forever">Eliminar para siempre</string>
+    <string name="delete_forever_title">¿Eliminar para siempre?</string>
+    <plurals name="delete_forever_message"><item quantity="one">El archivo de %1$d canción se borrará del dispositivo. No se puede deshacer.</item><item quantity="other">Los archivos de %1$d canciones se borrarán del dispositivo. No se puede deshacer.</item></plurals>
+    <plurals name="delete_forever_failed"><item quantity="one">No se pudo borrar %1$d archivo. Comprueba el permiso de la carpeta.</item><item quantity="other">No se pudieron borrar %1$d archivos. Comprueba el permiso de la carpeta.</item></plurals>
     <string name="video_media">Video</string>
     <string name="no_videos">No hay videos todavía</string>
     <string name="choose_video_folder">Elegir carpeta de videos</string>
@@ -266,6 +273,8 @@
     <string name="copyright_stone">© 2026 Stone.</string>
     <string name="theme_dark">Negro</string>
     <string name="theme_gray">Gris</string>
+    <string name="theme_midnight">Medianoche</string>
+    <string name="theme_amoled">AMOLED (negro puro, ahorra batería)</string>
     <string name="theme_light">Claro</string>
     <string name="play_with_others">Reproduce junto con otras aplicaciones</string>
     <string name="play_with_others_hint">Permite mezclar el audio de Stone con otras aplicaciones.</string>
@@ -301,9 +310,20 @@
     <string name="video_metadata_frame">Usar fotograma actual</string>
     <string name="video_metadata_gallery">Elegir imagen de la galería</string>
     <string name="video_metadata_format">Formato: %1$s</string>
-    <string name="video_metadata_native_status">Los campos compatibles se escriben en el archivo sin recomprimirlo.</string>
+    <string name="video_metadata_native_status">Se escribe directamente en el archivo MP4 sin recomprimir el vídeo.</string>
     <string name="video_metadata_internal_status">Este formato o ubicación no permite escritura segura; se guardará en Stone.</string>
     <string name="video_metadata_saved_native">Metadatos escritos en el archivo y guardados en Stone.</string>
     <string name="video_metadata_saved_internal">Metadatos guardados en Stone; el archivo original no se modificó.</string>
     <string name="video_metadata_native_failed">No se pudo modificar el archivo. Los cambios se guardaron en Stone.</string>
+    <string name="video_metadata_details">Detalles</string>
+    <string name="video_metadata_group_main">Identificación</string>
+    <string name="video_metadata_group_classification">Clasificación</string>
+    <string name="video_metadata_keywords">Etiquetas (palabras clave)</string>
+    <string name="video_metadata_keywords_hint">concierto, en vivo, 2024</string>
+    <string name="video_metadata_date_hint">AAAA o AAAA-MM-DD</string>
+    <string name="video_metadata_clear">Borrar campo</string>
+    <string name="video_metadata_frame_pick">Elegir fotograma</string>
+    <string name="video_metadata_remove_cover">Quitar miniatura</string>
+    <string name="video_metadata_image_failed">No se pudo guardar la imagen</string>
+    <string name="video_metadata_save_failed">No se pudieron guardar los metadatos</string>
 </resources>

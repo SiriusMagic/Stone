@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.QueueMusic
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
@@ -12,6 +11,7 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 /** Secondary actions that can be shown below a video preview or player. */
 enum class VideoControlId(val key: String) {
     AudioOnly("audio_only"),
+    /** Retired from the action row: options now live in the ⋮ button of the top bar. */
     Options("options"),
     Queue("queue"),
     Scale("scale")
@@ -26,7 +26,6 @@ data class VideoControlDefinition(
 object VideoControlRegistry {
     val definitions = listOf(
         VideoControlDefinition(VideoControlId.AudioOnly, Icons.Default.Headphones, R.string.audio_only),
-        VideoControlDefinition(VideoControlId.Options, Icons.Default.Tune, R.string.more_options),
         VideoControlDefinition(VideoControlId.Queue, Icons.Default.QueueMusic, R.string.queue),
         VideoControlDefinition(VideoControlId.Scale, Icons.Default.Crop, R.string.video_scale_toggle),
     )

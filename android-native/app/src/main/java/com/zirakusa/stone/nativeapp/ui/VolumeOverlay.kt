@@ -1,5 +1,10 @@
 package com.zirakusa.stone.nativeapp.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlin.math.roundToInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -40,9 +45,12 @@ import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
                     color = if (state.percent > 100) Color(0xFFF5C518) else Color(0xFFB8B5C0),
                     fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
-            Slider(value = state.percent.toFloat(), onValueChange = {
-                StonePlaybackService.setVolumePercent(it.toInt())
-            }, valueRange = 0f..state.maxPercent.toFloat(), modifier = Modifier.fillMaxWidth().height(34.dp),
+            // Local value while dragging so Android's coarse volume steps don't fight the thumb.
+            var dragging by remember { mutableStateOf<Float?>(null) }
+            Slider(value = dragging ?: state.percent.toFloat(), onValueChange = {
+                dragging = it
+                StonePlaybackService.setVolumePercent(it.roundToInt())
+            }, onValueChangeFinished = { dragging = null }, valueRange = 0f..state.maxPercent.toFloat(), modifier = Modifier.fillMaxWidth().height(34.dp),
                 colors = SliderDefaults.colors(thumbColor = Color.White,
                     activeTrackColor = Color(0xFFF5C518), inactiveTrackColor = Color(0xFF302C36)))
         }

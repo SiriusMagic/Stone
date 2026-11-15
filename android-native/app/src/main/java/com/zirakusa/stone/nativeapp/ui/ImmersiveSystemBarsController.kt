@@ -36,6 +36,8 @@ internal val LocalImmersiveSystemBarsController =
 internal class ImmersiveSystemBarsController(private val activity: ComponentActivity) {
     private companion object {
         const val TAG = "StoneImmersive"
+        const val REHIDE_DELAY_MS = 2_500L
+        const val MAX_REHIDE_ATTEMPTS = 2
     }
 
     private class ManagedWindow(val window: Window, val root: Boolean) {
@@ -53,6 +55,11 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
         var focusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
         var animationListener: WindowInsetsAnimationCompat.Callback? = null
         var systemBarsAnimationRunning = false
+        var keyboardVisible = false
+        /** One-shot safety check; never repeats on its own. */
+        var rehide: Runnable? = null
+        /** Bounded retries so a window that refuses to hide bars can't cause a loop. */
+        var rehideAttempts = 0
     }
 
     private val rootWindow = activity.window
@@ -94,6 +101,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
     fun unregisterWindow(window: Window) {
         if (window === rootWindow) return
         val managed = windows.remove(window) ?: return
+        cancelRehide(managed)
         // The dialog window is going away. Showing bars here can leak a visibility change
         // into the next window transition and is not needed for a destroyed window.
         managed.attached = false
@@ -240,6 +248,8 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             log("system bars hidden after transient reveal window=${windowId(managed.window)}")
         }
         managed.systemBarsVisible = barsVisible
+        managed.keyboardVisible = keyboardVisible
+        if (!barsVisible) { cancelRehide(managed); managed.rehideAttempts = 0 }
         if (requested && !managed.applying && !managed.pendingHide && barsVisible &&
             !managed.userRevealedTransientBars) {
             if (keyboardVisible) {
@@ -251,6 +261,9 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
                 // transiently visible and let Android dismiss them according to its policy.
                 managed.userRevealedTransientBars = true
                 log("transient system gesture revealed bars window=${windowId(managed.window)}")
+                // Bars shown by a window transition (closing a dialog or the player) are not
+                // transient, so Android never hides them again. Re-check once.
+                scheduleRehide(managed)
             } else {
                 // A content/window transition re-dispatched visible insets without a system
                 // gesture. Reconcile once at the central owner instead of accepting overlap.
@@ -302,12 +315,40 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             controller.hide(WindowInsetsCompat.Type.systemBars())
             managed.applying = false
             managed.systemBarsVisible = false
+            // If the hide never produces hidden insets, pendingHide would block every
+            // later reapply. Verify once.
+            scheduleRehide(managed)
         }
+    }
+
+    private fun scheduleRehide(managed: ManagedWindow) {
+        cancelRehide(managed)
+        if (managed.rehideAttempts >= MAX_REHIDE_ATTEMPTS) return
+        managed.rehideAttempts++
+        val task = Runnable {
+            managed.rehide = null
+            if (!requested || !managed.attached || managed.keyboardVisible) return@Runnable
+            val insets = ViewCompat.getRootWindowInsets(managed.decorView) ?: return@Runnable
+            if (!insets.isVisible(WindowInsetsCompat.Type.systemBars())) return@Runnable
+            log("system bars still visible; reapplying immersive window=${windowId(managed.window)}")
+            managed.pendingHide = false
+            managed.userRevealedTransientBars = false
+            managed.systemBarsVisible = true
+            reconcile(managed, force = true)
+        }
+        managed.rehide = task
+        managed.decorView.postDelayed(task, REHIDE_DELAY_MS)
+    }
+
+    private fun cancelRehide(managed: ManagedWindow) {
+        managed.rehide?.let { managed.decorView.removeCallbacks(it) }
+        managed.rehide = null
     }
 
     private fun restoreAll() = windows.values.toList().forEach(::restore)
 
     private fun restore(managed: ManagedWindow) {
+        cancelRehide(managed)
         if (!managed.attached) return
         val controller = WindowCompat.getInsetsController(managed.window, managed.decorView)
         if (managed.configuredForImmersive || requested || !managed.systemBarsVisible) {
@@ -333,6 +374,7 @@ internal class ImmersiveSystemBarsController(private val activity: ComponentActi
             it.userRevealedTransientBars = false
             it.pendingHide = false
             it.systemBarsAnimationRunning = false
+            it.rehideAttempts = 0
         }
     }
 

@@ -37,8 +37,7 @@ class HorizontalSettingsTest {
 
         val settings = VideoControlSettings.from(StoneSettingsStore(context))
         assertEquals(
-            listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Options,
-                VideoControlId.Scale),
+            listOf(VideoControlId.Queue, VideoControlId.AudioOnly, VideoControlId.Scale),
             settings.order,
         )
         assertEquals(listOf(VideoControlId.Queue, VideoControlId.AudioOnly,

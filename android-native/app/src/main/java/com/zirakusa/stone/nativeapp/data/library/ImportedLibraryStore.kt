@@ -17,12 +17,22 @@ class ImportedLibraryStore(context: Context) {
         List(values.length()) { SongJson.fromJson(values.getJSONObject(it)) }
     }.getOrDefault(emptyList())
 
+    @Synchronized fun remove(uri: String) {
+        val current = songs()
+        if (current.none { it.uri == uri }) return
+        write(current.filterNot { it.uri == uri })
+    }
+
     @Synchronized fun merge(additions: List<Song>): List<Song> {
         val merged = (songs() + additions).distinctBy { it.uri }
+        write(merged)
+        return merged
+    }
+
+    private fun write(merged: List<Song>) {
         val values = JSONArray().apply { merged.forEach { put(SongJson.toJson(it)) } }
         val temporary = File(index.parentFile, "index.json.tmp")
         temporary.writeText(values.toString())
         check(temporary.renameTo(index) || temporary.copyTo(index, overwrite = true).let { temporary.delete(); true })
-        return merged
     }
 }

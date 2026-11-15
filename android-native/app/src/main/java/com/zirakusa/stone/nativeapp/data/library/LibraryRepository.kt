@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 data class CachedLibrary(val songs: List<Song>, val deletedSongs: List<Song>)
 
 class LibraryRepository(context: Context) {
+    private val appContext = context.applicationContext
     private val videoMetadata = VideoMetadataStore(context)
     private val preferences = context.getSharedPreferences("stone-native-library", Context.MODE_PRIVATE)
     private val cache = LibraryCache(context)
@@ -65,9 +66,19 @@ class LibraryRepository(context: Context) {
 
     fun delete(song: Song) = disposition.delete(song.id)
     fun restoreDeleted(song: Song) = disposition.restoreDeleted(song.id)
+
+    /** Deletes the file from the device. Blocking I/O: call from a background dispatcher. */
+    fun deletePermanently(song: Song): Boolean {
+        if (!SongFileDeleter.delete(appContext, song.uri)) return false
+        disposition.purge(song.id)
+        imported.remove(song.uri)
+        return true
+    }
+
     private fun entries(songs: List<Song>): CachedLibrary {
         val deleted = disposition.deletedIds()
-        val visible = songs.map(videoMetadata::applyToSong)
+        val purged = disposition.purgedIds()
+        val visible = songs.filterNot { it.id in purged }.map(videoMetadata::applyToSong)
         return CachedLibrary(visible.filterNot { it.id in deleted }, visible.filter { it.id in deleted })
     }
 }

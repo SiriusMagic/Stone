@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -156,7 +156,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                     )
                 }
                 IconButton(onClick = onOptions, enabled = active) {
-                    Icon(Icons.Default.Tune, stringResource(R.string.more_options))
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
                 }
             }
         }

@@ -10,8 +10,8 @@ object StonePalette {
     var Surface = Color(0xFF15151B)
     val Yellow = Color(0xFFF5C518)
     val Blue = Color(0xFF339CFF)
-    val Chip = Color(0xFF15151B)
-    val Border = Color(0xFF22222B)
+    var Chip = Color(0xFF15151B)
+    var Border = Color(0xFF22222B)
     val Secondary = Color(0xFFA0A0A5)
     val Muted = Color(0xFF8B8B92)
     val Hint = Color(0xFF6B6B72)
@@ -24,22 +24,40 @@ object StonePalette {
     val MiniBackground = Color(0xF2443100)
     val MiniBorder = Color(0x6BF5C518)
     val MiniSubtitle = Color(0xFFE8C35D)
+    /** Accent used by the background glow; follows the theme. */
+    var Glow = Color(0xFFF5C518)
+    /** Whether the app backdrop draws grain and glow. AMOLED keeps pure black pixels. */
+    var Textured = true
 }
 
-private fun stoneColors(dark: Boolean) = if (dark) darkColorScheme(
-    primary = Color(0xFFF5C518), onPrimary = Color(0xFF0A0A0E),
-    background = Color(0xFF0A0A0E), surface = Color(0xFF1C1C24),
-    onBackground = Color.White, onSurface = Color.White,
-    onSurfaceVariant = Color(0xFFA0A0A5), error = Color(0xFFFF4C4C),
-) else androidx.compose.material3.lightColorScheme(
-    primary = Color(0xFF8A6500), onPrimary = Color.White,
-    background = Color(0xFFF7F6FA), surface = Color.White,
-    onBackground = Color(0xFF15141A), onSurface = Color(0xFF15141A),
-    onSurfaceVariant = Color(0xFF625F68), error = Color(0xFFBA1A1A),
-)
+/** Visual themes. Keys are persisted; keep them stable. */
+enum class StoneThemeSpec(val key: String, val background: Color, val surface: Color, val chip: Color,
+    val border: Color, val glow: Color, val textured: Boolean) {
+    DARK("dark", Color(0xFF0A0A0E), Color(0xFF15151B), Color(0xFF15151B), Color(0xFF22222B), Color(0xFFF5C518), true),
+    GRAY("gray", Color(0xFF24242A), Color(0xFF303038), Color(0xFF2C2C33), Color(0xFF3A3A44), Color(0xFFF5C518), true),
+    MIDNIGHT("midnight", Color(0xFF070B16), Color(0xFF111A2E), Color(0xFF0F1729), Color(0xFF1E2A44), Color(0xFF339CFF), true),
+    AMOLED("amoled", Color(0xFF000000), Color(0xFF0C0C0F), Color(0xFF0C0C0F), Color(0xFF1A1A20), Color(0xFFF5C518), false);
+
+    companion object {
+        val keys = entries.map { it.key }.toSet()
+        fun from(key: String) = entries.firstOrNull { it.key == key } ?: DARK
+    }
+}
 
 @Composable fun StoneTheme(mode: String = "dark", content: @Composable () -> Unit) {
-    StonePalette.Background = if (mode == "gray") Color(0xFF24242A) else Color(0xFF0A0A0E)
-    StonePalette.Surface = if (mode == "gray") Color(0xFF303038) else Color(0xFF15151B)
-    MaterialTheme(colorScheme = stoneColors(dark = true), content = content)
+    val spec = StoneThemeSpec.from(mode)
+    StonePalette.Background = spec.background
+    StonePalette.Surface = spec.surface
+    StonePalette.Chip = spec.chip
+    StonePalette.Border = spec.border
+    StonePalette.Glow = spec.glow
+    StonePalette.Textured = spec.textured
+    MaterialTheme(colorScheme = darkColorScheme(
+        primary = Color(0xFFF5C518), onPrimary = Color(0xFF0A0A0E),
+        background = spec.background, surface = spec.surface,
+        surfaceContainerLow = spec.chip, surfaceContainer = spec.surface,
+        surfaceContainerHigh = spec.surface, outline = spec.border, outlineVariant = spec.border,
+        onBackground = Color.White, onSurface = Color.White,
+        onSurfaceVariant = Color(0xFFA0A0A5), error = Color(0xFFFF4C4C),
+    ), content = content)
 }

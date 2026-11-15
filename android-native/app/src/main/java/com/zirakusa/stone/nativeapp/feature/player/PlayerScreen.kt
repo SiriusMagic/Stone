@@ -122,16 +122,16 @@ import kotlin.math.roundToInt
             onAudioOnly = onAudioOnly, videoScale = videoScale,
             onVideoScaleChange = onVideoScaleChange,
             videoControls = videoControls,
-            onOptions = { sheets.optionsSong = null; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
+            onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
         )
     } else if (landscape) {
         LandscapeAudioPlayer(state, song, progress, playback, back,
             controls = audioControls,
-            onOptions = { sheets.optionsSong = null; sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
+            onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onLyrics = { sheets.lyricsVisible = true },
             onEqualizer = { sheets.tool = PlayerTool.Equalizer },
             onQueue = { sheets.queueVisible = true })
     } else if (song?.isVideo == true) PortraitVideoPlayer(song, state, progress, playback, back,
-        onOptions = { sheets.optionsSong = null; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
+        onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
         onAudioOnly = {
             onAudioOnly(it)
         }, videoScale = videoScale,
@@ -296,6 +296,9 @@ private fun Context.findActivity(): Activity? = when (this) {
                     showLabel = false)
                 IconButton(onClick = { onAudioOnly(song) }) {
                     Icon(Icons.Default.Headphones, stringResource(R.string.audio_only), tint = StonePalette.Yellow)
+                }
+                if (onOptions != null) IconButton(onClick = onOptions) {
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
                 }
             }
             VideoTransportControls(state, progress, playback, Modifier.align(Alignment.Center))
@@ -567,9 +570,13 @@ private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Flo
         state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
     ) }
     var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
-    LaunchedEffect(state.volumePercent, maxVolumePercent) {
-        volume = state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
+    // While a swipe is active the gesture owns its fractional value. Syncing from the
+    // service mid-swipe snapped every small step back to the previous Android level
+    // (STREAM_MUSIC has ~15 steps), so slow swipes never changed the volume.
+    LaunchedEffect(state.volumePercent, maxVolumePercent, adjustment == null) {
+        if (adjustment == null) volume = state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
     }
+
     LaunchedEffect(adjustment) {
         if (adjustment != null) {
             delay(850)

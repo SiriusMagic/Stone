@@ -4,8 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,10 +23,11 @@ enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.st
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibrarySheets(sheet: String?, sort: LibrarySort, descending: Boolean,
     onSort: (LibrarySort) -> Unit, onReverse: () -> Unit, dismiss: () -> Unit,
-    deleted: List<Song>, restoreDeleted: (Song) -> Unit) {
+    deleted: List<Song>, restoreDeleted: (Song) -> Unit,
+    deletePermanently: (List<Song>, (Int) -> Unit) -> Unit = { _, _ -> }) {
     if (sheet == null) return
     if (sheet == "deleted") {
-        DispositionSheet(deleted, restoreDeleted, dismiss)
+        RecentlyDeletedSheet(deleted, restoreDeleted, deletePermanently, dismiss)
         return
     }
     if (sheet != "sort") return
@@ -46,26 +45,6 @@ enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.st
                 }
             }
             SheetAction(StoneGlyph.Sort, if (descending) R.string.descending else R.string.ascending, onReverse)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun DispositionSheet(songs: List<Song>, restore: (Song) -> Unit,
-    dismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = dismiss, containerColor = StonePalette.Chip,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        ImmersiveWindowEffect()
-        Column(Modifier.fillMaxHeight(.8f).padding(horizontal = 20.dp)) {
-            Text(stringResource(R.string.recently_deleted),
-                style = MaterialTheme.typography.headlineSmall)
-            if (songs.isEmpty()) Text(stringResource(R.string.no_results), Modifier.padding(top = 32.dp), color = StonePalette.Muted)
-            LazyColumn(Modifier.weight(1f)) { items(songs, key = { it.id }) { song ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text(song.title); Text(song.artist, color = StonePalette.Muted) }
-                    TextButton(onClick = { restore(song) }) { Text(stringResource(R.string.restore)) }
-                }
-            } }
         }
     }
 }

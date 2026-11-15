@@ -62,6 +62,13 @@
     <string name="remove_from_playlist">Remove from playlist</string><string name="add_to_playlist_title">Add to playlist</string>
     <string name="no_playlists">Create a playlist first</string>
     <string name="recently_deleted">Recently deleted</string><string name="restore">Restore</string>
+    <string name="recently_deleted_hint">Restore a song or remove it from the device for good.</string>
+    <string name="trash_empty">The trash is empty.</string>
+    <string name="empty_trash">Empty</string>
+    <string name="delete_forever">Delete forever</string>
+    <string name="delete_forever_title">Delete forever?</string>
+    <plurals name="delete_forever_message"><item quantity="one">The file of %1$d song will be removed from the device. This cannot be undone.</item><item quantity="other">The files of %1$d songs will be removed from the device. This cannot be undone.</item></plurals>
+    <plurals name="delete_forever_failed"><item quantity="one">%1$d file could not be deleted. Check the folder permission.</item><item quantity="other">%1$d files could not be deleted. Check the folder permission.</item></plurals>
     <string name="video_media">Video</string>
     <string name="no_videos">No videos yet</string>
     <string name="choose_video_folder">Choose video folder</string>
@@ -139,6 +146,8 @@
     <string name="quick_action_activated">%1$s activated</string>
     <string name="quick_action_confirmed">Shortcut executed: %1$s</string>
     <string name="theme_gray">Gray</string><string name="theme_light">Light</string>
+    <string name="theme_midnight">Midnight</string>
+    <string name="theme_amoled">AMOLED (pure black, saves battery)</string>
     <string name="play_with_others">Play alongside other apps</string><string name="play_with_others_hint">Let Stone audio mix with audio from other apps.</string>
     <string name="gapless">Gapless playback</string><string name="gapless_hint">Media3 handles gapless transitions automatically.</string>
     <string name="crossfade">Crossfade</string><string name="crossfade_hint">Crossfade between tracks is not available yet.</string>
@@ -239,4 +248,15 @@
     <string name="video_metadata_saved_native">Metadata was written to the file and saved in Stone.</string>
     <string name="video_metadata_saved_internal">Metadata was saved in Stone; the original file was not changed.</string>
     <string name="video_metadata_native_failed">The file could not be modified. Changes were saved in Stone.</string>
+    <string name="video_metadata_details">Details</string>
+    <string name="video_metadata_group_main">Identity</string>
+    <string name="video_metadata_group_classification">Classification</string>
+    <string name="video_metadata_keywords">Tags (keywords)</string>
+    <string name="video_metadata_keywords_hint">concert, live, 2024</string>
+    <string name="video_metadata_date_hint">YYYY or YYYY-MM-DD</string>
+    <string name="video_metadata_clear">Clear field</string>
+    <string name="video_metadata_frame_pick">Pick a frame</string>
+    <string name="video_metadata_remove_cover">Remove thumbnail</string>
+    <string name="video_metadata_image_failed">The image could not be saved</string>
+    <string name="video_metadata_save_failed">The metadata could not be saved</string>
 </resources>

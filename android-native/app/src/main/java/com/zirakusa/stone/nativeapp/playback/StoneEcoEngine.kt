@@ -5,6 +5,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,60 +24,62 @@ class StoneEcoEngine(context: Context) {
     private val mutableDiagnostics = MutableStateFlow(Diagnostics())
     val diagnostics = mutableDiagnostics.asStateFlow()
 
+    private var mode = AudioMode.BALANCED
+    private var acceleration = HardwareAcceleration.AUTOMATIC
+
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun apply(mode: AudioMode, player: Player) {
-        // Media3/Android decide offload support for the actual format and output.
-        // We only express the policy; we never claim offload or bit-perfect output here.
-        val strategy = when (mode) {
-            AudioMode.BATTERY -> "Ahorro máximo: solo altavoz integrado, sin CPU despierta y sin efectos"
-            AudioMode.BALANCED -> "Equilibrado: solo altavoz integrado y ruta eficiente"
-            AudioMode.HIFI -> "Cine: ruta estéreo del sistema; ganancia adicional según el dispositivo"
-        }
+        this.mode = mode
         player.setAudioAttributes(
             androidx.media3.common.AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
             true
         )
-        applyOutputRoute(mode, player)
-        applyWakePolicy(mode == AudioMode.BATTERY, player)
-        val output = inspectOutput()
-        mutableDiagnostics.value = Diagnostics(mode, output.first, output.second,
-            offloadAvailable = false, strategy = strategy)
+        // Output always follows Android's active route (headphones, Bluetooth, USB DAC
+        // or speaker). Pinning the speaker leaked audio while headphones were connected.
+        (player as? ExoPlayer)?.let { exo -> runCatching { exo.setPreferredAudioDevice(null) } }
+        applyPowerPolicy(player)
     }
 
     fun applyHardwareAcceleration(mode: HardwareAcceleration, player: Player) {
-        val current = mutableDiagnostics.value
-        val strategy = when (mode) {
-            HardwareAcceleration.AUTOMATIC -> "Android selecciona la ruta compatible"
-            HardwareAcceleration.DISABLED -> "Ruta convencional solicitada"
-            HardwareAcceleration.DECODING -> "Decodificación por hardware preferida cuando existe"
-            HardwareAcceleration.FULL -> "Offload solicitado; fallback seguro si no es compatible"
-            HardwareAcceleration.ADAPTIVE -> "Ultra ahorro: libera la CPU cuando la salida lo permite"
-        }
-        // Media3 still decides the real decoder/offload path for each format and output.
-        applyWakePolicy(mode == HardwareAcceleration.ADAPTIVE || current.mode == AudioMode.BATTERY, player)
-        mutableDiagnostics.value = current.copy(strategy = strategy)
-    }
-
-    private fun applyWakePolicy(minimizeWakeLock: Boolean, player: Player) {
-        (player as? ExoPlayer)?.let { exo ->
-            runCatching { exo.setWakeMode(if (minimizeWakeLock) C.WAKE_MODE_NONE else C.WAKE_MODE_LOCAL) }
-        }
+        acceleration = mode
+        applyPowerPolicy(player)
     }
 
     /**
-     * Android's public API can select one preferred device, but cannot mix the
-     * speaker, earpiece and Bluetooth outputs into one stream. Low-power modes
-     * therefore pin playback to the built-in speaker. Cine releases that pin so
-     * Android can use the active system route without pretending to mix outputs.
+     * Offload hands decoding to the audio DSP so the CPU can sleep between buffers. It is
+     * requested only when no Stone effect needs the PCM stream (Ahorro has no EQ and no
+     * gain above 100 %). Media3 falls back to the normal path when a format, route or
+     * video track does not support it, so this never interrupts playback.
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    private fun applyOutputRoute(mode: AudioMode, player: Player) {
-        val exo = player as? ExoPlayer ?: return
-        val preferred = if (mode == AudioMode.BATTERY || mode == AudioMode.BALANCED) {
-            audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
-        } else null
-        runCatching { exo.setPreferredAudioDevice(preferred) }
+    private fun applyPowerPolicy(player: Player) {
+        val offload = mode == AudioMode.BATTERY || (mode != AudioMode.HIFI &&
+            (acceleration == HardwareAcceleration.FULL || acceleration == HardwareAcceleration.ADAPTIVE))
+        val preferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
+            .setAudioOffloadMode(
+                if (offload) TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
+                else TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
+            )
+            .setIsGaplessSupportRequired(false)
+            .setIsSpeedChangeSupportRequired(false)
+            .build()
+        runCatching {
+            player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+                .setAudioOffloadPreferences(preferences).build()
+        }
+        // Media3 already drops its wake lock while sleeping for offload; keeping LOCAL
+        // protects the non-offload fallback from being stopped with the screen off.
+        (player as? ExoPlayer)?.let { exo -> runCatching { exo.setWakeMode(C.WAKE_MODE_LOCAL) } }
+        val strategy = when {
+            mode == AudioMode.BATTERY -> "Ahorro: offload al DSP cuando el formato lo admite, sin efectos"
+            offload -> "Offload solicitado; Media3 vuelve a la ruta normal si no es compatible"
+            mode == AudioMode.HIFI -> "Alta fidelidad: PCM de alta resolución en coma flotante y ruta activa del sistema"
+            else -> "Equilibrado: ruta activa del sistema con efectos de Stone"
+        }
+        val output = inspectOutput()
+        mutableDiagnostics.value = Diagnostics(mode, output.first, output.second,
+            offloadAvailable = offload, strategy = strategy)
     }
 
     /** Reads the current route only when a mode is applied or diagnostics are requested. */
@@ -88,7 +91,10 @@ class StoneEcoEngine(context: Context) {
     }
 
     private fun inspectOutput(): Pair<String, Boolean> {
-        val device = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS).firstOrNull()
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        val device = devices.firstOrNull { it.type in EXTERNAL_OUTPUTS }
+            ?: devices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+            ?: devices.firstOrNull()
             ?: return "Sin salida detectada" to false
         val usb = device.type == AudioDeviceInfo.TYPE_USB_DEVICE ||
             device.type == AudioDeviceInfo.TYPE_USB_HEADSET
@@ -99,5 +105,13 @@ class StoneEcoEngine(context: Context) {
                 else -> "Salida de audio"
             }
         return name to usb
+    }
+
+    private companion object {
+        val EXTERNAL_OUTPUTS = setOf(
+            AudioDeviceInfo.TYPE_USB_DEVICE, AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+        )
     }
 }
