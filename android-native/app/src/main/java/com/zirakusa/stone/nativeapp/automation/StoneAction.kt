@@ -3,14 +3,16 @@ package com.zirakusa.stone.nativeapp.automation
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** How dangerous an action is; decides whether it runs on its own or asks the user. */
+/** How dangerous an action is; with the token's [AccessMode] it decides whether the user is asked. */
 enum class ActionRisk {
-    /** Only reads state. Always automatic. */
+    /** Only reads state. */
     READ,
-    /** Changes something easy to undo (playback, theme). Automatic while API mode is on. */
+    /** Changes something easy to undo (playback, theme). */
     REVERSIBLE,
-    /** Writes files or library data. Always asks for confirmation on the phone. */
+    /** Writes tags, lyrics or covers. A backup is kept first, so metadata_undo can revert it. */
     PERSISTENT,
+    /** Destructive and not undoable (deleting a playlist). Asks on the phone in "Lectura y escritura". */
+    CRITICAL,
 }
 
 class ActionParam(val name: String, val type: String, val description: String, val required: Boolean = false,
@@ -44,7 +46,18 @@ class StoneAction(
         .put("additionalProperties", false)
 }
 
-class ActionException(message: String) : Exception(message)
+/**
+ * Error returned to the agent with a stable [code] (see docs/MCP.md) and an optional [hint]
+ * telling it how to recover.
+ */
+class ActionException(message: String, val code: String = "ACTION_FAILED", val hint: String? = null) : Exception(message) {
+    fun json(): JSONObject = JSONObject().put("code", code).put("message", message).apply { hint?.let { put("hint", it) } }
+}
 
-/** Entry of the in-app activity list (Ajustes › Modo API). */
-data class ActionRecord(val timeMs: Long, val action: String, val ok: Boolean, val detail: String)
+/** Outcome of an agent request, as shown in Ajustes › Modo API › Actividad. */
+enum class RecordStatus { OK, FAILED, DENIED }
+
+/** Entry of the in-app activity list. [risk] tells queries from changes. */
+data class ActionRecord(val timeMs: Long, val action: String, val ok: Boolean, val detail: String,
+    val status: RecordStatus = if (ok) RecordStatus.OK else RecordStatus.FAILED, val risk: ActionRisk = ActionRisk.READ,
+    val token: String = "")

@@ -86,20 +86,40 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
 | Fallo de DNS o de red en el agente | El entorno del agente no puede salir a internet | No es un problema de Stone: usar un cliente con acceso a red. |
 
-## Permisos del enlace
+## Permisos y tokens
 
-En Stone › Ajustes › Modo API › Opciones avanzadas › Permisos del enlace:
+Stone › Ajustes › Modo API › Seguridad. Cada token tiene un modo:
 
-- **Solo lectura**: el agente solo ve herramientas de consulta (buscar, estado, etiquetas, letras).
-- **Permitir edición (escritura)**: activa las herramientas `metadata_update*` y `metadata_set_lyrics`.
-  Si está apagada, el agente puede reproducir y cambiar ajustes, pero no tocar archivos.
+| Modo | Qué puede hacer | Qué pide aprobación |
+| --- | --- | --- |
+| Solo lectura | Consultas (`*_get`, `library_search`, `player_state`…) | Nada |
+| Lectura y escritura | Todo | Solo lo crítico (`playlist_delete`) |
+| Acceso completo | Todo | Nada |
 
-Además, cada herramienta tiene su casilla: las desmarcadas no se ofrecen al agente.
+En Herramientas cada función tiene su interruptor: las apagadas no se ofrecen a ningún agente.
+Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
+`metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
 
-`tools/list` solo muestra lo permitido; llamar a una herramienta bloqueada devuelve `isError: true` con el motivo.
+Android exige su propio permiso para editar archivos de la biblioteca del teléfono. Stone lo pide
+una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de pedirlo.
+
+## Edición masiva
+
+- `dryRun: true` en cualquier herramienta de edición devuelve qué cambiaría sin escribir nada.
+- `metadata_update_many`, `metadata_set_lyrics_many`: array JSON en `changes`.
+- `metadata_fetch_lyrics`: descarga letras de lrclib.net (sincronizadas si existen).
+- `metadata_rename`: plantillas `{title} {artist} {album} {file} {date} {n} {n:2}`, `clean`
+  (quita `_`, extensiones, `[1080p]`, `x264`, IDs de YouTube…) y `find`/`replace` con regex.
+- Los lotes devuelven `total`, `updated`, `failed`, `durationMs`, `batchId` y un resultado por elemento.
+
+## Códigos de error
+
+`structuredContent.error.code` (y `[CODE]` al inicio del texto): `UNKNOWN_TOOL`, `INVALID_PARAM`,
+`NOT_FOUND`, `READ_ONLY_TOKEN`, `TOOL_DISABLED`, `USER_DENIED`, `ANDROID_CONSENT`,
+`UNSUPPORTED_FORMAT`, `STONE_CLOSED`, `LYRICS_NOT_FOUND`, `SKIPPED`, `ACTION_FAILED`.
+Muchos incluyen `hint` con cómo resolverlo.
 
 ## Seguridad
 
 Quien tenga el enlace controla la reproducción. No lo pegues en sitios públicos; si se filtra,
-pulsa "Cambiar enlace" en Stone para revocarlo. Las acciones que escriben archivos siempre piden
-confirmación en el teléfono.
+pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca el que ya no uses.

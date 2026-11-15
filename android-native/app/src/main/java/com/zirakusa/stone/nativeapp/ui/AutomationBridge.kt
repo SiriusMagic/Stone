@@ -5,7 +5,11 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.view.WindowManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -122,6 +126,18 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
         }
         StoneAutomation.host = host
         onDispose { if (StoneAutomation.host === host) StoneAutomation.host = null }
+    }
+    // Android's own dialog for MediaStore files, asked once per batch of agent edits.
+    val writeRequest by StoneAutomation.writeRequest.collectAsState()
+    val currentWrite by rememberUpdatedState(writeRequest)
+    val writeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        currentWrite?.let { StoneAutomation.answerWriteAccess(it, result.resultCode == Activity.RESULT_OK) }
+    }
+    LaunchedEffect(writeRequest) {
+        writeRequest?.let { request ->
+            runCatching { writeLauncher.launch(IntentSenderRequest.Builder(request.sender).build()) }
+                .onFailure { StoneAutomation.answerWriteAccess(request, false) }
+        }
     }
     val pending by StoneAutomation.confirmation.collectAsState()
     pending?.let { request ->

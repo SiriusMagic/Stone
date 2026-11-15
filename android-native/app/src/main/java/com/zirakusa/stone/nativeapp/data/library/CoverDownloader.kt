@@ -2,6 +2,7 @@ package com.zirakusa.stone.nativeapp.data.library
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.core.graphics.scale
 import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -61,8 +62,8 @@ object CoverDownloader {
             ?: error("The cover image could not be decoded")
         val scale = MAX_SIDE.toFloat() / maxOf(bitmap.width, bitmap.height)
         if (scale >= 1f) return bitmap
-        return Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt().coerceAtLeast(1),
-            (bitmap.height * scale).toInt().coerceAtLeast(1), true).also { if (it !== bitmap) bitmap.recycle() }
+        return bitmap.scale((bitmap.width * scale).toInt().coerceAtLeast(1), (bitmap.height * scale).toInt().coerceAtLeast(1))
+            .also { if (it !== bitmap) bitmap.recycle() }
     }
 
     private fun toJpeg(bytes: ByteArray): ByteArray {

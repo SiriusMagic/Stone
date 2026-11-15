@@ -2,7 +2,10 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.automation.AccessMode
+import com.zirakusa.stone.nativeapp.automation.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.ApiMode
+import com.zirakusa.stone.nativeapp.automation.ApiToken
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
 import com.zirakusa.stone.nativeapp.automation.McpCheck
 import com.zirakusa.stone.nativeapp.automation.McpSelfTest
@@ -240,29 +243,43 @@ class McpServerTest {
         assertEquals(-32601, rpc("nope").getJSONObject("error").getInt("code"))
     }
 
-    @Test fun linkPermissionsLimitToolsAndCalls() {
-        fun names() = rpc("tools/list").getJSONObject("result").getJSONArray("tools")
-            .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
-        assertTrue(names().containsAll(listOf("metadata_update", "metadata_update_many", "metadata_set_lyrics")))
-        try {
-            ApiMode.allowWrite(false)
-            assertFalse("metadata_update" in names())
-            assertTrue("player_play" in names())
-            val denied = rpc("tools/call", JSONObject().put("name", "metadata_set_lyrics")
-                .put("arguments", JSONObject().put("songId", songs[0].id).put("lyrics", "x"))).getJSONObject("result")
-            assertTrue(denied.getBoolean("isError"))
-
-            ApiMode.restrictToReading(true)
-            assertFalse("player_play" in names())
-            assertTrue(names().containsAll(listOf("library_search", "metadata_get", "player_state")))
-            val blocked = rpc("tools/call", JSONObject().put("name", "player_play")).getJSONObject("result")
-            assertTrue(blocked.getBoolean("isError"))
-            assertEquals(0, toggles)
-            assertFalse(rpc("tools/call", JSONObject().put("name", "player_state")).getJSONObject("result").getBoolean("isError"))
-        } finally {
-            ApiMode.restrictToReading(false)
-            ApiMode.allowWrite(true)
+    @Test fun eachTokenHasItsOwnModeAndErrorsCarryCodes() {
+        McpServer.updateTokens(listOf(ApiToken("w", "Claude", token, AccessMode.WRITE, 0),
+            ApiToken("r", "Lector", "read-token", AccessMode.READ, 0), ApiToken("f", "Total", "full-token", AccessMode.FULL, 0)))
+        fun rpcAs(secret: String, method: String, params: JSONObject = JSONObject()): JSONObject {
+            val body = JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", method).put("params", params).toString()
+            val (code, text) = post(body, auth = "Bearer $secret")
+            assertEquals(200, code)
+            return JSONObject(text)
         }
+        fun names(secret: String) = rpcAs(secret, "tools/list").getJSONObject("result").getJSONArray("tools")
+            .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
+        assertTrue(names(token).containsAll(listOf("metadata_update", "metadata_undo", "metadata_rename", "playlist_delete")))
+        val readable = names("read-token")
+        assertFalse("player_play" in readable)
+        assertTrue(readable.containsAll(listOf("library_search", "metadata_get", "metadata_history", "player_state")))
+
+        val blocked = rpcAs("read-token", "tools/call", JSONObject().put("name", "player_play")).getJSONObject("result")
+        assertTrue(blocked.getBoolean("isError"))
+        assertEquals("READ_ONLY_TOKEN", blocked.getJSONObject("structuredContent").getJSONObject("error").getString("code"))
+        assertEquals(0, toggles)
+        // Full access never waits for the phone: a critical tool fails fast on its own error instead.
+        val delete = rpcAs("full-token", "tools/call", JSONObject().put("name", "playlist_delete")
+            .put("arguments", JSONObject().put("playlistId", "nope"))).getJSONObject("result")
+        assertTrue(delete.getBoolean("isError"))
+        assertFalse(delete.toString().contains("USER_DENIED"))
+        val unknown = rpcAs(token, "tools/call", JSONObject().put("name", "player_seek")
+            .put("arguments", JSONObject().put("bogus", 1))).getJSONObject("result")
+        assertEquals("INVALID_PARAM", unknown.getJSONObject("structuredContent").getJSONObject("error").getString("code"))
+        assertEquals(401, post("""{"jsonrpc":"2.0","id":1,"method":"ping"}""", auth = "Bearer revoked").first)
+    }
+
+    @Test fun accessModesOnlyAskForCriticalActions() {
+        assertFalse(AccessMode.WRITE.needsApproval(ActionRisk.PERSISTENT))
+        assertTrue(AccessMode.WRITE.needsApproval(ActionRisk.CRITICAL))
+        assertFalse(AccessMode.FULL.needsApproval(ActionRisk.CRITICAL))
+        assertFalse(AccessMode.READ.permits(ActionRisk.REVERSIBLE))
+        assertTrue(AccessMode.READ.permits(ActionRisk.READ))
     }
 
     @Test fun likesAnySongAndSingleToolsCanBeSwitchedOff() {

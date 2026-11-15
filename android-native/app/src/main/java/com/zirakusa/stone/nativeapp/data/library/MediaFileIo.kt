@@ -30,9 +30,14 @@ object MediaFileIo {
     fun needsWriteConsent(context: Context, value: String): Boolean {
         val uri = value.toUri()
         if (Build.VERSION.SDK_INT < 30 || uri.authority != MediaStore.AUTHORITY) return false
+        // "Acceso a todos los archivos" lets Stone edit any media file without a per-file dialog.
+        if (hasAllFilesAccess()) return false
         return context.checkUriPermission(uri, Process.myPid(), Process.myUid(),
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != PackageManager.PERMISSION_GRANTED
     }
+
+    /** Android 11+ "All files access" granted in system settings. */
+    fun hasAllFilesAccess(): Boolean = Build.VERSION.SDK_INT >= 30 && runCatching { Environment.isExternalStorageManager() }.getOrDefault(false)
 
     fun writeConsentRequest(context: Context, values: List<String>): IntentSender? =
         if (Build.VERSION.SDK_INT >= 30) MediaStore.createWriteRequest(context.contentResolver,

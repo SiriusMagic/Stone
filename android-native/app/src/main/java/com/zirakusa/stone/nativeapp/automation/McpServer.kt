@@ -36,17 +36,25 @@ object McpServer {
     val identity: String get() = "Stone ${BuildConfig.VERSION_NAME} (${BuildConfig.APPLICATION_ID})"
 
     @Volatile private var socket: ServerSocket? = null
-    @Volatile private var token: String = ""
+    /** Valid tokens by secret. */
+    @Volatile private var grants: Map<String, ApiToken> = emptyMap()
     @Volatile var port: Int = DEFAULT_PORT; private set
     private var workers: ExecutorService? = null
     /** Open legacy SSE streams by session id. */
     private val streams = ConcurrentHashMap<String, OutputStream>()
+    private val streamGrants = ConcurrentHashMap<String, ApiToken>()
 
     val running: Boolean get() = socket?.isClosed == false
 
-    @Synchronized fun start(token: String, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean {
+    /** Single-token start (tests, older callers): that token gets "Lectura y escritura". */
+    fun start(token: String, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean =
+        start(listOf(ApiToken("main", "Principal", token, AccessMode.WRITE, 0)), localNetwork, port)
+
+    fun updateTokens(tokens: List<ApiToken>) { grants = tokens.associateBy { it.secret } }
+
+    @Synchronized fun start(tokens: List<ApiToken>, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean {
         stop()
-        this.token = token
+        updateTokens(tokens)
         this.port = port
         return runCatching {
             val address = if (localNetwork) InetAddress.getByName("0.0.0.0") else InetAddress.getLoopbackAddress()
@@ -68,6 +76,7 @@ object McpServer {
         socket = null
         streams.values.forEach { runCatching { it.close() } }
         streams.clear()
+        streamGrants.clear()
         workers?.shutdownNow()
         workers = null
     }
@@ -83,43 +92,49 @@ object McpServer {
         if (path == "/health") return McpHttp.respond(out, 200, JSONObject().put("status", "ok").put("server", "Stone")
             .put("version", BuildConfig.VERSION_NAME).put("mcpPath", PATH).put("tokenRequired", true))
         val session = request.query["sessionId"]?.takeIf { streams.containsKey(it) }
-        if (!authorized(request) && session == null) return McpHttp.respond(out, 401,
+        val grant = grantFor(request) ?: session?.let { streamGrants[it] }
+        if (grant == null) return McpHttp.respond(out, 401,
             error(null, -32001, if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
             else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo API."),
             listOf("WWW-Authenticate: Bearer"))
+        ApiTokens.touch(grant.id)
         when {
-            path == "/sse" && request.method == "GET" -> openStream(client, out, request)
-            path == "/messages" && request.method == "POST" -> postToStream(out, request, session)
-            path == "/tools" && request.method == "GET" -> McpHttp.respond(out, 200, StoneGuide.toolList())
+            path == "/sse" && request.method == "GET" -> openStream(client, out, request, grant)
+            path == "/messages" && request.method == "POST" -> postToStream(out, request, session, grant)
+            path == "/tools" && request.method == "GET" -> McpHttp.respond(out, 200, StoneGuide.toolList(grant.mode))
             path.startsWith("/call/") && (request.method == "GET" || request.method == "POST") ->
-                simpleCall(out, request, path.removePrefix("/call/"))
-            path == PATH || path == "/" -> streamableHttp(out, request)
+                simpleCall(out, request, path.removePrefix("/call/"), grant)
+            path == PATH || path == "/" -> streamableHttp(out, request, grant)
             else -> McpHttp.respond(out, 404, error(null, -32601,
                 "Stone: unknown path. Use POST $PATH (MCP), GET /sse, GET /tools, GET /call/TOOL_NAME or GET /health."))
         }
     }
 
     /** One tool per plain request, for agents that cannot speak MCP: `GET /call/player_state?token=…`. */
-    private fun simpleCall(out: OutputStream, request: McpRequest, tool: String) {
+    private fun simpleCall(out: OutputStream, request: McpRequest, tool: String, grant: ApiToken) {
         val action = StoneAutomation.find(tool) ?: return McpHttp.respond(out, 404, JSONObject().put("ok", false)
             .put("error", "Unknown tool '$tool'. GET /tools lists them, or call stone_help."))
         val reply = try {
             val body = request.body.takeIf { it.startsWith("{") }?.let(::JSONObject)
             val arguments = body ?: StoneGuide.arguments(action, request.query)
             JSONObject().put("ok", true).put("tool", action.toolName)
-                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments) })
+                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments, grant.mode, grant.name) })
+        } catch (failure: ActionException) {
+            JSONObject().put("ok", false).put("tool", action.toolName).put("error", failure.message)
+                .put("code", failure.code).apply { failure.hint?.let { put("hint", it) } }
         } catch (failure: Exception) {
             JSONObject().put("ok", false).put("tool", action.toolName).put("error", failure.message ?: "Action failed")
+                .put("code", "INVALID_REQUEST")
         }
         McpHttp.respond(out, if (reply.getBoolean("ok")) 200 else 400, reply)
     }
 
     /** Streamable HTTP: one POST per JSON-RPC message or batch; GET has no server stream here. */
-    private fun streamableHttp(out: OutputStream, request: McpRequest) {
+    private fun streamableHttp(out: OutputStream, request: McpRequest, grant: ApiToken) {
         when (request.method) {
             "POST" -> {
-                val (reply, initialized) = dispatch(request.body)
+                val (reply, initialized) = dispatch(request.body, grant)
                 val headers = if (initialized) listOf("Mcp-Session-Id: ${UUID.randomUUID()}") else emptyList()
                 if (reply == null) McpHttp.respond(out, 202, null, headers) else McpHttp.respond(out, 200, reply, headers)
             }
@@ -127,53 +142,54 @@ object McpServer {
             // MCP clients probe GET for a server stream (which Stone does not offer) and expect 405.
             // Anything else doing a GET (a browser, curl, an agent reading the link) gets a guide.
             else -> if (request.method == "GET" && request.header("accept")?.contains("text/event-stream") != true)
-                McpHttp.respond(out, 200, StoneGuide.overview())
+                McpHttp.respond(out, 200, StoneGuide.overview(grant.mode))
             else McpHttp.respond(out, 405, error(null, -32000,
                 "Stone: this endpoint has no server stream. Send MCP requests with POST (or use GET /sse)."), listOf("Allow: POST, DELETE"))
         }
     }
 
     /** Legacy SSE transport: announce where to post, then keep the stream alive until it closes. */
-    private fun openStream(client: Socket, out: OutputStream, request: McpRequest) {
+    private fun openStream(client: Socket, out: OutputStream, request: McpRequest, grant: ApiToken) {
         val id = UUID.randomUUID().toString()
         client.soTimeout = 0
         McpHttp.startEventStream(out)
         val tokenSuffix = request.query["token"]?.let { "&token=$it" }.orEmpty()
         McpHttp.event(out, "endpoint", "/messages?sessionId=$id$tokenSuffix")
         streams[id] = out
+        streamGrants[id] = grant
         try {
             while (running && streams.containsKey(id)) {
                 Thread.sleep(15_000)
                 McpHttp.event(out, null, "") // keep-alive; throws once the client is gone
             }
         } catch (_: Exception) {
-        } finally { streams.remove(id) }
+        } finally { streams.remove(id); streamGrants.remove(id) }
     }
 
-    private fun postToStream(out: OutputStream, request: McpRequest, session: String?) {
+    private fun postToStream(out: OutputStream, request: McpRequest, session: String?, grant: ApiToken) {
         val stream = session?.let { streams[it] }
             ?: return McpHttp.respond(out, 404, error(null, -32000, "Stone: unknown or closed SSE session"))
         McpHttp.respond(out, 202, null)
-        val (reply, _) = dispatch(request.body)
+        val (reply, _) = dispatch(request.body, grant)
         if (reply != null) runCatching { McpHttp.event(stream, "message", reply.toString()) }
     }
 
     /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
-    private fun dispatch(text: String): Pair<Any?, Boolean> = try {
+    private fun dispatch(text: String, grant: ApiToken): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {
             val batch = JSONArray(text)
             val messages = (0 until batch.length()).map { batch.getJSONObject(it) }
-            JSONArray(messages.mapNotNull(::handle)).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
+            JSONArray(messages.mapNotNull { handle(it, grant) }).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
         } else {
             val message = JSONObject(text)
-            handle(message) to (message.optString("method") == "initialize")
+            handle(message, grant) to (message.optString("method") == "initialize")
         }
     } catch (parse: org.json.JSONException) {
         error(null, -32700, "Invalid JSON") to false
     }
 
     /** Returns the JSON-RPC response, or null for notifications. */
-    private fun handle(message: JSONObject): JSONObject? {
+    private fun handle(message: JSONObject, grant: ApiToken): JSONObject? {
         val id = message.opt("id")
         val method = message.optString("method")
         if (id == null || id == JSONObject.NULL) return null
@@ -186,17 +202,20 @@ object McpServer {
                     .put("serverInfo", JSONObject().put("name", "stone").put("title", "Stone").put("version", BuildConfig.VERSION_NAME))
                     .put("instructions", "Controls the Stone music/video player on this phone. Call stone_help to find a tool by " +
                         "intention. Search the library first (library_search) to get song ids; player_state shows what is playing. " +
-                        "Tools that write files ask the user for confirmation on the phone (up to 60 s). " +
-                        if (ApiMode.readOnly) "This link is READ-ONLY: only query tools are listed."
-                        else if (!ApiMode.writeAccess) "Editing files is disabled for this link." else "")
+                        "Edit tools accept dryRun=true to preview changes; every edit is backed up and metadata_undo reverts it. " +
+                        "Errors carry a code (structuredContent.error.code). " + when (grant.mode) {
+                            AccessMode.READ -> "This token is READ-ONLY: only query tools are listed."
+                            AccessMode.WRITE -> "Only critical actions (like deleting a playlist) ask the user on the phone (up to 60 s)."
+                            AccessMode.FULL -> "Full access: nothing asks the user for approval."
+                        })
                 "ping" -> JSONObject()
-                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available.map { action ->
+                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode).map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)
                         .put("inputSchema", action.inputSchema())
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)
-                            .put("destructiveHint", action.risk == ActionRisk.PERSISTENT))
+                            .put("destructiveHint", action.risk == ActionRisk.CRITICAL))
                 }))
-                "tools/call" -> callTool(params)
+                "tools/call" -> callTool(params, grant)
                 // Optional lists some clients request at start-up; Stone has none of these.
                 "resources/list" -> JSONObject().put("resources", JSONArray())
                 "resources/templates/list" -> JSONObject().put("resourceTemplates", JSONArray())
@@ -211,18 +230,20 @@ object McpServer {
         }
     }
 
-    private fun callTool(params: JSONObject): JSONObject {
+    private fun callTool(params: JSONObject, grant: ApiToken): JSONObject {
         val name = params.optString("name")
         val arguments = params.optJSONObject("arguments") ?: JSONObject()
         return try {
-            val result = runBlocking { StoneAutomation.execute(name, arguments) }
+            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name) }
             JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", result.toString())))
                 .put("isError", false).apply { if (result is JSONObject) put("structuredContent", result) }
         } catch (failure: ActionException) {
             if (StoneAutomation.find(name) == null) throw IllegalArgumentException(
                 "Unknown tool '$name'. Call tools/list or the stone_help tool to see the valid names.")
-            // Tool errors go in the result so the model can read them and correct itself.
-            JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", failure.message)))
+            // Tool errors go in the result, with a stable code, so the model can read them and correct itself.
+            val text = "[${failure.code}] ${failure.message}" + (failure.hint?.let { " Hint: $it" } ?: "")
+            JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", text)))
+                .put("structuredContent", JSONObject().put("ok", false).put("error", failure.json()))
                 .put("isError", true)
         }
     }
@@ -232,9 +253,10 @@ object McpServer {
         return (bearer ?: request.header("x-api-key")?.trim() ?: request.query["token"]?.trim())?.takeIf { it.isNotEmpty() }
     }
 
-    private fun authorized(request: McpRequest): Boolean {
-        val given = givenToken(request) ?: return false
-        return token.isNotEmpty() && MessageDigest.isEqual(given.toByteArray(), token.toByteArray())
+    /** The token the request carries, compared in constant time, or null when missing or revoked. */
+    private fun grantFor(request: McpRequest): ApiToken? {
+        val given = givenToken(request)?.toByteArray() ?: return null
+        return grants.values.firstOrNull { MessageDigest.isEqual(given, it.secret.toByteArray()) }
     }
 
     private fun error(id: Any?, code: Int, message: String) = JSONObject().put("jsonrpc", "2.0")

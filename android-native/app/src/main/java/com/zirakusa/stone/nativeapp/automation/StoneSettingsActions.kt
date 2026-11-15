@@ -40,8 +40,8 @@ internal object StoneSettingsActions {
             val name = args.getString("name").trim().ifEmpty { throw ActionException("The name cannot be empty.") }
             host().renamePlaylist(target.id, name); ok("'${target.name}' renamed to '$name'")
         },
-        StoneAction("playlist.delete", "Delete a playlist (songs and files stay). Needs approval on the phone.",
-            ActionRisk.PERSISTENT, listOf(ActionParam("playlistId", "string", "Id from playlist_list.", true)),
+        StoneAction("playlist.delete", "Delete a playlist (songs and files stay). Critical: in \"Lectura y escritura\" mode the user approves it on the phone.",
+            ActionRisk.CRITICAL, listOf(ActionParam("playlistId", "string", "Id from playlist_list.", true)),
             summary = { args -> "Borrar la lista «${host().playlists.firstOrNull { it.id == args.optString("playlistId") }?.name ?: "?"}»" }) { args ->
             val target = playlist(args.getString("playlistId"))
             host().deletePlaylist(target.id); ok("Playlist '${target.name}' deleted")

@@ -1,3 +1,18 @@
+# Stone Kotlin 1.6.9
+
+- Modo API rediseñado en pestañas: General, Herramientas, Seguridad, Enlace y Actividad.
+- Modos de acceso: Solo lectura, Lectura y escritura (solo lo crítico, como borrar una lista, pide
+  aprobación) y Acceso completo (nada pregunta). Varios tokens, cada uno con nombre y modo propio;
+  se pueden rotar o revocar por separado.
+- Copia de seguridad antes de cada edición de etiquetas, letras o portadas: `metadata_history` y
+  `metadata_undo` (también "Deshacer la última edición" en Seguridad).
+- `dryRun` en todas las herramientas de edición; errores con código estable
+  (`structuredContent.error.code`); resumen y barra de progreso en las operaciones por lote.
+- Nuevas: `metadata_set_lyrics_many`, `metadata_fetch_lyrics` (lrclib.net) y `metadata_rename`
+  (plantillas `{artist} - {title}`, `{n:2}`, limpieza de nombres técnicos de vídeo, regex).
+- Android: un solo diálogo del sistema por lote y opción "Acceso a todos los archivos" para que
+  no vuelva a preguntar.
+
 # Stone Kotlin 1.6.8
 
 - Modo API: casilla por herramienta en Opciones avanzadas (agrupadas por categoría, con

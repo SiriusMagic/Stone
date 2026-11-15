@@ -23,22 +23,24 @@ internal object StoneGuide {
         "stone" to "Help and tool search")
 
     private fun StoneAction.brief() = JSONObject().put("name", toolName).put("description", description)
-        .put("needsPhoneApproval", risk == ActionRisk.PERSISTENT).put("readOnly", risk == ActionRisk.READ)
+        .put("risk", risk.name.lowercase()).put("readOnly", risk == ActionRisk.READ)
+        .put("undoable", risk == ActionRisk.PERSISTENT).put("critical", risk == ActionRisk.CRITICAL)
         .put("parameters", JSONArray(params.map { param ->
             JSONObject().put("name", param.name).put("type", param.type).put("required", param.required)
                 .put("description", param.description).apply { param.options?.let { put("options", JSONArray(it)) } }
         }))
 
     /** Tools whose name, description or parameters contain every word of [query]. */
-    fun search(query: String, category: String?): JSONObject {
+    fun search(query: String, category: String?, access: AccessMode = StoneAutomation.currentAccess): JSONObject {
         val words = query.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }
-        val matches = StoneAutomation.available.filter { action ->
+        val matches = StoneAutomation.available(access).filter { action ->
             val text = (action.name + " " + action.description + " " + action.params.joinToString(" ") { it.name + " " + it.description }).lowercase()
             (category == null || action.name.substringBefore('.') == category) && words.all { it in text }
         }
         return JSONObject().put("categories", JSONObject(categories as Map<*, *>))
             .put("workflow", "1) library_search to get song ids. 2) player_play_song / player_queue_next / playlist_add_songs with those ids. " +
-                "3) player_state to confirm. Tools marked needsPhoneApproval wait up to 60 s for the user to accept on the phone.")
+                "3) player_state to confirm. Edits accept dryRun=true and can be reverted with metadata_undo. " +
+                "Critical tools may wait up to 60 s for the user to accept on the phone.").put("access", access.key)
             .put("total", matches.size).put("tools", JSONArray(matches.map { it.brief() }))
     }
 
@@ -51,7 +53,7 @@ internal object StoneGuide {
     }
 
     /** JSON shown to a plain GET (browser, curl, an agent probing the link). */
-    fun overview(): JSONObject = JSONObject()
+    fun overview(access: AccessMode): JSONObject = JSONObject()
         .put("server", "Stone").put("version", BuildConfig.VERSION_NAME).put("protocol", "Model Context Protocol (MCP)")
         .put("status", "ok: the token is valid and Stone is reachable")
         .put("howToConnect", JSONObject()
@@ -63,16 +65,10 @@ internal object StoneGuide {
                 "Examples: /call/player_state , /call/player_set_volume?percent=40 , /call/library_search?query=love&limit=5")
             .put("health", ".../health needs no token and only says whether Stone is running."))
         .put("firstSteps", JSONArray(listOf("stone_help", "player_state", "library_search")))
-        .put("access", access()).put("tools", JSONArray(StoneAutomation.available.map { JSONObject().put("name", it.toolName).put("description", it.description) }))
+        .put("access", access.key).put("tools", JSONArray(StoneAutomation.available(access).map { JSONObject().put("name", it.toolName).put("description", it.description) }))
 
-    fun toolList(): JSONObject = StoneAutomation.available.let { tools ->
-        JSONObject().put("total", tools.size).put("access", access()).put("tools", JSONArray(tools.map { it.brief() }))
-    }
-
-    private fun access() = when {
-        ApiMode.readOnly -> "read-only"
-        !ApiMode.writeAccess -> "control (no file editing)"
-        else -> "full (file edits need approval on the phone)"
+    fun toolList(access: AccessMode): JSONObject = StoneAutomation.available(access).let { tools ->
+        JSONObject().put("total", tools.size).put("access", access.key).put("tools", JSONArray(tools.map { it.brief() }))
     }
 
     /** Turns `?percent=40&enabled=true` into typed arguments following the tool's schema. */

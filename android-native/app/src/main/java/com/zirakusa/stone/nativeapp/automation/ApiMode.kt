@@ -16,17 +16,11 @@ object ApiMode {
         private set
     var localNetwork by mutableStateOf(false)
         private set
-    var token by mutableStateOf("")
-        private set
+    /** Secret of the main token (the one behind the big Copy button). */
+    val token: String get() = ApiTokens.primary?.secret.orEmpty()
     var port by mutableIntStateOf(McpServer.DEFAULT_PORT)
         private set
     var running by mutableStateOf(false)
-        private set
-    /** Read-only link: agents can only query; nothing is played or changed. */
-    var readOnly by mutableStateOf(false)
-        private set
-    /** Lets agents edit tags, lyrics and covers of songs and videos (each change is approved on the phone). */
-    var writeAccess by mutableStateOf(true)
         private set
     /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
     var relayState by mutableStateOf(RelayClient.State.OFFLINE)
@@ -45,12 +39,10 @@ object ApiMode {
         this.store = store
         enabled = store.look("api.enabled", "false").toBoolean()
         localNetwork = store.look("api.lan", "false").toBoolean()
-        readOnly = store.look("api.readOnly", "false").toBoolean()
-        writeAccess = store.look("api.write", "true").toBoolean()
         disabledTools = store.look("api.disabled", "").split(',').filter { it.isNotBlank() }.toSet()
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
-        token = store.look("api.token", "").ifBlank { newToken().also { store.setLook("api.token", it) } }
+        ApiTokens.load(store, "Principal")
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
         relaySecret = store.look("api.relaySecret", "").ifBlank { newToken(32).also { store.setLook("api.relaySecret", it) } }
         apply()
@@ -58,8 +50,9 @@ object ApiMode {
 
     fun enable(value: Boolean) { enabled = value; store?.setLook("api.enabled", value.toString()); apply() }
     fun allowLocalNetwork(value: Boolean) { localNetwork = value; store?.setLook("api.lan", value.toString()); apply() }
-    fun restrictToReading(value: Boolean) { readOnly = value; store?.setLook("api.readOnly", value.toString()) }
-    fun allowWrite(value: Boolean) { writeAccess = value; store?.setLook("api.write", value.toString()) }
+    /** Access mode of the main token (the cards of the General tab). */
+    val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
+    fun changeMode(value: AccessMode) { ApiTokens.primary?.let { ApiTokens.setMode(it.id, value) } }
 
     /** Tools the user switched off one by one (MCP names). */
     var disabledTools by mutableStateOf(emptySet<String>())
@@ -74,18 +67,12 @@ object ApiMode {
         store?.setLook("api.disabled", disabledTools.sorted().joinToString(","))
     }
 
-    /** Whether the link may use [action]: its risk level is allowed and the tool is not switched off. */
-    fun permits(action: StoneAction): Boolean = permits(action.risk) && action.toolName !in disabledTools
+    /** Whether a token with [access] may use [action]: allowed by its mode and not switched off. */
+    fun permits(action: StoneAction, access: AccessMode = mode): Boolean =
+        access.permits(action.risk) && action.toolName !in disabledTools
 
-    /** Whether the current link's permissions let an agent use an action of [risk]. */
-    fun permits(risk: ActionRisk): Boolean = when (risk) {
-        ActionRisk.READ -> true
-        ActionRisk.REVERSIBLE -> !readOnly
-        ActionRisk.PERSISTENT -> !readOnly && writeAccess
-    }
-
-    /** Revokes every agent that knows the old token. */
-    fun regenerateToken() { token = newToken(); store?.setLook("api.token", token); apply() }
+    /** Revokes every agent that knows the old main token. */
+    fun regenerateToken() { ApiTokens.primary?.let { ApiTokens.rotate(it.id) } }
 
     /** Changes the port (1024-65535); false when the value is not valid. */
     fun changePort(value: Int): Boolean {
@@ -95,14 +82,18 @@ object ApiMode {
     }
 
     private fun apply() {
-        running = if (enabled) McpServer.start(token, localNetwork, port) else { McpServer.stop(); false }
+        running = if (enabled) McpServer.start(ApiTokens.tokens, localNetwork, port) else { McpServer.stop(); false }
         if (enabled && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }
 
     /** The one link users paste into Claude or ChatGPT; changing the token revokes the old one. */
-    fun publicLink(): String? = if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}?token=$token" else null
+    fun publicLink(secret: String = token): String? =
+        if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}?token=$secret" else null
+
+    /** Internet link when there is a relay, else this phone's address. */
+    fun linkFor(secret: String = token): String = publicLink(secret) ?: "http://127.0.0.1:$port${McpServer.PATH}?token=$secret"
 
     /** Wi-Fi addresses of this phone (only when the local network is allowed). */
     fun lanHosts(): List<String> = if (!localNetwork) emptyList() else runCatching {
