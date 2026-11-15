@@ -146,7 +146,11 @@ class StonePlaybackService : MediaSessionService() {
                 // read; it is never persisted as a second volume source.
                 volumePercent = requestedPercent
             }
-            if (activePlayer?.volume != modeGain) activePlayer?.volume = modeGain
+            // At zero the player itself is muted too: this never depends on how the device's
+            // audio path applies the stream volume.
+            val playerVolume = if (volumePercent <= 0) 0f else modeGain
+            if (activePlayer?.volume != playerVolume) activePlayer?.volume = playerVolume
+            service?.let { live -> activePlayer?.let { live.ecoEngine?.setMuted(volumePercent <= 0, it) } }
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
             service?.let {
@@ -390,7 +394,7 @@ class StonePlaybackService : MediaSessionService() {
     fun applyAudioMode(mode: AudioMode) {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = false)
         modeGain = mode.gain
-        session?.player?.volume = mode.gain
+        session?.player?.volume = if (volumePercent <= 0) 0f else mode.gain
         setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }
         logAudio("service.applyAudioMode(${mode.key})", before, player = session?.player)

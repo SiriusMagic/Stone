@@ -14,7 +14,7 @@
     <string name="play">Play</string><string name="pause">Pause</string><string name="next">Next</string>
     <string name="previous">Previous</string><string name="back">Back</string><string name="shuffle">Shuffle</string>
     <string name="repeat">Repeat</string><string name="queue">Up next</string><string name="now_playing">Now playing</string>
-    <string name="volume">Volume</string><string name="boost">BOOST</string><string name="native_volume">NATIVE</string>
+    <string name="volume">Volume</string>
     <string name="seek">Playback position</string>
     <string name="search_toggle">Search</string><string name="clear_search">Clear search</string>
     <plurals name="video_count"><item quantity="one">%1$d video</item><item quantity="other">%1$d videos</item></plurals><string name="video_details">%1$s | %2$s</string>
@@ -254,7 +254,6 @@
     <string name="tags_format_unsupported">This format can\'t be tagged yet (supported: MP3, FLAC, M4A).</string>
     <string name="audio_mode_sleepy">Sleepy</string>
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
-    <string name="volume_sleepy_chip" formatted="false">Sleepy · max 10%</string>
     <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
     <string name="shorts">Shorts</string>
     <string name="movies">Movies</string>
@@ -290,4 +289,86 @@
     <string name="tags_duration">Duration</string>
     <string name="tags_size">Size</string>
     <string name="video_more_details">More details</string>
+    <string name="color_gold">Gold</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_white">White</string>
+    <string name="color_coffee">Coffee</string>
+    <string name="color_green">Green</string>
+    <string name="color_red">Red</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_soft">Soft gray</string>
+    <string name="color_accent">Same as accent</string>
+    <string name="theme_coffee">Coffee</string>
+    <string name="theme_golden">Dark gold</string>
+    <string name="custom_title">Custom</string>
+    <string name="custom_intro">Change Stone\'s colours, sizes, images and name. Changes apply instantly.</string>
+    <string name="custom_accent">Accent colour (lines, highlights, active icons)</string>
+    <string name="custom_text_color">Text colour</string>
+    <string name="custom_icon_color">Icon colour</string>
+    <string name="custom_font_size">Text size</string>
+    <string name="custom_icon_size">Icon size</string>
+    <string name="custom_background">Background image</string>
+    <string name="custom_avatar">Image instead of the penguin</string>
+    <string name="custom_pick_image">Pick from gallery</string>
+    <string name="custom_remove_image">Remove</string>
+    <string name="custom_app_name">App name</string>
+    <string name="custom_app_name_hint">Shown inside Stone and on the shortcut.</string>
+    <string name="custom_shortcut">Create a shortcut with this name and image</string>
+    <string name="custom_shortcut_hint">Android doesn\'t let an app change its own drawer icon or name; the shortcut appears on your home screen with the image and name you choose.</string>
+    <string name="custom_shortcut_unsupported">Your launcher doesn\'t support pinned shortcuts.</string>
+    <string name="custom_reset">Reset customisation</string>
+    <string name="custom_audio_max">Maximum volume: %1$d%%</string>
+    <string name="custom_audio_gain">Gain: %1$d%%</string>
+    <string name="audio_mode_custom">Custom</string>
+    <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Audio levels).</string>
+    <string name="audio_levels_title">Audio levels</string>
+    <string name="audio_levels_intro">Set each mode\'s maximum volume and gain. Gain lowers or raises the sound on top of Android\'s volume.</string>
+    <string name="audio_levels_battery" formatted="false">Battery saver always uses Android\'s plain 100 %, with no effects.</string>
+    <string name="audio_levels_reset">Reset levels</string>
+    <string name="layout_large">Large</string>
+    <string name="layout_list">List</string>
+    <string name="layout_compact">Compact</string>
+    <string name="layout_compact_action">Switch to compact list</string>
+    <string name="theme_ocean">Ocean</string>
+    <string name="theme_forest">Forest</string>
+    <string name="theme_wine">Wine</string>
+    <string name="theme_violet">Violet</string>
+    <string name="theme_slate">Slate</string>
+    <string name="api_title">API mode (AI agents)</string>
+    <string name="api_intro">Lets an MCP-compatible AI agent control Stone: playback, library, playlists, tags, themes and language. Stone works the same without it; off by default.</string>
+    <string name="api_enable">Enable MCP server</string>
+    <string name="api_enable_hint">Works while Stone is open.</string>
+    <string name="api_lan">Allow local network (Wi-Fi)</string>
+    <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
+    <string name="api_running">Server running</string>
+    <string name="api_failed">Could not start (port 8765 in use?)</string>
+    <string name="api_address">Address (tap to copy)</string>
+    <string name="api_token">Access token</string>
+    <string name="api_copy_token">Copy token</string>
+    <string name="api_new_token">Generate another</string>
+    <string name="api_header_hint">The agent must send the header «Authorization: Bearer TOKEN». A new token revokes the previous access.</string>
+    <string name="api_tools">Available tools</string>
+    <string name="api_risk_hint">○ read only · ◐ reversible change · ● modifies files: asks for your confirmation on screen.</string>
+    <string name="api_activity">Recent activity</string>
+    <string name="api_copied">Copied</string>
+    <string name="api_confirm_title">An agent wants to make a change</string>
+    <string name="api_confirm_allow">Allow</string>
+    <string name="api_confirm_deny">Deny</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_custom">Mine</string>
+    <string name="custom_hex">Hex</string>
+    <string name="custom_hue">Hue</string>
+    <string name="custom_saturation">Saturation</string>
+    <string name="custom_brightness">Brightness</string>
+    <string name="custom_color_hint">Move the sliders or type a colour such as #3FA7FF.</string>
+    <string name="custom_launcher_icon">Home icon</string>
+    <string name="custom_launcher_icon_hint">Changes the colour of Stone\'s icon on your home screen and app drawer. Some launchers take a few seconds to refresh it.</string>
+    <string name="launcher_original">Original</string>
+    <string name="sleep_timer_remaining">%1$s left · until %2$s</string>
+    <string name="sleep_add_minutes">+%1$d min</string>
+    <string name="sleep_fade_out">Lower the volume gradually at the end</string>
+    <string name="sleep_fade_out_hint">During the last half minute the sound fades out softly.</string>
+    <string name="sleep_end_of_track">When this song ends</string>
 </resources>

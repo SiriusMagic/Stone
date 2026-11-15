@@ -14,7 +14,10 @@ data class StoneSettings(
     val crossfadeSeconds: Int = 5,
     val notifyNewFiles: Boolean = false,
     val pushNotifications: Boolean = false,
+    /** Last custom duration chosen in the sleep timer (minutes). */
     val sleepMinutes: Int = 0,
+    val sleepFinishTrack: Boolean = false,
+    val sleepFadeOut: Boolean = true,
     val audioMode: String = "balanced",
     val autoRescan: Boolean = true,
     /** Index every song/video on the device through MediaStore (needs media permission). */
@@ -41,8 +44,10 @@ class StoneSettingsStore(context: Context) {
         notifyNewFiles = db.setting("notifyNewFiles", "false").toBoolean(),
         pushNotifications = db.setting("pushNotifications", "false").toBoolean(),
         sleepMinutes = db.setting("sleepMinutes", "0").toIntOrNull()?.coerceAtLeast(0) ?: 0,
+        sleepFinishTrack = db.setting("sleepFinishTrack", "false").toBoolean(),
+        sleepFadeOut = db.setting("sleepFadeOut", "true").toBoolean(),
         audioMode = db.setting("audioMode", "balanced")
-            .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced",
+            .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy", "custom") } ?: "balanced",
         autoRescan = db.setting("autoRescan", "true").toBoolean(),
         deviceScan = db.setting("deviceScan", "true").toBoolean(),
         hardwareAcceleration = db.setting("hardwareAcceleration", "automatic")
@@ -52,7 +57,7 @@ class StoneSettingsStore(context: Context) {
         videoScale = db.setting("videoScale", "auto")
             .takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto",
         videoLibraryLayout = db.setting("videoLibraryLayout", "grid")
-            .takeIf { it in setOf("grid", "list") } ?: "grid",
+            .takeIf { it in setOf("grid", "list", "compact") } ?: "grid",
         immersiveEnabled = db.setting("immersiveMode", legacyImmersiveDefault(db)).toBoolean(),
         shakeToReport = db.setting("shakeToReport", "true").toBoolean(),
     )
@@ -60,6 +65,9 @@ class StoneSettingsStore(context: Context) {
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
     fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in setOf("es", "en") } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())
+    /** Personalizado values (colours, sizes, images, name, custom audio level). */
+    fun look(key: String, fallback: String) = db.setting("look.$key", fallback)
+    fun setLook(key: String, value: String) = db.setSetting("look.$key", value)
     fun shortcutVisible(key: String, fallback: Boolean = true) =
         db.setting("home.shortcut.$key", fallback.toString()).toBoolean()
     fun setShortcutVisible(key: String, value: Boolean) =
@@ -82,13 +90,13 @@ class StoneSettingsStore(context: Context) {
     fun setCrossfadeSeconds(value: Int) = db.setSetting("crossfadeSeconds", value.coerceIn(0, 12).toString())
     fun setSleepMinutes(value: Int) = db.setSetting("sleepMinutes", value.coerceAtLeast(0).toString())
     fun setAudioMode(value: String) = db.setSetting("audioMode",
-        value.takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced")
+        value.takeIf { it in setOf("battery", "balanced", "hifi", "sleepy", "custom") } ?: "balanced")
     fun setHardwareAcceleration(value: String) = db.setSetting("hardwareAcceleration",
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
     fun setVideoScale(value: String) = db.setSetting("videoScale",
         value.takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto")
     fun setVideoLibraryLayout(value: String) = db.setSetting("videoLibraryLayout",
-        value.takeIf { it in setOf("grid", "list") } ?: "grid")
+        value.takeIf { it in setOf("grid", "list", "compact") } ?: "grid")
     fun setDeviceScan(value: Boolean) = db.setSetting("deviceScan", value.toString())
     fun setAutoRescan(value: Boolean) = db.setSetting("autoRescan", value.toString())
     /** True once Stone asked for the media permission on first launch. */

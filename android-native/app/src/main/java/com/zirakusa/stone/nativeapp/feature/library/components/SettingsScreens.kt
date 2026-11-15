@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.alpha
 import android.content.Intent
 import com.zirakusa.stone.nativeapp.R
+import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.SleepTimerContent
 import com.zirakusa.stone.nativeapp.feature.player.VideoScale
@@ -108,6 +109,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     SettingsMenuSection(R.string.settings_section_playback, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
                             "reproducción audio sonido modos salida altavoz bluetooth usb notificaciones avisos diagnóstico", { onPage("playback") }),
+                        SettingsMenuItem(Icons.Default.Equalizer, stringResource(R.string.audio_levels_title), "",
+                            "reproducción niveles audio ganancia volumen máximo dormilón cine balanceado altavoz sonido",
+                            { onPage("audio-levels") }),
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
@@ -116,12 +120,18 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             "reproducción vídeo video iconos controles personalizar", { onPage("video-controls") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
+                        SettingsMenuItem(Icons.Default.Hub, stringResource(R.string.api_title), "",
+                            "sistema api mcp agente ia inteligencia artificial automatización control externo token",
+                            { onPage("api-mode") }),
                         SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
                             "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
                     )),
                     SettingsMenuSection(R.string.settings_section_appearance, listOf(
                         SettingsMenuItem(Icons.Default.Fullscreen, stringResource(R.string.immersive_screen), "",
                             "personalización apariencia pantalla inmersiva barras sistema reproductor biblioteca", { onPage("immersive") }),
+                        SettingsMenuItem(Icons.Default.Palette, stringResource(R.string.custom_title), "",
+                            "personalizado color acento letras iconos tamaño fondo imagen nombre icono app audio nivel",
+                            { onPage("custom") }),
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
                             "personalización tema apariencia colores", { onPage("theme") }),
                         SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
@@ -162,7 +172,11 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 }
                 when (page) {
                     "theme" -> listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
-                        "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled).forEach { (value, label) ->
+                        "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled,
+                        "coffee" to R.string.theme_coffee, "golden" to R.string.theme_golden,
+                        "ocean" to R.string.theme_ocean, "forest" to R.string.theme_forest,
+                        "wine" to R.string.theme_wine, "violet" to R.string.theme_violet,
+                        "slate" to R.string.theme_slate).forEach { (value, label) ->
                         SettingsChoice(label, theme == value) { onTheme(value) }
                     }
                     "language" -> languages.forEach { item ->
@@ -170,6 +184,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
                     "library-scan" -> LibraryScanSettings(store)
+                    "custom" -> LookSettings(store)
+                    "audio-levels" -> AudioLevelSettings(store, playback)
+                    "api-mode" -> ApiModeSettings()
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "playback" -> {
                         PlaybackDetail(store, playback, { onPage("audio-mode") },
@@ -196,7 +213,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
     "light" -> R.string.theme_light; "gray" -> R.string.theme_gray
-    "midnight" -> R.string.theme_midnight; "amoled" -> R.string.theme_amoled; else -> R.string.theme_dark
+    "midnight" -> R.string.theme_midnight; "amoled" -> R.string.theme_amoled
+    "coffee" -> R.string.theme_coffee; "golden" -> R.string.theme_golden
+    "ocean" -> R.string.theme_ocean; "forest" -> R.string.theme_forest; "wine" -> R.string.theme_wine
+    "violet" -> R.string.theme_violet; "slate" -> R.string.theme_slate; else -> R.string.theme_dark
 })
 
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {
@@ -204,6 +224,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "shortcuts" -> R.string.settings_home_shortcuts
     "immersive" -> R.string.immersive_screen
     "library-scan" -> R.string.device_scan
+    "custom" -> R.string.custom_title
+    "audio-levels" -> R.string.audio_levels_title
+    "api-mode" -> R.string.api_title
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
     "video-controls" -> R.string.video_controls
@@ -361,8 +384,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(18.dp))
-        androidx.compose.foundation.Image(painterResource(R.drawable.stone_penguin), stringResource(R.string.stone),
-            Modifier.size(112.dp), contentScale = ContentScale.Fit)
+        StoneAvatar(Modifier.size(112.dp), stringResource(R.string.stone))
         Text(stringResource(R.string.stone), fontSize = 24.sp, fontWeight = FontWeight.Black,
             modifier = Modifier.padding(top = 14.dp))
         Text(stringResource(R.string.version_label, BuildConfig.VERSION_NAME), color = StonePalette.Muted,
@@ -503,6 +525,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         AudioMode.BALANCED -> stringResource(R.string.audio_mode_balanced)
         AudioMode.HIFI -> stringResource(R.string.audio_mode_hifi)
         AudioMode.SLEEPY -> stringResource(R.string.audio_mode_sleepy)
+        AudioMode.CUSTOM -> stringResource(R.string.audio_mode_custom)
     }
     Text(stringResource(R.string.system_diagnostics_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 14.dp))
@@ -701,6 +724,7 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         AudioMode.BALANCED -> R.string.audio_mode_balanced
         AudioMode.HIFI -> R.string.audio_mode_hifi
         AudioMode.SLEEPY -> R.string.audio_mode_sleepy
+        AudioMode.CUSTOM -> R.string.audio_mode_custom
     })
     Row(Modifier.fillMaxWidth().heightIn(min = 82.dp).clickable(onClick = open),
         verticalAlignment = Alignment.CenterVertically) {
@@ -728,6 +752,8 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
                 Icons.Default.GraphicEq)
             AudioMode.SLEEPY -> Triple(R.string.audio_mode_sleepy, R.string.audio_mode_sleepy_info,
                 Icons.Default.Bedtime)
+            AudioMode.CUSTOM -> Triple(R.string.audio_mode_custom, R.string.audio_mode_custom_info,
+                Icons.Default.Tune)
         }
             Row(Modifier.fillMaxWidth().clickable {
                 if (mode == AudioMode.BATTERY || mode == AudioMode.SLEEPY) playback?.setPlaybackProfile(

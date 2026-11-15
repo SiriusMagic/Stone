@@ -1,5 +1,17 @@
 # Stone Kotlin 1.6.0
 
+- Personalizado: acento libre ("Mío") con deslizadores de tono, saturación y brillo o código hex;
+  colores naranja y turquesa nuevos; icono de inicio en 11 colores (el pingüino sobre fondo de
+  color, cambia en la pantalla de inicio y en el cajón de apps).
+- Temporizador para dormir: cuenta regresiva en vivo, botones +5 y +15 min, presets 15/45/90,
+  "Al terminar esta canción", bajada gradual de volumen en el último medio minuto y memoria del
+  último tiempo personalizado y de los interruptores.
+- Modo API: herramientas `appearance_set_look`, `appearance_reset_look`, `player_sleep_timer` y
+  `player_sleep_timer_extend`; `appearance_get` devuelve toda la personalización.
+- Plan de nuevas funciones de controles de vídeo en `docs/STONE-VIDEO-CONTROLES-PLAN.md`.
+- Ajustes > Sistema > Modo API (agentes de IA): servidor MCP opcional, apagado por defecto, con
+  token Bearer, solo loopback salvo que se permita la red local; herramientas de reproducción,
+  biblioteca, listas, etiquetas (con confirmación en pantalla), tema, acento, idioma y modo de audio.
 - Biblioteca: mantener pulsado selecciona (canciones, vídeos y shorts) con "Seleccionar todos",
   lápiz para editar etiquetas y acciones Agregar a, Reproducir a continuación, Compartir y Borrar.
 - Vídeo: mantener pulsado reproduce a 2.0X mientras se mantiene el dedo.

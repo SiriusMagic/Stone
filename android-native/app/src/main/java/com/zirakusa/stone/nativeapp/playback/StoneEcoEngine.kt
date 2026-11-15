@@ -41,6 +41,15 @@ class StoneEcoEngine(context: Context) {
         applyPowerPolicy(player)
     }
 
+    private var muted = false
+
+    /** Volume reached zero (or left it): leave/re-enter offload so silence is guaranteed. */
+    fun setMuted(value: Boolean, player: Player) {
+        if (muted == value) return
+        muted = value
+        applyPowerPolicy(player)
+    }
+
     fun applyHardwareAcceleration(mode: HardwareAcceleration, player: Player) {
         acceleration = mode
         applyPowerPolicy(player)
@@ -54,8 +63,11 @@ class StoneEcoEngine(context: Context) {
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun applyPowerPolicy(player: Player) {
-        val offload = mode == AudioMode.BATTERY || mode == AudioMode.SLEEPY || (mode != AudioMode.HIFI &&
-            (acceleration == HardwareAcceleration.FULL || acceleration == HardwareAcceleration.ADAPTIVE))
+        // Offload hands volume to the audio DSP, and some devices ignore both a reduced track
+        // gain and a zero stream volume there. So it is never used by modes that attenuate
+        // in software (Dormilón, Personalizado) nor while the volume is at zero.
+        val offload = !muted && mode.gain >= 1f && (mode == AudioMode.BATTERY || (mode == AudioMode.BALANCED &&
+            (acceleration == HardwareAcceleration.FULL || acceleration == HardwareAcceleration.ADAPTIVE)))
         val preferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
             .setAudioOffloadMode(
                 if (offload) TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
@@ -73,7 +85,7 @@ class StoneEcoEngine(context: Context) {
         (player as? ExoPlayer)?.let { exo -> runCatching { exo.setWakeMode(C.WAKE_MODE_LOCAL) } }
         val strategy = when {
             mode == AudioMode.BATTERY -> "Ahorro: offload al DSP cuando el formato lo admite, sin efectos"
-            mode == AudioMode.SLEEPY -> "Dormilón: ganancia -20 dB (máximo 10 %) y bajo consumo"
+            mode == AudioMode.SLEEPY -> "Dormilón: ganancia -20 dB (máximo 10 %) aplicada por software"
             offload -> "Offload solicitado; Media3 vuelve a la ruta normal si no es compatible"
             mode == AudioMode.HIFI -> "Alta fidelidad: PCM de alta resolución en coma flotante y ruta activa del sistema"
             else -> "Equilibrado: ruta activa del sistema con efectos de Stone"

@@ -23,8 +23,8 @@
     <string name="shuffle">Aleatorio</string>
     <string name="repeat">Repetir</string>
     <string name="volume">Volumen</string>
-    <string name="boost">BOOST</string>
-    <string name="native_volume">NATIVO</string>
+    
+    
     <string name="queue">A continuación</string>
     <string name="now_playing">Reproduciendo</string>
     <string name="seek">Posición de reproducción</string>
@@ -320,7 +320,6 @@
     <string name="tags_format_unsupported">Este formato aún no admite edición de etiquetas (compatibles: MP3, FLAC, M4A).</string>
     <string name="audio_mode_sleepy">Dormilón</string>
     <string name="audio_mode_sleepy_info" formatted="false">Para escuchar en la cama sin molestar: el volumen máximo queda en el 10&#160;% y hasta el nivel más bajo suena suave. Ahorra batería.</string>
-    <string name="volume_sleepy_chip" formatted="false">Dormilón · máx. 10&#160;%</string>
     <plurals name="folder_count"><item quantity="one">%1$d carpeta</item><item quantity="other">%1$d carpetas</item></plurals>
     <string name="shorts">Shorts</string>
     <string name="movies">Películas</string>
@@ -356,4 +355,86 @@
     <string name="tags_duration">Duración</string>
     <string name="tags_size">Tamaño</string>
     <string name="video_more_details">Más detalles</string>
+    <string name="color_gold">Dorado</string>
+    <string name="color_blue">Azul</string>
+    <string name="color_white">Blanco</string>
+    <string name="color_coffee">Café</string>
+    <string name="color_green">Verde</string>
+    <string name="color_red">Rojo</string>
+    <string name="color_purple">Morado</string>
+    <string name="color_pink">Rosa</string>
+    <string name="color_soft">Gris suave</string>
+    <string name="color_accent">Igual que el acento</string>
+    <string name="theme_coffee">Café</string>
+    <string name="theme_golden">Dorado oscuro</string>
+    <string name="custom_title">Personalizado</string>
+    <string name="custom_intro">Cambia colores, tamaños, imágenes y nombre de Stone. Los cambios se ven al instante.</string>
+    <string name="custom_accent">Color de acento (líneas, marcados, iconos activos)</string>
+    <string name="custom_text_color">Color de las letras</string>
+    <string name="custom_icon_color">Color de los iconos</string>
+    <string name="custom_font_size">Tamaño de letra</string>
+    <string name="custom_icon_size">Tamaño de iconos</string>
+    <string name="custom_background">Imagen de fondo</string>
+    <string name="custom_avatar">Imagen en lugar del pingüino</string>
+    <string name="custom_pick_image">Elegir de la galería</string>
+    <string name="custom_remove_image">Quitar</string>
+    <string name="custom_app_name">Nombre de la app</string>
+    <string name="custom_app_name_hint">Se muestra dentro de Stone y en el acceso directo.</string>
+    <string name="custom_shortcut">Crear acceso directo con este nombre e imagen</string>
+    <string name="custom_shortcut_hint">Android no permite que una app cambie su propio icono o nombre del cajón; el acceso directo aparece en tu pantalla de inicio con la imagen y el nombre que elijas.</string>
+    <string name="custom_shortcut_unsupported">Tu lanzador no admite accesos directos fijados.</string>
+    <string name="custom_reset">Restablecer personalización</string>
+    <string name="custom_audio_max">Volumen máximo: %1$d%%</string>
+    <string name="custom_audio_gain">Ganancia: %1$d%%</string>
+    <string name="audio_mode_custom">Personalizado</string>
+    <string name="audio_mode_custom_info">Tu propio volumen máximo y ganancia (Ajustes › Niveles de audio).</string>
+    <string name="audio_levels_title">Niveles de audio</string>
+    <string name="audio_levels_intro">Ajusta el volumen máximo y la ganancia de cada modo. La ganancia baja o sube el sonido por encima del volumen de Android.</string>
+    <string name="audio_levels_battery" formatted="false">Ahorro de batería usa siempre el 100 % de Android, sin efectos.</string>
+    <string name="audio_levels_reset">Restablecer niveles</string>
+    <string name="layout_large">Grande</string>
+    <string name="layout_list">Lista</string>
+    <string name="layout_compact">Compacta</string>
+    <string name="layout_compact_action">Cambiar a lista compacta</string>
+    <string name="theme_ocean">Océano</string>
+    <string name="theme_forest">Bosque</string>
+    <string name="theme_wine">Vino</string>
+    <string name="theme_violet">Violeta</string>
+    <string name="theme_slate">Pizarra</string>
+    <string name="api_title">Modo API (agentes de IA)</string>
+    <string name="api_intro">Permite que un agente de IA compatible con MCP controle Stone: reproducción, biblioteca, listas, etiquetas, temas e idioma. Stone funciona igual sin esto; desactivado por defecto.</string>
+    <string name="api_enable">Activar servidor MCP</string>
+    <string name="api_enable_hint">Funciona mientras Stone esté abierto.</string>
+    <string name="api_lan">Permitir red local (Wi-Fi)</string>
+    <string name="api_lan_hint">Apagado: solo desde este teléfono. Encendido: otros equipos de tu Wi-Fi con el token.</string>
+    <string name="api_running">Servidor activo</string>
+    <string name="api_failed">No se pudo iniciar (¿puerto 8765 ocupado?)</string>
+    <string name="api_address">Dirección (toca para copiar)</string>
+    <string name="api_token">Token de acceso</string>
+    <string name="api_copy_token">Copiar token</string>
+    <string name="api_new_token">Generar otro</string>
+    <string name="api_header_hint">El agente debe enviar la cabecera «Authorization: Bearer TOKEN». Generar otro token revoca el acceso anterior.</string>
+    <string name="api_tools">Herramientas disponibles</string>
+    <string name="api_risk_hint">○ solo lectura · ◐ cambio reversible · ● modifica archivos: pide tu confirmación en pantalla.</string>
+    <string name="api_activity">Actividad reciente</string>
+    <string name="api_copied">Copiado</string>
+    <string name="api_confirm_title">Un agente quiere hacer un cambio</string>
+    <string name="api_confirm_allow">Permitir</string>
+    <string name="api_confirm_deny">Denegar</string>
+    <string name="color_orange">Naranja</string>
+    <string name="color_teal">Turquesa</string>
+    <string name="color_custom">Mío</string>
+    <string name="custom_hex">Hex</string>
+    <string name="custom_hue">Tono</string>
+    <string name="custom_saturation">Saturación</string>
+    <string name="custom_brightness">Brillo</string>
+    <string name="custom_color_hint">Mueve los deslizadores o escribe un color como #3FA7FF.</string>
+    <string name="custom_launcher_icon">Icono de inicio</string>
+    <string name="custom_launcher_icon_hint">Cambia el color del icono de Stone en tu pantalla de inicio y en el cajón de apps. Algunos lanzadores tardan unos segundos en refrescarlo.</string>
+    <string name="launcher_original">Original</string>
+    <string name="sleep_timer_remaining">Quedan %1$s · hasta las %2$s</string>
+    <string name="sleep_add_minutes">+%1$d min</string>
+    <string name="sleep_fade_out">Bajar el volumen poco a poco al final</string>
+    <string name="sleep_fade_out_hint">Durante el último medio minuto el sonido se apaga suavemente.</string>
+    <string name="sleep_end_of_track">Al terminar esta canción</string>
 </resources>

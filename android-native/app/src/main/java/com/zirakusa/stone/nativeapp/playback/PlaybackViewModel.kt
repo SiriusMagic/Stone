@@ -31,10 +31,51 @@ data class QueueEntry(val id: String, val title: String, val artist: String, val
  * (-20 dB): the whole volume range maps to 0-10 % of the normal output, so even Android's
  * lowest step becomes quiet enough for listening in bed next to someone sleeping.
  */
-enum class AudioMode(val key: String, val maxVolumePercent: Int, val gain: Float = 1f) {
+enum class AudioMode(val key: String, val defaultMaxPercent: Int, val defaultGain: Float = 1f) {
     BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300),
-    SLEEPY("sleepy", 100, gain = 0.1f)
+    SLEEPY("sleepy", 100, defaultGain = 0.1f),
+    /** The user's own level. */
+    CUSTOM("custom", 150);
+
+    /** Effective values: the defaults unless changed in Ajustes › Niveles de audio. */
+    val maxVolumePercent: Int get() = AudioLevels.maxPercent(this)
+    val gain: Float get() = AudioLevels.gain(this)
 }
+
+/**
+ * Per-mode volume ceiling and software gain. [gain] is applied on top of Android's volume
+ * (Dormilón defaults to 0.1 = -20 dB so even the lowest step is soft). Ahorro always keeps
+ * Android's plain 100 % because it must stay effect-free.
+ */
+object AudioLevels {
+    private val max = java.util.concurrent.ConcurrentHashMap<AudioMode, Int>()
+    private val gains = java.util.concurrent.ConcurrentHashMap<AudioMode, Float>()
+    val adjustable = listOf(AudioMode.SLEEPY, AudioMode.BALANCED, AudioMode.HIFI, AudioMode.CUSTOM)
+
+    fun maxPercent(mode: AudioMode) = max[mode] ?: mode.defaultMaxPercent
+    fun gain(mode: AudioMode) = gains[mode] ?: mode.defaultGain
+
+    fun load(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore) {
+        adjustable.forEach { mode ->
+            store.look("audio.${mode.key}.max", "").toIntOrNull()?.let { max[mode] = it.coerceIn(10, 300) }
+            store.look("audio.${mode.key}.gain", "").toFloatOrNull()?.let { gains[mode] = it.coerceIn(.01f, 1f) }
+        }
+    }
+
+    fun set(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore?, mode: AudioMode,
+        maxPercent: Int, gain: Float) {
+        if (mode !in adjustable) return
+        max[mode] = maxPercent.coerceIn(10, 300); gains[mode] = gain.coerceIn(.01f, 1f)
+        store?.setLook("audio.${mode.key}.max", max.getValue(mode).toString())
+        store?.setLook("audio.${mode.key}.gain", gains.getValue(mode).toString())
+    }
+
+    fun reset(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore?) {
+        max.clear(); gains.clear()
+        adjustable.forEach { store?.setLook("audio.${it.key}.max", ""); store?.setLook("audio.${it.key}.gain", "") }
+    }
+}
+
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
 }
@@ -46,7 +87,9 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val equalizerEnabled: Boolean = false, val equalizerValues: List<Int> = List(10) { 0 },
     val equalizerPreset: String = "Personalizado", val sleepMinutes: Int = 0,
     val sleepEndAtMs: Long = 0L,
-    val sleepFinishTrack: Boolean = false, val volumePercent: Int = 100,
+    val sleepFinishTrack: Boolean = false, val sleepFadeOut: Boolean = true,
+    /** Last duration set through "Tiempo personalizado", to prefill the picker. */
+    val sleepCustomMinutes: Int = 30, val volumePercent: Int = 100,
     val audioMode: AudioMode = AudioMode.BALANCED,
     val hardwareAcceleration: HardwareAcceleration = HardwareAcceleration.AUTOMATIC)
 
@@ -78,8 +121,12 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     }.getOrDefault(HardwareAcceleration.AUTOMATIC)
     private var sleepMinutes = 0
     private var sleepEndAtMs = 0L
-    private var sleepFinishTrack = false
+    private var sleepFinishTrack = settings.read().sleepFinishTrack
+    private var sleepFadeOut = settings.read().sleepFadeOut
+    private var sleepCustomMinutes = settings.read().sleepMinutes.takeIf { it > 0 } ?: 30
     private var sleepJob: Job? = null
+    /** Volume the player had before a sleep fade started; restored after the pause. */
+    private var volumeBeforeFade: Float? = null
     private var systemArtworkJob: Job? = null
     private var systemArtworkGeneration = 0L
     private val systemArtworkSources = mutableMapOf<String, ArtworkSource>()
@@ -197,7 +244,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             speed = speed, equalizerEnabled = equalizerEnabled,
             equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset,
             sleepMinutes = sleepMinutes, sleepEndAtMs = sleepEndAtMs,
-            sleepFinishTrack = sleepFinishTrack,
+            sleepFinishTrack = sleepFinishTrack, sleepFadeOut = sleepFadeOut,
+            sleepCustomMinutes = sleepCustomMinutes,
             volumePercent = volumePercent, audioMode = audioMode,
             hardwareAcceleration = hardwareAcceleration)
     }
@@ -414,35 +462,72 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         else -> null
     }
     fun setSleepTimer(minutes: Int, finishTrack: Boolean = sleepFinishTrack) {
-        sleepJob?.cancel()
-        sleepMinutes = minutes.coerceAtLeast(0)
-        sleepEndAtMs = if (sleepMinutes > 0) {
-            System.currentTimeMillis() + sleepMinutes * 60_000L
-        } else 0L
         sleepFinishTrack = finishTrack
-        if (sleepMinutes > 0) sleepJob = viewModelScope.launch {
-            delay(sleepMinutes * 60_000L)
-            if (sleepFinishTrack) {
-                val player = controller ?: return@launch
-                val previousRepeat = player.repeatMode
-                player.repeatMode = Player.REPEAT_MODE_ONE
-                var previous = player.currentPosition
-                while (true) {
-                    delay(200)
-                    val current = player.currentPosition
-                    if (current + 1_000 < previous || player.playbackState == Player.STATE_ENDED) {
-                        player.pause(); player.repeatMode = previousRepeat; break
-                    }
-                    previous = current
-                }
-            } else controller?.pause()
+        scheduleSleep(minutes.coerceAtLeast(0) * 60_000L)
+    }
+    /** Custom duration from the picker; remembered for next time. */
+    fun setCustomSleepTimer(minutes: Int) {
+        if (minutes > 0) { sleepCustomMinutes = minutes; settings.setSleepMinutes(minutes) }
+        setSleepTimer(minutes)
+    }
+    /** Adds [minutes] to a running timer (or starts one when none is active). */
+    fun extendSleepTimer(minutes: Int) {
+        val remaining = (sleepEndAtMs - System.currentTimeMillis()).coerceAtLeast(0L)
+        scheduleSleep(remaining + minutes.coerceAtLeast(0) * 60_000L)
+    }
+    /** Pauses when the current song ends, whatever is left of it. */
+    fun sleepAtEndOfTrack() {
+        val (position, duration) = progress()
+        sleepFinishTrack = true
+        scheduleSleep((duration - position).coerceAtLeast(1_000L), fade = false)
+    }
+    fun setSleepFinishTrack(value: Boolean) { sleepFinishTrack = value; settings.setBoolean("sleepFinishTrack", value); publish() }
+    fun setSleepFadeOut(value: Boolean) { sleepFadeOut = value; settings.setBoolean("sleepFadeOut", value); publish() }
+
+    private fun scheduleSleep(durationMs: Long, fade: Boolean = sleepFadeOut) {
+        sleepJob?.cancel()
+        restoreVolumeAfterFade()
+        sleepMinutes = ((durationMs + 59_999L) / 60_000L).toInt()
+        sleepEndAtMs = if (durationMs > 0) System.currentTimeMillis() + durationMs else 0L
+        if (durationMs > 0) sleepJob = viewModelScope.launch {
+            val fadeMs = if (fade && !sleepFinishTrack) SLEEP_FADE_MS.coerceAtMost(durationMs) else 0L
+            delay(durationMs - fadeMs)
+            if (fadeMs > 0) fadeOut(fadeMs)
+            if (sleepFinishTrack) waitForTrackEnd()
+            controller?.pause()
+            restoreVolumeAfterFade()
             sleepMinutes = 0
             sleepEndAtMs = 0L
             publish()
         }
         publish()
     }
-    fun setSleepFinishTrack(value: Boolean) { sleepFinishTrack = value; publish() }
+    private suspend fun fadeOut(fadeMs: Long) {
+        val player = controller ?: return
+        val start = player.volume.also { volumeBeforeFade = it }
+        val steps = 30
+        repeat(steps) { step ->
+            delay(fadeMs / steps)
+            player.volume = start * (1f - (step + 1f) / steps)
+        }
+    }
+    private fun restoreVolumeAfterFade() {
+        volumeBeforeFade?.let { controller?.volume = it }
+        volumeBeforeFade = null
+    }
+    private suspend fun waitForTrackEnd() {
+        val player = controller ?: return
+        val previousRepeat = player.repeatMode
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        var previous = player.currentPosition
+        while (true) {
+            delay(200)
+            val current = player.currentPosition
+            if (current + 1_000 < previous || player.playbackState == Player.STATE_ENDED) break
+            previous = current
+        }
+        player.repeatMode = previousRepeat
+    }
     fun remove(id: String) {
         val player = controller ?: return
         for (index in player.mediaItemCount - 1 downTo 0) if (player.getMediaItemAt(index).mediaId == id)
@@ -569,5 +654,10 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         controller?.removeListener(listener)
         MediaController.releaseFuture(future)
         equalizer.release()
+    }
+
+    private companion object {
+        /** Length of the volume fade before the sleep timer pauses. */
+        const val SLEEP_FADE_MS = 30_000L
     }
 }

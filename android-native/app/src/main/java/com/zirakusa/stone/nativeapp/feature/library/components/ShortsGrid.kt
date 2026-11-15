@@ -4,71 +4,32 @@ package com.zirakusa.stone.nativeapp.feature.library.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.feature.library.LibraryState
-import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-/** Short videos (< 1:30) as tall 9:16 cards, two per row like a shorts feed. */
-@Composable internal fun ShortsGrid(shorts: List<Song>, state: LibraryState, currentId: String,
-    modifier: Modifier, onPlay: (Song, List<Song>) -> Unit, onOptions: (Song) -> Unit,
-    onDelete: (Song) -> Unit = {}, onTagsSaved: () -> Unit = {}) {
-    val selection = remember { VideoSelectionState() }
-    VideoSelectionDialogs(selection, shorts, onDelete, onTagsSaved)
-    Column(modifier.fillMaxSize()) {
-    if (selection.active) Box(Modifier.padding(horizontal = 12.dp)) {
-        SelectionHeader(selection.ids.size, shorts.size, onExit = selection::exit, onToggleAll = {
-            selection.ids = if (selection.ids.size == shorts.size) emptySet() else shorts.map { it.id }.toSet()
-        })
-    }
-    LazyVerticalGrid(GridCells.Adaptive(150.dp), Modifier.weight(1f).fillMaxWidth().testTag("shorts-grid"),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(pluralStringResource(R.plurals.shorts_count, shorts.size, shorts.size),
-                color = StonePalette.SongSubtitle, fontSize = 15.sp, modifier = Modifier.padding(start = 4.dp))
+/** Tall 9:16 card for a short video (< 1:30), used by the "Grande" layout of the Shorts tab. */
+@Composable internal fun ShortCard(short: Song, selected: Boolean, play: () -> Unit, onOptions: () -> Unit,
+    checked: Boolean?, onLongClick: () -> Unit, onEdit: (() -> Unit)?) {
+    Box(Modifier.fillMaxWidth().aspectRatio(9f / 16f).combinedClickable(onLongClick = onLongClick, onClick = play)) {
+        VideoThumbnail(short, selected = selected, modifier = Modifier.fillMaxSize(), showPlay = false,
+            onOptions = onOptions.takeIf { checked == null }, fill = true, checked = checked)
+        if (onEdit != null) Box(Modifier.align(Alignment.TopEnd)) { EditTagsButton(onEdit) }
+        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(8.dp)) {
+            Text(videoDisplayTitle(short), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(formatVideoDuration(short.durationMs), Modifier.padding(top = 4.dp)
+                .background(Color(0xB3000000), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 2.dp),
+                color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        if (shorts.isEmpty() && !state.scanning) item(span = { GridItemSpan(maxLineSpan) }) {
-            LibraryEmptyState(videos = true)
-        }
-        items(shorts, key = { it.id }) { short ->
-            Box(Modifier.fillMaxWidth().aspectRatio(9f / 16f).combinedClickable(
-                onLongClick = { if (!selection.active) selection.start(short) },
-                onClick = { selection.click(short) { onPlay(short, shorts) } })) {
-                VideoThumbnail(short, selected = short.id == currentId, modifier = Modifier.fillMaxSize(),
-                    showPlay = false, onOptions = { onOptions(short) }.takeIf { !selection.active }, fill = true,
-                    checked = selection.checked(short))
-                if (selection.editable(short)) Box(Modifier.align(Alignment.TopEnd)) {
-                    EditTagsButton { selection.editing = short }
-                }
-                Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(8.dp)) {
-                    Text(videoDisplayTitle(short), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                        maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(formatVideoDuration(short.durationMs), Modifier.padding(top = 4.dp)
-                        .background(Color(0xB3000000), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 2.dp),
-                        color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-    VideoSelectionBar(selection, shorts)
     }
 }

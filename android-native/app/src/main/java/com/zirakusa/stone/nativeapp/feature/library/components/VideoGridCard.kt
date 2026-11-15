@@ -172,24 +172,26 @@ fun VideoGridCard(song: Song, selected: Boolean = false, play: () -> Unit,
 @Composable
 fun VideoListRow(song: Song, selected: Boolean = false, play: () -> Unit,
     onOptions: () -> Unit = {}, checked: Boolean? = null, onLongClick: (() -> Unit)? = null,
-    onEdit: (() -> Unit)? = null) {
+    onEdit: (() -> Unit)? = null, dense: Boolean = false) {
     Row(
-        Modifier.fillMaxWidth().combinedClickable(onLongClick = onLongClick, onClick = play).padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().combinedClickable(onLongClick = onLongClick, onClick = play)
+            .padding(vertical = if (dense) 3.dp else 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         VideoThumbnail(
             song = song,
             selected = selected,
-            modifier = Modifier.width(132.dp).aspectRatio(16f / 9f),
+            modifier = Modifier.width(if (dense) 84.dp else 132.dp).aspectRatio(16f / 9f),
+            showPlay = !dense,
             onOptions = null,
             checked = checked
         )
         Column(Modifier.weight(1f).padding(start = 12.dp)) {
             Text(
                 videoDisplayTitle(song),
-                fontSize = 16.sp,
+                fontSize = if (dense) 14.sp else 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
+                maxLines = if (dense) 1 else 2,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
