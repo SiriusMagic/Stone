@@ -12,12 +12,15 @@ import com.zirakusa.stone.nativeapp.R
  * Stone's mascots. The one chosen in Personalizado is shown inside the app (header, rail,
  * about) and as the home-screen icon. Each mascot is an `activity-alias` in the manifest with
  * its own adaptive icon; Stone keeps exactly one of them enabled.
+ *
+ * Alias names must never change: Android keeps the enabled state per name, so renaming or
+ * removing one can leave the app with no launcher entry after an update.
  */
 enum class LauncherIcon(val key: String, val alias: String, val drawable: Int, val label: Int) {
-    PENGUIN("penguin", "Launcher", R.drawable.mascot_penguin, R.string.mascot_penguin),
-    PANDA("panda", "LauncherPanda", R.drawable.mascot_panda, R.string.mascot_panda),
-    KOALA("koala", "LauncherKoala", R.drawable.mascot_koala, R.string.mascot_koala),
-    FOX("fox", "LauncherFox", R.drawable.mascot_fox, R.string.mascot_fox);
+    PENGUIN("penguin", "Home", R.drawable.mascot_penguin, R.string.mascot_penguin),
+    PANDA("panda", "HomePanda", R.drawable.mascot_panda, R.string.mascot_panda),
+    KOALA("koala", "HomeKoala", R.drawable.mascot_koala, R.string.mascot_koala),
+    FOX("fox", "HomeFox", R.drawable.mascot_fox, R.string.mascot_fox);
 
     companion object {
         /** The mascot currently in use, read from the package manager at start-up. */

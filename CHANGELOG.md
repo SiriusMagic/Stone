@@ -1,3 +1,9 @@
+# Stone Kotlin 1.6.2
+
+- Corrige que Stone no se abriera tras actualizar (el lanzador llevaba a los ajustes de Android):
+  si en la 1.6.0 se eligió un icono de color, la 1.6.1 quedaba sin ninguna entrada de inicio
+  activa. Las entradas de inicio tienen nombres nuevos y el pingüino vuelve a estar activo.
+
 # Stone Kotlin 1.6.1
 
 - Modo API más compatible: token por cabecera, `X-Api-Key` o `?token=` en el enlace; CORS para

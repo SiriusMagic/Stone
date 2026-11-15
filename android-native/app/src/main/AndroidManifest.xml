@@ -16,29 +16,32 @@
         <activity android:name=".MainActivity" android:exported="true"
             android:supportsPictureInPicture="true" android:resizeableActivity="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation" />
-        <!-- Home-screen mascots (Personalizado › Mascota). Exactly one alias is enabled. -->
-        <activity-alias android:name=".Launcher" android:targetActivity=".MainActivity"
+        <!-- Home-screen mascots (Personalizado › Mascota). Exactly one alias is enabled.
+             Never rename these: Android remembers enabled/disabled per name, and a removed or
+             renamed alias can leave Stone with no launcher entry after an update (1.6.1 bug).
+             Old names (.Launcher*) were dropped for that reason. -->
+        <activity-alias android:name=".Home" android:targetActivity=".MainActivity"
             android:exported="true" android:enabled="true" android:icon="@mipmap/ic_launcher_penguin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
-        <activity-alias android:name=".LauncherPanda" android:targetActivity=".MainActivity"
+        <activity-alias android:name=".HomePanda" android:targetActivity=".MainActivity"
             android:exported="true" android:enabled="false" android:icon="@mipmap/ic_launcher_panda">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
-        <activity-alias android:name=".LauncherKoala" android:targetActivity=".MainActivity"
+        <activity-alias android:name=".HomeKoala" android:targetActivity=".MainActivity"
             android:exported="true" android:enabled="false" android:icon="@mipmap/ic_launcher_koala">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
-        <activity-alias android:name=".LauncherFox" android:targetActivity=".MainActivity"
+        <activity-alias android:name=".HomeFox" android:targetActivity=".MainActivity"
             android:exported="true" android:enabled="false" android:icon="@mipmap/ic_launcher_fox">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
