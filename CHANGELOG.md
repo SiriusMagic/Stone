@@ -1,3 +1,11 @@
+# Stone Kotlin 1.6.4
+
+- El enlace del Modo API ya es público: el relevo está publicado y su dirección viene dentro de
+  la app (`stoneRelayUrl` en `android-native/gradle.properties`). "Copiar enlace" entrega un
+  enlace `https://…` que Claude y ChatGPT aceptan; ya no sale `127.0.0.1`.
+- Comprobado contra el relevo publicado: inicio de sesión MCP, lista de 27 herramientas, una
+  llamada real y rechazo de un token incorrecto.
+
 # Stone Kotlin 1.6.3
 
 - Modo API en dos toques: "Activar MCP" y "Copiar enlace". El enlace es fijo, lleva el token
