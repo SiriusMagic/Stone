@@ -45,10 +45,12 @@ fun SleepTimerIndicator(
     val fallbackEndAtMillis = remember(minutes) { System.currentTimeMillis() + minutes * 60_000L }
     val displayEndAtMillis = endAtMillis.takeIf { it > 0L } ?: fallbackEndAtMillis
     var daylight by remember { mutableStateOf(isDaylight()) }
-    LaunchedEffect(Unit) {
+    var remaining by remember { mutableStateOf(formatRemaining(displayEndAtMillis)) }
+    LaunchedEffect(displayEndAtMillis) {
         while (true) {
             daylight = isDaylight()
-            delay(60_000L)
+            remaining = formatRemaining(displayEndAtMillis)
+            delay(1_000L)
         }
     }
     Row(
@@ -72,7 +74,7 @@ fun SleepTimerIndicator(
         }
         if (showLabel) {
             Text(
-                stringResource(R.string.sleep_timer_until, formatEndTime(displayEndAtMillis)),
+                stringResource(R.string.sleep_timer_remaining, remaining, formatEndTime(displayEndAtMillis)),
                 color = StonePalette.Yellow,
                 maxLines = 1
             )
@@ -83,6 +85,13 @@ fun SleepTimerIndicator(
 private fun isDaylight(): Boolean {
     val time = LocalTime.now()
     return time.hour in 6..17
+}
+
+/** "1:05:30" or "25:30" left until [endAtMillis]. */
+private fun formatRemaining(endAtMillis: Long): String {
+    val seconds = ((endAtMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+    val hours = seconds / 3600; val minutes = seconds % 3600 / 60; val rest = seconds % 60
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, rest) else "%d:%02d".format(minutes, rest)
 }
 
 private fun formatEndTime(endAtMillis: Long): String = runCatching {

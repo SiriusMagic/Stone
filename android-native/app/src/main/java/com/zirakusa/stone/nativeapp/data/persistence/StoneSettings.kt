@@ -14,7 +14,10 @@ data class StoneSettings(
     val crossfadeSeconds: Int = 5,
     val notifyNewFiles: Boolean = false,
     val pushNotifications: Boolean = false,
+    /** Last custom duration chosen in the sleep timer (minutes). */
     val sleepMinutes: Int = 0,
+    val sleepFinishTrack: Boolean = false,
+    val sleepFadeOut: Boolean = true,
     val audioMode: String = "balanced",
     val autoRescan: Boolean = true,
     /** Index every song/video on the device through MediaStore (needs media permission). */
@@ -41,6 +44,8 @@ class StoneSettingsStore(context: Context) {
         notifyNewFiles = db.setting("notifyNewFiles", "false").toBoolean(),
         pushNotifications = db.setting("pushNotifications", "false").toBoolean(),
         sleepMinutes = db.setting("sleepMinutes", "0").toIntOrNull()?.coerceAtLeast(0) ?: 0,
+        sleepFinishTrack = db.setting("sleepFinishTrack", "false").toBoolean(),
+        sleepFadeOut = db.setting("sleepFadeOut", "true").toBoolean(),
         audioMode = db.setting("audioMode", "balanced")
             .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy", "custom") } ?: "balanced",
         autoRescan = db.setting("autoRescan", "true").toBoolean(),

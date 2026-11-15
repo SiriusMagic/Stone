@@ -421,4 +421,20 @@
     <string name="api_confirm_title">Un agente quiere hacer un cambio</string>
     <string name="api_confirm_allow">Permitir</string>
     <string name="api_confirm_deny">Denegar</string>
+    <string name="color_orange">Naranja</string>
+    <string name="color_teal">Turquesa</string>
+    <string name="color_custom">Mío</string>
+    <string name="custom_hex">Hex</string>
+    <string name="custom_hue">Tono</string>
+    <string name="custom_saturation">Saturación</string>
+    <string name="custom_brightness">Brillo</string>
+    <string name="custom_color_hint">Mueve los deslizadores o escribe un color como #3FA7FF.</string>
+    <string name="custom_launcher_icon">Icono de inicio</string>
+    <string name="custom_launcher_icon_hint">Cambia el color del icono de Stone en tu pantalla de inicio y en el cajón de apps. Algunos lanzadores tardan unos segundos en refrescarlo.</string>
+    <string name="launcher_original">Original</string>
+    <string name="sleep_timer_remaining">Quedan %1$s · hasta las %2$s</string>
+    <string name="sleep_add_minutes">+%1$d min</string>
+    <string name="sleep_fade_out">Bajar el volumen poco a poco al final</string>
+    <string name="sleep_fade_out_hint">Durante el último medio minuto el sonido se apaga suavemente.</string>
+    <string name="sleep_end_of_track">Al terminar esta canción</string>
 </resources>

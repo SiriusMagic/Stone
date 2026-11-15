@@ -8,7 +8,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
@@ -26,6 +28,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 @Composable internal fun AutomationBridge(playback: PlaybackViewModel, library: LibraryViewModel,
     libraryState: LibraryState, playbackState: PlaybackState, theme: String, language: String,
     onTheme: (String) -> Unit, onLanguage: (String) -> Unit) {
+    val context = LocalContext.current.applicationContext
     val currentLibrary by rememberUpdatedState(libraryState)
     val currentPlayback by rememberUpdatedState(playbackState)
     val currentTheme by rememberUpdatedState(theme)
@@ -54,6 +57,11 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             override fun setTheme(key: String) = setTheme(key)
             override fun setLanguage(code: String) = setLanguage(code)
             override fun refreshLibrary() = library.refresh()
+            override fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean) {
+                playback.setSleepFadeOut(fadeOut); playback.setSleepTimer(minutes, finishTrack)
+            }
+            override fun extendSleepTimer(minutes: Int) = playback.extendSleepTimer(minutes)
+            override fun setLauncherIcon(key: String) = LauncherIcon.apply(context, LauncherIcon.from(key))
         }
         StoneAutomation.host = host
         onDispose { if (StoneAutomation.host === host) StoneAutomation.host = null }

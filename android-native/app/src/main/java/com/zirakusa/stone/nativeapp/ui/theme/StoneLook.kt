@@ -5,19 +5,24 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 
 /** Accent colour that replaces Stone's gold everywhere (lines, highlights, active icons). */
 enum class StoneAccent(val key: String, val color: Color, val label: Int) {
     GOLD("gold", Color(0xFFF5C518), R.string.color_gold),
+    ORANGE("orange", Color(0xFFFF8A3D), R.string.color_orange),
     BLUE("blue", Color(0xFF4FB3FF), R.string.color_blue),
+    TEAL("teal", Color(0xFF3FD0D4), R.string.color_teal),
     WHITE("white", Color(0xFFF2F2F5), R.string.color_white),
     COFFEE("coffee", Color(0xFFC89B6D), R.string.color_coffee),
     GREEN("green", Color(0xFF4CD27A), R.string.color_green),
     RED("red", Color(0xFFFF5C6C), R.string.color_red),
     PURPLE("purple", Color(0xFFB388FF), R.string.color_purple),
-    PINK("pink", Color(0xFFFF7EB6), R.string.color_pink);
+    PINK("pink", Color(0xFFFF7EB6), R.string.color_pink),
+    /** Any colour the user mixes; the value lives in [StoneLook.customAccent]. */
+    CUSTOM("custom", Color.Unspecified, R.string.color_custom);
 
     companion object { fun from(key: String) = entries.firstOrNull { it.key == key } ?: GOLD }
 }
@@ -31,7 +36,7 @@ enum class StoneInk(val key: String, val color: Color, val label: Int) {
     COFFEE("coffee", Color(0xFFE7CDB2), R.string.color_coffee),
     GREEN("green", Color(0xFFB9F0C9), R.string.color_green);
 
-    fun resolve(accent: StoneAccent) = if (this == ACCENT) accent.color else color
+    fun resolve(accent: Color) = if (this == ACCENT) accent else color
     companion object { fun from(key: String, fallback: StoneInk) = entries.firstOrNull { it.key == key } ?: fallback }
 }
 
@@ -41,6 +46,8 @@ enum class StoneInk(val key: String, val color: Color, val label: Int) {
  */
 object StoneLook {
     var accent by mutableStateOf(StoneAccent.GOLD)
+    /** Colour used when [accent] is [StoneAccent.CUSTOM]. */
+    var customAccent by mutableStateOf(Color(0xFFF5C518))
     var textInk by mutableStateOf(StoneInk.WHITE)
     var iconInk by mutableStateOf(StoneInk.WHITE)
     var fontScale by mutableFloatStateOf(1f)
@@ -56,6 +63,9 @@ object StoneLook {
         private set
     private var store: StoneSettingsStore? = null
 
+    /** The accent actually drawn, whichever swatch is selected. */
+    val accentColor: Color get() = if (accent == StoneAccent.CUSTOM) customAccent else accent.color
+
     fun chooseSongLayout(key: String) { songLayout = key; store?.setLook("songLayout", key) }
 
     /** Saves the current values with the store given at [load] (used by automation). */
@@ -65,6 +75,7 @@ object StoneLook {
         this.store = store
         songLayout = store.look("songLayout", "list")
         accent = StoneAccent.from(store.look("accent", "gold"))
+        customAccent = parseHex(store.look("customAccent", "")) ?: Color(0xFFF5C518)
         textInk = StoneInk.from(store.look("textInk", "white"), StoneInk.WHITE)
         iconInk = StoneInk.from(store.look("iconInk", "white"), StoneInk.WHITE)
         fontScale = store.look("fontScale", "1").toFloatOrNull()?.coerceIn(.8f, 1.4f) ?: 1f
@@ -76,6 +87,7 @@ object StoneLook {
 
     fun save(store: StoneSettingsStore) {
         store.setLook("accent", accent.key)
+        store.setLook("customAccent", hex(customAccent))
         store.setLook("textInk", textInk.key)
         store.setLook("iconInk", iconInk.key)
         store.setLook("fontScale", fontScale.toString())
@@ -85,9 +97,22 @@ object StoneLook {
         store.setLook("appTitle", appTitle)
     }
 
-    fun reset(store: StoneSettingsStore) {
-        accent = StoneAccent.GOLD; textInk = StoneInk.WHITE; iconInk = StoneInk.WHITE
+    fun reset(store: StoneSettingsStore) { this.store = store; resetDefaults() }
+
+    /** Back to Stone's defaults; saved when a store was given. */
+    fun resetDefaults() {
+        accent = StoneAccent.GOLD; customAccent = Color(0xFFF5C518); textInk = StoneInk.WHITE; iconInk = StoneInk.WHITE
         fontScale = 1f; iconScale = 1f; backgroundImage = null; avatarImage = null; appTitle = ""
-        save(store)
+        persist()
+    }
+
+    /** "#RRGGBB" for a colour (alpha is always opaque). */
+    fun hex(color: Color): String = "#%06X".format(color.toArgb() and 0xFFFFFF)
+
+    /** Parses "#RRGGBB" or "RRGGBB"; null when the text is not a colour. */
+    fun parseHex(text: String): Color? {
+        val digits = text.trim().removePrefix("#")
+        if (digits.length != 6 || !digits.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }) return null
+        return Color(0xFF000000 or digits.toLong(16))
     }
 }

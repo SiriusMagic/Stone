@@ -1,7 +1,6 @@
 package com.zirakusa.stone.nativeapp.feature.player
 
 import android.widget.Toast
-import android.widget.NumberPicker
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,7 +35,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -320,92 +318,6 @@ private val EqMuted = Color(0xFF91A4A4)
 
 private fun verticalBandValue(y: Float, height: Float): Int =
     ((1f - y / height.coerceAtLeast(1f)) * 20f - 10f).roundToInt().coerceIn(-10, 10)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable fun SleepSheet(state: PlaybackState, playback: PlaybackViewModel, close: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
-        ImmersiveWindowEffect()
-        SleepTimerContent(state, playback)
-    }
-}
-
-@Composable fun SleepTimerContent(state: PlaybackState, playback: PlaybackViewModel,
-    close: () -> Unit = {}) {
-    val options = listOf(0, 10, 20, 30, 60)
-    var customVisible by remember { mutableStateOf(false) }
-    var hours by remember(state.sleepMinutes) { mutableIntStateOf(
-        if (state.sleepMinutes !in options) state.sleepMinutes / 60 else 0) }
-    var minutes by remember(state.sleepMinutes) { mutableIntStateOf(
-        if (state.sleepMinutes !in options && state.sleepMinutes > 0) state.sleepMinutes % 60 else 30) }
-
-    if (customVisible) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
-            Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { customVisible = false }) {
-                    Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
-                }
-                Text(stringResource(R.string.custom_sleep_time), fontSize = 24.sp, fontWeight = FontWeight.Black)
-            }
-            Row(Modifier.fillMaxWidth().height(240.dp), horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically) {
-                SleepNumberPicker(hours, 0, 23, { hours = it }, R.string.hours)
-                SleepNumberPicker(minutes, 0, 59, { minutes = it }, R.string.minutes_short)
-            }
-            Button(enabled = hours + minutes > 0, onClick = {
-                playback.setSleepTimer(hours * 60 + minutes)
-                customVisible = false
-                close()
-            }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Text(stringResource(R.string.set_sleep_timer), fontWeight = FontWeight.Bold)
-            }
-        }
-    } else {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp).padding(bottom = 24.dp)) {
-            Text(stringResource(R.string.sleep_timer), fontSize = 27.sp, fontWeight = FontWeight.Black)
-            options.forEach { value ->
-                Row(Modifier.fillMaxWidth().height(58.dp).clickable { playback.setSleepTimer(value) },
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (value == 0) stringResource(R.string.off) else
-                        pluralStringResource(R.plurals.minutes_later, value, value), Modifier.weight(1f),
-                        color = if (state.sleepMinutes == value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (state.sleepMinutes == value) Icon(Icons.Default.Check, null,
-                        tint = MaterialTheme.colorScheme.primary)
-                }
-            }
-            Row(Modifier.fillMaxWidth().height(58.dp).clickable { customVisible = true },
-                verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.custom), Modifier.weight(1f))
-                if (state.sleepMinutes !in options && state.sleepMinutes > 0)
-                    Text(pluralStringResource(R.plurals.minutes_later, state.sleepMinutes, state.sleepMinutes), color = MaterialTheme.colorScheme.primary)
-                else Text(stringResource(R.string.set_custom), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Icon(Icons.Default.ChevronRight, null)
-            }
-            HorizontalDivider(Modifier.padding(vertical = 14.dp), color = MaterialTheme.colorScheme.outlineVariant)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.finish_current_track), Modifier.weight(1f))
-                Switch(state.sleepFinishTrack, playback::setSleepFinishTrack)
-            }
-        }
-    }
-}
-
-@Composable private fun SleepNumberPicker(value: Int, minimum: Int, maximum: Int,
-    onValue: (Int) -> Unit, label: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        AndroidView(factory = { context -> NumberPicker(context).apply {
-            minValue = minimum
-            maxValue = maximum
-            this.value = value.coerceIn(minimum, maximum)
-            wrapSelectorWheel = true
-            descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-            setOnValueChangedListener { _, _, next -> onValue(next) }
-        } }, modifier = Modifier.width(112.dp).height(190.dp), update = { picker ->
-            if (picker.value != value) picker.value = value.coerceIn(minimum, maximum)
-        })
-        Text(stringResource(label), color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold)
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun TagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {

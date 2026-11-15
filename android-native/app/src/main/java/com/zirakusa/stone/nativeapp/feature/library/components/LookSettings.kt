@@ -4,25 +4,16 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -33,13 +24,13 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.LookImages
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
+import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StoneAccent
 import com.zirakusa.stone.nativeapp.ui.theme.StoneInk
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import kotlin.math.roundToInt
 
-/** Ajustes › Personalizado: colours, sizes, images and name/shortcut. */
+/** Ajustes › Personalizado: colours, sizes, images, home icon and name/shortcut. Owns the state. */
 @Composable internal fun LookSettings(store: StoneSettingsStore?) {
     val context = LocalContext.current
     fun persist() { store?.let(StoneLook::save) }
@@ -53,29 +44,32 @@ import kotlin.math.roundToInt
     }
     Text(stringResource(R.string.custom_intro), color = StonePalette.Muted, modifier = Modifier.padding(bottom = 8.dp))
 
-    Section(R.string.custom_accent)
-    Swatches(StoneAccent.entries.map { it.color to it.label }, StoneLook.accent.ordinal) {
-        StoneLook.accent = StoneAccent.entries[it]; persist()
+    LookSection(R.string.custom_accent)
+    val accent = StoneLook.accentColor
+    Swatches(StoneAccent.entries.map { (if (it == StoneAccent.CUSTOM) StoneLook.customAccent else it.color) to it.label },
+        StoneLook.accent.ordinal) { StoneLook.accent = StoneAccent.entries[it]; persist() }
+    if (StoneLook.accent == StoneAccent.CUSTOM) CustomAccentEditor(StoneLook.customAccent) {
+        StoneLook.customAccent = it; persist()
     }
-    Section(R.string.custom_text_color)
-    Swatches(StoneInk.entries.map { it.resolve(StoneLook.accent) to it.label }, StoneLook.textInk.ordinal) {
+    LookSection(R.string.custom_text_color)
+    Swatches(StoneInk.entries.map { it.resolve(accent) to it.label }, StoneLook.textInk.ordinal) {
         StoneLook.textInk = StoneInk.entries[it]; persist()
     }
-    Section(R.string.custom_icon_color)
-    Swatches(StoneInk.entries.map { it.resolve(StoneLook.accent) to it.label }, StoneLook.iconInk.ordinal) {
+    LookSection(R.string.custom_icon_color)
+    Swatches(StoneInk.entries.map { it.resolve(accent) to it.label }, StoneLook.iconInk.ordinal) {
         StoneLook.iconInk = StoneInk.entries[it]; persist()
     }
 
-    Section(R.string.custom_font_size)
+    LookSection(R.string.custom_font_size)
     ScaleSlider(StoneLook.fontScale, .8f..1.4f) { StoneLook.fontScale = it; persist() }
-    Section(R.string.custom_icon_size)
+    LookSection(R.string.custom_icon_size)
     ScaleSlider(StoneLook.iconScale, .8f..1.5f) { StoneLook.iconScale = it; persist() }
 
-    Section(R.string.custom_background)
+    LookSection(R.string.custom_background)
     ImageChoice(StoneLook.backgroundImage != null, { backgroundPicker.launch("image/*") }) {
         StoneLook.backgroundImage = null; persist()
     }
-    Section(R.string.custom_avatar)
+    LookSection(R.string.custom_avatar)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         StoneAvatar(Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
         ImageChoice(StoneLook.avatarImage != null, { avatarPicker.launch("image/*") }) {
@@ -83,7 +77,14 @@ import kotlin.math.roundToInt
         }
     }
 
-    Section(R.string.custom_app_name)
+    LookSection(R.string.custom_launcher_icon)
+    Swatches(LauncherIcon.entries.map { it.color to it.label }, LauncherIcon.current.ordinal, content = {
+        Icon(painterResource(R.drawable.ic_penguin), null, Modifier.size(40.dp), tint = androidx.compose.ui.graphics.Color.Unspecified)
+    }) { LauncherIcon.apply(context, LauncherIcon.entries[it]); store?.setLook("launcherIcon", LauncherIcon.current.key) }
+    Text(stringResource(R.string.custom_launcher_icon_hint), color = StonePalette.Muted, fontSize = 12.sp,
+        modifier = Modifier.padding(top = 6.dp))
+
+    LookSection(R.string.custom_app_name)
     OutlinedTextField(StoneLook.appTitle, { StoneLook.appTitle = it.take(30); persist() }, Modifier.fillMaxWidth(),
         singleLine = true, placeholder = { Text(stringResource(R.string.app_name)) },
         supportingText = { Text(stringResource(R.string.custom_app_name_hint)) })
@@ -96,44 +97,6 @@ import kotlin.math.roundToInt
 
     OutlinedButton(onClick = { store?.let(StoneLook::reset) }, Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 12.dp)) {
         Text(stringResource(R.string.custom_reset))
-    }
-}
-
-@Composable private fun Section(title: Int) {
-    Text(stringResource(title), color = StonePalette.Yellow, fontWeight = FontWeight.Black,
-        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-}
-
-@Composable private fun Swatches(colors: List<Pair<Color, Int>>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        colors.forEachIndexed { index, (color, label) ->
-            Column(Modifier.width(64.dp).clickable { onSelect(index) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(color)
-                    .border(2.dp, if (index == selected) Color.White else StonePalette.Border, CircleShape),
-                    contentAlignment = Alignment.Center) {
-                    if (index == selected) Icon(Icons.Default.Check, null,
-                        tint = if (color.luminanceIsLight()) Color.Black else Color.White)
-                }
-                Text(stringResource(label), fontSize = 11.sp, maxLines = 1, modifier = Modifier.padding(top = 4.dp),
-                    color = StonePalette.Secondary)
-            }
-        }
-    }
-}
-
-private fun Color.luminanceIsLight() = (red * .299f + green * .587f + blue * .114f) > .6f
-
-@Composable private fun ScaleSlider(value: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Slider(value, { onChange((it * 20).roundToInt() / 20f) }, Modifier.weight(1f), valueRange = range)
-        Text("${(value * 100).roundToInt()}%", Modifier.width(56.dp).padding(start = 8.dp))
-    }
-}
-
-@Composable private fun ImageChoice(hasImage: Boolean, pick: () -> Unit, remove: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilledTonalButton(onClick = pick) { Text(stringResource(R.string.custom_pick_image)) }
-        if (hasImage) OutlinedButton(onClick = remove) { Text(stringResource(R.string.custom_remove_image)) }
     }
 }
 

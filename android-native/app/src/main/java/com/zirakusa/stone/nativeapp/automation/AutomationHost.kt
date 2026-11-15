@@ -31,4 +31,8 @@ interface AutomationHost {
     fun setTheme(key: String)
     fun setLanguage(code: String)
     fun refreshLibrary()
+    /** Sleep timer: [minutes] 0 turns it off. */
+    fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean)
+    fun extendSleepTimer(minutes: Int)
+    fun setLauncherIcon(key: String)
 }

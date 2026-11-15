@@ -8,6 +8,8 @@ import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.ui.theme.StoneInk
+import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -33,6 +35,8 @@ class McpServerTest {
         Song("content://fixture/2.mp3", "Skyfall", "Adele", "Skyfall", "Music", 286_000, 1, 1))
     private var toggles = 0
     private var playlistsCreated = listOf<String>()
+    private var sleepMinutes = 0
+    private var launcherIcon = "default"
 
     @Before fun start() {
         StoneAutomation.host = object : AutomationHost {
@@ -57,6 +61,9 @@ class McpServerTest {
             override fun setTheme(key: String) = Unit
             override fun setLanguage(code: String) = Unit
             override fun refreshLibrary() = Unit
+            override fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean) { sleepMinutes = minutes }
+            override fun extendSleepTimer(minutes: Int) { sleepMinutes += minutes }
+            override fun setLauncherIcon(key: String) { launcherIcon = key }
         }
         assertTrue(McpServer.start(token, localNetwork = false))
     }
@@ -134,5 +141,30 @@ class McpServerTest {
         val missing = rpc("tools/call", JSONObject().put("name", "player_seek")).getJSONObject("result")
         assertTrue(missing.getBoolean("isError"))
         assertEquals(-32601, rpc("nope").getJSONObject("error").getInt("code"))
+    }
+
+    @Test fun customisationAndSleepTimerTools() {
+        rpc("tools/call", JSONObject().put("name", "player_sleep_timer").put("arguments", JSONObject().put("minutes", 20)))
+        rpc("tools/call", JSONObject().put("name", "player_sleep_timer_extend").put("arguments", JSONObject().put("minutes", 5)))
+        assertEquals(25, sleepMinutes)
+
+        val look = rpc("tools/call", JSONObject().put("name", "appearance_set_look").put("arguments",
+            JSONObject().put("accentHex", "#3FA7FF").put("textColor", "soft").put("fontScale", 1.2)
+                .put("appTitle", "Mi música").put("launcherIcon", "blue"))).getJSONObject("result")
+        assertFalse(look.getBoolean("isError"))
+        assertEquals("custom", StoneLook.accent.key)
+        assertEquals("#3FA7FF", StoneLook.hex(StoneLook.customAccent))
+        assertEquals(StoneInk.SOFT, StoneLook.textInk)
+        assertEquals(1.2f, StoneLook.fontScale)
+        assertEquals("Mi música", StoneLook.appTitle)
+        assertEquals("blue", launcherIcon)
+        val state = rpc("tools/call", JSONObject().put("name", "appearance_get")).getJSONObject("result").getJSONObject("structuredContent")
+        assertEquals("#3FA7FF", state.getString("accentHex"))
+
+        val bad = rpc("tools/call", JSONObject().put("name", "appearance_set_look")
+            .put("arguments", JSONObject().put("accentHex", "azul"))).getJSONObject("result")
+        assertTrue(bad.getBoolean("isError"))
+        rpc("tools/call", JSONObject().put("name", "appearance_reset_look"))
+        assertEquals("gold", StoneLook.accent.key)
     }
 }

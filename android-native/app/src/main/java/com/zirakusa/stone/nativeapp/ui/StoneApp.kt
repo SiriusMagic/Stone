@@ -59,6 +59,7 @@ import kotlinx.coroutines.delay
         com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
         com.zirakusa.stone.nativeapp.playback.AudioLevels.load(settingsStore)
         com.zirakusa.stone.nativeapp.automation.ApiMode.load(settingsStore)
+        com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon.load(context)
         settingsStore.read()
     }
     var theme by rememberSaveable { mutableStateOf(initialSettings.theme) }

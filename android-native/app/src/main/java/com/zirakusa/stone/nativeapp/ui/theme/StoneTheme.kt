@@ -64,7 +64,7 @@ enum class StoneThemeSpec(val key: String, val background: Color, val surface: C
 
 @Composable fun StoneTheme(mode: String = "dark", content: @Composable () -> Unit) {
     val spec = StoneThemeSpec.from(mode)
-    val accent = StoneLook.accent.color
+    val accent = StoneLook.accentColor
     StonePalette.Background = spec.background
     StonePalette.Surface = spec.surface
     StonePalette.Chip = spec.chip
@@ -72,8 +72,8 @@ enum class StoneThemeSpec(val key: String, val background: Color, val surface: C
     StonePalette.Glow = spec.glow
     StonePalette.Textured = spec.textured
     StonePalette.Yellow = accent
-    StonePalette.Text = StoneLook.textInk.resolve(StoneLook.accent)
-    StonePalette.IconTint = StoneLook.iconInk.resolve(StoneLook.accent)
+    StonePalette.Text = StoneLook.textInk.resolve(accent)
+    StonePalette.IconTint = StoneLook.iconInk.resolve(accent)
     // Mini player colours are derived from the accent so they follow every colour choice.
     StonePalette.MiniBackground = accent.copy(alpha = .22f).compositeOver(spec.background).copy(alpha = .95f)
     StonePalette.MiniBorder = accent.copy(alpha = .42f)

@@ -355,4 +355,20 @@
     <string name="api_confirm_title">An agent wants to make a change</string>
     <string name="api_confirm_allow">Allow</string>
     <string name="api_confirm_deny">Deny</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_custom">Mine</string>
+    <string name="custom_hex">Hex</string>
+    <string name="custom_hue">Hue</string>
+    <string name="custom_saturation">Saturation</string>
+    <string name="custom_brightness">Brightness</string>
+    <string name="custom_color_hint">Move the sliders or type a colour such as #3FA7FF.</string>
+    <string name="custom_launcher_icon">Home icon</string>
+    <string name="custom_launcher_icon_hint">Changes the colour of Stone\'s icon on your home screen and app drawer. Some launchers take a few seconds to refresh it.</string>
+    <string name="launcher_original">Original</string>
+    <string name="sleep_timer_remaining">%1$s left · until %2$s</string>
+    <string name="sleep_add_minutes">+%1$d min</string>
+    <string name="sleep_fade_out">Lower the volume gradually at the end</string>
+    <string name="sleep_fade_out_hint">During the last half minute the sound fades out softly.</string>
+    <string name="sleep_end_of_track">When this song ends</string>
 </resources>

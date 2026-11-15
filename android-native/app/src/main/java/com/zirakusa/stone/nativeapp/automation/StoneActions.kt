@@ -4,11 +4,7 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
 import com.zirakusa.stone.nativeapp.data.library.AudioTags
 import com.zirakusa.stone.nativeapp.data.library.MediaFileIo
-import com.zirakusa.stone.nativeapp.playback.AudioMode
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import com.zirakusa.stone.nativeapp.ui.theme.StoneAccent
-import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
-import com.zirakusa.stone.nativeapp.ui.theme.StoneThemeSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -32,6 +28,7 @@ internal object StoneActions {
             .put("speed", playback.speed.toDouble()).put("volumePercent", playback.volumePercent)
             .put("maxVolumePercent", playback.audioMode.maxVolumePercent).put("audioMode", playback.audioMode.key)
             .put("queueSize", playback.queue.size).put("shuffle", playback.shuffle)
+            .put("sleepMinutes", playback.sleepMinutes).put("sleepEndAtMs", playback.sleepEndAtMs)
     }
 
     fun all(): List<StoneAction> = listOf(
@@ -70,6 +67,21 @@ internal object StoneActions {
         StoneAction("player.queue_next", "Insert a song right after the current one.", ActionRisk.REVERSIBLE,
             listOf(ActionParam("songId", "string", "Id returned by library_search.", true))) { args ->
             val target = song(args.getString("songId")); host().playNext(listOf(target)); ok("${target.title} plays next")
+        },
+        StoneAction("player.sleep_timer", "Set the sleep timer: pause after N minutes (0 turns it off).", ActionRisk.REVERSIBLE, listOf(
+            ActionParam("minutes", "integer", "Minutes until pause; 0 cancels.", true),
+            ActionParam("finishTrack", "boolean", "Let the playing song end before pausing (default false)."),
+            ActionParam("fadeOut", "boolean", "Lower the volume gradually during the last 30 seconds (default true)."))) { args ->
+            val minutes = args.getInt("minutes")
+            if (minutes !in 0..1439) throw ActionException("minutes must be between 0 and 1439")
+            host().setSleepTimer(minutes, args.optBoolean("finishTrack", false), args.optBoolean("fadeOut", true))
+            ok(if (minutes == 0) "Sleep timer off" else "Pausing in $minutes min")
+        },
+        StoneAction("player.sleep_timer_extend", "Add minutes to the running sleep timer.", ActionRisk.REVERSIBLE,
+            listOf(ActionParam("minutes", "integer", "Minutes to add (1-180).", true))) { args ->
+            val minutes = args.getInt("minutes")
+            if (minutes !in 1..180) throw ActionException("minutes must be between 1 and 180")
+            host().extendSleepTimer(minutes); ok("Added $minutes min")
         },
         // ---- library ----
         StoneAction("library.search", "Search songs and videos by title, artist, album or folder. Returns ids for other tools.",
@@ -151,30 +163,5 @@ internal object StoneActions {
             }
             host().refreshLibrary(); ok("Tags written to the file")
         },
-        // ---- appearance ----
-        StoneAction("appearance.get", "Current theme, accent colour, language and available options.", ActionRisk.READ) {
-            JSONObject().put("theme", host().theme).put("themes", JSONArray(StoneThemeSpec.entries.map { it.key }))
-                .put("accent", StoneLook.accent.key).put("accents", JSONArray(StoneAccent.entries.map { it.key }))
-                .put("language", host().language).put("languages", JSONArray(SUPPORTED_LANGUAGES))
-        },
-        StoneAction("appearance.set_theme", "Change the background theme.", ActionRisk.REVERSIBLE,
-            listOf(ActionParam("theme", "string", "Theme key.", true, StoneThemeSpec.entries.map { it.key }))) { args ->
-            host().setTheme(args.getString("theme")); ok("Theme changed")
-        },
-        StoneAction("appearance.set_accent", "Change the accent colour used for highlights.", ActionRisk.REVERSIBLE,
-            listOf(ActionParam("accent", "string", "Accent key.", true, StoneAccent.entries.map { it.key }))) { args ->
-            StoneLook.accent = StoneAccent.from(args.getString("accent")); StoneLook.persist(); ok("Accent changed")
-        },
-        // ---- settings ----
-        StoneAction("settings.set_language", "Change the app language.", ActionRisk.REVERSIBLE,
-            listOf(ActionParam("language", "string", "Language code.", true, SUPPORTED_LANGUAGES))) { args ->
-            host().setLanguage(args.getString("language")); ok("Language changed")
-        },
-        StoneAction("settings.set_audio_mode", "Change the audio mode (battery, balanced, hifi = Cine, sleepy = Dormilón, custom).",
-            ActionRisk.REVERSIBLE, listOf(ActionParam("mode", "string", "Mode key.", true, AudioMode.entries.map { it.key }))) { args ->
-            host().setAudioMode(AudioMode.entries.first { it.key == args.getString("mode") }); ok("Audio mode changed")
-        },
-    )
-
-    val SUPPORTED_LANGUAGES = listOf("es", "en", "pt", "fr")
+    ) + StoneLookActions.all()
 }
