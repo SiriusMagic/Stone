@@ -1,3 +1,9 @@
+# Stone Kotlin 1.6.6
+
+- Los botones físicos de volumen vuelven a mostrar el panel de volumen de Stone dentro de la
+  app; ya no aparece el panel de Android. Cada pulsación mueve un nivel de Android hasta el
+  100 % y, por encima, 10 % de amplificación hasta el tope del modo.
+
 # Stone Kotlin 1.6.5
 
 - Corrige el enlace público del Modo API en el teléfono: Android bloqueaba la llamada interna de
