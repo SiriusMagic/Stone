@@ -52,6 +52,13 @@ android {
             matchingFallbacks += "release"
             buildConfigField("boolean", "AUDIO_DIAGNOSTICS_ENABLED", "false")
         }
+        // Test build "Stone V56": separate app id, installs next to the previous APK.
+        create("v56") {
+            initWith(getByName("preview"))
+            applicationIdSuffix = ".v56"
+            versionNameSuffix = "-V56"
+            matchingFallbacks += listOf("preview", "release")
+        }
     }
 }
 dependencies {
