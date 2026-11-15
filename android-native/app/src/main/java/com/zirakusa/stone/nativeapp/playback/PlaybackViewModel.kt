@@ -26,8 +26,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
-enum class AudioMode(val key: String, val maxVolumePercent: Int) {
-    BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300)
+/**
+ * [gain] is a software attenuation applied on top of Android's volume. Dormilón uses 0.1
+ * (-20 dB): the whole volume range maps to 0-10 % of the normal output, so even Android's
+ * lowest step becomes quiet enough for listening in bed next to someone sleeping.
+ */
+enum class AudioMode(val key: String, val maxVolumePercent: Int, val gain: Float = 1f) {
+    BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300),
+    SLEEPY("sleepy", 100, gain = 0.1f)
 }
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")

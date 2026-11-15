@@ -253,7 +253,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "basic" -> QuickActionRegistry.pinnedIds.toSet()
                     "audiophile" -> QuickActionRegistry.pinnedIds.toSet() + setOf(
                         "audio_mode_battery", "audio_mode_balanced", "audio_mode_hifi",
-                        "diagnostics")
+                        "audio_mode_sleepy", "diagnostics")
                     "custom" -> items.filter { item ->
                         store?.customShortcutVisible(item.id, visible[item.id] == true)
                             ?: (visible[item.id] == true)
@@ -497,6 +497,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
         AudioMode.BATTERY -> stringResource(R.string.audio_mode_battery)
         AudioMode.BALANCED -> stringResource(R.string.audio_mode_balanced)
         AudioMode.HIFI -> stringResource(R.string.audio_mode_hifi)
+        AudioMode.SLEEPY -> stringResource(R.string.audio_mode_sleepy)
     }
     Text(stringResource(R.string.system_diagnostics_hint), color = StonePalette.Muted,
         modifier = Modifier.padding(bottom = 14.dp))
@@ -694,6 +695,7 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         AudioMode.BATTERY -> R.string.audio_mode_battery
         AudioMode.BALANCED -> R.string.audio_mode_balanced
         AudioMode.HIFI -> R.string.audio_mode_hifi
+        AudioMode.SLEEPY -> R.string.audio_mode_sleepy
     })
     Row(Modifier.fillMaxWidth().heightIn(min = 82.dp).clickable(onClick = open),
         verticalAlignment = Alignment.CenterVertically) {
@@ -719,10 +721,12 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
                 Icons.Default.Balance)
             AudioMode.HIFI -> Triple(R.string.audio_mode_hifi, R.string.audio_mode_hifi_info,
                 Icons.Default.GraphicEq)
+            AudioMode.SLEEPY -> Triple(R.string.audio_mode_sleepy, R.string.audio_mode_sleepy_info,
+                Icons.Default.Bedtime)
         }
             Row(Modifier.fillMaxWidth().clickable {
-                if (mode == AudioMode.BATTERY) playback?.setPlaybackProfile(
-                    AudioMode.BATTERY, HardwareAcceleration.ADAPTIVE)
+                if (mode == AudioMode.BATTERY || mode == AudioMode.SLEEPY) playback?.setPlaybackProfile(
+                    mode, HardwareAcceleration.ADAPTIVE)
                 else playback?.setAudioMode(mode)
             }
             .padding(vertical = 14.dp), verticalAlignment = Alignment.Top) {

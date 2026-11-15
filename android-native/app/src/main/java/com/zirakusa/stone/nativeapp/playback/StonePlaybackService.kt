@@ -36,6 +36,9 @@ class StonePlaybackService : MediaSessionService() {
         @Volatile private var activePlayer: ExoPlayer? = null
         @Volatile private var volumePercent: Int = 100
         @Volatile private var maxVolumePercent: Int = AudioMode.BALANCED.maxVolumePercent
+        /** Software gain of the current mode (Dormilón attenuates; others are 1). */
+        @Volatile private var modeGain: Float = 1f
+        val currentModeGain: Float get() = modeGain
         @Volatile private var lastAppliedNativeLevel: Int = -1
         @Volatile private var revision: Long = 0
         @Volatile private var diagnosticBoostDisabled = false
@@ -143,7 +146,7 @@ class StonePlaybackService : MediaSessionService() {
                 // read; it is never persisted as a second volume source.
                 volumePercent = requestedPercent
             }
-            if (activePlayer?.volume != 1f) activePlayer?.volume = 1f
+            if (activePlayer?.volume != modeGain) activePlayer?.volume = modeGain
             revision++
             mutableVolumeUi.value = VolumeUiState(volumePercent, revision, showOverlay, maxVolumePercent)
             service?.let {
@@ -386,6 +389,8 @@ class StonePlaybackService : MediaSessionService() {
 
     fun applyAudioMode(mode: AudioMode) {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = false)
+        modeGain = mode.gain
+        session?.player?.volume = mode.gain
         setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }
         logAudio("service.applyAudioMode(${mode.key})", before, player = session?.player)

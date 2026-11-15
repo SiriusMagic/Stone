@@ -18,7 +18,16 @@ internal object Mp4Atoms {
 
     /** Returns the new `moov` box. [mediaShift] is added to chunk offsets that follow it. */
     fun rebuildMoov(moov: ByteArray, draft: VideoMetadataDraft, cover: ByteArray?,
-        removeCover: Boolean, mediaShift: Long = 0L): ByteArray {
+        removeCover: Boolean, mediaShift: Long = 0L, only: Set<String>? = null): ByteArray {
+        onlyTypes.set(only)
+        try { return rebuildMoovInternal(moov, draft, cover, removeCover, mediaShift) } finally { onlyTypes.remove() }
+    }
+
+    /** When set, tags outside this set are neither written nor removed (audio editor). */
+    private val onlyTypes = ThreadLocal<Set<String>?>()
+
+    private fun rebuildMoovInternal(moov: ByteArray, draft: VideoMetadataDraft, cover: ByteArray?,
+        removeCover: Boolean, mediaShift: Long): ByteArray {
         val root = parse(moov, 0, moov.size).single()
         require(root.type == "moov") { "El átomo moov no es válido" }
         val children = parse(root.bytes, root.headerSize, root.bytes.size)
@@ -121,7 +130,7 @@ internal object Mp4Atoms {
             "desc" to draft.description.trim(), "©ART" to draft.author.trim(),
             "©alb" to draft.album.trim(), "©day" to draft.date.trim(),
             "©gen" to draft.genre.trim(), "keyw" to draft.keywords.trim(),
-        )
+        ).filterKeys { key -> onlyTypes.get()?.contains(key) ?: true }
         val out = ByteArrayOutputStream(4096)
         val written = mutableSetOf<String>()
         existing.forEach { item ->

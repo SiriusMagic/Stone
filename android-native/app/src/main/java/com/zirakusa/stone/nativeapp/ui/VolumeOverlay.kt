@@ -39,10 +39,12 @@ import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
                     fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("${state.percent}%", color = Color(0xFFF5C518), fontSize = 19.sp,
                     fontWeight = FontWeight.ExtraBold)
-                Text(stringResource(if (state.percent > 100) R.string.boost else R.string.native_volume),
+                val sleepy = StonePlaybackService.currentModeGain < 1f
+                Text(if (sleepy) stringResource(R.string.volume_sleepy_chip)
+                    else stringResource(if (state.percent > 100) R.string.boost else R.string.native_volume),
                     Modifier.padding(start = 10.dp).background(Color(0xFF2A2730), RoundedCornerShape(16.dp))
                         .padding(horizontal = 10.dp, vertical = 6.dp),
-                    color = if (state.percent > 100) Color(0xFFF5C518) else Color(0xFFB8B5C0),
+                    color = if (sleepy || state.percent > 100) Color(0xFFF5C518) else Color(0xFFB8B5C0),
                     fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
             // Local value while dragging so Android's coarse volume steps don't fight the thumb.

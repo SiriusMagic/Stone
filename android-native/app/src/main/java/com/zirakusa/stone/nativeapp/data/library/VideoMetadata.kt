@@ -213,7 +213,7 @@ class VideoMetadataEditor(private val context: Context) {
                 val cover = if (draft.thumbnailChanged && draft.thumbnailUri.isNotBlank()) {
                     context.contentResolver.openInputStream(draft.thumbnailUri.toUri())?.use { it.readBytes() }
                 } else null
-                Mp4MetadataWriter.write(context, value, draft, cover,
+                Mp4MetadataWriter.writeAndRescan(context, value, draft, cover,
                     removeCover = draft.thumbnailChanged && draft.thumbnailUri.isBlank())
                 nativeWritten = true
             } catch (error: Exception) {

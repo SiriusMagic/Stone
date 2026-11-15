@@ -113,6 +113,7 @@ private val legacyDefinitions = listOf(
             AudioMode.BATTERY -> "audio_mode_battery"
             AudioMode.BALANCED -> "audio_mode_balanced"
             AudioMode.HIFI -> "audio_mode_hifi"
+            AudioMode.SLEEPY -> "audio_mode_sleepy"
             null -> null
         }
     )
@@ -150,6 +151,9 @@ private val legacyDefinitions = listOf(
             }
             "audio_mode_hifi" -> {
                 playbackViewModel?.setPlaybackProfile(AudioMode.HIFI, HardwareAcceleration.FULL)
+            }
+            "audio_mode_sleepy" -> {
+                playbackViewModel?.setPlaybackProfile(AudioMode.SLEEPY, HardwareAcceleration.ADAPTIVE)
             }
             "diagnostics" -> {
                 onOpenSettings(); onSettingsPage("system-diagnostics"); onSettingsSheetVisible(true)

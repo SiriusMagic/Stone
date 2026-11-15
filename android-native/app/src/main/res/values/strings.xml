@@ -80,8 +80,6 @@
     <string name="repeat_all">Repetir todo</string>
     <string name="tag_editor">Editor de etiquetas</string>
     <string name="cover">Portada</string><string name="tags">Etiquetas</string>
-    <string name="cover_editor_unavailable">La portada se conserva; la integración segura de nuevas imágenes estará disponible en una próxima versión.</string>
-    <string name="mp3_tags_only">Estos campos se guardan actualmente de forma segura en etiquetas ID3 de archivos MP3. Otros formatos permanecen sin cambios.</string>
     <string name="add_to_playlist">Agregar a la lista de reproducción</string>
     <string name="share">Compartir</string>
     <string name="speed">Velocidad</string>
@@ -329,4 +327,11 @@
     <string name="device_scan_missing">Falta el permiso de música y vídeos.</string>
     <string name="device_scan_grant">Conceder permiso</string>
     <string name="device_scan_open_settings">Abrir ajustes de la aplicación</string>
+    <string name="tags_saved_in_file">Etiquetas guardadas en el archivo original.</string>
+    <string name="tags_write_original">Los cambios se escriben en el archivo original (MP3, FLAC, M4A); otros reproductores los verán.</string>
+    <string name="tags_format_unsupported">Este formato aún no admite edición de etiquetas (compatibles: MP3, FLAC, M4A).</string>
+    <string name="audio_mode_sleepy">Dormilón</string>
+    <string name="audio_mode_sleepy_info" formatted="false">Para escuchar en la cama sin molestar: el volumen máximo queda en el 10&#160;% y hasta el nivel más bajo suena suave. Ahorra batería.</string>
+    <string name="volume_sleepy_chip" formatted="false">Dormilón · máx. 10&#160;%</string>
+    <plurals name="folder_count"><item quantity="one">%1$d carpeta</item><item quantity="other">%1$d carpetas</item></plurals>
 </resources>

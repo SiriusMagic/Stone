@@ -9,10 +9,19 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 data class AudioTags(val title: String = "", val artist: String = "", val album: String = "",
-    val genre: String = "")
+    val genre: String = "",
+    /** New front cover (JPEG/PNG bytes) or null to keep the current one. */
+    val cover: ByteArray? = null,
+    val removeCover: Boolean = false)
 
-/** Preserves unknown ID3 frames and rewrites only Stone's editable MP3 text frames. */
+/**
+ * Edits tags inside the ORIGINAL audio file (MP3/ID3, FLAC/Vorbis, M4A/MP4) and then asks
+ * Android to re-index it so every player shows the change. Unknown tags are preserved.
+ * Headers are padded, so most edits rewrite only the tag area in place.
+ */
 class AudioTagEditor(private val context: Context) {
+    fun supports(value: String) = MediaFileIo.extension(context, value) in supported
+
     fun read(value: String): AudioTags {
         val retriever = MediaMetadataRetriever()
         return try {
@@ -25,16 +34,52 @@ class AudioTagEditor(private val context: Context) {
     }
 
     fun write(value: String, tags: AudioTags) {
-        require(value.substringBefore('?').substringAfterLast('.', "").equals("mp3", true)) {
-            "La edición de etiquetas está disponible para archivos MP3."
-        }
         val uri = value.toUri()
-        val source = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: error("No se pudo abrir el archivo")
-        val updated = rewrite(source, mapOf("TIT2" to tags.title, "TPE1" to tags.artist,
-            "TALB" to tags.album, "TCON" to tags.genre))
-        context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(updated) }
-            ?: error("El proveedor no permite modificar este archivo")
+        when (val extension = MediaFileIo.extension(context, value)) {
+            "mp3" -> {
+                val head = headWith(uri) { Id3Tag.size(it).takeIf { size -> size > 0 } ?: 0 }
+                MediaFileIo.replaceHead(context, uri, Id3Tag.size(head).toLong(), Id3Tag.rebuild(head, tags))
+            }
+            "flac" -> {
+                val head = headWith(uri) { bytes ->
+                    val start = FlacTag.start(bytes)
+                    if (start >= 0) FlacTag.metadataEnd(bytes, start)
+                    else if (bytes.size >= Id3Tag.size(bytes) + 4) error("El archivo FLAC no es válido")
+                    else -1
+                }
+                val start = FlacTag.start(head)
+                val end = FlacTag.metadataEnd(head, start)
+                require(start >= 0 && end > 0) { "El archivo FLAC no es válido" }
+                MediaFileIo.replaceHead(context, uri, end.toLong(), FlacTag.rebuild(head, start, end, tags))
+            }
+            in mp4 -> Mp4MetadataWriter.write(context, value,
+                VideoMetadataDraft(title = tags.title, author = tags.artist, album = tags.album, genre = tags.genre),
+                tags.cover, tags.removeCover, onlyTypes = setOf("©nam", "©ART", "©alb", "©gen"))
+            else -> error("El formato .$extension no admite edición de etiquetas en Stone todavía.")
+        }
+        MediaFileIo.rescan(context, value)
+    }
+
+    /**
+     * Reads the start of the file until [needed] (total header bytes, -1 = unknown yet)
+     * fits. Headers with large covers may need several MB.
+     */
+    private fun headWith(uri: android.net.Uri, needed: (ByteArray) -> Int): ByteArray {
+        val fileSize = MediaFileIo.size(context, uri)
+        var length = 256 * 1024
+        while (true) {
+            val head = MediaFileIo.readHead(context, uri, length)
+            val required = needed(head)
+            if (required in 0..head.size) return head
+            if (head.size.toLong() >= fileSize || length >= MAX_HEAD) error("Etiquetas demasiado grandes o dañadas")
+            length = if (required > head.size) minOf(required + 16, MAX_HEAD) else minOf(length * 4, MAX_HEAD)
+        }
+    }
+
+    private companion object {
+        const val MAX_HEAD = 48 * 1024 * 1024
+        val mp4 = setOf("m4a", "m4b", "mp4")
+        val supported = setOf("mp3", "flac") + mp4
     }
 
     /** Writes a new MP3 copy with an ID3 USLT frame; the selected source is never changed. */
@@ -47,22 +92,6 @@ class AudioTagEditor(private val context: Context) {
         val updated = rewriteLyrics(source, lyrics)
         context.contentResolver.openOutputStream(target, "wt")?.use { it.write(updated) }
             ?: error("No se pudo crear la copia")
-    }
-
-    private fun rewrite(source: ByteArray, changes: Map<String, String>): ByteArray {
-        val hasTag = source.size >= 10 && String(source, 0, 3, Charsets.ISO_8859_1) == "ID3"
-        val version = if (hasTag && source[3].toInt() in 3..4) source[3].toInt() else 3
-        val tagEnd = if (hasTag) (10 + syncSafe(source, 6)).coerceAtMost(source.size) else 0
-        val existing = if (hasTag) source.copyOfRange(10, tagEnd) else ByteArray(0)
-        val body = ByteArrayOutputStream().apply {
-            write(preserve(existing, version))
-            changes.forEach { (frame, text) -> writeTextFrame(this, version, frame, text) }
-        }.toByteArray()
-        require(body.size <= 0x0fffffff)
-        return ByteArrayOutputStream(10 + body.size + source.size - tagEnd).apply {
-            write("ID3".toByteArray(Charsets.ISO_8859_1)); write(byteArrayOf(version.toByte(), 0, 0))
-            write(syncSafeBytes(body.size)); write(body); write(source, tagEnd, source.size - tagEnd)
-        }.toByteArray()
     }
 
     private fun rewriteLyrics(source: ByteArray, lyrics: String): ByteArray {
@@ -82,9 +111,8 @@ class AudioTagEditor(private val context: Context) {
     }
 
     private fun preserve(body: ByteArray, version: Int): ByteArray {
-        // Only the four fields exposed by the editor are replaced. All other ID3 frames,
-        // including the retired fields, remain untouched when the user saves.
-        val replaced = setOf("TIT2", "TPE1", "TALB", "TCON")
+        // The lyrics copy keeps every frame (title, artist, cover…) and replaces only USLT.
+        val replaced = setOf("USLT")
         val kept = ByteArrayOutputStream(); var offset = 0
         while (offset + 10 <= body.size) {
             val id = String(body, offset, 4, Charsets.ISO_8859_1)
@@ -97,16 +125,6 @@ class AudioTagEditor(private val context: Context) {
             offset = end
         }
         return kept.toByteArray()
-    }
-
-    private fun writeTextFrame(out: ByteArrayOutputStream, version: Int, id: String, value: String) {
-        if (value.isBlank()) return
-        val text = if (version == 4) value.toByteArray(Charsets.UTF_8) else value.toByteArray(Charsets.UTF_16)
-        val payload = byteArrayOf(if (version == 4) 3 else 1) + text
-        out.write(id.toByteArray(Charsets.ISO_8859_1))
-        out.write(if (version == 4) syncSafeBytes(payload.size) else
-            ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(payload.size).array())
-        out.write(byteArrayOf(0, 0)); out.write(payload)
     }
 
     private fun writeUslt(out: ByteArrayOutputStream, version: Int, value: String) {

@@ -12,7 +12,6 @@ import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import java.util.Locale
 
 /**
  * Streams an MP4/M4V edit without loading the media into memory. Only `moov` is read and
@@ -24,14 +23,15 @@ import java.util.Locale
  */
 object Mp4MetadataWriter {
     private const val MAX_MOOV = 64L * 1024L * 1024L
-    private val extensions = setOf("mp4", "m4v")
+    private val extensions = setOf("mp4", "m4v", "m4a", "m4b")
 
     private class Box(val type: String, val offset: Long, val size: Long)
 
     fun canWrite(context: Context, value: String): Boolean {
-        val extension = Uri.decode(value).substringBefore('?').substringAfterLast('.', "").lowercase(Locale.ROOT)
-        if (extension !in extensions) return false
+        if (MediaFileIo.extension(context, value) !in extensions) return false
         val uri = value.toUri()
+        // MediaStore files: writable after the system consent dialog (Android 11+).
+        if (uri.authority == android.provider.MediaStore.AUTHORITY) return android.os.Build.VERSION.SDK_INT >= 30
         return when (uri.scheme) {
             "file" -> File(uri.path ?: return false).let { it.isFile && it.canRead() && it.canWrite() }
             "content" -> runCatching {
@@ -54,7 +54,8 @@ object Mp4MetadataWriter {
         }
     }.getOrDefault(emptyMap())
 
-    fun write(context: Context, value: String, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean) {
+    fun write(context: Context, value: String, draft: VideoMetadataDraft, cover: ByteArray?, removeCover: Boolean,
+        onlyTypes: Set<String>? = null) {
         val uri = value.toUri()
         val (layout, moovBytes) = open(context, uri, "r").use { input ->
             val boxes = boxes(input.channel)
@@ -64,7 +65,7 @@ object Mp4MetadataWriter {
         val moov = layout.first { it.type == "moov" }
         val mediaAfter = layout.any { it.offset > moov.offset && it.type == "mdat" }
         if (!mediaAfter && layout.last() === moov) {
-            val rebuilt = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover)
+            val rebuilt = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover, only = onlyTypes)
             openWritable(context, uri).use { output ->
                 val buffer = ByteBuffer.wrap(rebuilt)
                 while (buffer.hasRemaining()) output.write(buffer, moov.offset + buffer.position())
@@ -75,11 +76,18 @@ object Mp4MetadataWriter {
         }
         // The new moov size decides how far later media moves; offsets only move when
         // media follows moov. Rebuilding twice keeps the size calculation exact.
-        val probe = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover)
+        val probe = Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover, only = onlyTypes)
         val shift = if (mediaAfter) probe.size - moov.size else 0L
-        val rebuilt = if (shift == 0L) probe else Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover, shift)
+        val rebuilt = if (shift == 0L) probe else Mp4Atoms.rebuildMoov(moovBytes, draft, cover, removeCover, shift, only = onlyTypes)
         check(rebuilt.size == probe.size) { "No se pudo recalcular el MP4" }
         replaceWithRebuilt(context, uri, layout, moov, rebuilt)
+    }
+
+    /** Entry point used after every successful write so other apps see the change. */
+    fun writeAndRescan(context: Context, value: String, draft: VideoMetadataDraft, cover: ByteArray?,
+        removeCover: Boolean, onlyTypes: Set<String>? = null) {
+        write(context, value, draft, cover, removeCover, onlyTypes)
+        MediaFileIo.rescan(context, value)
     }
 
     private fun replaceWithRebuilt(context: Context, uri: Uri, layout: List<Box>, moov: Box, rebuilt: ByteArray) {

@@ -54,7 +54,7 @@ class StoneEcoEngine(context: Context) {
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun applyPowerPolicy(player: Player) {
-        val offload = mode == AudioMode.BATTERY || (mode != AudioMode.HIFI &&
+        val offload = mode == AudioMode.BATTERY || mode == AudioMode.SLEEPY || (mode != AudioMode.HIFI &&
             (acceleration == HardwareAcceleration.FULL || acceleration == HardwareAcceleration.ADAPTIVE))
         val preferences = TrackSelectionParameters.AudioOffloadPreferences.Builder()
             .setAudioOffloadMode(
@@ -73,6 +73,7 @@ class StoneEcoEngine(context: Context) {
         (player as? ExoPlayer)?.let { exo -> runCatching { exo.setWakeMode(C.WAKE_MODE_LOCAL) } }
         val strategy = when {
             mode == AudioMode.BATTERY -> "Ahorro: offload al DSP cuando el formato lo admite, sin efectos"
+            mode == AudioMode.SLEEPY -> "Dormilón: ganancia -20 dB (máximo 10 %) y bajo consumo"
             offload -> "Offload solicitado; Media3 vuelve a la ruta normal si no es compatible"
             mode == AudioMode.HIFI -> "Alta fidelidad: PCM de alta resolución en coma flotante y ruta activa del sistema"
             else -> "Equilibrado: ruta activa del sistema con efectos de Stone"

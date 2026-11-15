@@ -396,47 +396,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
         VideoTagEditorSheet(song, close, saved)
         return
     }
-    val context = LocalContext.current; val scope = rememberCoroutineScope(); val editor = remember { AudioTagEditor(context) }
-    var tags by remember { mutableStateOf(AudioTags(song.title, song.artist, song.album)) }
-    var tab by remember(song.id) { mutableIntStateOf(1) }
-    var busy by remember { mutableStateOf(true) }; var error by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(song.id) { tags = withContext(Dispatchers.IO) { runCatching { editor.read(song.uri) }.getOrDefault(tags) }; busy = false }
-    ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        ImmersiveWindowEffect()
-        Column(Modifier.fillMaxHeight(.92f).padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.tag_editor), Modifier.weight(1f), fontSize = 25.sp, fontWeight = FontWeight.Black)
-                Button(enabled = !busy, onClick = { scope.launch {
-                    busy = true; error = withContext(Dispatchers.IO) { runCatching { editor.write(song.uri, tags) }.exceptionOrNull()?.message }
-                    busy = false; if (error == null) saved()
-                } }) { Text(stringResource(R.string.save)) }
-            }
-            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            TabRow(selectedTabIndex = tab, containerColor = Color.Transparent) {
-                listOf(R.string.cover, R.string.tags).forEachIndexed { index, label ->
-                    Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(label)) })
-                }
-            }
-            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
-                when (tab) {
-                    0 -> item { Text(stringResource(R.string.cover_editor_unavailable), color = StonePalette.Muted); StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.fillMaxWidth().height(220.dp)) }
-                    1 -> {
-                        item { TagField(R.string.title, tags.title) { tags = tags.copy(title = it) } }
-                        item { TagField(R.string.artist, tags.artist) { tags = tags.copy(artist = it) } }
-                        item { TagField(R.string.album, tags.album) { tags = tags.copy(album = it) } }
-                        item { TagField(R.string.genre, tags.genre) { tags = tags.copy(genre = it) } }
-                        item { Text(stringResource(R.string.mp3_tags_only), color = StonePalette.Muted, fontSize = 12.sp) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable private fun TagField(label: Int, value: String, multiline: Boolean = false, change: (String) -> Unit) {
-    OutlinedTextField(value, change, Modifier.fillMaxWidth(), label = { Text(stringResource(label)) }, singleLine = !multiline, minLines = if (multiline) 4 else 1)
+    AudioTagEditorSheet(song, close, saved)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -42,7 +42,7 @@ class StoneSettingsStore(context: Context) {
         pushNotifications = db.setting("pushNotifications", "false").toBoolean(),
         sleepMinutes = db.setting("sleepMinutes", "0").toIntOrNull()?.coerceAtLeast(0) ?: 0,
         audioMode = db.setting("audioMode", "balanced")
-            .takeIf { it in setOf("battery", "balanced", "hifi") } ?: "balanced",
+            .takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced",
         autoRescan = db.setting("autoRescan", "true").toBoolean(),
         deviceScan = db.setting("deviceScan", "true").toBoolean(),
         hardwareAcceleration = db.setting("hardwareAcceleration", "automatic")
@@ -82,7 +82,7 @@ class StoneSettingsStore(context: Context) {
     fun setCrossfadeSeconds(value: Int) = db.setSetting("crossfadeSeconds", value.coerceIn(0, 12).toString())
     fun setSleepMinutes(value: Int) = db.setSetting("sleepMinutes", value.coerceAtLeast(0).toString())
     fun setAudioMode(value: String) = db.setSetting("audioMode",
-        value.takeIf { it in setOf("battery", "balanced", "hifi") } ?: "balanced")
+        value.takeIf { it in setOf("battery", "balanced", "hifi", "sleepy") } ?: "balanced")
     fun setHardwareAcceleration(value: String) = db.setSetting("hardwareAcceleration",
         value.takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic")
     fun setVideoScale(value: String) = db.setSetting("videoScale",

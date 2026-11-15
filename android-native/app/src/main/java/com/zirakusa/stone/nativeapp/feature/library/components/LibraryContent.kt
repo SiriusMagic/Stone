@@ -87,6 +87,18 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                     }
                 }
             }
+            if (!compact && tab == LibraryTab.Folders && collection == null) item {
+                // Same header as Songs: count + add-folder icon at the start of the section.
+                val folderCount = remember(mediaSongs) { mediaSongs.mapTo(HashSet(), groupKey).size }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text(pluralStringResource(R.plurals.folder_count, folderCount, folderCount), Modifier.weight(1f),
+                        color = StonePalette.SongSubtitle, fontSize = 15.sp)
+                    IconButton(onClick = onFolder, enabled = !state.scanning) {
+                        Icon(Icons.Default.CreateNewFolder, stringResource(R.string.choose_folder))
+                    }
+                }
+            }
             if (collection != null) item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (managing) {

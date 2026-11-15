@@ -47,6 +47,7 @@ import kotlinx.coroutines.withContext
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val editor = remember { VideoMetadataEditor(context.applicationContext) }
+    val writeGate = rememberMediaWriteGate()
     var document by remember(song.id) { mutableStateOf<VideoMetadataDocument?>(null) }
     var draft by remember(song.id) { mutableStateOf(VideoMetadataDraft(title = song.title, author = song.artist)) }
     var original by remember(song.id) { mutableStateOf(draft) }
@@ -74,7 +75,7 @@ import kotlinx.coroutines.withContext
             busy = false
         }
     }
-    fun save() = scope.launch {
+    fun saveNow() = scope.launch {
         busy = true
         withContext(Dispatchers.IO) { runCatching { editor.save(song.uri, draft) } }.onSuccess { outcome ->
             val message = when {
@@ -87,6 +88,7 @@ import kotlinx.coroutines.withContext
         }.onFailure { error = it.message ?: context.getString(R.string.video_metadata_save_failed) }
         busy = false
     }
+    fun save() = writeGate(song.uri) { saveNow() }
     ModalBottomSheet(onDismissRequest = close, containerColor = StonePalette.Chip,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         ImmersiveWindowEffect()
@@ -188,7 +190,7 @@ import kotlinx.coroutines.withContext
     }
 }
 
-@Composable private fun FieldGroup(title: Int, content: @Composable ColumnScope.() -> Unit) {
+@Composable internal fun FieldGroup(title: Int, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
         .background(Brush.verticalGradient(listOf(StonePalette.Surface, StonePalette.Background)))
         .border(1.dp, StonePalette.Border, RoundedCornerShape(16.dp)).padding(14.dp),
@@ -199,7 +201,7 @@ import kotlinx.coroutines.withContext
     }
 }
 
-@Composable private fun EditorField(icon: ImageVector, label: Int, value: String, hint: Int? = null,
+@Composable internal fun EditorField(icon: ImageVector, label: Int, value: String, hint: Int? = null,
     change: (String) -> Unit) {
     OutlinedTextField(value, change, Modifier.fillMaxWidth(), singleLine = true,
         label = { Text(stringResource(label)) },
@@ -211,7 +213,7 @@ import kotlinx.coroutines.withContext
         colors = editorFieldColors())
 }
 
-@Composable private fun editorFieldColors() = OutlinedTextFieldDefaults.colors(
+@Composable internal fun editorFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = StonePalette.Yellow, focusedLabelColor = StonePalette.Yellow,
     cursorColor = StonePalette.Yellow, unfocusedBorderColor = StonePalette.Border)
 

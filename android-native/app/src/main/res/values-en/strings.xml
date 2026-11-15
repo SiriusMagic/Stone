@@ -174,7 +174,6 @@
     <string name="clear_queue_message">Do you want to clear the current playback queue?</string>
     <string name="clear_queue_title">Clear playback queue</string>
     <string name="cover">Cover</string>
-    <string name="cover_editor_unavailable">The cover is preserved; safely adding new images will be available in a future version.</string>
     <string name="cpu_stone">Stone CPU</string>
     <string name="cpu_threads">CPU threads</string>
     <string name="device_memory">Device memory</string>
@@ -196,7 +195,6 @@
     <string name="floating_window">Floating window</string>
     <string name="low_memory">Low memory</string>
     <string name="low_memory_threshold">Low-memory threshold</string>
-    <string name="mp3_tags_only">These fields are currently saved safely in MP3 ID3 tags. Other formats remain unchanged.</string>
     <string name="native_heap">Native heap</string>
     <string name="not_available">Not available</string>
     <string name="not_charging">Not charging</string>
@@ -262,4 +260,11 @@
     <string name="device_scan_missing">Music and video permission is missing.</string>
     <string name="device_scan_grant">Grant permission</string>
     <string name="device_scan_open_settings">Open app settings</string>
+    <string name="tags_saved_in_file">Tags saved in the original file.</string>
+    <string name="tags_write_original">Changes are written to the original file (MP3, FLAC, M4A); other players will see them.</string>
+    <string name="tags_format_unsupported">This format can\'t be tagged yet (supported: MP3, FLAC, M4A).</string>
+    <string name="audio_mode_sleepy">Sleepy</string>
+    <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
+    <string name="volume_sleepy_chip" formatted="false">Sleepy · max 10%</string>
+    <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
 </resources>
