@@ -318,11 +318,21 @@
     <string name="custom_shortcut_hint">Android doesn\'t let an app change its own drawer icon or name; the shortcut appears on your home screen with the image and name you choose.</string>
     <string name="custom_shortcut_unsupported">Your launcher doesn\'t support pinned shortcuts.</string>
     <string name="custom_reset">Reset customisation</string>
-    <string name="custom_audio">Custom audio level</string>
     <string name="custom_audio_max">Maximum volume: %1$d%%</string>
     <string name="custom_audio_gain">Gain: %1$d%%</string>
-    <string name="custom_audio_hint">Used by the «Custom» playback mode.</string>
     <string name="audio_mode_custom">Custom</string>
-    <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Custom).</string>
-    <string name="custom_audio_use">Use the Custom mode</string>
+    <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Audio levels).</string>
+    <string name="audio_levels_title">Audio levels</string>
+    <string name="audio_levels_intro">Set each mode\'s maximum volume and gain. Gain lowers or raises the sound on top of Android\'s volume.</string>
+    <string name="audio_levels_battery" formatted="false">Battery saver always uses Android\'s plain 100 %, with no effects.</string>
+    <string name="audio_levels_reset">Reset levels</string>
+    <string name="layout_large">Large</string>
+    <string name="layout_list">List</string>
+    <string name="layout_compact">Compact</string>
+    <string name="layout_compact_action">Switch to compact list</string>
+    <string name="theme_ocean">Ocean</string>
+    <string name="theme_forest">Forest</string>
+    <string name="theme_wine">Wine</string>
+    <string name="theme_violet">Violet</string>
+    <string name="theme_slate">Slate</string>
 </resources>

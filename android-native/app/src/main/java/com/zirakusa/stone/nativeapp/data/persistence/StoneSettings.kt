@@ -52,7 +52,7 @@ class StoneSettingsStore(context: Context) {
         videoScale = db.setting("videoScale", "auto")
             .takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto",
         videoLibraryLayout = db.setting("videoLibraryLayout", "grid")
-            .takeIf { it in setOf("grid", "list") } ?: "grid",
+            .takeIf { it in setOf("grid", "list", "compact") } ?: "grid",
         immersiveEnabled = db.setting("immersiveMode", legacyImmersiveDefault(db)).toBoolean(),
         shakeToReport = db.setting("shakeToReport", "true").toBoolean(),
     )
@@ -91,7 +91,7 @@ class StoneSettingsStore(context: Context) {
     fun setVideoScale(value: String) = db.setSetting("videoScale",
         value.takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto")
     fun setVideoLibraryLayout(value: String) = db.setSetting("videoLibraryLayout",
-        value.takeIf { it in setOf("grid", "list") } ?: "grid")
+        value.takeIf { it in setOf("grid", "list", "compact") } ?: "grid")
     fun setDeviceScan(value: Boolean) = db.setSetting("deviceScan", value.toString())
     fun setAutoRescan(value: Boolean) = db.setSetting("autoRescan", value.toString())
     /** True once Stone asked for the media permission on first launch. */

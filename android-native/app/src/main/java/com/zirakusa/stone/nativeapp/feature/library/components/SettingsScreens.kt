@@ -109,6 +109,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     SettingsMenuSection(R.string.settings_section_playback, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
                             "reproducción audio sonido modos salida altavoz bluetooth usb notificaciones avisos diagnóstico", { onPage("playback") }),
+                        SettingsMenuItem(Icons.Default.Equalizer, stringResource(R.string.audio_levels_title), "",
+                            "reproducción niveles audio ganancia volumen máximo dormilón cine balanceado altavoz sonido",
+                            { onPage("audio-levels") }),
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
                             "reproducción temporizador dormir", { onPage("sleep") }),
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
@@ -167,7 +170,10 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                 when (page) {
                     "theme" -> listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
                         "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled,
-                        "coffee" to R.string.theme_coffee, "golden" to R.string.theme_golden).forEach { (value, label) ->
+                        "coffee" to R.string.theme_coffee, "golden" to R.string.theme_golden,
+                        "ocean" to R.string.theme_ocean, "forest" to R.string.theme_forest,
+                        "wine" to R.string.theme_wine, "violet" to R.string.theme_violet,
+                        "slate" to R.string.theme_slate).forEach { (value, label) ->
                         SettingsChoice(label, theme == value) { onTheme(value) }
                     }
                     "language" -> languages.forEach { item ->
@@ -175,7 +181,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
                     "library-scan" -> LibraryScanSettings(store)
-                    "custom" -> LookSettings(store, playback)
+                    "custom" -> LookSettings(store)
+                    "audio-levels" -> AudioLevelSettings(store, playback)
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "playback" -> {
                         PlaybackDetail(store, playback, { onPage("audio-mode") },
@@ -203,7 +210,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 @Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
     "light" -> R.string.theme_light; "gray" -> R.string.theme_gray
     "midnight" -> R.string.theme_midnight; "amoled" -> R.string.theme_amoled
-    "coffee" -> R.string.theme_coffee; "golden" -> R.string.theme_golden; else -> R.string.theme_dark
+    "coffee" -> R.string.theme_coffee; "golden" -> R.string.theme_golden
+    "ocean" -> R.string.theme_ocean; "forest" -> R.string.theme_forest; "wine" -> R.string.theme_wine
+    "violet" -> R.string.theme_violet; "slate" -> R.string.theme_slate; else -> R.string.theme_dark
 })
 
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {
@@ -212,6 +221,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "immersive" -> R.string.immersive_screen
     "library-scan" -> R.string.device_scan
     "custom" -> R.string.custom_title
+    "audio-levels" -> R.string.audio_levels_title
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
     "video-controls" -> R.string.video_controls

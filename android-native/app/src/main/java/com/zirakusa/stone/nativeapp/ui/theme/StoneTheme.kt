@@ -49,7 +49,12 @@ enum class StoneThemeSpec(val key: String, val background: Color, val surface: C
     MIDNIGHT("midnight", Color(0xFF070B16), Color(0xFF111A2E), Color(0xFF0F1729), Color(0xFF1E2A44), Color(0xFF339CFF), true),
     AMOLED("amoled", Color(0xFF000000), Color(0xFF0C0C0F), Color(0xFF0C0C0F), Color(0xFF1A1A20), Color(0xFFF5C518), false),
     COFFEE("coffee", Color(0xFF1A120C), Color(0xFF2A1E15), Color(0xFF261B13), Color(0xFF3B2B1F), Color(0xFFC89B6D), true),
-    GOLDEN("golden", Color(0xFF15110A), Color(0xFF241D10), Color(0xFF211A0F), Color(0xFF3A2F17), Color(0xFFF5C518), true);
+    GOLDEN("golden", Color(0xFF15110A), Color(0xFF241D10), Color(0xFF211A0F), Color(0xFF3A2F17), Color(0xFFF5C518), true),
+    OCEAN("ocean", Color(0xFF061417), Color(0xFF0E2328), Color(0xFF0C1F24), Color(0xFF17363D), Color(0xFF3FD0D4), true),
+    FOREST("forest", Color(0xFF08130C), Color(0xFF122117), Color(0xFF101D14), Color(0xFF1E3526), Color(0xFF4CD27A), true),
+    WINE("wine", Color(0xFF16080D), Color(0xFF261018), Color(0xFF220E15), Color(0xFF3D1B28), Color(0xFFFF5C7C), true),
+    VIOLET("violet", Color(0xFF0E0A1A), Color(0xFF1A1430), Color(0xFF17122A), Color(0xFF2B2247), Color(0xFFB388FF), true),
+    SLATE("slate", Color(0xFF12161C), Color(0xFF1D232C), Color(0xFF1A2028), Color(0xFF2C3440), Color(0xFF9FB3C8), true);
 
     companion object {
         val keys = entries.map { it.key }.toSet()

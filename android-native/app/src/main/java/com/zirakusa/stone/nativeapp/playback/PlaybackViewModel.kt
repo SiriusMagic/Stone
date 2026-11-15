@@ -31,30 +31,51 @@ data class QueueEntry(val id: String, val title: String, val artist: String, val
  * (-20 dB): the whole volume range maps to 0-10 % of the normal output, so even Android's
  * lowest step becomes quiet enough for listening in bed next to someone sleeping.
  */
-enum class AudioMode(val key: String, private val baseMaxPercent: Int, private val baseGain: Float = 1f) {
+enum class AudioMode(val key: String, val defaultMaxPercent: Int, val defaultGain: Float = 1f) {
     BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300),
-    SLEEPY("sleepy", 100, baseGain = 0.1f),
-    /** The user's own level from Ajustes › Personalizado. */
+    SLEEPY("sleepy", 100, defaultGain = 0.1f),
+    /** The user's own level. */
     CUSTOM("custom", 150);
 
-    val maxVolumePercent: Int get() = if (this == CUSTOM) CustomAudioLevel.maxPercent else baseMaxPercent
-    val gain: Float get() = if (this == CUSTOM) CustomAudioLevel.gain else baseGain
+    /** Effective values: the defaults unless changed in Ajustes › Niveles de audio. */
+    val maxVolumePercent: Int get() = AudioLevels.maxPercent(this)
+    val gain: Float get() = AudioLevels.gain(this)
 }
 
-/** Values of the "Personalizado" audio mode. */
-object CustomAudioLevel {
-    @Volatile var maxPercent: Int = 150
-    @Volatile var gain: Float = 1f
+/**
+ * Per-mode volume ceiling and software gain. [gain] is applied on top of Android's volume
+ * (Dormilón defaults to 0.1 = -20 dB so even the lowest step is soft). Ahorro always keeps
+ * Android's plain 100 % because it must stay effect-free.
+ */
+object AudioLevels {
+    private val max = java.util.concurrent.ConcurrentHashMap<AudioMode, Int>()
+    private val gains = java.util.concurrent.ConcurrentHashMap<AudioMode, Float>()
+    val adjustable = listOf(AudioMode.SLEEPY, AudioMode.BALANCED, AudioMode.HIFI, AudioMode.CUSTOM)
+
+    fun maxPercent(mode: AudioMode) = max[mode] ?: mode.defaultMaxPercent
+    fun gain(mode: AudioMode) = gains[mode] ?: mode.defaultGain
 
     fun load(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore) {
-        maxPercent = store.look("audioMax", "150").toIntOrNull()?.coerceIn(10, 300) ?: 150
-        gain = store.look("audioGain", "1").toFloatOrNull()?.coerceIn(.05f, 1f) ?: 1f
+        adjustable.forEach { mode ->
+            store.look("audio.${mode.key}.max", "").toIntOrNull()?.let { max[mode] = it.coerceIn(10, 300) }
+            store.look("audio.${mode.key}.gain", "").toFloatOrNull()?.let { gains[mode] = it.coerceIn(.01f, 1f) }
+        }
     }
 
-    fun save(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore) {
-        store.setLook("audioMax", maxPercent.toString()); store.setLook("audioGain", gain.toString())
+    fun set(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore?, mode: AudioMode,
+        maxPercent: Int, gain: Float) {
+        if (mode !in adjustable) return
+        max[mode] = maxPercent.coerceIn(10, 300); gains[mode] = gain.coerceIn(.01f, 1f)
+        store?.setLook("audio.${mode.key}.max", max.getValue(mode).toString())
+        store?.setLook("audio.${mode.key}.gain", gains.getValue(mode).toString())
+    }
+
+    fun reset(store: com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore?) {
+        max.clear(); gains.clear()
+        adjustable.forEach { store?.setLook("audio.${it.key}.max", ""); store?.setLook("audio.${it.key}.gain", "") }
     }
 }
+
 enum class HardwareAcceleration(val key: String) {
     AUTOMATIC("automatic"), DISABLED("disabled"), DECODING("decoding"), FULL("full"), ADAPTIVE("adaptive")
 }

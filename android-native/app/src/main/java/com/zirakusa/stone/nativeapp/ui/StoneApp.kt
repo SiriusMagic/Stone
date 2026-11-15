@@ -57,7 +57,7 @@ import kotlinx.coroutines.delay
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
     val initialSettings = remember(settingsStore) {
         com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
-        com.zirakusa.stone.nativeapp.playback.CustomAudioLevel.load(settingsStore)
+        com.zirakusa.stone.nativeapp.playback.AudioLevels.load(settingsStore)
         settingsStore.read()
     }
     var theme by rememberSaveable { mutableStateOf(initialSettings.theme) }

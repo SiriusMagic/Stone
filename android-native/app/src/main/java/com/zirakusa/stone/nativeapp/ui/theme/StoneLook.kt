@@ -51,8 +51,16 @@ object StoneLook {
     var avatarImage by mutableStateOf<String?>(null)
     /** Name shown inside Stone (the launcher label itself can't be changed by an app). */
     var appTitle by mutableStateOf("")
+    /** Songs view: "grid" (Grande), "list" or "compact". */
+    var songLayout by mutableStateOf("list")
+        private set
+    private var store: StoneSettingsStore? = null
+
+    fun chooseSongLayout(key: String) { songLayout = key; store?.setLook("songLayout", key) }
 
     fun load(store: StoneSettingsStore) {
+        this.store = store
+        songLayout = store.look("songLayout", "list")
         accent = StoneAccent.from(store.look("accent", "gold"))
         textInk = StoneInk.from(store.look("textInk", "white"), StoneInk.WHITE)
         iconInk = StoneInk.from(store.look("iconInk", "white"), StoneInk.WHITE)

@@ -32,9 +32,6 @@ import com.zirakusa.stone.nativeapp.MainActivity
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.LookImages
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.CustomAudioLevel
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.ui.theme.StoneAccent
 import com.zirakusa.stone.nativeapp.ui.theme.StoneInk
@@ -42,8 +39,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.roundToInt
 
-/** Ajustes › Personalizado: colours, sizes, images, name/shortcut and custom audio level. */
-@Composable internal fun LookSettings(store: StoneSettingsStore?, playback: PlaybackViewModel?) {
+/** Ajustes › Personalizado: colours, sizes, images and name/shortcut. */
+@Composable internal fun LookSettings(store: StoneSettingsStore?) {
     val context = LocalContext.current
     fun persist() { store?.let(StoneLook::save) }
     val backgroundPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -97,8 +94,6 @@ import kotlin.math.roundToInt
     Text(stringResource(R.string.custom_shortcut_hint), color = StonePalette.Muted, fontSize = 12.sp,
         modifier = Modifier.padding(top = 6.dp))
 
-    CustomAudioSection(store, playback)
-
     OutlinedButton(onClick = { store?.let(StoneLook::reset) }, Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 12.dp)) {
         Text(stringResource(R.string.custom_reset))
     }
@@ -139,26 +134,6 @@ private fun Color.luminanceIsLight() = (red * .299f + green * .587f + blue * .11
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilledTonalButton(onClick = pick) { Text(stringResource(R.string.custom_pick_image)) }
         if (hasImage) OutlinedButton(onClick = remove) { Text(stringResource(R.string.custom_remove_image)) }
-    }
-}
-
-@Composable private fun CustomAudioSection(store: StoneSettingsStore?, playback: PlaybackViewModel?) {
-    var max by remember { mutableIntStateOf(CustomAudioLevel.maxPercent) }
-    var gain by remember { mutableIntStateOf((CustomAudioLevel.gain * 100).roundToInt()) }
-    val mode = playback?.state?.collectAsState()?.value?.audioMode
-    fun apply() {
-        CustomAudioLevel.maxPercent = max; CustomAudioLevel.gain = gain / 100f
-        store?.let(CustomAudioLevel::save)
-        if (mode == AudioMode.CUSTOM) playback?.setAudioMode(AudioMode.CUSTOM)
-    }
-    Section(R.string.custom_audio)
-    Text(stringResource(R.string.custom_audio_max, max))
-    Slider(max.toFloat(), { max = (it / 10).roundToInt() * 10 }, valueRange = 10f..300f, onValueChangeFinished = ::apply)
-    Text(stringResource(R.string.custom_audio_gain, gain))
-    Slider(gain.toFloat(), { gain = (it / 5).roundToInt() * 5 }, valueRange = 5f..100f, onValueChangeFinished = ::apply)
-    Text(stringResource(R.string.custom_audio_hint), color = StonePalette.Muted, fontSize = 12.sp)
-    if (mode != AudioMode.CUSTOM) TextButton(onClick = { apply(); playback?.setAudioMode(AudioMode.CUSTOM) }) {
-        Text(stringResource(R.string.custom_audio_use))
     }
 }
 

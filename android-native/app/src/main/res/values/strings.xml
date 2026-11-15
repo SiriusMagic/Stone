@@ -384,11 +384,21 @@
     <string name="custom_shortcut_hint">Android no permite que una app cambie su propio icono o nombre del cajón; el acceso directo aparece en tu pantalla de inicio con la imagen y el nombre que elijas.</string>
     <string name="custom_shortcut_unsupported">Tu lanzador no admite accesos directos fijados.</string>
     <string name="custom_reset">Restablecer personalización</string>
-    <string name="custom_audio">Nivel de audio propio</string>
     <string name="custom_audio_max">Volumen máximo: %1$d%%</string>
     <string name="custom_audio_gain">Ganancia: %1$d%%</string>
-    <string name="custom_audio_hint">Se usa con el modo de reproducción «Personalizado».</string>
     <string name="audio_mode_custom">Personalizado</string>
-    <string name="audio_mode_custom_info">Tu propio volumen máximo y ganancia (Ajustes › Personalizado).</string>
-    <string name="custom_audio_use">Usar el modo Personalizado</string>
+    <string name="audio_mode_custom_info">Tu propio volumen máximo y ganancia (Ajustes › Niveles de audio).</string>
+    <string name="audio_levels_title">Niveles de audio</string>
+    <string name="audio_levels_intro">Ajusta el volumen máximo y la ganancia de cada modo. La ganancia baja o sube el sonido por encima del volumen de Android.</string>
+    <string name="audio_levels_battery" formatted="false">Ahorro de batería usa siempre el 100 % de Android, sin efectos.</string>
+    <string name="audio_levels_reset">Restablecer niveles</string>
+    <string name="layout_large">Grande</string>
+    <string name="layout_list">Lista</string>
+    <string name="layout_compact">Compacta</string>
+    <string name="layout_compact_action">Cambiar a lista compacta</string>
+    <string name="theme_ocean">Océano</string>
+    <string name="theme_forest">Bosque</string>
+    <string name="theme_wine">Vino</string>
+    <string name="theme_violet">Violeta</string>
+    <string name="theme_slate">Pizarra</string>
 </resources>
