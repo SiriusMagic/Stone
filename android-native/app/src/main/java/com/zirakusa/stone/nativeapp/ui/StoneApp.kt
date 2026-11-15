@@ -59,7 +59,7 @@ import kotlinx.coroutines.delay
     var language by rememberSaveable { mutableStateOf(initialSettings.language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
-    var landscapeMode by rememberSaveable { mutableStateOf(initialSettings.landscapeLayoutMode) }
+    var landscapeMode by rememberSaveable { mutableStateOf(com.zirakusa.stone.core.LandscapeLayoutMode.ALWAYS) }
     var videoScale by rememberSaveable { mutableStateOf(VideoScale.fromKey(initialSettings.videoScale)) }
     var videoLibraryLayout by rememberSaveable {
         mutableStateOf(VideoLibraryLayout.fromKey(initialSettings.videoLibraryLayout))
@@ -67,6 +67,7 @@ import kotlinx.coroutines.delay
     var immersiveEnabled by rememberSaveable { mutableStateOf(initialSettings.immersiveEnabled) }
     var shakeToReport by rememberSaveable { mutableStateOf(initialSettings.shakeToReport) }
     var shakeReportVisible by rememberSaveable { mutableStateOf(false) }
+    var reportScreenshot by rememberSaveable { mutableStateOf<String?>(null) }
     var videoControlRevision by remember { mutableIntStateOf(0) }
     val videoControls = remember(settingsStore, videoControlRevision) {
         VideoControlSettings.from(settingsStore)
@@ -96,6 +97,7 @@ import kotlinx.coroutines.delay
         }
         playback.play(song, songs)
     }
+    SideEffect { com.zirakusa.stone.nativeapp.feature.player.AudioOnlySelection.id = audioOnlyId }
     val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
@@ -109,6 +111,19 @@ import kotlinx.coroutines.delay
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
         it?.let(library::selectFolder)
+    }
+    // First launch: ask once for media access so the whole device is indexed like any
+    // music player. Folders chosen with the picker keep working without it.
+    val mediaPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()) {
+        com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.tryEmit(Unit)
+    }
+    LaunchedEffect(Unit) {
+        if (settingsStore.read().deviceScan && !settingsStore.mediaPermissionAsked() &&
+            !com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.audioGranted(context)) {
+            settingsStore.setMediaPermissionAsked()
+            mediaPermission.launch(com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.permissions())
+        }
     }
     val owner = LocalLifecycleOwner.current
     DisposableEffect(owner, library) {
@@ -124,7 +139,9 @@ import kotlinx.coroutines.delay
         val sensorManager = context.getSystemService(SensorManager::class.java)
         val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val detector = if (shakeToReport && sensor != null) ShakeDetector(onShake = {
-            if (!shakeReportVisible) shakeReportVisible = true
+            // Capture first, then open the sheet, so the screenshot shows the problem.
+            if (!shakeReportVisible) com.zirakusa.stone.nativeapp.feature.library.components.ReportScreenshot
+                .capture(context) { uri -> reportScreenshot = uri?.toString(); shakeReportVisible = true }
         }) else null
         fun register() {
             if (detector != null && sensor != null) {
@@ -208,6 +225,7 @@ import kotlinx.coroutines.delay
                 playSong, Modifier.weight(1f), player.currentId, library::createPlaylist,
                 library::removeFromPlaylist, library::restoreDeleted,
                 onDeletePermanently = library::deletePermanently,
+                onMarkPurged = library::markPurged,
                 onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
@@ -313,7 +331,8 @@ import kotlinx.coroutines.delay
         if (shakeReportVisible) FeedbackReportSheet(
             initialKind = FeedbackKind.BUG,
             screenLabel = if (layout.fullPlayer) "Reproductor" else "Biblioteca",
-            close = { shakeReportVisible = false }
+            initialAttachments = listOfNotNull(reportScreenshot?.let(android.net.Uri::parse)),
+            close = { shakeReportVisible = false; reportScreenshot = null }
         )
         }
     }

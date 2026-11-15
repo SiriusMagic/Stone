@@ -35,7 +35,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val userStore = LibraryUserStore(application)
     private val playlistCoverStore = PlaylistCoverStore(application)
     private val settings = StoneSettingsStore(application)
-    private val mutable = MutableStateFlow(LibraryState(hasFolder = repository.folder != null))
+    private val mutable = MutableStateFlow(LibraryState(hasFolder = repository.hasSource))
     val state = mutable.asStateFlow()
     private var active = false
     private var scanJob: Job? = null
@@ -47,6 +47,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             favoriteIds = user.favorites, recentIds = user.recent,
             playCounts = user.counts,
             deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
+    }
+
+    init {
+        viewModelScope.launch {
+            com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.collect {
+                mutable.update { it.copy(hasFolder = repository.hasSource) }
+                if (active) refresh(true)
+            }
+        }
     }
 
     fun onForeground() { active = true; if (settings.read().autoRescan) refresh(false) }
@@ -84,15 +93,24 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun restoreDeleted(song: Song) { repository.restoreDeleted(song); mutable.update {
         it.copy(songs = (it.songs + song).distinctBy { item -> item.id }, deletedSongs = it.deletedSongs - song) } }
-    /** Deletes files for good; [done] receives how many could not be removed. */
-    fun deletePermanently(songs: List<Song>, done: (Int) -> Unit = {}) {
+    /** Called after Android's own delete confirmation removed MediaStore files. */
+    fun markPurged(songs: List<Song>) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { songs.forEach(repository::markPurged) }
+            val ids = songs.mapTo(mutableSetOf()) { it.id }
+            mutable.update { it.copy(deletedSongs = it.deletedSongs.filterNot { song -> song.id in ids }) }
+        }
+    }
+
+    /** Deletes files for good; [done] receives the songs that could not be removed. */
+    fun deletePermanently(songs: List<Song>, done: (List<Song>) -> Unit = {}) {
         viewModelScope.launch {
             val removed = withContext(Dispatchers.IO) {
                 songs.filter { song -> runCatching { repository.deletePermanently(song) }.getOrDefault(false) }
             }
             val ids = removed.mapTo(mutableSetOf()) { it.id }
             mutable.update { it.copy(deletedSongs = it.deletedSongs.filterNot { song -> song.id in ids }) }
-            done(songs.size - removed.size)
+            done(songs.filterNot { it.id in ids })
         }
     }
     fun recordPlay(song: Song) { userStore.recordPlay(song.id); mutable.update { it.copy(

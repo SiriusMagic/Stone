@@ -1,6 +1,13 @@
 package com.zirakusa.stone.nativeapp.feature.library.components
 
+import android.app.Activity
+import androidx.core.net.toUri
+import android.os.Build
+import android.provider.MediaStore
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -28,8 +35,15 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 /** Trash: restore a song or remove its file from the device after confirmation. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun RecentlyDeletedSheet(songs: List<Song>, restore: (Song) -> Unit,
-    deletePermanently: (List<Song>, (Int) -> Unit) -> Unit, dismiss: () -> Unit) {
+    deletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit, dismiss: () -> Unit,
+    markPurged: (List<Song>) -> Unit = {}) {
     val context = LocalContext.current
+    // Android 11+ only lets the user (not the app) delete media found through MediaStore.
+    var systemPending by remember { mutableStateOf<List<Song>>(emptyList()) }
+    val systemDelete = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) markPurged(systemPending)
+        systemPending = emptyList()
+    }
     var pending by remember { mutableStateOf<List<Song>?>(null) }
     ModalBottomSheet(onDismissRequest = dismiss, containerColor = StonePalette.Chip,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -63,8 +77,16 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             confirmButton = { TextButton(onClick = {
                 pending = null
                 deletePermanently(targets) { failed ->
-                    if (failed > 0) Toast.makeText(context, context.resources.getQuantityString(
-                        R.plurals.delete_forever_failed, failed, failed), Toast.LENGTH_LONG).show()
+                    val media = failed.filter { it.uri.startsWith("content://media/") }
+                    if (media.isNotEmpty() && Build.VERSION.SDK_INT >= 30) {
+                        systemPending = media
+                        val request = MediaStore.createDeleteRequest(context.contentResolver,
+                            media.map { it.uri.toUri() })
+                        systemDelete.launch(IntentSenderRequest.Builder(request.intentSender).build())
+                    }
+                    val other = failed.size - if (Build.VERSION.SDK_INT >= 30) media.size else 0
+                    if (other > 0) Toast.makeText(context, context.resources.getQuantityString(
+                        R.plurals.delete_forever_failed, other, other), Toast.LENGTH_LONG).show()
                 }
             }) { Text(stringResource(R.string.delete_forever), color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { pending = null }) { Text(stringResource(R.string.cancel)) } })

@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,7 +13,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -56,24 +58,25 @@ internal fun FeedbackDetail(shakeToReport: Boolean, onShakeToReportChange: (Bool
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FeedbackReportSheet(initialKind: FeedbackKind = FeedbackKind.BUG,
-    screenLabel: String, close: () -> Unit) {
+    screenLabel: String, initialAttachments: List<Uri> = emptyList(), close: () -> Unit) {
     ModalBottomSheet(onDismissRequest = close, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         ImmersiveWindowEffect()
-        FeedbackForm(initialKind, screenLabel, onShared = close,
+        FeedbackForm(initialKind, screenLabel, onShared = close, initialAttachments = initialAttachments,
             modifier = Modifier.fillMaxHeight(.92f).padding(horizontal = 24.dp))
     }
 }
 
 @Composable
 private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
-    modifier: Modifier = Modifier, onShared: () -> Unit = {}, scrollable: Boolean = true) {
+    modifier: Modifier = Modifier, onShared: () -> Unit = {}, scrollable: Boolean = true,
+    initialAttachments: List<Uri> = emptyList()) {
     val context = LocalContext.current
     var kind by remember(initialKind) { mutableStateOf(initialKind) }
     var details by remember { mutableStateOf("") }
     var category by remember { mutableIntStateOf(R.string.feedback_other) }
     var includeTechnical by remember { mutableStateOf(false) }
-    var attachments by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var attachments by remember(initialAttachments) { mutableStateOf(initialAttachments) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { selected ->
         attachments = (attachments + selected).distinct().take(4)
     }
@@ -114,9 +117,10 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
         }
         Text(stringResource(R.string.feedback_details), fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-        OutlinedTextField(value = details, onValueChange = { details = it.take(500) },
+        if (attachments.isNotEmpty()) AttachmentThumbnails(attachments) { attachments = attachments - it }
+        OutlinedTextField(value = details, onValueChange = { details = it.take(MAX_DETAILS) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp), minLines = 5,
-            supportingText = { Text("${details.length}/500") },
+            supportingText = { Text("${details.length} / $MAX_DETAILS") },
             placeholder = { Text(stringResource(R.string.feedback_details_hint)) })
         Text(stringResource(R.string.feedback_attachments), fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
@@ -124,18 +128,6 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
             Icon(Icons.Default.AttachFile, null)
             Spacer(Modifier.width(6.dp))
             Text(stringResource(R.string.feedback_add_attachment))
-        }
-        if (attachments.isNotEmpty()) {
-            Text(stringResource(R.string.feedback_review_attachments), color = StonePalette.Muted,
-                fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
-            attachments.forEach { uri ->
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(attachmentName(context, uri), Modifier.weight(1f), maxLines = 1)
-                    IconButton(onClick = { attachments = attachments - uri }) {
-                        Icon(Icons.Default.DeleteOutline, stringResource(R.string.feedback_remove_attachment))
-                    }
-                }
-            }
         }
         Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
             Checkbox(checked = includeTechnical, onCheckedChange = { includeTechnical = it })
@@ -149,6 +141,26 @@ private fun FeedbackForm(initialKind: FeedbackKind, screenLabel: String,
                 Toast.LENGTH_LONG).show() else onShared()
         }, enabled = details.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
             Text(stringResource(R.string.feedback_share))
+        }
+    }
+}
+
+private const val MAX_DETAILS = 2000
+
+/** Screenshot/attachment previews with a remove button, shown above the description. */
+@Composable private fun AttachmentThumbnails(items: List<Uri>, remove: (Uri) -> Unit) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState())
+        .padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items.forEach { uri ->
+            Box(Modifier.size(width = 84.dp, height = 112.dp)) {
+                com.zirakusa.stone.nativeapp.ui.components.StoneArtwork(uri.toString(), 0L,
+                    Modifier.fillMaxSize().clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)))
+                IconButton(onClick = { remove(uri) }, modifier = Modifier.align(Alignment.TopEnd)
+                    .padding(4.dp).size(28.dp).background(androidx.compose.ui.graphics.Color(0xCC000000), CircleShape)) {
+                    Icon(Icons.Default.Close, stringResource(R.string.feedback_remove_attachment),
+                        tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(16.dp))
+                }
+            }
         }
     }
 }
@@ -184,9 +196,3 @@ private fun shareFeedback(context: Context, kind: FeedbackKind, category: Int, d
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.feedback_share_title)))
     }.isSuccess
 }
-
-private fun attachmentName(context: Context, uri: Uri): String = runCatching {
-    context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
-        if (it.moveToFirst()) it.getString(0).orEmpty() else uri.lastPathSegment.orEmpty()
-    } ?: uri.lastPathSegment.orEmpty()
-}.getOrDefault(uri.lastPathSegment.orEmpty())

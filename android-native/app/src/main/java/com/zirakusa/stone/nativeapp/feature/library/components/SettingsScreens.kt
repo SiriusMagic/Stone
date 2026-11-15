@@ -100,6 +100,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     })
                 val menuSections = listOf(
                     SettingsMenuSection(R.string.settings_section_library, listOf(
+                        SettingsMenuItem(Icons.Default.TravelExplore, stringResource(R.string.device_scan), "",
+                            "biblioteca escanear automáticamente dispositivo permiso archivos música buscar", { onPage("library-scan") }),
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
                             "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
                     )),
@@ -124,8 +126,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     SettingsMenuSection(R.string.settings_section_appearance, listOf(
                         SettingsMenuItem(Icons.Default.Fullscreen, stringResource(R.string.immersive_screen), "",
                             "personalización apariencia pantalla inmersiva barras sistema reproductor biblioteca", { onPage("immersive") }),
-                        SettingsMenuItem(Icons.Default.ViewQuilt, stringResource(R.string.horizontal_layout), "",
-                            "horizontal paisaje girar pantalla distribución layout landscape", { onPage("horizontal-layout") }),
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
                             "personalización tema apariencia colores", { onPage("theme") }),
                         SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
@@ -173,8 +173,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
+                    "library-scan" -> LibraryScanSettings(store)
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
-                    "horizontal-layout" -> HorizontalLayoutSettings(landscapeLayoutMode, onLandscapeLayoutChange)
                     "playback" -> PlaybackDetail(store, playback, { onPage("audio-mode") },
                         { onPage("hardware-acceleration") })
                     "video" -> VideoSettingsDetail(videoScale, onVideoScaleChange)
@@ -202,7 +202,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     "theme" -> R.string.settings_theme; "language" -> R.string.settings_language
     "shortcuts" -> R.string.settings_home_shortcuts
     "immersive" -> R.string.immersive_screen
-    "horizontal-layout" -> R.string.horizontal_layout
+    "library-scan" -> R.string.device_scan
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video" -> R.string.video_settings
     "video-controls" -> R.string.video_controls
@@ -801,7 +801,7 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
     if (playback != null && playbackState != null) SleepTimerContent(playbackState, playback, onClose)
 }
 
-@Composable private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+@Composable internal fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = 18.dp), content = content)
 }
 
@@ -827,7 +827,7 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
     }
 }
 
-@Composable private fun ToggleSetting(title: Int, subtitle: Int, value: Boolean, change: (Boolean) -> Unit) {
+@Composable internal fun ToggleSetting(title: Int, subtitle: Int, value: Boolean, change: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 72.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f).padding(end = 10.dp)) {
             Text(stringResource(title), fontWeight = FontWeight.SemiBold)

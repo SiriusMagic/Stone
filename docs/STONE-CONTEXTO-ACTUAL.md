@@ -21,7 +21,7 @@ recrear el entorno de desarrollo.
 - Documentación de diseño horizontal: `android-native/DISENO-HORIZONTAL.md`
 - Notas de rendimiento: `android-native/RENDIMIENTO.md` y `docs/STONE-1.6.0-PERFORMANCE.md`
 - APK debug rastreado por Git: `android-native/app/build/outputs/apk/debug/app-debug.apk`
-- APK optimizado de menor tamaño: `android-native/Stone-1.5.13-optimized.apk`
+- APK optimizado de menor tamaño: `android-native/Stone-1.6.0-optimized.apk`
 
 ## Compilación desde un entorno limpio
 

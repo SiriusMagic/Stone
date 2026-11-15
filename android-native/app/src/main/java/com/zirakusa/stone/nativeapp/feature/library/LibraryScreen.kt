@@ -46,7 +46,8 @@ private val legacyDefinitions = listOf(
     currentId: String = "", onCreatePlaylist: (String) -> Unit = {},
     onRemoveFromPlaylist: (String, Song) -> Unit = { _, _ -> },
     onRestoreDeleted: (Song) -> Unit = {},
-    onDeletePermanently: (List<Song>, (Int) -> Unit) -> Unit = { _, _ -> },
+    onDeletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit = { _, _ -> },
+    onMarkPurged: (List<Song>) -> Unit = {},
     theme: String = "dark", onThemeChange: (String) -> Unit = {}, language: String = "es",
     onLanguageChange: (String) -> Unit = {}, settingsStore: StoneSettingsStore? = null,
     settingsPage: String? = null, onSettingsPage: (String?) -> Unit = {},
@@ -209,7 +210,7 @@ private val legacyDefinitions = listOf(
     }
     LibrarySheets(sheet,
         sort, descending, { sort = it; sheet = null }, { descending = !descending },
-        { sheet = null }, state.deletedSongs, onRestoreDeleted, onDeletePermanently)
+        { sheet = null }, state.deletedSongs, onRestoreDeleted, onDeletePermanently, onMarkPurged)
     if (settingsSheetVisible) SettingsPanel(theme, onThemeChange, language, onLanguageChange,
         settingsStore, settingsPage, onSettingsPage, { onSettingsSheetVisible(false) },
         { sheet = it }, playbackViewModel, landscapeLayoutMode = landscapeLayoutMode,

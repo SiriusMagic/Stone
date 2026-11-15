@@ -17,6 +17,8 @@ data class StoneSettings(
     val sleepMinutes: Int = 0,
     val audioMode: String = "balanced",
     val autoRescan: Boolean = true,
+    /** Index every song/video on the device through MediaStore (needs media permission). */
+    val deviceScan: Boolean = true,
     val hardwareAcceleration: String = "automatic",
     val musicReminders: Boolean = false,
     val landscapeLayoutMode: LandscapeLayoutMode = LandscapeLayoutMode.ALWAYS,
@@ -42,6 +44,7 @@ class StoneSettingsStore(context: Context) {
         audioMode = db.setting("audioMode", "balanced")
             .takeIf { it in setOf("battery", "balanced", "hifi") } ?: "balanced",
         autoRescan = db.setting("autoRescan", "true").toBoolean(),
+        deviceScan = db.setting("deviceScan", "true").toBoolean(),
         hardwareAcceleration = db.setting("hardwareAcceleration", "automatic")
             .takeIf { it in setOf("automatic", "disabled", "decoding", "full", "adaptive") } ?: "automatic",
         musicReminders = db.setting("musicReminders", "false").toBoolean(),
@@ -86,6 +89,11 @@ class StoneSettingsStore(context: Context) {
         value.takeIf { it in setOf("auto", "fit", "zoom", "fill") } ?: "auto")
     fun setVideoLibraryLayout(value: String) = db.setSetting("videoLibraryLayout",
         value.takeIf { it in setOf("grid", "list") } ?: "grid")
+    fun setDeviceScan(value: Boolean) = db.setSetting("deviceScan", value.toString())
+    fun setAutoRescan(value: Boolean) = db.setSetting("autoRescan", value.toString())
+    /** True once Stone asked for the media permission on first launch. */
+    fun mediaPermissionAsked() = db.setting("mediaPermissionAsked", "false").toBoolean()
+    fun setMediaPermissionAsked() = db.setSetting("mediaPermissionAsked", "true")
     fun setImmersiveEnabled(value: Boolean) = db.setSetting("immersiveMode", value.toString())
     fun setShakeToReport(value: Boolean) = db.setSetting("shakeToReport", value.toString())
     fun videoControlVisible(key: String, fallback: Boolean = true) =

@@ -24,10 +24,11 @@ enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.st
 @Composable fun LibrarySheets(sheet: String?, sort: LibrarySort, descending: Boolean,
     onSort: (LibrarySort) -> Unit, onReverse: () -> Unit, dismiss: () -> Unit,
     deleted: List<Song>, restoreDeleted: (Song) -> Unit,
-    deletePermanently: (List<Song>, (Int) -> Unit) -> Unit = { _, _ -> }) {
+    deletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit = { _, _ -> },
+    markPurged: (List<Song>) -> Unit = {}) {
     if (sheet == null) return
     if (sheet == "deleted") {
-        RecentlyDeletedSheet(deleted, restoreDeleted, deletePermanently, dismiss)
+        RecentlyDeletedSheet(deleted, restoreDeleted, deletePermanently, dismiss, markPurged)
         return
     }
     if (sheet != "sort") return

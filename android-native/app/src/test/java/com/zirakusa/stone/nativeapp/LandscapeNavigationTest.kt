@@ -10,7 +10,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.*
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
-import com.zirakusa.stone.nativeapp.feature.library.components.HorizontalLayoutSettings
 import com.zirakusa.stone.nativeapp.feature.player.rememberPlayerSheetsState
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import org.junit.Assert.*
@@ -58,17 +57,6 @@ class LandscapeNavigationTest {
         compose.onNodeWithText(label(R.string.folders)).assertIsSelected()
         compose.onNodeWithText("Music").assertIsDisplayed()
         assertEquals(0, playbackCommands)
-    }
-
-    @Test fun preferenceChangesPresentationImmediatelyWithoutChangingPlayerNavigation() {
-        val mode = mutableStateOf(LandscapeLayoutMode.ALWAYS)
-        compose.setContent { StoneTheme { HorizontalLayoutSettings(mode.value) { mode.value = it } } }
-        compose.onNodeWithText(label(R.string.horizontal_always)).assertIsSelected()
-        compose.onNodeWithText(label(R.string.horizontal_library_only)).performClick().assertIsSelected()
-        assertTrue(homeLayout(891f, true, true, false, false, mode.value).fullPlayer)
-        assertTrue(homeLayout(891f, true, false, false, false, mode.value).dockedPlayer)
-        compose.onNodeWithText(label(R.string.horizontal_always)).performClick().assertIsSelected()
-        assertTrue(homeLayout(891f, true, true, false, false, mode.value).dockedPlayer)
     }
 
     @Test fun playerSheetsSurviveSavedStateRestoration() {

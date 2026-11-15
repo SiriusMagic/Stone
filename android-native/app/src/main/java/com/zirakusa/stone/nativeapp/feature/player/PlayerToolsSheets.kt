@@ -60,6 +60,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
+/** Song currently played as audio only; mirrored from StoneApp for the options menu. */
+internal object AudioOnlySelection { var id by mutableStateOf<String?>(null) }
+
 enum class PlayerTool { Tags, Equalizer, Playlist, Share, Speed, Ringtone, Sleep,
     FloatingWindow, Delete }
 
@@ -74,9 +77,10 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
     onSelect: (PlayerTool) -> Unit, extraActions: List<PlayerOptionExtra> = emptyList()) {
     // In landscape the sheet would otherwise stretch to Material's 640 dp maximum and
     // cover most of the screen; half the window keeps the library visible beside it.
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val landscape = configuration.screenWidthDp > configuration.screenHeightDp
-    val maxWidth = if (landscape) (configuration.screenWidthDp / 2).dp else BottomSheetDefaults.SheetMaxWidth
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val landscape = window.width > window.height
+    val maxWidth = if (landscape) with(density) { (window.width / 2).toDp() } else BottomSheetDefaults.SheetMaxWidth
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF62393B),
         sheetMaxWidth = maxWidth, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = landscape)) {
         ImmersiveWindowEffect()
@@ -98,7 +102,9 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
         add(ToolRow(Icons.Default.Timer, R.string.sleep_timer, PlayerTool.Sleep))
         add(ToolRow(Icons.Default.Delete, R.string.delete, PlayerTool.Delete))
     }
-    val videoRows = if (song?.isVideo == true && song.id == state.currentId) listOf(
+    // A video playing in "audio only" mode has no picture, so a floating window makes no sense.
+    val videoRows = if (song?.isVideo == true && song.id == state.currentId &&
+        song.id != AudioOnlySelection.id) listOf(
         ToolRow(Icons.Default.PictureInPictureAlt, R.string.floating_window, PlayerTool.FloatingWindow)
     ) else emptyList()
     val visibleRows = rows.take(8) + videoRows + rows.drop(8)

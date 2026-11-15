@@ -23,6 +23,18 @@ class LibraryRepository(context: Context) {
     private val disposition = SongDispositionStore(context)
     private val imported = ImportedLibraryStore(context)
     private val policy = RefreshPolicy()
+    private val device = DeviceMediaScanner(appContext)
+    private val settings = com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore(appContext)
+
+    /** Whole-device scanning is on and Android granted the media permission. */
+    fun deviceScanActive(): Boolean = settings.read().deviceScan && DeviceMediaAccess.audioGranted(appContext)
+    val hasSource: Boolean get() = folders.isNotEmpty() || deviceScanActive()
+
+    /** Folder songs win over MediaStore copies of the same file (they keep SAF write access). */
+    private fun merge(folderSongs: List<Song>, deviceSongs: List<Song>): List<Song> {
+        val known = folderSongs.mapTo(HashSet()) { it.size to it.durationMs / 1000 }
+        return folderSongs + deviceSongs.filterNot { (it.size to it.durationMs / 1000) in known }
+    }
     val folders: List<String> get() = preferences.getStringSet("folders", null)
         ?.toList().orEmpty().ifEmpty { listOfNotNull(preferences.getString("folder", null)) }
     val folder: String? get() = folders.firstOrNull()
@@ -35,12 +47,14 @@ class LibraryRepository(context: Context) {
         }
     }
     suspend fun cached(): CachedLibrary = withContext(Dispatchers.IO) {
-        entries((folders.flatMap(cache::read) + imported.songs()).distinctBy { it.id })
+        val deviceSongs = if (deviceScanActive()) cache.read(DEVICE_KEY) else emptyList()
+        entries((merge(folders.flatMap(cache::read), deviceSongs) + imported.songs()).distinctBy { it.id })
     }
 
     suspend fun refresh(manual: Boolean): CachedLibrary? {
         val trees = folders
-        if (trees.isEmpty()) return null
+        val scanDevice = deviceScanActive()
+        if (trees.isEmpty() && !scanDevice) return null
         if (!policy.tryStart(manual, SystemClock.elapsedRealtime())) return null
         var success = false
         return try {
@@ -56,8 +70,10 @@ class LibraryRepository(context: Context) {
                         previous
                     }
                 }.distinctBy { it.id }.sortedBy { it.title.lowercase() }
-                if (scannedTrees == 0) throw IllegalStateException("No se pudo actualizar ninguna carpeta")
-                (merged + imported.songs()).distinctBy { it.id }
+                if (trees.isNotEmpty() && scannedTrees == 0 && !scanDevice)
+                    throw IllegalStateException("No se pudo actualizar ninguna carpeta")
+                val deviceSongs = if (scanDevice) device.scan().also { cache.write(DEVICE_KEY, it) } else emptyList()
+                (merge(merged, deviceSongs).sortedBy { it.title.lowercase() } + imported.songs()).distinctBy { it.id }
             }
             success = true
             entries(songs)
@@ -75,10 +91,14 @@ class LibraryRepository(context: Context) {
         return true
     }
 
+    fun markPurged(song: Song) { disposition.purge(song.id); imported.remove(song.uri) }
+
     private fun entries(songs: List<Song>): CachedLibrary {
         val deleted = disposition.deletedIds()
         val purged = disposition.purgedIds()
         val visible = songs.filterNot { it.id in purged }.map(videoMetadata::applyToSong)
         return CachedLibrary(visible.filterNot { it.id in deleted }, visible.filter { it.id in deleted })
     }
+
+    private companion object { const val DEVICE_KEY = "device://mediastore" }
 }
