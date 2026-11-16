@@ -33,7 +33,7 @@ internal object StoneGuide {
     /** Tools whose name, description or parameters contain every word of [query]. */
     fun search(query: String, category: String?, access: AccessMode = StoneAutomation.currentAccess): JSONObject {
         val words = query.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }
-        val matches = StoneAutomation.available(access).filter { action ->
+        val matches = StoneAutomation.available(access, StoneAutomation.currentBlocked).filter { action ->
             val text = (action.name + " " + action.description + " " + action.params.joinToString(" ") { it.name + " " + it.description }).lowercase()
             (category == null || action.name.substringBefore('.') == category) && words.all { it in text }
         }
@@ -55,7 +55,7 @@ internal object StoneGuide {
     }
 
     /** JSON shown to a plain GET (browser, curl, an agent probing the link). */
-    fun overview(access: AccessMode): JSONObject = JSONObject()
+    fun overview(access: AccessMode, blocked: Set<String> = emptySet()): JSONObject = JSONObject()
         .put("server", "Stone").put("version", BuildConfig.VERSION_NAME).put("protocol", "Model Context Protocol (MCP)")
         .put("status", "ok: the token is valid and Stone is reachable")
         .put("howToConnect", JSONObject()
@@ -67,9 +67,9 @@ internal object StoneGuide {
                 "Examples: /call/player_state , /call/player_set_volume?percent=40 , /call/library_search?query=love&limit=5")
             .put("health", ".../health needs no token and only says whether Stone is running."))
         .put("firstSteps", JSONArray(listOf("stone_help", "stone_troubleshoot", "player_state", "library_search")))
-        .put("access", access.key).put("tools", JSONArray(StoneAutomation.available(access).map { JSONObject().put("name", it.toolName).put("description", it.description) }))
+        .put("access", access.key).put("tools", JSONArray(StoneAutomation.available(access, blocked).map { JSONObject().put("name", it.toolName).put("description", it.description) }))
 
-    fun toolList(access: AccessMode): JSONObject = StoneAutomation.available(access).let { tools ->
+    fun toolList(access: AccessMode, blocked: Set<String> = emptySet()): JSONObject = StoneAutomation.available(access, blocked).let { tools ->
         JSONObject().put("total", tools.size).put("access", access.key).put("tools", JSONArray(tools.map { it.brief() }))
     }
 

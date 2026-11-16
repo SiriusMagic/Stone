@@ -7,10 +7,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `AccessMode.kt` (51) What a token lets an agent do.
+- `AccessMode.kt` (55) What a token lets an agent do.
 - `ActivityLog.kt` (65) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `ApiMode.kt` (152) User switches for the MCP server (Ajustes › Modo API).
-- `ApiTokens.kt` (93) Access tokens of Ajustes › Modo API › Seguridad.
+- `ApiMode.kt` (153) User switches for the MCP server (Ajustes › Modo API).
+- `ApiTokens.kt` (96) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthThrottle.kt` (29) Slows down token guessing:
 - `AutomationHost.kt` (71) What the running app offers to automation.
 - `McpHttp.kt` (114) One parsed HTTP/1.1 request;
@@ -19,10 +19,11 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MetadataBatch.kt` (126) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `RelayClient.kt` (127) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
+- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
 - `StoneAction.kt` (83) How dangerous an action is;
 - `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
 - `StoneAgentActions.kt` (37) Tools that help agents help themselves:
-- `StoneAutomation.kt` (156) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAutomation.kt` (165) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
 - `StoneGuide.kt` (91) Discovery help for agents:
 - `StoneJobs.kt` (122) Background batches for agents.
@@ -85,7 +86,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/feature/library/components
 - `AlbumCard.kt` (57)
-- `ApiActivityTab.kt` (90) Actividad tab:
+- `ApiActivityTab.kt` (92) Actividad tab:
+- `ApiAnalytics.kt` (144) Time windows:
 - `ApiGeneralTab.kt` (67) General tab:
 - `ApiLinkTab.kt` (53) Enlace tab:
 - `ApiModeConnect.kt` (63) Port, "Probar conexión" and ready-to-paste client configurations.
@@ -94,7 +96,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiModeShared.kt` (126) Tabs of Ajustes › Modo API.
 - `ApiModeToolList.kt` (70) Herramientas tab:
 - `ApiSecurityTab.kt` (81) Seguridad tab:
-- `ApiTokenRow.kt` (121) One token:
+- `ApiTokenEditor.kt` (142) Full-screen editor of one token:
+- `ApiTokenRow.kt` (108) One token:
 - `ArtistCard.kt` (54)
 - `AudioLevelSettings.kt` (112) Ajustes › Niveles de audio:
 - `CrashReportCard.kt` (41) Ajustes › Diagnóstico:

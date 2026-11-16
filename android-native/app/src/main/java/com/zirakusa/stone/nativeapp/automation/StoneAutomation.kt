@@ -42,17 +42,24 @@ object StoneAutomation {
     val actions: List<StoneAction> by lazy { StoneActions.all() }
 
     /** Actions a token with [access] may use (its mode and Ajustes › Modo API › Herramientas). */
-    fun available(access: AccessMode): List<StoneAction> = actions.filter { ApiMode.permits(it, access) }
+    fun available(access: AccessMode, blocked: Set<String> = emptySet()): List<StoneAction> =
+        actions.filter { ApiMode.permits(it, access) && it.toolName !in blocked }
+
+    /** Tools turned off for the token of the request being executed (stone_help hides them). */
+    @Volatile internal var currentBlocked: Set<String> = emptySet()
 
     fun find(toolName: String) = actions.firstOrNull { it.toolName == toolName || it.name == toolName }
 
     /** Runs [toolName] with [arguments]; throws [ActionException] with a code and message for the agent. */
-    suspend fun execute(toolName: String, arguments: JSONObject, access: AccessMode = AccessMode.WRITE, token: String = ""): Any {
+    suspend fun execute(toolName: String, arguments: JSONObject, access: AccessMode = AccessMode.WRITE, token: String = "",
+        tokenId: String = "", blocked: Set<String> = emptySet()): Any {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName", "UNKNOWN_TOOL",
             "Call tools/list or stone_help.")
         return try {
             if (action.toolName in ApiMode.disabledTools) throw ActionException("The user turned off '${action.toolName}' for agents.",
                 "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo API > Herramientas.")
+            if (action.toolName in blocked) throw ActionException("The user turned off '${action.toolName}' for this token.",
+                "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo API > Seguridad > (this token).")
             if (!access.permits(action.risk)) throw ActionException("This token is read-only.", "READ_ONLY_TOKEN",
                 "The user can change the token's mode in Stone > Ajustes > Modo API > Seguridad.")
             validate(action, arguments)
@@ -60,15 +67,15 @@ object StoneAutomation {
             if (!dryRun && access.needsApproval(action.risk) && !confirm(action, arguments))
                 throw ActionException("The user did not approve this change on the phone.", "USER_DENIED",
                     "Ask the user, or use a token with 'Acceso completo'.")
-            currentAccess = access
+            currentAccess = access; currentBlocked = blocked
             val result = withContext(Dispatchers.Main) { action.run(arguments) }
-            record(action, RecordStatus.OK, arguments.toString(), token, "")
+            record(action, RecordStatus.OK, arguments.toString(), token, "", tokenId)
             result
         } catch (error: Exception) {
             val failure = ActionException.of(error)
             val status = if (failure.code in setOf("USER_DENIED", "READ_ONLY_TOKEN", "TOOL_DISABLED", "ANDROID_CONSENT"))
                 RecordStatus.DENIED else RecordStatus.FAILED
-            record(action, status, failure.message ?: failure.code, token, failure.code)
+            record(action, status, failure.message ?: failure.code, token, failure.code, tokenId)
             throw failure
         }
     }
@@ -135,7 +142,9 @@ object StoneAutomation {
 
     fun reportProgress(progress: BatchProgress?) { mutableProgress.value = progress }
 
-    private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String, code: String) {
+    private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String, code: String, tokenId: String) {
+        RequestStats.record(tokenId, when (status) { RecordStatus.OK -> RequestStats.OK; RecordStatus.DENIED -> RequestStats.DENIED
+            RecordStatus.FAILED -> RequestStats.FAILED })
         val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(240),
             status, action.risk, token, code)
         val history = mutableHistory.updateAndGet { (listOf(entry) + it).take(HISTORY_SIZE) }

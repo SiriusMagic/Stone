@@ -1,5 +1,11 @@
 # Sin publicar (próxima versión)
 
+- Modo API › Actividad › Analítica: solicitudes por minuto de todos los agentes o de cada token (última hora
+  o 24 h): total, media y pico por minuto, errores y denegadas, gráfico de barras (toca una barra para ver su
+  hora y cifras) y llamadas con token erróneo. Se guarda en el teléfono.
+- «Configurar token»: editor de cada token con nombre, modo, caducidad, herramientas permitidas por categoría
+  (solo para ese token; Stone las comprueba en cada solicitud y el agente deja de verlas) y su propia analítica.
+  Revocar pide confirmación.
 - Ecualizador «Según el género»: con el ecualizador encendido, cada canción aplica el ajuste de su género
   (Electrónica, Rock, Latín, Heavy metal…) al empezar. Las canciones sin género usan tu propio ajuste, que nunca
   se sobrescribe. También desde la API: equalizer_set_by_genre.

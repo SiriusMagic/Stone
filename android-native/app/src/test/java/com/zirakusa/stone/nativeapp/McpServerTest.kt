@@ -165,7 +165,16 @@ class McpServerTest {
         }
     }
 
-    @Test fun tokenInTheUrlCanBeTurnedOff() {
+    @Test fun eachTokenOnlySeesAndUsesItsAllowedTools() {
+        val limited = ApiToken("a", "GPT", token, AccessMode.FULL, 0, disabledTools = setOf("player_state"))
+        assertTrue(McpServer.start(listOf(limited), localNetwork = false))
+        val list = post("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}""").second
+        assertFalse(JSONObject(list).getJSONObject("result").getJSONArray("tools").toString().contains("\"player_state\""))
+        val call = post("""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"player_state","arguments":{}}}""").second
+        assertTrue(call.contains("TOOL_DISABLED"))
+    }
+
+        @Test fun tokenInTheUrlCanBeTurnedOff() {
         val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
         McpServer.allowQueryToken = false
         try {

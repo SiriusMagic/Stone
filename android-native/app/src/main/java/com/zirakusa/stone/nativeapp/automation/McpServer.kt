@@ -109,7 +109,7 @@ object McpServer {
             "Stone: too many wrong tokens. Wait a minute and use the current link."), listOf("Retry-After: 60"))
         // Every request needs the token, SSE messages included: a leaked sessionId alone is not enough.
         val grant = grantFor(request)
-        if (grant == null) AuthThrottle.failed(caller)
+        if (grant == null) { AuthThrottle.failed(caller); RequestStats.record("", RequestStats.REJECTED) }
         if (grant == null) return McpHttp.respond(out, 401,
             error(null, -32001, if (!allowQueryToken && request.query["token"] != null && headerToken(request) == null)
                 "Stone: this phone only accepts the token in the header 'Authorization: Bearer TOKEN', not in the URL."
@@ -121,7 +121,7 @@ object McpServer {
         when {
             path == "/sse" && request.method == "GET" -> openStream(client, out, request, grant)
             path == "/messages" && request.method == "POST" -> postToStream(out, request, session, grant)
-            path == "/tools" && request.method == "GET" -> McpHttp.respond(out, 200, StoneGuide.toolList(grant.mode))
+            path == "/tools" && request.method == "GET" -> McpHttp.respond(out, 200, StoneGuide.toolList(grant.mode, grant.disabledTools))
             path.startsWith("/call/") && (request.method == "GET" || request.method == "POST") ->
                 simpleCall(out, request, path.removePrefix("/call/"), grant)
             path == PATH || path == "/" -> streamableHttp(out, request, grant)
@@ -138,7 +138,7 @@ object McpServer {
             val body = request.body.takeIf { it.startsWith("{") }?.let(::JSONObject)
             val arguments = body ?: StoneGuide.arguments(action, request.query)
             JSONObject().put("ok", true).put("tool", action.toolName)
-                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments, grant.mode, grant.name) })
+                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments, grant.mode, grant.name, grant.id, grant.disabledTools) })
         } catch (failure: ActionException) {
             JSONObject().put("ok", false).put("tool", action.toolName).put("error", failure.message)
                 .put("code", failure.code).apply { failure.hint?.let { put("hint", it) } }
@@ -161,7 +161,7 @@ object McpServer {
             // MCP clients probe GET for a server stream (which Stone does not offer) and expect 405.
             // Anything else doing a GET (a browser, curl, an agent reading the link) gets a guide.
             else -> if (request.method == "GET" && request.header("accept")?.contains("text/event-stream") != true)
-                McpHttp.respond(out, 200, StoneGuide.overview(grant.mode))
+                McpHttp.respond(out, 200, StoneGuide.overview(grant.mode, grant.disabledTools))
             else McpHttp.respond(out, 405, error(null, -32000,
                 "Stone: this endpoint has no server stream. Send MCP requests with POST (or use GET /sse)."), listOf("Allow: POST, DELETE"))
         }
@@ -231,7 +231,7 @@ object McpServer {
                             AccessMode.FULL -> "Full access: nothing asks the user for approval."
                         })
                 "ping" -> JSONObject()
-                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode).map { action ->
+                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode, grant.disabledTools).map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)
                         .put("inputSchema", action.inputSchema())
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)
@@ -256,7 +256,7 @@ object McpServer {
         val name = params.optString("name")
         val arguments = params.optJSONObject("arguments") ?: JSONObject()
         return try {
-            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name) }
+            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools) }
             JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", result.toString())))
                 .put("isError", false).apply { if (result is JSONObject) put("structuredContent", result) }
         } catch (failure: ActionException) {

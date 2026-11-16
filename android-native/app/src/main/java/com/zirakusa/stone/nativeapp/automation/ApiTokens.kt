@@ -47,6 +47,9 @@ object ApiTokens {
         it.copy(expiresAt = if (validDays > 0) System.currentTimeMillis() + validDays * 86_400_000L else 0)
     }
 
+    /** Tools this token may not use (the agent no longer sees them in tools/list). */
+    fun setDisabledTools(id: String, tools: Set<String>) = change(id) { it.copy(disabledTools = tools - "stone_help") }
+
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim().ifEmpty { it.name }) }
     fun setMode(id: String, mode: AccessMode) = change(id) { it.copy(mode = mode) }
     /** New secret for the same token: whoever had the old link loses access. */
@@ -55,7 +58,7 @@ object ApiTokens {
     /** Removes a token; the last one is rotated instead so the link card always has something to show. */
     fun revoke(id: String) {
         if (tokens.size <= 1) return rotate(id)
-        tokens = tokens.filterNot { it.id == id }; save(); publish()
+        tokens = tokens.filterNot { it.id == id }; save(); publish(); RequestStats.forget(id)
     }
 
     /** Called by the server on every authorized request; saved at most once a minute. */

@@ -53,6 +53,7 @@ object ApiMode {
             ?: McpServer.DEFAULT_PORT
         ApiTokens.load(store, "Principal")
         ActivityLog.attach(store)
+        RequestStats.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
         // Stored encrypted with a Keystore key; values from older versions are re-sealed here.
         relaySecret = SecretBox.open(store.look("api.relaySecret", "")).ifBlank { newToken(32) }

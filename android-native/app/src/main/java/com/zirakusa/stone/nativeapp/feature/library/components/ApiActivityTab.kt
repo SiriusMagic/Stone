@@ -36,6 +36,8 @@ private enum class ActivityFilter(val label: Int) {
     val history by StoneAutomation.history.collectAsState()
     var filter by rememberSaveable { mutableStateOf(ActivityFilter.ALL) }
     ApiProgress()
+    // Requests per minute for every agent together, or one token at a time.
+    ApiSection(R.string.api_analytics, Icons.Default.MonitorHeart) { ApiAnalyticsCard() }
     ApiSection(R.string.api_tab_activity, Icons.Default.MonitorHeart, R.string.api_stats_since) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stat(history.count { it.status == RecordStatus.OK }, R.string.api_stats_ok, ApiGreen)

@@ -21,14 +21,15 @@ import com.zirakusa.stone.nativeapp.automation.AccessMode
 import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.ApiToken
 import com.zirakusa.stone.nativeapp.automation.ApiTokens
+import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import java.text.DateFormat
 import java.util.Date
 
-/** One token: name, partial secret, mode chips and a menu (copy link, rename, rotate, revoke). */
+/** One token: name, its own link with copy, a summary and "Configurar token" (editor with tools and analytics). */
 @Composable internal fun ApiTokenRow(token: ApiToken, main: Boolean, copy: (String, String) -> Unit) {
     var menu by remember { mutableStateOf(false) }
-    var renaming by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf(false) }
     val format = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT) }
     HorizontalDivider(Modifier.padding(top = 8.dp), color = StonePalette.Muted.copy(alpha = .2f))
     Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -52,32 +53,27 @@ import java.util.Date
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, null) }
             DropdownMenu(menu, { menu = false }) {
                 DropdownMenuItem({ Text(stringResource(R.string.api_token_copy_link)) }, { menu = false; copy("Stone MCP", ApiMode.shareText(token.secret)) })
-                DropdownMenuItem({ Text(stringResource(R.string.api_token_rename)) }, { menu = false; renaming = true })
+                DropdownMenuItem({ Text(stringResource(R.string.api_token_configure)) }, { menu = false; editing = true })
                 DropdownMenuItem({ Text(stringResource(R.string.api_token_rotate)) }, { menu = false; ApiTokens.rotate(token.id) })
-                DropdownMenuItem({ Text(stringResource(R.string.api_token_revoke), color = ApiRed) }, { menu = false; ApiTokens.revoke(token.id) })
             }
         }
     }
-    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        AccessMode.entries.forEach { mode ->
-            FilterChip(token.mode == mode, { ApiTokens.setMode(token.id, mode) }, { Text(stringResource(mode.label()), fontSize = 12.sp) })
-        }
+    val total = remember(token.disabledTools) { StoneAutomation.actions.size - 1 } // stone_help is always on
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        ApiPill(if (token.expired) stringResource(R.string.api_token_expired) else stringResource(R.string.api_token_active),
+            if (token.expired) ApiRed else ApiGreen)
+        Text(stringResource(token.mode.label()) + " · " + stringResource(R.string.api_token_tools_count,
+            total - token.disabledTools.size, total), Modifier.weight(1f).padding(start = 8.dp),
+            color = StonePalette.Secondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        FilledTonalButton(onClick = { editing = true }) { Text(stringResource(R.string.api_token_configure), fontSize = 12.sp) }
     }
-    if (renaming) ApiTokenDialog(token.name, token.mode, token.expiresAt, onDismiss = { renaming = false }) { name, mode, days ->
-        ApiTokens.rename(token.id, name); ApiTokens.setMode(token.id, mode)
-        if (days != null) ApiTokens.setExpiry(token.id, days)
-        renaming = false
-    }
+    if (editing) ApiTokenEditor(token) { editing = false }
 }
-
-/** Expiry choices in days; 0 = never, -1 = custom number of days. */
-private val expiryOptions = listOf(0, 7, 30, 90, 365, -1)
 
 /**
  * Create or edit a token: name, access mode and expiry. [onSave] gets the expiry in days from now
  * (0 = never), or null when editing and the expiry was not touched.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun ApiTokenDialog(initialName: String = "", initialMode: AccessMode = AccessMode.WRITE,
     initialExpiresAt: Long = 0, onDismiss: () -> Unit, onSave: (String, AccessMode, Int?) -> Unit) {
     var name by remember { mutableStateOf(initialName) }
@@ -98,16 +94,7 @@ private val expiryOptions = listOf(0, 7, 30, 90, 365, -1)
                 if (editing) Text(if (initialExpiresAt > 0) stringResource(R.string.api_token_expires,
                     DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(initialExpiresAt)))
                     else stringResource(R.string.api_token_forever), color = StonePalette.Muted, fontSize = 12.sp)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    expiryOptions.forEach { option ->
-                        FilterChip(choice == option, { choice = option }, { Text(when (option) {
-                            0 -> stringResource(R.string.api_token_forever)
-                            365 -> stringResource(R.string.api_token_year)
-                            -1 -> stringResource(R.string.api_token_custom)
-                            else -> stringResource(R.string.api_token_days, option)
-                        }, fontSize = 12.sp) })
-                    }
-                }
+                ExpiryChips(choice) { choice = it }
                 if (choice == -1) OutlinedTextField(custom, { value -> custom = value.filter(Char::isDigit).take(4) },
                     Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.api_token_custom_days)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
