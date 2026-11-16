@@ -124,5 +124,12 @@ Muchos incluyen `hint` con cómo resolverlo.
 
 ## Seguridad
 
+- Los tokens nuevos tienen la forma `stn_` + 43 caracteres (256 bits aleatorios); los antiguos siguen
+  valiendo hasta que los rotes. Al crear uno puedes darle caducidad (7, 30 o 90 días).
+- Tras 20 tokens incorrectos en un minuto desde el mismo origen, el servidor responde `429` durante un
+  minuto (cabecera `Retry-After: 60`). Un token correcto de otro cliente no se ve afectado.
+- Las respuestas llevan `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` y
+  `Referrer-Policy: no-referrer`; las peticiones están limitadas a 64 cabeceras y 1 MB de cuerpo.
+
 Quien tenga el enlace controla la reproducción. No lo pegues en sitios públicos; si se filtra,
 pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca el que ya no uses.

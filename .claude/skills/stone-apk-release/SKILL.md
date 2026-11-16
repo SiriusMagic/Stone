@@ -43,6 +43,7 @@ From `android-native/`:
 
 ## 4. Record the release
 
+- If files were added, moved or split, regenerate the code map: `python3 android-native/tools/update_map.py`.
 - Copy the APK to `android-native/Stone-<versionName>-optimized.apk`.
 - `android-native/README.md`: update "La última versión generada es `X` (versionCode N)" and the
   `Stone-X-optimized.apk` name.

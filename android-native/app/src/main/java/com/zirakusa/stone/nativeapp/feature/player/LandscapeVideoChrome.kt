@@ -62,7 +62,7 @@ internal enum class VideoPanel { None, Menu, List }
     val hasSubtitles = player?.currentTracks?.groups?.any { it.type == C.TRACK_TYPE_TEXT } == true
     val hd = (player?.videoSize?.height ?: 0) >= 720
     val muted = state.volumePercent == 0
-    val activity = remember(context) { context.findActivityOrNull() }
+    val activity = remember(context) { context.findActivity() }
 
     Box(modifier.fillMaxSize()) {
         // Night mode: a dark veil over the picture (controls stay bright).
@@ -168,8 +168,3 @@ internal enum class VideoPanel { None, Menu, List }
 
 private fun speedText(speed: Float) = if (speed % 1f == 0f) "${speed.toInt()}x" else "${speed}x"
 
-private tailrec fun android.content.Context.findActivityOrNull(): android.app.Activity? = when (this) {
-    is android.app.Activity -> this
-    is android.content.ContextWrapper -> baseContext.findActivityOrNull()
-    else -> null
-}

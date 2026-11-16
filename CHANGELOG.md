@@ -1,5 +1,12 @@
-# Sin publicar (APK aún no generado)
+# Stone Kotlin 1.7.3
 
+- Dependencias al día: Android Gradle Plugin 8.13.2, Kotlin 2.4.21, SDK 36, Compose BOM 2026.06.01,
+  Activity 1.13, Lifecycle 2.10, Media3 1.11.1, coroutines 1.11, OkHttp 5.3.2. (Lo siguiente, Compose
+  1.12 y Lifecycle 2.11, exige SDK 37 y AGP 9.1: queda para otra migración.)
+- MCP más seguro: tokens `stn_` de 256 bits con caducidad opcional, bloqueo temporal (429) tras
+  intentos con token incorrecto, límite de cabeceras y respuestas sin caché.
+- Código reorganizado en archivos pequeños (Ajustes, reproductor de vídeo, biblioteca) y mapa
+  `android-native/MAP.md` para trabajar leyendo solo lo necesario.
 - Vídeo en horizontal rediseñado: título con HD, subtítulos, lista y menú; accesos con texto a los
   lados (Girar, Tamaño | Repetir, Reproducción en segundo plano, Mudo); barra de tiempo y fila
   candado · anterior · −10 · pausa · +10 · siguiente · velocidad · ventana flotante. Panel lateral

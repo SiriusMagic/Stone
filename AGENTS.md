@@ -4,6 +4,8 @@ Use this project with minimal reading and zone-based edits.
 
 ## Read Order
 
+0. Android (Kotlin) work: read `android-native/AGENTS.md` and `android-native/MAP.md` only.
+
 1. Read `C:\Users\ZIRAKUSA\BotCaja\musica\MAP.md`.
 2. If the task is in the frontend, read `C:\Users\ZIRAKUSA\BotCaja\musica\frontend\MAP.md`.
 3. Open the target file.

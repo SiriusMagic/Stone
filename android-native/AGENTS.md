@@ -1,5 +1,10 @@
 # Trabajo sobre Stone Kotlin
 
+- Para gastar pocos tokens: lee primero `MAP.md` (un renglón por archivo), abre solo el archivo que
+  necesitas y, si pasa de ~200 líneas, busca la función con grep y lee ese tramo.
+- Archivos visuales cerca de 150-250 líneas; si uno crece, divídelo por tema y vuelve a generar el
+  mapa con `python3 tools/update_map.py`.
+
 - Referencia exclusiva: Stone en `../frontend/`, sus recursos y `../backend/`.
 - Leer `README.md` y `../docs/MIGRACION-KOTLIN.md` antes de trasladar funciones.
 - Organizar por responsabilidad: core, data, playback, feature, ui. Evitar archivos monolíticos.

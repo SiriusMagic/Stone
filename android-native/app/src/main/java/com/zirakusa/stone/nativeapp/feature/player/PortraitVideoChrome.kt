@@ -47,7 +47,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     val context = LocalContext.current
     var locked by remember { mutableStateOf(false) }
     var night by rememberSaveable { mutableStateOf(false) }
-    val activity = remember(context) { context.findActivityOrNull() }
+    val activity = remember(context) { context.findActivity() }
     Box(modifier.fillMaxSize()) {
         if (night) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .45f)))
         if (locked) {
@@ -116,8 +116,3 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 private fun speedPill(speed: Float) = "%.1fX".format(speed)
 
-private tailrec fun android.content.Context.findActivityOrNull(): android.app.Activity? = when (this) {
-    is android.app.Activity -> this
-    is android.content.ContextWrapper -> baseContext.findActivityOrNull()
-    else -> null
-}
