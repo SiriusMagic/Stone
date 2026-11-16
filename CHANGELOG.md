@@ -1,3 +1,8 @@
+# Stone Kotlin 1.7.5
+
+- Arreglo del cierre en vertical: Kotlin 2.4 era más nuevo que el optimizador R8 del APK, que no
+  entendía su código y podía generar un APK que fallaba. Se usa Kotlin 2.3.21, que R8 sí entiende.
+
 # Stone Kotlin 1.7.4
 
 - Arreglo: la 1.7.3 se cerraba al reproducir música. Se vuelve al motor de reproducción probado

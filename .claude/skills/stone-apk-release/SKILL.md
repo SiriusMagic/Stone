@@ -29,6 +29,9 @@ From `android-native/`:
   pre-existing ones (`GradleDependency`, `SelectedPhotoAccess`); fix new ones (unused strings,
   missing translations in the six `values*` folders, KTX suggestions, plurals with `%d`).
 - If `--offline` fails because a dependency is missing, retry once without it.
+- R8 must understand the Kotlin version: if the build log says "An error occurred when parsing kotlin
+  metadata", the APK can crash on the phone even though every test passes. Lower Kotlin (or raise
+  AGP/R8) until that warning is gone; never ship with it.
 
 ## 3. Verify the APK before handing it over
 
