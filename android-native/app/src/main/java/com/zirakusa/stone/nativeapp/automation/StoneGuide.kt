@@ -31,9 +31,10 @@ internal object StoneGuide {
         }))
 
     /** Tools whose name, description or parameters contain every word of [query]. */
-    fun search(query: String, category: String?, access: AccessMode = StoneAutomation.currentAccess): JSONObject {
+    fun search(query: String, category: String?, auth: AuthContext = AuthContext.LOCAL): JSONObject {
+        val access = auth.access
         val words = query.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotBlank() }
-        val matches = StoneAutomation.available(access, StoneAutomation.currentBlocked).filter { action ->
+        val matches = StoneAutomation.available(access, auth.blocked).filter { action ->
             val text = (action.name + " " + action.description + " " + action.params.joinToString(" ") { it.name + " " + it.description }).lowercase()
             (category == null || action.name.substringBefore('.') == category) && words.all { it in text }
         }
@@ -51,7 +52,7 @@ internal object StoneGuide {
         ActionRisk.READ, listOf(
             ActionParam("query", "string", "Words to look for in tool names and descriptions. Empty lists everything."),
             ActionParam("category", "string", "Restrict to one category.", options = categories.keys.toList()))) { args ->
-        search(args.optString("query"), args.optString("category").ifBlank { null })
+        search(args.optString("query"), args.optString("category").ifBlank { null }, currentAuth())
     }
 
     /** JSON shown to a plain GET (browser, curl, an agent probing the link). */

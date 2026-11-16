@@ -79,4 +79,6 @@ data class ActionRecord(val timeMs: Long, val action: String, val ok: Boolean, v
     val status: RecordStatus = if (ok) RecordStatus.OK else RecordStatus.FAILED, val risk: ActionRisk = ActionRisk.READ,
     val token: String = "",
     /** Error code (RATE_LIMITED, LOW_CONFIDENCE…) when the call failed. */
-    val code: String = "")
+    val code: String = "",
+    /** Id of the token that made the call ("" = Stone itself); an agent only sees its own calls. */
+    val tokenId: String = "")

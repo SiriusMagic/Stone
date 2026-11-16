@@ -27,8 +27,9 @@ internal object StoneJobs {
     /** Shortest wait after a 429 (tests make it tiny). */
     @Volatile internal var minWaitMs = 5_000L
 
+    /** [owner] is the token id that started the job ("" = Stone itself): only it can read, resume or cancel it. */
     class Entry(val id: String, val tool: String, val items: List<BatchItem>, val locked: Set<String>,
-        val work: (BatchItem, String) -> JSONObject) {
+        val work: (BatchItem, String) -> JSONObject, val owner: String = "") {
         val batch = UUID.randomUUID().toString().take(8)
         val results = mutableListOf<JSONObject>()
         val startedAt = System.currentTimeMillis()
@@ -41,15 +42,15 @@ internal object StoneJobs {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = LinkedHashMap<String, Entry>()
 
-    fun start(tool: String, items: List<BatchItem>, locked: Set<String> = emptySet(),
+    fun start(tool: String, items: List<BatchItem>, locked: Set<String> = emptySet(), owner: String = "",
         work: (BatchItem, String) -> JSONObject): JSONObject {
-        val entry = Entry(UUID.randomUUID().toString().take(8), tool, items, locked, work)
+        val entry = Entry(UUID.randomUUID().toString().take(8), tool, items, locked, work, owner)
         synchronized(jobs) {
             jobs[entry.id] = entry
             while (jobs.size > MAX_JOBS) jobs.remove(jobs.keys.first { jobs[it]?.status != "running" } ?: break)
         }
         launch(entry)
-        return status(entry.id, 0).put("message", "Running in the background. Poll stone_job_status jobId=${entry.id} " +
+        return status(entry.id, 0, owner).put("message", "Running in the background. Poll stone_job_status jobId=${entry.id} " +
             "every 10-20 s; each song gets its own result.")
     }
 
@@ -59,6 +60,8 @@ internal object StoneJobs {
             while (isActive) {
                 val index = synchronized(entry.results) { entry.results.size }
                 if (index >= entry.items.size) break
+                // A job never outlives its token: revoked, paused or expired stops it before the next song.
+                if (entry.owner.isNotEmpty() && !McpServer.isActive(entry.owner)) { entry.status = "cancelled"; break }
                 val item = entry.items[index]
                 StoneAutomation.reportProgress(BatchProgress(entry.tool, index, entry.items.size))
                 val result = try {
@@ -81,25 +84,26 @@ internal object StoneJobs {
         }
     }
 
-    fun cancel(id: String): JSONObject {
-        val entry = find(id)
+    fun cancel(id: String, owner: String = ""): JSONObject {
+        val entry = find(id, owner)
         entry.runner?.cancel(); entry.status = "cancelled"
-        return status(id, 0)
+        return status(id, 0, owner)
     }
 
-    fun resume(id: String): JSONObject {
-        val entry = find(id)
-        if (entry.status == "running" || entry.status == "waiting") return status(id, 0)
+    fun resume(id: String, owner: String = ""): JSONObject {
+        val entry = find(id, owner)
+        if (entry.status == "running" || entry.status == "waiting") return status(id, 0, owner)
         entry.waits = 0; launch(entry)
-        return status(id, 0)
+        return status(id, 0, owner)
     }
 
-    private fun find(id: String) = synchronized(jobs) { jobs[id] }
+    /** Another token's job is reported exactly like a missing one, so ids reveal nothing. */
+    private fun find(id: String, owner: String) = synchronized(jobs) { jobs[id] }?.takeIf { owner.isEmpty() || it.owner == owner }
         ?: throw ActionException("No job with id '$id'.", "NOT_FOUND", "stone_job_status without jobId lists the jobs.")
 
     /** Progress, per-song results from [since] on, and what is left. */
-    fun status(id: String, since: Int): JSONObject {
-        val entry = find(id)
+    fun status(id: String, since: Int, owner: String = ""): JSONObject {
+        val entry = find(id, owner)
         val results = synchronized(entry.results) { entry.results.toList() }
         val ok = results.count { it.optBoolean("ok") }
         return JSONObject().put("jobId", entry.id).put("tool", entry.tool).put("status", entry.status)
@@ -115,7 +119,7 @@ internal object StoneJobs {
             .put("results", JSONArray(results.drop(since.coerceAtLeast(0))))
     }
 
-    fun list(): JSONObject = JSONObject().put("jobs", JSONArray(synchronized(jobs) { jobs.keys.toList() }.reversed().map { id ->
-        status(id, Int.MAX_VALUE).apply { remove("results"); remove("remainingSongIds") }
-    }))
+    fun list(owner: String = ""): JSONObject = JSONObject().put("jobs", JSONArray(synchronized(jobs) {
+        jobs.values.filter { owner.isEmpty() || it.owner == owner }.map { it.id }
+    }.reversed().map { id -> status(id, Int.MAX_VALUE, owner).apply { remove("results"); remove("remainingSongIds") } }))
 }

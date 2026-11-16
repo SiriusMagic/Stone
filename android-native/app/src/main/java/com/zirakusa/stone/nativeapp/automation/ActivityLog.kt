@@ -30,7 +30,7 @@ internal object ActivityLog {
 
     fun serialize(history: List<ActionRecord>): String = JSONArray(history.map { record ->
         JSONObject().put("t", record.timeMs).put("a", record.action).put("s", record.status.name).put("d", record.detail)
-            .put("r", record.risk.name).put("k", record.token).put("c", record.code)
+            .put("r", record.risk.name).put("k", record.token).put("c", record.code).put("i", record.tokenId)
     }).toString()
 
     fun parse(raw: String): List<ActionRecord> = runCatching {
@@ -40,13 +40,15 @@ internal object ActivityLog {
             val status = runCatching { RecordStatus.valueOf(item.optString("s")) }.getOrDefault(RecordStatus.FAILED)
             ActionRecord(item.optLong("t"), item.optString("a"), status == RecordStatus.OK, item.optString("d"), status,
                 runCatching { ActionRisk.valueOf(item.optString("r")) }.getOrDefault(ActionRisk.READ),
-                item.optString("k"), item.optString("c"))
+                item.optString("k"), item.optString("c"), item.optString("i"))
         }
     }.getOrDefault(emptyList())
 
     /** stone_activity: newest first, optionally only failures, one tool or one token. */
-    fun query(history: List<ActionRecord>, onlyErrors: Boolean, tool: String?, token: String?, limit: Int): JSONObject {
+    fun query(history: List<ActionRecord>, onlyErrors: Boolean, tool: String?, token: String?, limit: Int,
+        ownerTokenId: String = ""): JSONObject {
         val selected = history.filter { record ->
+            (ownerTokenId.isEmpty() || record.tokenId == ownerTokenId) &&
             (!onlyErrors || record.status != RecordStatus.OK) &&
                 (tool == null || record.action.replace('.', '_') == tool.replace('.', '_')) &&
                 (token == null || record.token.equals(token, ignoreCase = true))

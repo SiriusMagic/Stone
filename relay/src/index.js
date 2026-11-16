@@ -86,11 +86,20 @@ export class DeviceRelay {
       if (value) headers[name] = value;
     }
     const path = url.pathname.replace(/^\/d\/[^/]+/, "") || "/";
+    // "client" is the caller's address as Cloudflare saw it (CF-Connecting-IP is set by Cloudflare, not by
+    // the caller). Stone uses it only to count wrong tokens per caller. Older Stone versions ignore it.
     const message = { t: "req", id, method: request.method, path, query: url.search, headers,
+      client: request.headers.get("CF-Connecting-IP") || "",
       body: ["GET", "HEAD"].includes(request.method) ? "" : await request.text() };
     const answer = new Promise((resolve) => {
       this.pending.set(id, resolve);
-      setTimeout(() => { if (this.pending.delete(id)) resolve(null); }, REQUEST_TIMEOUT_MS);
+      setTimeout(() => {
+        if (!this.pending.delete(id)) return;
+        // Tell the phone this request was answered 504, so it does not run it later behind the agent's back.
+        // Outgoing WebSocket messages are not billed as requests. Older Stone versions ignore "timeout".
+        try { socket.send(JSON.stringify({ t: "timeout", id })); } catch (_) {}
+        resolve(null);
+      }, REQUEST_TIMEOUT_MS);
     });
     try { socket.send(JSON.stringify(message)); } catch (_) { this.pending.delete(id); return jsonError(503, "Stone relay: phone disconnected"); }
     const reply = await answer;

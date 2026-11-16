@@ -90,8 +90,10 @@ limpiar título → buscar → validar artista/duración/versión → guardar �
 - **library / playlist (extra)**: `library_set_favorite`, `playlist_rename`, `playlist_delete`.
 - **metadata (lotes)**: `search_lyrics`, `fetch_lyrics`, `suggest_tags`, `suggest_tags_many`, `rename`,
   `prepare_write`, `history`, `undo`.
-- **stone**: `help`, `troubleshoot` (diccionario de soluciones), `activity` (últimas llamadas y errores),
-  `job_status`, `job_resume`, `job_cancel` (trabajos en segundo plano).
+- **stone**: `help`, `troubleshoot` (diccionario de soluciones), `activity` (tus últimas llamadas y errores;
+  cada token ve solo las suyas), `metrics` (contadores del servidor y del enlace, sin secretos),
+  `job_status`, `job_resume`, `job_cancel` (trabajos en segundo plano; cada trabajo pertenece al token que lo
+  inició, los demás no lo ven, y se detiene si ese token se revoca, pausa o caduca).
 
 El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
@@ -177,3 +179,19 @@ una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de ped
 
 Quien tenga el enlace controla la reproducción. No lo pegues en sitios públicos; si se filtra,
 pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca el que ya no uses.
+
+## Varios agentes a la vez (aislamiento y reintentos)
+
+- Cada petición se ejecuta con la autorización de **su** token (modo y herramientas), guardada en la propia
+  petición: lo que haga otro agente al mismo tiempo no la afecta.
+- Tokens erróneos: se cuentan por origen. A través del relay el origen es la dirección que Cloudflare da del
+  cliente (`CF-Connecting-IP`); `X-Forwarded-For` y similares se ignoran. Un token válido nunca queda
+  bloqueado por los errores de otro.
+- Si una petición esperó más de 60 s en el teléfono, Stone responde **503 con `Retry-After: 10`** y
+  **no la ejecuta** ("Nothing was changed"); reenvíala.
+- Si la cola del teléfono está llena (64 en espera), el relay responde 503 "busy" sin ejecutar nada.
+- Si un cambio terminó después del 504 del relay y el mismo token lo repite igual (misma herramienta y
+  argumentos) en 10 min, Stone devuelve el primer resultado con `"replayed": true` en vez de hacerlo dos veces.
+  Las lecturas nunca se repiten de memoria.
+- El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
+  de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.

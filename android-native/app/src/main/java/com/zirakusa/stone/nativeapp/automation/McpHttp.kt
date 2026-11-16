@@ -61,6 +61,9 @@ internal class McpRequest(val method: String, val path: String, val query: Map<S
 }
 
 internal object McpHttp {
+    /** Status of the last answer written on this thread, for [ServerMetrics]. */
+    val lastStatus = ThreadLocal<Int>()
+
     /** Lets browser-based MCP clients call Stone; every data request still needs the token. */
     val cors = listOf(
         "Access-Control-Allow-Origin: *",
@@ -71,6 +74,7 @@ internal object McpHttp {
 
     fun respond(out: OutputStream, status: Int, body: Any?, extraHeaders: List<String> = emptyList(),
         contentType: String = "application/json") {
+        lastStatus.set(status)
         val bytes = body?.toString()?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
         val head = buildString {
             append("HTTP/1.1 $status ${reason(status)}\r\n")
@@ -87,6 +91,7 @@ internal object McpHttp {
 
     /** Opens a Server-Sent Events stream (legacy MCP transport). */
     fun startEventStream(out: OutputStream) {
+        lastStatus.set(200)
         val head = buildString {
             append("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\n")
             append("Connection: keep-alive\r\nX-Stone-Server: ${McpServer.identity}\r\n")
@@ -108,6 +113,6 @@ internal object McpHttp {
     private fun reason(status: Int) = when (status) {
         429 -> "Too Many Requests"
         200 -> "OK"; 202 -> "Accepted"; 204 -> "No Content"; 400 -> "Bad Request"; 401 -> "Unauthorized"
-        404 -> "Not Found"; 405 -> "Method Not Allowed"; else -> "Error"
+        403 -> "Forbidden"; 404 -> "Not Found"; 405 -> "Method Not Allowed"; 503 -> "Service Unavailable"; else -> "Error"
     }
 }

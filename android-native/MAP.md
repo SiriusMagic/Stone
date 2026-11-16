@@ -8,25 +8,29 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation
 - `AccessMode.kt` (58) What a token lets an agent do.
-- `ActivityLog.kt` (65) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `ApiMode.kt` (144) User switches for the MCP server (Ajustes › Modo API).
+- `ActivityLog.kt` (67) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
+- `ApiMode.kt` (146) User switches for the MCP server (Ajustes › Modo API).
 - `ApiTokens.kt` (102) Access tokens of Ajustes › Modo API › Seguridad.
+- `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 - `AutomationHost.kt` (71) What the running app offers to automation.
-- `McpHttp.kt` (114) One parsed HTTP/1.1 request;
+- `McpHttp.kt` (119) One parsed HTTP/1.1 request;
 - `McpSelfTest.kt` (50) Result of calling Stone's own MCP address the way an agent would.
-- `McpServer.kt` (298) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (340) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `MetadataBatch.kt` (126) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
-- `RelayClient.kt` (127) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
+- `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
+- `RelayClient.kt` (210) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
+- `RelayGuard.kt` (84) Safety rules for requests that arrive through the internet relay.
 - `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
-- `StoneAction.kt` (83) How dangerous an action is;
+- `ServerMetrics.kt` (86) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
+- `StoneAction.kt` (85) How dangerous an action is;
 - `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
-- `StoneAgentActions.kt` (37) Tools that help agents help themselves:
-- `StoneAutomation.kt` (163) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAgentActions.kt` (44) Tools that help agents help themselves:
+- `StoneAutomation.kt` (177) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
-- `StoneGuide.kt` (91) Discovery help for agents:
-- `StoneJobs.kt` (122) Background batches for agents.
+- `StoneGuide.kt` (92) Discovery help for agents:
+- `StoneJobs.kt` (126) Background batches for agents.
 - `StoneLibraryEditActions.kt` (161) Bulk tools:
 - `StoneLookActions.kt` (100) Appearance and settings actions:
 - `StoneMediaActions.kt` (218) Queue, equalizer, video and library-view actions (added in 1.6.7).

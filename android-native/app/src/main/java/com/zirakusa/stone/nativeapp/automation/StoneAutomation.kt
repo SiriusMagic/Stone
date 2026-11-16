@@ -27,8 +27,6 @@ data class BatchProgress(val action: String, val done: Int, val total: Int, val 
  */
 object StoneAutomation {
     @Volatile var host: AutomationHost? = null
-    /** Mode of the request being executed; only used to filter stone_help results. */
-    @Volatile internal var currentAccess: AccessMode = AccessMode.WRITE
 
     private val mutableConfirmation = MutableStateFlow<PendingConfirmation?>(null)
     val confirmation = mutableConfirmation.asStateFlow()
@@ -45,14 +43,12 @@ object StoneAutomation {
     fun available(access: AccessMode, blocked: Set<String> = emptySet()): List<StoneAction> =
         actions.filter { ApiMode.permits(it, access) && it.toolName !in blocked }
 
-    /** Tools turned off for the token of the request being executed (stone_help hides them). */
-    @Volatile internal var currentBlocked: Set<String> = emptySet()
 
     fun find(toolName: String) = actions.firstOrNull { it.toolName == toolName || it.name == toolName }
 
     /** Runs [toolName] with [arguments]; throws [ActionException] with a code and message for the agent. */
     suspend fun execute(toolName: String, arguments: JSONObject, access: AccessMode = AccessMode.WRITE, token: String = "",
-        tokenId: String = "", blocked: Set<String> = emptySet()): Any {
+        tokenId: String = "", blocked: Set<String> = emptySet(), relay: RelayInfo? = null): Any {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName", "UNKNOWN_TOOL",
             "Call tools/list or stone_help.")
         return try {
@@ -62,12 +58,25 @@ object StoneAutomation {
                 "The user can change the token's mode in Stone > Ajustes > Modo API > Seguridad.")
             validate(action, arguments)
             val dryRun = arguments.optBoolean("dryRun", false)
+            // An agent repeating a change whose first try finished after the relay's 504 gets that first
+            // result back instead of the change being made twice (see RelayGuard).
+            val lateKey = if (relay != null && !dryRun && action.risk != ActionRisk.READ)
+                RelayGuard.callKey(tokenId, action.toolName, arguments) else null
+            lateKey?.let(RelayGuard::takeLate)?.let { first ->
+                ServerMetrics.event("replayedLateResults")
+                record(action, RecordStatus.OK, "replayed: the first try finished after a timeout; not run again", token, "", tokenId)
+                return replayed(first)
+            }
             if (!dryRun && access.needsApproval(action.risk) && !confirm(action, arguments))
                 throw ActionException("The user did not approve this change on the phone.", "USER_DENIED",
                     "Ask the user, or use a token with 'Acceso completo'.")
-            currentAccess = access; currentBlocked = blocked
-            val result = withContext(Dispatchers.Main) { action.run(arguments) }
+            // The request's own authorization travels with its coroutine (see AuthContext).
+            val result = withContext(Dispatchers.Main + AuthContext(tokenId, token, access, blocked)) { action.run(arguments) }
             record(action, RecordStatus.OK, arguments.toString(), token, "", tokenId)
+            if (lateKey != null && relay != null &&
+                (RelayGuard.hasTimedOut(relay.id) || System.currentTimeMillis() - relay.receivedAt >= RelayGuard.lateAfterMs)) {
+                RelayGuard.rememberLate(lateKey, result); ServerMetrics.event("lateCompletions")
+            }
             result
         } catch (error: Exception) {
             val failure = ActionException.of(error)
@@ -77,6 +86,11 @@ object StoneAutomation {
             throw failure
         }
     }
+
+    private fun replayed(first: Any): JSONObject = (first as? JSONObject)?.let { JSONObject(it.toString()) }
+        ?.put("replayed", true)?.put("replayNote", "This change had already been made: the first request finished after the " +
+            "link timed out. Stone returns that result instead of doing it again.")
+        ?: JSONObject().put("result", first.toString()).put("replayed", true)
 
     private fun validate(action: StoneAction, arguments: JSONObject) {
         val known = action.params.associateBy { it.name }
@@ -144,7 +158,7 @@ object StoneAutomation {
         RequestStats.record(tokenId, when (status) { RecordStatus.OK -> RequestStats.OK; RecordStatus.DENIED -> RequestStats.DENIED
             RecordStatus.FAILED -> RequestStats.FAILED })
         val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(240),
-            status, action.risk, token, code)
+            status, action.risk, token, code, tokenId)
         val history = mutableHistory.updateAndGet { (listOf(entry) + it).take(HISTORY_SIZE) }
         ActivityLog.recorded(history, status != RecordStatus.OK)
     }

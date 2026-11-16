@@ -1,3 +1,18 @@
+# Sin publicar (próxima versión)
+
+- Seguridad con varios agentes: cada petición usa solo los permisos de su token (antes, con varios agentes a la
+  vez, `stone_help` podía mostrar a un token de solo lectura herramientas de otro). Cada agente ve solo su
+  actividad y sus trabajos; un trabajo se detiene si su token se revoca, pausa o caduca.
+- Un agente con un token erróneo ya no bloquea a los demás: los intentos se cuentan por origen real del cliente
+  y un token válido nunca queda bloqueado.
+- Sin acciones duplicadas por tiempo de espera: lo que esperó demasiado no se ejecuta (503, «no se cambió nada»)
+  y un cambio repetido tras un 504 devuelve el primer resultado. Cola del enlace limitada (64).
+- El enlace deja de reconectar cuando el relay responde un error que no cambiará y, ante fallos de red, espera
+  hasta 5 min y vuelve a intentar al recuperar la red (antes: cada 30 s sin fin).
+- Nueva herramienta `stone_metrics`: solicitudes por ruta, códigos HTTP, métodos MCP, latencia, esperas en cola,
+  reconexiones y tiempos de espera del relay, sin guardar tokens, direcciones ni argumentos.
+- Relay (requiere `npx wrangler deploy`): envía la dirección del cliente y avisa al teléfono de cada 504.
+
 # Stone Kotlin 1.7.8
 
 - Modo API más simple: solo dos pestañas. General: «Activar MCP», «Crear token» y una tarjeta por token con

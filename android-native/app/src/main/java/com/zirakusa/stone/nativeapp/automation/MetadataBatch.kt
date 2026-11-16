@@ -107,7 +107,7 @@ internal object MetadataBatch {
         preview: (Song, JSONObject) -> JSONObject, work: (BatchItem, String) -> JSONObject): JSONObject {
         val dryRun = args.optBoolean("dryRun")
         val background = args.optBoolean("background", items.size > StoneJobs.SYNC_LIMIT)
-        return if (background && !dryRun) StoneJobs.start(tool, items, locked, work)
+        return if (background && !dryRun) StoneJobs.start(tool, items, locked, currentAuth().tokenId, work)
         else run(tool, items, dryRun, locked, preview, work)
     }
 

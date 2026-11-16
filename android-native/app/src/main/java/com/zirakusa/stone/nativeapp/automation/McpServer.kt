@@ -93,9 +93,28 @@ object McpServer {
         workers = null
     }
 
+    /** Relay details of the request this thread is serving (null for direct local calls). */
+    private val currentRelay = ThreadLocal<RelayInfo?>()
+
     private fun serve(client: Socket) {
         client.soTimeout = 15_000
         val request = McpRequest.read(client) ?: return
+        val started = System.currentTimeMillis()
+        // Relay details count only with the per-run relay key: other apps on the phone cannot fake them.
+        val relay = if (RelayGuard.isRelay(request.header("x-stone-relay-key")))
+            RelayInfo(request.header("x-stone-relay-received")?.toLongOrNull() ?: started, request.header("x-stone-relay-id"),
+                RelayGuard.cleanAddress(request.header("x-stone-relay-client")))
+            else null
+        currentRelay.set(relay)
+        McpHttp.lastStatus.remove()
+        try { route(client, request, relay) } finally {
+            currentRelay.remove()
+            ServerMetrics.request(request.method, request.path, McpHttp.lastStatus.get() ?: 0,
+                System.currentTimeMillis() - (relay?.receivedAt ?: started), relay != null, relay?.let { started - it.receivedAt })
+        }
+    }
+
+    private fun route(client: Socket, request: McpRequest, relay: RelayInfo?) {
         val out = client.getOutputStream()
         if (request.method == "OPTIONS") return McpHttp.respond(out, 204, null)
         // Agents often append to the MCP URL, so /mcp/tools works the same as /tools.
@@ -104,12 +123,28 @@ object McpServer {
         if (path == "/health") return McpHttp.respond(out, 200, JSONObject().put("status", "ok").put("server", "Stone")
             .put("version", BuildConfig.VERSION_NAME).put("mcpPath", PATH).put("tokenRequired", true))
         val session = request.query["sessionId"]?.takeIf { streams.containsKey(it) }
-        val caller = client.inetAddress?.hostAddress.orEmpty() + "|" + request.header("x-forwarded-for").orEmpty()
-        if (AuthThrottle.blocked(caller)) return McpHttp.respond(out, 429, error(null, -32001,
-            "Stone: too many wrong tokens. Wait a minute and use the current link."), listOf("Retry-After: 60"))
+        // Waited too long in the queue: the relay has given up (504), so running it now would only
+        // do the work behind the agent's back. Nothing is executed.
+        if (relay != null && System.currentTimeMillis() - relay.receivedAt > RelayGuard.queueDeadlineMs) {
+            ServerMetrics.event("staleRequestsNotRun")
+            return McpHttp.respond(out, 503, error(null, -32000,
+                "Stone was busy and did not run this request. Nothing was changed; send it again."), listOf("Retry-After: 10"))
+        }
         // Every request needs the token, SSE messages included: a leaked sessionId alone is not enough.
         val grant = grantFor(request)
-        if (grant == null) { AuthThrottle.failed(caller); RequestStats.record("", RequestStats.REJECTED) }
+        if (grant == null) {
+            // Wrong tokens are counted per origin: the internet client's address as reported by the relay
+            // (Cloudflare's own value), or the local caller. Spoofable headers like X-Forwarded-For are ignored,
+            // and a valid token is never blocked by someone else's mistakes.
+            val origin = if (relay != null) "relay:" + (relay.client ?: "unknown") else "local:" + client.inetAddress?.hostAddress.orEmpty()
+            RequestStats.record("", RequestStats.REJECTED)
+            if (AuthThrottle.blocked(origin)) {
+                ServerMetrics.event("authThrottled")
+                return McpHttp.respond(out, 429, error(null, -32001,
+                    "Stone: too many wrong tokens. Wait a minute and use the current link."), listOf("Retry-After: 60"))
+            }
+            AuthThrottle.failed(origin); ServerMetrics.event("authRejected")
+        }
         if (grant == null) return McpHttp.respond(out, 401,
             error(null, -32001, if (!allowQueryToken && request.query["token"] != null && headerToken(request) == null)
                 "Stone: this phone only accepts the token in the header 'Authorization: Bearer TOKEN', not in the URL."
@@ -139,7 +174,7 @@ object McpServer {
             val body = request.body.takeIf { it.startsWith("{") }?.let(::JSONObject)
             val arguments = body ?: StoneGuide.arguments(action, request.query)
             JSONObject().put("ok", true).put("tool", action.toolName)
-                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments, grant.mode, grant.name, grant.id, grant.disabledTools) })
+                .put("result", runBlocking { StoneAutomation.execute(action.toolName, arguments, grant.mode, grant.name, grant.id, grant.disabledTools, currentRelay.get()) })
         } catch (failure: ActionException) {
             JSONObject().put("ok", false).put("tool", action.toolName).put("error", failure.message)
                 .put("code", failure.code).apply { failure.hint?.let { put("hint", it) } }
@@ -215,6 +250,7 @@ object McpServer {
     private fun handle(message: JSONObject, grant: ApiToken): JSONObject? {
         val id = message.opt("id")
         val method = message.optString("method")
+        ServerMetrics.rpc(method.ifBlank { "none" }, if (method == "tools/call") message.optJSONObject("params")?.optString("name") else null)
         if (id == null || id == JSONObject.NULL) return null
         val params = message.optJSONObject("params") ?: JSONObject()
         return try {
@@ -257,7 +293,7 @@ object McpServer {
         val name = params.optString("name")
         val arguments = params.optJSONObject("arguments") ?: JSONObject()
         return try {
-            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools) }
+            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools, currentRelay.get()) }
             JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", result.toString())))
                 .put("isError", false).apply { if (result is JSONObject) put("structuredContent", result) }
         } catch (failure: ActionException) {
@@ -285,6 +321,12 @@ object McpServer {
         val now = System.currentTimeMillis()
         return grants.values.firstOrNull { MessageDigest.isEqual(given, it.secret.toByteArray()) }
             ?.takeIf { (it.expiresAt == 0L || it.expiresAt > now) && !it.paused }
+    }
+
+    /** Whether [tokenId] can still be used right now (exists, not paused, not expired). */
+    fun isActive(tokenId: String): Boolean {
+        val now = System.currentTimeMillis()
+        return grants.values.any { it.id == tokenId && !it.paused && (it.expiresAt == 0L || it.expiresAt > now) }
     }
 
     private fun isPaused(request: McpRequest): Boolean {

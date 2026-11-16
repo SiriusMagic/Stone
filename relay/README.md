@@ -47,3 +47,10 @@ actuales de Cloudflare si tienes muchos usuarios.
 ```sh
 npm run dev            # relevo en http://127.0.0.1:8787
 ```
+
+## Desde Stone 1.7.9
+
+El relay añade al mensaje `client` (la dirección del cliente según Cloudflare, `CF-Connecting-IP`) y avisa al
+teléfono con `{t:"timeout", id}` cuando responde 504. Ambos son compatibles: un Stone anterior los ignora, y un
+Stone nuevo sigue funcionando con el relay anterior (cuenta los tokens erróneos de todo el relay juntos y
+detecta las respuestas tardías por tiempo). Para activarlos: `npx wrangler deploy`.

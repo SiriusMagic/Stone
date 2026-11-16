@@ -34,6 +34,8 @@ object ApiMode {
         private set
     private var store: StoneSettingsStore? = null
     private var relay: RelayClient? = null
+    /** Only to reconnect the relay as soon as the phone has a network again. */
+    private var connectivity: android.net.ConnectivityManager? = null
     private var device = ""
     private var relaySecret = ""
     /** Relay address; built in through BuildConfig, replaceable in tests. */
@@ -42,8 +44,9 @@ object ApiMode {
     /** Whether this build has an internet relay (else only this phone / Wi-Fi). */
     val relayAvailable: Boolean get() = relayUrl.isNotBlank()
 
-    fun load(store: StoneSettingsStore) {
+    fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store
+        connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
         // Wi-Fi access (plain HTTP) is no longer offered: always this phone and the encrypted relay only.
         localNetwork = false
@@ -91,7 +94,7 @@ object ApiMode {
     private fun apply() {
         running = if (enabled) McpServer.start(ApiTokens.tokens, localNetwork, port) else { McpServer.stop(); false }
         if (enabled && running && relayAvailable) {
-            if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }) { relayState = it }.also { it.start() }
+            if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }
 
