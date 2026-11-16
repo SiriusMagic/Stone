@@ -1,4 +1,4 @@
-# Sin publicar (próxima versión)
+# Stone Kotlin 1.7.8
 
 - Modo API más simple: solo dos pestañas. General: «Activar MCP», «Crear token» y una tarjeta por token con
   nombre, enlace (copiar) y Revocar · Pausar · Configurar. Analítica aparte, con la actividad debajo.
