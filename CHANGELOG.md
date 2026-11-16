@@ -1,5 +1,8 @@
 # Sin publicar (APK aún no generado)
 
+- Letras: deslizar hacia arriba en el reproductor las abre. Se abren a pantalla completa (antes a
+  media altura), con el color de la portada, la canción arriba y la línea actual marcada según el
+  tiempo; editar, borrar y "seguir la canción" pasan a una cápsula flotante abajo a la derecha.
 - Letras vacías: se quita la lupa (navegador); "Buscar automáticamente" pasa a ser el botón
   principal, en amarillo. Su diálogo sigue ofreciendo "Buscar en la web" si no encuentra la canción.
 

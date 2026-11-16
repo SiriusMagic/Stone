@@ -114,7 +114,7 @@ import kotlin.math.roundToInt
     val progress = rememberPlayerProgress(state, playback)
     val audioControls = rememberPlaybackControls(song?.id.orEmpty())
     val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
-        detectTrackSwipe(playback::previous, playback::next)
+        detectTrackSwipe(playback::previous, playback::next) { sheets.lyricsVisible = true }
     } else Modifier
     BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
     // Decide by the window, not this box: while the player animates closed the box becomes
@@ -641,8 +641,8 @@ private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
     }
 }
 
-/** Changes tracks only after a deliberate horizontal swipe; vertical gestures are ignored. */
-private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit) {
+/** Horizontal swipe changes tracks; a deliberate swipe up opens the lyrics ([onUp]). */
+private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit, onUp: () -> Unit = {}) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
@@ -656,7 +656,11 @@ private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, o
             totalY += delta.y
             val distance = maxOf(abs(totalX), abs(totalY))
             if (distance > viewConfiguration.touchSlop) {
-                if (abs(totalY) > abs(totalX)) break
+                if (abs(totalY) > abs(totalX)) {
+                    if (totalY > 0f) break
+                    if (-totalY >= maxOf(viewConfiguration.touchSlop * 3f, density * 72f)) { change.consume(); onUp(); break }
+                    continue
+                }
                 if (abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {
                     change.consume()
                     if (totalX < 0f) onNext() else onPrevious()

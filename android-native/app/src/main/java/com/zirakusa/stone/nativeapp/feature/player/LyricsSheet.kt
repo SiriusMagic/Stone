@@ -9,6 +9,12 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -93,8 +99,12 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     if (autoSearch) LyricsAutoSearchDialog(song, ::openInEditor, onWeb = { autoSearch = false; browserVisible = true },
         onDismiss = { autoSearch = false })
 
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF17151B),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF3A353D)) }) {
+    // Full height, coloured like the cover; the current line follows the song's timing.
+    val tint = rememberSongTint(song)
+    val ink = if (tint.luminance() > .5f) Color(0xFF1E1A1C) else Color.White
+    ModalBottomSheet(onDismissRequest = onClose, containerColor = tint, contentColor = ink,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = ink.copy(alpha = .3f)) }) {
         ImmersiveWindowEffect()
         if (editor) {
             Column(Modifier.fillMaxSize().padding(24.dp)) {
@@ -125,67 +135,48 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
             }
             return@ModalBottomSheet
         }
+        Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.size(64.dp))
+                StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)))
                 Column(Modifier.weight(1f).padding(horizontal = 13.dp)) {
-                    Text(state.title, fontWeight = FontWeight.ExtraBold, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis)
-                    Text(state.artist, color = Color(0xFFA8A1AB), maxLines = 1)
+                    Text(state.title, fontWeight = FontWeight.ExtraBold, maxLines = 1, color = StonePalette.Yellow,
+                        overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
+                    Text(state.artist, color = ink.copy(alpha = .7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     LinearProgressIndicator({ if (progress.second > 0) progress.first.toFloat() / progress.second else 0f },
-                        Modifier.fillMaxWidth().padding(top = 8.dp), color = StonePalette.Yellow)
+                        Modifier.fillMaxWidth().padding(top = 8.dp), color = StonePalette.Yellow, trackColor = ink.copy(alpha = .15f))
                 }
-                FilledIconButton(onClick = playback::toggle,
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = StonePalette.Yellow,
-                        contentColor = StonePalette.Background)) {
-                    Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow, null)
+                IconButton(onClick = playback::toggle) {
+                    Icon(if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        stringResource(if (state.playing) R.string.pause else R.string.play), Modifier.size(34.dp), tint = StonePalette.Yellow)
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.lyrics), Modifier.weight(1f), fontSize = 28.sp, fontWeight = FontWeight.Black)
-                IconButton(onClick = { autoScroll = !autoScroll }) {
-                    Icon(Icons.Default.VerticalAlignBottom,
-                        if (autoScroll) "Desactivar desplazamiento automático" else "Activar desplazamiento automático",
-                        tint = if (autoScroll) StonePalette.Yellow else Color(0xFF8A848F))
-                }
-                IconButton(onClick = {
-                    val text = document.editableText()
-                    draft = TextFieldValue(text, TextRange(text.length))
-                    editor = true
-                }) { Icon(Icons.Default.Edit, "Editar letras") }
-                IconButton(onClick = {
-                    overrides.clear(song.id)
-                    overrides.deleteOffset(song.id)
-                    document = LyricsDocument(emptyList(), emptyList())
-                    val text = document.editableText()
-                    draft = TextFieldValue(text, TextRange(text.length))
-                }) { Icon(Icons.Default.Delete, "Borrar letras") }
-            }
+            Spacer(Modifier.height(18.dp))
             if (lines.isNotEmpty()) LazyColumn(Modifier.weight(1f), state = listState,
-                contentPadding = PaddingValues(bottom = 220.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
+                contentPadding = PaddingValues(bottom = 160.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 itemsIndexed(lines) { index, line ->
                     val selected = index == active
                     val color by animateColorAsState(
-                        if (selected) StonePalette.Yellow else Color(0xFF77717B),
+                        when { selected -> ink; active < 0 -> ink.copy(alpha = .85f); else -> ink.copy(alpha = .45f) },
                         animationSpec = tween(220), label = "lyric-color")
                     val emphasis by animateFloatAsState(
                         if (selected) 1f else .96f,
                         animationSpec = tween(220), label = "lyric-emphasis")
                     Surface(
-                        color = if (selected) StonePalette.Yellow.copy(alpha = .12f) else Color.Transparent,
+                        color = Color.Transparent,
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(line.text, color = color,
-                            fontSize = if (selected) 24.sp else 22.sp,
-                            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                            fontSize = if (selected) 26.sp else 23.sp,
+                            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)
                                 .graphicsLayer { scaleX = emphasis; scaleY = emphasis })
                     }
                 }
             } else Column(Modifier.weight(1f).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
-                Icon(Icons.Default.ChatBubbleOutline, null, Modifier.size(64.dp), tint = Color(0xFF6D626F))
-                Text(stringResource(R.string.no_lyrics), Modifier.padding(18.dp), color = Color(0xFFC6C0C9), fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.ChatBubbleOutline, null, Modifier.size(64.dp), tint = ink.copy(alpha = .45f))
+                Text(stringResource(R.string.no_lyrics), Modifier.padding(18.dp), color = ink.copy(alpha = .8f), fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedIconButton(onClick = { editor = true }, Modifier.size(62.dp)) { Icon(Icons.Default.Add, stringResource(R.string.lyrics_add)) }
                     // Automatic search (lrclib.net) is the main action; its dialog still offers the web as a fallback.
@@ -195,6 +186,28 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                         Icon(Icons.Default.AutoAwesome, stringResource(R.string.lyrics_auto_title))
                     }
                 }
+            }
+        }
+            // Floating capsule: follow the song, edit, delete.
+            if (lines.isNotEmpty()) Row(Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = 24.dp)
+                .clip(RoundedCornerShape(28.dp)).background(ink.copy(alpha = .1f))
+                .border(1.dp, ink.copy(alpha = .2f), RoundedCornerShape(28.dp)).padding(horizontal = 6.dp)) {
+                if (document.synced.isNotEmpty()) IconButton(onClick = { autoScroll = !autoScroll }) {
+                    Icon(Icons.Default.VerticalAlignCenter, stringResource(R.string.lyrics_follow),
+                        tint = if (autoScroll) StonePalette.Yellow else ink.copy(alpha = .6f))
+                }
+                IconButton(onClick = {
+                    val text = document.editableText()
+                    draft = TextFieldValue(text, TextRange(text.length))
+                    editor = true
+                }) { Icon(Icons.Outlined.Edit, stringResource(R.string.lyrics_edit)) }
+                IconButton(onClick = {
+                    overrides.clear(song.id)
+                    overrides.deleteOffset(song.id)
+                    document = LyricsDocument(emptyList(), emptyList())
+                    val text = document.editableText()
+                    draft = TextFieldValue(text, TextRange(text.length))
+                }) { Icon(Icons.Outlined.Delete, stringResource(R.string.delete)) }
             }
         }
     }

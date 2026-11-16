@@ -616,4 +616,5 @@
     <string name="theme_more_in_custom">Opacità, modalità Focus e tavolozza: Impostazioni › Personalizzato.</string>
     <string name="recommendations_title">Consigliati per te</string>
     <string name="recommendations_empty">Aggiungi altra musica per ricevere consigli.</string>
+    <string name="lyrics_follow">Segui il brano</string>
 </resources>

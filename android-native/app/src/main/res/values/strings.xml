@@ -579,4 +579,5 @@
     <string name="theme_more_in_custom">Opacidad, modo Foco y paleta libre: Ajustes › Personalizado.</string>
     <string name="recommendations_title">Recomendaciones para ti</string>
     <string name="recommendations_empty">Añade más música para recibir recomendaciones.</string>
+    <string name="lyrics_follow">Seguir la canción</string>
 </resources>

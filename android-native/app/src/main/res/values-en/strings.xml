@@ -515,4 +515,5 @@
     <string name="theme_more_in_custom">Opacity, Focus mode and free palette: Settings › Custom.</string>
     <string name="recommendations_title">Recommended for you</string>
     <string name="recommendations_empty">Add more music to get recommendations.</string>
+    <string name="lyrics_follow">Follow the song</string>
 </resources>
