@@ -1,3 +1,8 @@
+# Sin publicar (APK aún no generado)
+
+- Letras vacías: se quita la lupa (navegador); "Buscar automáticamente" pasa a ser el botón
+  principal, en amarillo. Su diálogo sigue ofreciendo "Buscar en la web" si no encuentra la canción.
+
 # Stone Kotlin 1.7.2
 
 - Letrero "LETRAS" y lista "Con letras": ahora cuentan las letras guardadas en Stone (a mano, de

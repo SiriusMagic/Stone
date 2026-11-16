@@ -188,14 +188,11 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                 Text(stringResource(R.string.no_lyrics), Modifier.padding(18.dp), color = Color(0xFFC6C0C9), fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedIconButton(onClick = { editor = true }, Modifier.size(62.dp)) { Icon(Icons.Default.Add, stringResource(R.string.lyrics_add)) }
-                    OutlinedIconButton(onClick = { autoSearch = true }, Modifier.size(62.dp)) {
+                    // Automatic search (lrclib.net) is the main action; its dialog still offers the web as a fallback.
+                    FilledIconButton(onClick = { autoSearch = true }, Modifier.size(62.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = StonePalette.Yellow, contentColor = StonePalette.Background)) {
                         Icon(Icons.Default.AutoAwesome, stringResource(R.string.lyrics_auto_title))
-                    }
-                    FilledIconButton(onClick = {
-                        browserVisible = true
-                    }, Modifier.size(62.dp), colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = StonePalette.Yellow, contentColor = StonePalette.Background)) {
-                        Icon(Icons.Default.Search, stringResource(R.string.search_lyrics))
                     }
                 }
             }
