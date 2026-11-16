@@ -100,6 +100,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val mutable = MutableStateFlow(PlaybackState())
     val state = mutable.asStateFlow()
     private var controller: MediaController? = null
+    private val requested = RequestedItemGuard()
     private val data = PlaybackDataStore(application)
     private val settings = StoneSettingsStore(application)
     private val equalizer = PlaybackEqualizer()
@@ -230,18 +231,24 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
 
     private fun publish() {
         val player = controller ?: return
+        val queue = List(player.mediaItemCount) {
+            val item = player.getMediaItemAt(it)
+            QueueEntry(item.mediaId, item.mediaMetadata.title?.toString().orEmpty(),
+                item.mediaMetadata.artist?.toString().orEmpty(),
+                item.localConfiguration?.uri?.toString(), item.mediaMetadata.albumTitle?.toString().orEmpty())
+        }
+        val actualId = player.currentMediaItem?.mediaId.orEmpty()
+        val currentId = requested.shown(actualId, player.playbackState == Player.STATE_READY)
+        // While the tapped song is pinned, title and position come from its queue entry.
+        val pinned = queue.indexOfFirst { it.id == currentId }.takeIf { currentId != actualId && it >= 0 }
         mutable.value = PlaybackState(ready = true,
-            title = player.mediaMetadata.title?.toString().orEmpty(),
-            artist = player.mediaMetadata.artist?.toString().orEmpty(), playing = player.isPlaying,
+            title = pinned?.let { queue[it].title } ?: player.mediaMetadata.title?.toString().orEmpty(),
+            artist = pinned?.let { queue[it].artist } ?: player.mediaMetadata.artist?.toString().orEmpty(),
+            playing = player.isPlaying,
             shuffle = manualShuffle || player.shuffleModeEnabled, repeat = player.repeatMode,
-            queue = List(player.mediaItemCount) {
-                val item = player.getMediaItemAt(it)
-                QueueEntry(item.mediaId, item.mediaMetadata.title?.toString().orEmpty(),
-                    item.mediaMetadata.artist?.toString().orEmpty(),
-                    item.localConfiguration?.uri?.toString(), item.mediaMetadata.albumTitle?.toString().orEmpty())
-            }, index = player.currentMediaItemIndex, failed = player.playerError != null,
-            currentId = player.currentMediaItem?.mediaId.orEmpty(),
-            favorite = data.isFavorite(player.currentMediaItem?.mediaId.orEmpty()),
+            queue = queue, index = pinned ?: player.currentMediaItemIndex, failed = player.playerError != null,
+            currentId = currentId,
+            favorite = data.isFavorite(currentId),
             speed = speed, equalizerEnabled = equalizerEnabled,
             equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset,
             sleepMinutes = sleepMinutes, sleepEndAtMs = sleepEndAtMs,
@@ -257,6 +264,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         prepareSystemArtworkSources(songs)
         originalQueueIds = songs.map { it.id }
         manualShuffle = false
+        requested.request(song.id)
         controller?.apply {
             shuffleModeEnabled = false
             setMediaItems(songs.map(::mediaItem), index, 0)
@@ -300,8 +308,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         StonePlaybackService.instance?.applyHardwareAcceleration(mode)
         publish()
     }
-    fun previous() { controller?.seekToPrevious() }
-    fun next() { controller?.seekToNext() }
+    fun previous() { requested.clear(); controller?.seekToPrevious() }
+    fun next() { requested.clear(); controller?.seekToNext() }
     fun shuffle() { setShuffle(!mutable.value.shuffle) }
     fun repeat() { setRepeat((mutable.value.repeat + 1) % 3) }
     fun setRepeat(mode: Int) {
@@ -348,6 +356,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         publish()
     }
     fun playAt(index: Int) {
+        requested.clear()
         controller?.takeIf { index in 0 until it.mediaItemCount }?.run {
             seekToDefaultPosition(index); play()
         }

@@ -163,7 +163,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `PlayerSheetsHost.kt` (87) Shared by the full player and the home dock;
 - `PlayerSheetsState.kt` (37) Item whose shared options menu is open;
 - `PlayerToolsSheets.kt` (389) Song currently played as audio only;
-- `PortraitVideoChrome.kt` (119) Portrait video controls:
+- `PortraitVideoChrome.kt` (120) Portrait video controls:
 - `QueueSheet.kt` (244) Outlined "LETRAS" label in front of the subtitle of songs that have lyrics.
 - `RecommendationsSheet.kt` (80) Songs to play after [current]:
 - `SleepTimerSheet.kt` (134) Preset durations offered in the sheet (0 = off).
@@ -171,7 +171,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `TagEditorParts.kt` (97) Full-screen editor frame:
 - `TagSuggestDialog.kt` (82) Results of "Completar etiquetas":
 - `VideoControlPreferences.kt` (83) Secondary actions that can be shown below a video preview or player.
-- `VideoControlRow.kt` (109) Renders the user-configurable secondary video actions in their saved order.
+- `VideoControlRow.kt` (114) Renders the user-configurable secondary video actions in their saved order.
 - `VideoGestures.kt` (221) Handles vertical brightness/volume adjustments and horizontal track changes.
 - `VideoOptionsSheet.kt` (199) Video ⋮ menu.
 - `VideoPlayers.kt` (127) Controls stay visible;
@@ -187,8 +187,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `DiagnosticsReportExporter.kt` (33)
 - `PerformanceDiagnostics.kt` (88) /proc exposes this count without allocating a stack trace for every thread.
 - `PlaybackEqualizer.kt` (89) Read-only state used by the audio investigation;
-- `PlaybackViewModel.kt` (670) [gain] is a software attenuation applied on top of Android's volume.
+- `PlaybackViewModel.kt` (679) [gain] is a software attenuation applied on top of Android's volume.
 - `PlaybackVolumeBoost.kt` (163) A percentage above 100 maps to a logarithmic gain;
+- `RequestedItemGuard.kt` (26) Keeps the song the user just tapped as the current one while the player loads the new list.
 - `StoneEcoEngine.kt` (140) Lightweight playback policy.
 - `StonePlaybackService.kt` (494) Sole owner of playback;
 - `StoneWidgetProvider.kt` (109) Home-screen player (4×2):

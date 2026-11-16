@@ -1,5 +1,7 @@
 # Sin publicar (próxima versión)
 
+- Arreglo: al tocar una canción, la marca ya no salta a la primera de la lista y vuelve; la canción
+  tocada queda marcada hasta que el reproductor la tiene cargada.
 - Arreglo: Stone se cerraba al abrir un vídeo en vertical (desde el mini reproductor). La fila de
   botones redondos se desplazaba dentro de otra fila desplazable; ahora solo se desplaza una.
 - Letras sincronizadas en el reproductor: el recuadro bajo los controles muestra una frase y, al
