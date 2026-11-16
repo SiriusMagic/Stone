@@ -56,8 +56,12 @@ object ApiMode {
         RequestStats.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
         // Stored encrypted with a Keystore key; values from older versions are re-sealed here.
-        relaySecret = SecretBox.open(store.look("api.relaySecret", "")).ifBlank { newToken(32) }
-            .also { if (!SecretBox.isSealed(store.look("api.relaySecret", ""))) store.setLook("api.relaySecret", SecretBox.seal(it)) }
+        val storedRelay = store.look("api.relaySecret", "")
+        val openedRelay = SecretBox.open(storedRelay)
+        relaySecret = openedRelay.ifBlank { newToken(32) }
+        // Save when it was plain text (older versions) or could not be decrypted (Keystore key lost):
+        // otherwise a new key would be used but never stored, and the relay would refuse the phone.
+        if (!SecretBox.isSealed(storedRelay) || openedRelay.isBlank()) store.setLook("api.relaySecret", SecretBox.seal(relaySecret))
         apply()
     }
 

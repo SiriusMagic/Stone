@@ -1,5 +1,7 @@
-# Sin publicar (próxima versión)
+# Stone Kotlin 1.7.7
 
+- APK completo (sin optimizar): `Stone-1.7.7-completo.apk`.
+- Arreglo: si el Android Keystore perdía su clave, la nueva clave del relay no se guardaba y el enlace público dejaba de funcionar.
 - Modo API › Actividad › Analítica: solicitudes por minuto de todos los agentes o de cada token (última hora
   o 24 h): total, media y pico por minuto, errores y denegadas, gráfico de barras (toca una barra para ver su
   hora y cifras) y llamadas con token erróneo. Se guarda en el teléfono.
