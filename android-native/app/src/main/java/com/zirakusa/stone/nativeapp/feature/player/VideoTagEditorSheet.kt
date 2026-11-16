@@ -43,6 +43,7 @@ import java.util.Locale
  */
 @Composable internal fun VideoTagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     val scope = rememberCoroutineScope()
     val editor = remember { VideoMetadataEditor(context.applicationContext) }
     val writeGate = rememberMediaWriteGate()
@@ -70,7 +71,7 @@ import java.util.Locale
             busy = true
             withContext(Dispatchers.IO) { runCatching { editor.saveImageFromGallery(song.uri, uri) } }
                 .onSuccess { draft = draft.copy(thumbnailUri = it, thumbnailChanged = true); error = null }
-                .onFailure { error = it.message ?: context.getString(R.string.video_metadata_image_failed) }
+                .onFailure { error = it.message ?: stoneResources.getString(R.string.video_metadata_image_failed) }
             busy = false
         }
     }
@@ -82,9 +83,9 @@ import java.util.Locale
                 outcome.nativeFailureMessage != null -> R.string.video_metadata_native_failed
                 else -> R.string.video_metadata_saved_internal
             }
-            Toast.makeText(context, context.getString(message), Toast.LENGTH_LONG).show()
+            Toast.makeText(context, stoneResources.getString(message), Toast.LENGTH_LONG).show()
             saved()
-        }.onFailure { error = it.message ?: context.getString(R.string.video_metadata_save_failed) }
+        }.onFailure { error = it.message ?: stoneResources.getString(R.string.video_metadata_save_failed) }
         busy = false
     }
     fun save() = writeGate(song.uri) { saveNow() }

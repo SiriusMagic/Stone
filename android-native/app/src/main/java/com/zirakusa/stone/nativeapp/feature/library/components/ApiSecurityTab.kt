@@ -34,6 +34,7 @@ import org.json.JSONObject
 /** Seguridad tab: tokens with their own mode, Android's all-files access and edit backups. */
 @Composable internal fun ApiSecurityTab(copy: (String, String) -> Unit) {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     var creating by remember { mutableStateOf(false) }
     ApiSection(R.string.api_tokens_title, Icons.Default.Key, R.string.api_tokens_hint, R.string.api_token_create to { creating = true }) {
         ApiTokens.tokens.forEachIndexed { index, token -> ApiTokenRow(token, index == 0, copy) }
@@ -68,7 +69,7 @@ import org.json.JSONObject
         OutlinedButton(enabled = backups > 0, modifier = Modifier.padding(top = 8.dp), onClick = {
             scope.launch {
                 val message = runCatching { StoneAutomation.execute("metadata_undo", JSONObject(), AccessMode.FULL, "Stone") }
-                    .fold({ context.getString(R.string.api_backups_undone) }, { it.message ?: "" })
+                    .fold({ stoneResources.getString(R.string.api_backups_undone) }, { it.message ?: "" })
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             }
         }) { Text(stringResource(R.string.api_backups_undo)) }

@@ -84,6 +84,7 @@ private val legacyDefinitions = listOf(
     var shortcutRevision by remember { mutableIntStateOf(0) }
     val contentState = rememberSaveableStateHolder()
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     var shortcuts by remember(settingsStore) { mutableStateOf(allQuickActionIds.associateWith {
         val profile = settingsStore?.shortcutProfile() ?: "custom"
         if (it in QuickActionRegistry.pinnedIds && profile != "custom") true
@@ -131,9 +132,9 @@ private val legacyDefinitions = listOf(
             .firstOrNull { it.id == id }?.label ?: id
         val modeAction = id.startsWith("audio_mode_")
         val message = if (modeAction) {
-            context.getString(R.string.quick_action_activated, label)
+            stoneResources.getString(R.string.quick_action_activated, label)
         } else {
-            context.getString(R.string.quick_action_confirmed, label)
+            stoneResources.getString(R.string.quick_action_confirmed, label)
         }
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }

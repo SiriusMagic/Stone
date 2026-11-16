@@ -5,12 +5,12 @@ plugins {
 }
 android {
     namespace = "com.zirakusa.stone.nativeapp"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         // Preview can coexist with Stone 1.3.2; never overwrite its user data.
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 36
         versionName = "1.7.2"
         // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
@@ -38,7 +38,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions { jvmTarget = "21" }
     buildTypes {
         debug {
             // Diagnostic-only A/B switch. Release and preview builds never expose it.
@@ -60,23 +59,24 @@ android {
 }
 dependencies {
     implementation(project(":core"))
-    implementation(platform("androidx.compose:compose-bom:2025.04.01"))
-    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
+    implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
-    implementation("androidx.media3:media3-exoplayer:1.6.1")
-    implementation("androidx.media3:media3-session:1.6.1")
-    implementation("androidx.media3:media3-ui:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.media3:media3-exoplayer:1.11.1")
+    implementation("androidx.media3:media3-session:1.11.1")
+    implementation("androidx.media3:media3-ui:1.11.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // WebSocket to the Stone relay (fixed public link for the MCP server).
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("org.robolectric:robolectric:4.18")
     testImplementation("androidx.compose.ui:ui-test-junit4")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.43.0")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.43.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.79.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.79.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21) } }

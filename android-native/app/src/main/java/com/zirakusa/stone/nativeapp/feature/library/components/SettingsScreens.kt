@@ -416,6 +416,7 @@ private val legalPages = setOf("privacy", "terms", "licenses")
 
 @Composable private fun AudioOutputDetail() {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     val route = remember(context) {
         val manager = context.getSystemService(android.media.AudioManager::class.java)
         val devices = manager?.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS).orEmpty()
@@ -431,7 +432,7 @@ private val legalPages = setOf("privacy", "terms", "licenses")
             android.media.AudioDeviceInfo.TYPE_USB_DEVICE,
             android.media.AudioDeviceInfo.TYPE_USB_HEADSET -> "USB"
             android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "Altavoz del teléfono"
-            else -> context.getString(R.string.not_available)
+            else -> stoneResources.getString(R.string.not_available)
         }
     }
     Text(stringResource(R.string.audio_output_intro), color = StonePalette.Muted,

@@ -38,6 +38,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     deletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit, dismiss: () -> Unit,
     markPurged: (List<Song>) -> Unit = {}) {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     // Android 11+ only lets the user (not the app) delete media found through MediaStore.
     var systemPending by remember { mutableStateOf<List<Song>>(emptyList()) }
     val systemDelete = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -85,7 +86,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         systemDelete.launch(IntentSenderRequest.Builder(request.intentSender).build())
                     }
                     val other = failed.size - if (Build.VERSION.SDK_INT >= 30) media.size else 0
-                    if (other > 0) Toast.makeText(context, context.resources.getQuantityString(
+                    if (other > 0) Toast.makeText(context, stoneResources.getQuantityString(
                         R.plurals.delete_forever_failed, other, other), Toast.LENGTH_LONG).show()
                 }
             }) { Text(stringResource(R.string.delete_forever), color = MaterialTheme.colorScheme.error) } },

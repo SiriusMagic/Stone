@@ -46,6 +46,7 @@ import java.io.ByteArrayOutputStream
  */
 @Composable internal fun AudioTagEditorSheet(song: Song, close: () -> Unit, saved: () -> Unit) {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     val scope = rememberCoroutineScope()
     val editor = remember { AudioTagEditor(context.applicationContext) }
     val writeGate = rememberMediaWriteGate()
@@ -68,7 +69,7 @@ import java.io.ByteArrayOutputStream
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) scope.launch {
             val cover = withContext(Dispatchers.IO) { runCatching { coverBytes(context, uri) }.getOrNull() }
-            if (cover == null) error = context.getString(R.string.video_metadata_image_failed)
+            if (cover == null) error = stoneResources.getString(R.string.video_metadata_image_failed)
             else { tags = tags.copy(cover = cover, removeCover = false); preview = BitmapFactory.decodeByteArray(cover, 0, cover.size) }
         }
     }

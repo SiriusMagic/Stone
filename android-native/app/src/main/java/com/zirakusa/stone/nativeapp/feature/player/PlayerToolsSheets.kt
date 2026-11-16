@@ -331,6 +331,7 @@ private fun verticalBandValue(y: Float, height: Float): Int =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun RingtoneSheet(song: Song, close: () -> Unit) {
     val context = LocalContext.current; val scope = rememberCoroutineScope()
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     var start by remember { mutableFloatStateOf(0f) }; var busy by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = close, containerColor = Color(0xFF17151B)) {
         ImmersiveWindowEffect()
@@ -342,8 +343,8 @@ private fun verticalBandValue(y: Float, height: Float): Int =
                 if (!SongActions.canSetRingtone(context)) { SongActions.requestWriteSettings(context); return@Button }
                 scope.launch { busy = true
                     val result = withContext(Dispatchers.IO) { runCatching { SongActions.setRingtone(context, song.uri, song.title, start.toInt()) } }
-                    busy = false; Toast.makeText(context, if (result.isSuccess) context.getString(R.string.ringtone_ready)
-                    else result.exceptionOrNull()?.message ?: context.getString(R.string.ringtone_failed), Toast.LENGTH_LONG).show()
+                    busy = false; Toast.makeText(context, if (result.isSuccess) stoneResources.getString(R.string.ringtone_ready)
+                    else result.exceptionOrNull()?.message ?: stoneResources.getString(R.string.ringtone_failed), Toast.LENGTH_LONG).show()
                     if (result.isSuccess) close()
                 }
             }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(if (SongActions.canSetRingtone(context)) R.string.set_ringtone else R.string.allow_and_continue)) }
