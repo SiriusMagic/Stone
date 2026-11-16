@@ -564,6 +564,9 @@
     <string name="recommendations_title">Recomendaciones para ti</string>
     <string name="recommendations_empty">Añade más música para recibir recomendaciones.</string>
     <string name="lyrics_follow">Seguir la canción</string>
+    <string name="lyrics_file_saved">Letras guardadas también dentro del archivo: viajan con la canción al compartirla.</string>
+    <string name="lyrics_file_failed">Letras guardadas en Stone, pero no en el archivo: %1$s</string>
+    <string name="lyrics_file_unsupported">Letras guardadas en Stone. Este formato no admite letras dentro del archivo (MP3, FLAC y M4A sí).</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_video">Vídeo</string>
     <string name="settings_section_notifications">Notificaciones</string>

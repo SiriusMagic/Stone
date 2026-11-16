@@ -6,9 +6,28 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/** Reads the same ID3 USLT frame supported by Stone 1.3.2, without a React bridge. */
+/**
+ * Lyrics embedded in the file: ID3 USLT (MP3, the frame Stone 1.3.2 used), the FLAC LYRICS
+ * comment and the M4A `©lyr` tag, which is also what Stone writes when lyrics are saved.
+ */
 class EmbeddedLyricsReader(private val context: Context) {
     fun read(uri: Uri): String = runCatching {
+        val start = MediaFileIo.readHead(context, uri, 12)
+        when {
+            start.size >= 3 && String(start, 0, 3, Charsets.ISO_8859_1) == "ID3" ->
+                id3(uri).ifBlank { flac(uri) }
+            start.size >= 4 && String(start, 0, 4, Charsets.ISO_8859_1) == "fLaC" -> flac(uri)
+            // Audio-only MP4 (M4A/M4B) by its brand: videos are not opened here.
+            start.size >= 12 && String(start, 4, 4, Charsets.ISO_8859_1) == "ftyp" &&
+                String(start, 8, 3, Charsets.ISO_8859_1) in setOf("M4A", "M4B") ->
+                Mp4MetadataWriter.readTags(context, uri.toString())["©lyr"].orEmpty()
+            else -> ""
+        }
+    }.getOrDefault("")
+
+    private fun flac(uri: Uri): String = FlacTag.readLyrics(MediaFileIo.readHead(context, uri, 4 * 1024 * 1024))
+
+    private fun id3(uri: Uri): String = runCatching {
         context.contentResolver.openInputStream(uri)?.use { input ->
             val header = ByteArray(10)
             if (input.read(header) != 10 || String(header, 0, 3) != "ID3") return@use ""

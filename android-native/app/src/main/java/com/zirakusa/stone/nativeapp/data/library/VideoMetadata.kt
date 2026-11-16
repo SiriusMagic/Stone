@@ -40,6 +40,8 @@ data class VideoMetadataDraft(
     val album: String = "",
     /** Comma separated keywords, stored as the MP4 `keyw` tag. */
     val keywords: String = "",
+    /** Song lyrics, stored as the MP4 `©lyr` tag (audio files only). */
+    val lyrics: String = "",
     val thumbnailUri: String = "",
     /** True only when the user explicitly selected or removed the thumbnail. */
     val thumbnailChanged: Boolean = false,

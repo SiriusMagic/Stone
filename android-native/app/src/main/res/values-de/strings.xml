@@ -599,6 +599,9 @@
     <string name="recommendations_title">Empfehlungen für dich</string>
     <string name="recommendations_empty">Füge mehr Musik hinzu, um Empfehlungen zu erhalten.</string>
     <string name="lyrics_follow">Dem Song folgen</string>
+    <string name="lyrics_file_saved">Songtext auch in der Datei gespeichert: Er wird beim Teilen mitgeschickt.</string>
+    <string name="lyrics_file_failed">Songtext in Stone gespeichert, aber nicht in der Datei: %1$s</string>
+    <string name="lyrics_file_unsupported">Songtext in Stone gespeichert. Dieses Format kann keinen Songtext in der Datei speichern (MP3, FLAC und M4A schon).</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_notifications">Benachrichtigungen</string>

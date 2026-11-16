@@ -130,7 +130,9 @@ internal object Mp4Atoms {
             "desc" to draft.description.trim(), "©ART" to draft.author.trim(),
             "©alb" to draft.album.trim(), "©day" to draft.date.trim(),
             "©gen" to draft.genre.trim(), "keyw" to draft.keywords.trim(),
-        ).filterKeys { key -> onlyTypes.get()?.contains(key) ?: true }
+            "©lyr" to draft.lyrics.trim(),
+        // Lyrics are only touched when asked for, so the video editor never erases them.
+        ).filterKeys { key -> onlyTypes.get()?.contains(key) ?: (key != "©lyr") }
         val out = ByteArrayOutputStream(4096)
         val written = mutableSetOf<String>()
         existing.forEach { item ->

@@ -501,6 +501,9 @@
     <string name="recommendations_title">Recommended for you</string>
     <string name="recommendations_empty">Add more music to get recommendations.</string>
     <string name="lyrics_follow">Follow the song</string>
+    <string name="lyrics_file_saved">Lyrics also saved inside the file: they travel with the song when you share it.</string>
+    <string name="lyrics_file_failed">Lyrics saved in Stone, but not in the file: %1$s</string>
+    <string name="lyrics_file_unsupported">Lyrics saved in Stone. This format can’t hold lyrics inside the file (MP3, FLAC and M4A can).</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_notifications">Notifications</string>

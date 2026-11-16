@@ -12,7 +12,14 @@ data class AudioTags(val title: String = "", val artist: String = "", val album:
     val genre: String = "",
     /** New front cover (JPEG/PNG bytes) or null to keep the current one. */
     val cover: ByteArray? = null,
-    val removeCover: Boolean = false)
+    val removeCover: Boolean = false,
+    /**
+     * Lyrics to embed (LRC timestamps are kept, as most players read them from the same tag):
+     * null keeps what the file has, blank removes them.
+     */
+    val lyrics: String? = null,
+    /** Only [lyrics] change; title, artist, album, genre and cover stay exactly as they are. */
+    val lyricsOnly: Boolean = false)
 
 /**
  * Edits tags inside the ORIGINAL audio file (MP3/ID3, FLAC/Vorbis, M4A/MP4) and then asks
@@ -53,12 +60,17 @@ class AudioTagEditor(private val context: Context) {
                 MediaFileIo.replaceHead(context, uri, end.toLong(), FlacTag.rebuild(head, start, end, tags))
             }
             in mp4 -> Mp4MetadataWriter.write(context, value,
-                VideoMetadataDraft(title = tags.title, author = tags.artist, album = tags.album, genre = tags.genre),
-                tags.cover, tags.removeCover, onlyTypes = setOf("©nam", "©ART", "©alb", "©gen"))
+                VideoMetadataDraft(title = tags.title, author = tags.artist, album = tags.album, genre = tags.genre,
+                    lyrics = tags.lyrics.orEmpty()),
+                tags.cover, tags.removeCover, onlyTypes = (if (tags.lyricsOnly) emptySet()
+                    else setOf("©nam", "©ART", "©alb", "©gen")) + if (tags.lyrics != null) setOf("©lyr") else emptySet())
             else -> error("El formato .$extension no admite edición de etiquetas en Stone todavía.")
         }
         MediaFileIo.rescan(context, value)
     }
+
+    /** Saves [lyrics] (LRC or plain text) inside the original file; blank removes them. */
+    fun writeLyrics(value: String, lyrics: String) = write(value, AudioTags(lyrics = lyrics, lyricsOnly = true))
 
     /**
      * Reads the start of the file until [needed] (total header bytes, -1 = unknown yet)

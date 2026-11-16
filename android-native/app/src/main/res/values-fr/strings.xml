@@ -599,6 +599,9 @@
     <string name="recommendations_title">Recommandé pour toi</string>
     <string name="recommendations_empty">Ajoute plus de musique pour avoir des recommandations.</string>
     <string name="lyrics_follow">Suivre la chanson</string>
+    <string name="lyrics_file_saved">Paroles aussi enregistrées dans le fichier : elles suivent la chanson quand vous la partagez.</string>
+    <string name="lyrics_file_failed">Paroles enregistrées dans Stone, mais pas dans le fichier : %1$s</string>
+    <string name="lyrics_file_unsupported">Paroles enregistrées dans Stone. Ce format ne peut pas contenir de paroles (MP3, FLAC et M4A oui).</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_video">Vidéo</string>
     <string name="settings_section_notifications">Notifications</string>

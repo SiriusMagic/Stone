@@ -60,6 +60,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val overrides = remember { LyricsOverrides(context.applicationContext) }
+    val writeToFile = rememberLyricsFileWriter()
     var editor by remember { mutableStateOf(false) }
     var browserVisible by remember { mutableStateOf(false) }
     var autoSearch by remember { mutableStateOf(false) }
@@ -131,6 +132,8 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                     Button(enabled = draft.text.isNotBlank(), onClick = {
                         overrides.put(song.id, draft.text)
                         document = LyricsParser.parse(draft.text)
+                        // Also inside the song file, so sharing it shares the lyrics.
+                        writeToFile(song, draft.text)
                         editor = false
                     }) { Text(stringResource(R.string.save)) }
                 }
@@ -211,6 +214,7 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                 IconButton(onClick = {
                     overrides.clear(song.id)
                     overrides.deleteOffset(song.id)
+                    writeToFile(song, "")
                     document = LyricsDocument(emptyList(), emptyList())
                     val text = document.editableText()
                     draft = TextFieldValue(text, TextRange(text.length))

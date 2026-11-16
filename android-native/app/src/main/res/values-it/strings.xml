@@ -599,6 +599,9 @@
     <string name="recommendations_title">Consigliati per te</string>
     <string name="recommendations_empty">Aggiungi altra musica per ricevere consigli.</string>
     <string name="lyrics_follow">Segui il brano</string>
+    <string name="lyrics_file_saved">Testo salvato anche nel file: viaggia con il brano quando lo condividi.</string>
+    <string name="lyrics_file_failed">Testo salvato in Stone, ma non nel file: %1$s</string>
+    <string name="lyrics_file_unsupported">Testo salvato in Stone. Questo formato non può contenere il testo nel file (MP3, FLAC e M4A sì).</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_notifications">Notifiche</string>

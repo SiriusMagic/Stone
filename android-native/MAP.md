@@ -31,12 +31,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/data/library
 - `ArtworkLoader.kt` (180) Only visible artwork is loaded.
 - `AudioMetadataReader.kt` (34) Port of Stone's metadata reader, without its React Native bridge.
-- `AudioTagEditor.kt` (146) New front cover (JPEG/PNG bytes) or null to keep the current one.
-- `AudioTagWriters.kt` (222) Pure tag builders (no I/O) so they can be unit tested.
+- `AudioTagEditor.kt` (158) New front cover (JPEG/PNG bytes) or null to keep the current one.
+- `AudioTagWriters.kt` (261) Pure tag builders (no I/O) so they can be unit tested.
 - `CoverDownloader.kt` (76) Downloads a cover image from the internet (http/https) and returns it as a JPEG of at most 1600 px, ready to embed in a file.
 - `DeviceMediaScanner.kt` (84) Runtime permission needed to read every song and video indexed by Android.
 - `EditJournal.kt` (73) What a tag, lyrics or cover edit replaced, so it can be undone.
-- `EmbeddedLyricsReader.kt` (69) Reads the same ID3 USLT frame supported by Stone 1.3.2, without a React bridge.
+- `EmbeddedLyricsReader.kt` (88) Lyrics embedded in the file:
 - `FolderScanner.kt` (76) Uses Stone's selected SAF folder;
 - `ImportedLibraryStore.kt` (39) Legacy app-private media index kept so imports from older releases remain playable.
 - `LibraryCache.kt` (62) Disposable index only;
@@ -48,7 +48,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LyricsOverrides.kt` (45) User-entered lyrics are durable data and intentionally live outside the disposable library cache.
 - `LyricsTextCleaner.kt` (27) Cleans lyrics copied from a web page:
 - `MediaFileIo.kt` (175) Shared file access for the tag editors.
-- `Mp4Atoms.kt` (194) Pure MP4 box logic for metadata editing.
+- `Mp4Atoms.kt` (196) Pure MP4 box logic for metadata editing.
 - `Mp4MetadataWriter.kt` (177) Streams an MP4/M4V edit without loading the media into memory.
 - `NewFilesNotifier.kt` (96) "Notificación de nuevos archivos":
 - `NotificationScheduler.kt` (62) Ajustes › Notificaciones:
@@ -59,7 +59,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `SongFileDeleter.kt` (30) Removes the physical media file.
 - `SongJson.kt` (57) Stable representation shared by the library cache and legacy app-private media index.
 - `TagSuggestions.kt` (39) A possible set of tags for a song, with how sure Stone is that it is the same song (0-1).
-- `VideoMetadata.kt` (283) Comma separated keywords, stored as the MP4 `keyw` tag.
+- `VideoMetadata.kt` (285) Comma separated keywords, stored as the MP4 `keyw` tag.
 
 ## app/data/persistence
 - `CrashLog.kt` (43) Keeps the last crash on the phone ("Stone se detuvo"), so it can be read and sent from Ajustes › Diagnóstico.
@@ -149,8 +149,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LyricPhrase.kt` (45) One phrase on a single line, left aligned.
 - `LyricsAutoSearch.kt` (67) "Buscar automáticamente":
 - `LyricsClock.kt` (91) The song's lyrics:
+- `LyricsFileSync.kt` (44) Copies saved lyrics into the song file itself (MP3 USLT, FLAC LYRICS, M4A ©lyr), so they travel with the file when it is shared or opened in another p
 - `LyricsSearchBrowser.kt` (118) Search engines offered as chips;
-- `LyricsSheet.kt` (222)
+- `LyricsSheet.kt` (226)
 - `LyricsWebExtractor.kt` (60) Finds the lyrics on the page open in the lyrics browser.
 - `MediaWriteGate.kt` (35) Runs a write action on a media file, first asking Android for write consent when the file comes from the device-wide MediaStore index (Android 11+).
 - `MiniPlayer.kt` (135)

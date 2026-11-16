@@ -1,3 +1,11 @@
+# Sin publicar (próxima versión)
+
+- Al guardar o borrar letras, también se guardan o se quitan dentro del archivo de la canción (MP3,
+  FLAC y M4A). Al compartir la canción o abrirla en otro reproductor, la letra va incluida, con sus
+  tiempos si es sincronizada. Stone avisa si se guardó en el archivo o si el formato no lo admite.
+- Stone lee letras incrustadas también en FLAC y M4A (antes solo en MP3).
+- Editar título, artista, álbum o género ya no toca las letras guardadas en el archivo.
+
 # Stone Kotlin 1.7.6
 
 - Arreglo: al tocar una canción, la marca ya no salta a la primera de la lista y vuelve; la canción

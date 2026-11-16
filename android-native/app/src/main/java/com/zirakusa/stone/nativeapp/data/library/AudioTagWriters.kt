@@ -30,15 +30,19 @@ internal object Id3Tag {
             val extended = if (version == 4) syncSafe(body, 0) else 4 + ByteBuffer.wrap(body, 0, 4).int
             body = body.copyOfRange(extended.coerceIn(0, body.size), body.size)
         }
-        val replaced = replacedText.values.toMutableSet()
+        val replaced = if (tags.lyricsOnly) mutableSetOf() else replacedText.values.toMutableSet()
         if (tags.cover != null || tags.removeCover) replaced += "APIC"
+        if (tags.lyrics != null) replaced += "USLT"
         val frames = ByteArrayOutputStream().apply {
             write(keepFrames(body, version, replaced))
-            textFrame(this, version, "TIT2", tags.title)
-            textFrame(this, version, "TPE1", tags.artist)
-            textFrame(this, version, "TALB", tags.album)
-            textFrame(this, version, "TCON", tags.genre)
+            if (!tags.lyricsOnly) {
+                textFrame(this, version, "TIT2", tags.title)
+                textFrame(this, version, "TPE1", tags.artist)
+                textFrame(this, version, "TALB", tags.album)
+                textFrame(this, version, "TCON", tags.genre)
+            }
             tags.cover?.let { pictureFrame(this, version, it) }
+            tags.lyrics?.let { lyricsFrame(this, version, it) }
         }.toByteArray()
         val total = if (10 + frames.size <= oldSize) oldSize else 10 + frames.size + PADDING
         return ByteArrayOutputStream(total).apply {
@@ -81,6 +85,16 @@ internal object Id3Tag {
         frame(out, version, id, byteArrayOf(if (version == 4) 3 else 1) + text)
     }
 
+    /** USLT: encoding, language, empty description, then the text (UTF-8 in v2.4, UTF-16 in v2.3). */
+    private fun lyricsFrame(out: ByteArrayOutputStream, version: Int, value: String) {
+        if (value.isBlank()) return
+        val text = value.trim()
+        val payload = if (version == 4) byteArrayOf(3) + "eng".toByteArray(Charsets.ISO_8859_1) + byteArrayOf(0) +
+            text.toByteArray(Charsets.UTF_8)
+        else byteArrayOf(1) + "eng".toByteArray(Charsets.ISO_8859_1) + byteArrayOf(0, 0) + text.toByteArray(Charsets.UTF_16)
+        frame(out, version, "USLT", payload)
+    }
+
     private fun pictureFrame(out: ByteArrayOutputStream, version: Int, image: ByteArray) {
         val mime = if (isPng(image)) "image/png" else "image/jpeg"
         frame(out, version, "APIC", byteArrayOf(0) + mime.toByteArray(Charsets.ISO_8859_1) +
@@ -112,6 +126,8 @@ internal object FlacTag {
     private const val PICTURE = 6
     private val keys = mapOf("TITLE" to AudioTags::title, "ARTIST" to AudioTags::artist,
         "ALBUM" to AudioTags::album, "GENRE" to AudioTags::genre)
+
+    private val lyricKeys = setOf("LYRICS", "UNSYNCEDLYRICS")
 
     class Block(val type: Int, val data: ByteArray)
 
@@ -145,6 +161,25 @@ internal object FlacTag {
         return result
     }
 
+    /** Lyrics stored as a Vorbis comment, read from the start of the file even if covers follow. */
+    fun readLyrics(head: ByteArray): String {
+        val start = start(head).takeIf { it >= 0 } ?: return ""
+        var offset = start + 4
+        while (offset + 4 <= head.size) {
+            val last = head[offset].toInt() and 0x80 != 0
+            val type = head[offset].toInt() and 0x7f
+            val length = u24(head, offset + 1)
+            if (offset + 4 + length > head.size) return ""
+            if (type == VORBIS) return comments(head.copyOfRange(offset + 4, offset + 4 + length)).firstNotNullOfOrNull {
+                val key = it.substringBefore('=', "").uppercase()
+                if (key in lyricKeys) it.substringAfter('=').takeIf(String::isNotBlank) else null
+            }.orEmpty()
+            if (last) return ""
+            offset += 4 + length
+        }
+        return ""
+    }
+
     fun readComments(head: ByteArray): Map<String, String> {
         val start = start(head).takeIf { it >= 0 } ?: return emptyMap()
         val end = metadataEnd(head, start).takeIf { it > 0 && it <= head.size } ?: return emptyMap()
@@ -163,11 +198,15 @@ internal object FlacTag {
         if (existing != null) {
             val buffer = ByteBuffer.wrap(existing.data).order(ByteOrder.LITTLE_ENDIAN)
             vendor = ByteArray(buffer.int).also { buffer.get(it) }
-            kept = comments(existing.data).filterNot { it.substringBefore('=').uppercase() in keys }
+            kept = comments(existing.data).filterNot {
+                val key = it.substringBefore('=').uppercase()
+                (!tags.lyricsOnly && key in keys) || (tags.lyrics != null && key in lyricKeys)
+            }
         } else {
             vendor = "Stone".toByteArray(Charsets.UTF_8); kept = emptyList()
         }
-        val added = keys.mapNotNull { (key, field) -> field(tags).trim().takeIf { it.isNotEmpty() }?.let { "$key=$it" } }
+        val added = keys.filter { !tags.lyricsOnly }.mapNotNull { (key, field) -> field(tags).trim().takeIf { it.isNotEmpty() }?.let { "$key=$it" } } +
+            listOfNotNull(tags.lyrics?.trim()?.takeIf { it.isNotEmpty() }?.let { "LYRICS=$it" })
         val vorbis = ByteArrayOutputStream().apply {
             write(le32(vendor.size)); write(vendor); write(le32(kept.size + added.size))
             (kept + added).forEach { val bytes = it.toByteArray(Charsets.UTF_8); write(le32(bytes.size)); write(bytes) }
