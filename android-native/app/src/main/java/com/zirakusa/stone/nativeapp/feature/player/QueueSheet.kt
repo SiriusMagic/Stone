@@ -40,6 +40,8 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.LyricsIndex
+import androidx.compose.foundation.border
 import com.zirakusa.stone.nativeapp.R
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -84,7 +86,10 @@ private val QueueDark = Color(0xFF4A292B)
                     QueueArtwork(current.uri, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(current.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
-                        Text(subtitle(current), maxLines = 1, overflow = TextOverflow.Ellipsis, color = subInk, fontSize = 13.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (LyricsIndex.has(current.id)) LyricsBadge(subInk)
+                            Text(subtitle(current), maxLines = 1, overflow = TextOverflow.Ellipsis, color = subInk, fontSize = 13.sp)
+                        }
                     }
                 }
                 HorizontalDivider(color = ink.copy(alpha = .15f))
@@ -134,8 +139,11 @@ private val QueueDark = Color(0xFF4A292B)
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(item.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.Bold)
-                            Text(subtitle(item), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                color = subInk, fontSize = 13.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (LyricsIndex.has(item.id)) LyricsBadge(subInk)
+                                Text(subtitle(item), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                    color = subInk, fontSize = 13.sp)
+                            }
                         }
                         Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
                             Modifier.size(38.dp).pointerInput(item.id, state.queue.size) {
@@ -198,6 +206,12 @@ private val QueueDark = Color(0xFF4A292B)
         }
         }
     }
+}
+
+/** Outlined "LETRAS" label in front of the subtitle of songs that have lyrics. */
+@Composable private fun LyricsBadge(color: Color) {
+    Text(stringResource(R.string.lyrics_badge), Modifier.padding(end = 8.dp).border(1.dp, color, RoundedCornerShape(14.dp))
+        .padding(horizontal = 7.dp, vertical = 1.dp), color = color, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
 }
 
 private fun subtitle(item: com.zirakusa.stone.nativeapp.playback.QueueEntry) =

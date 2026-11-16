@@ -15,10 +15,12 @@ class LyricsOverrides(context: Context) {
     fun put(songId: String, value: String) {
         val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
         database.putString("lyrics", lyrics.put(songId, value).toString())
+        LyricsIndex.onSaved(songId, value)
     }
     fun delete(songId: String) {
         val lyrics = runCatching { JSONObject(database.getString("lyrics") ?: "{}") }.getOrDefault(JSONObject())
         database.putString("lyrics", lyrics.apply { remove(songId) }.toString())
+        LyricsIndex.onSaved(songId, null)
     }
 
     /** Keeps a durable empty override so embedded lyrics do not reappear after deletion. */

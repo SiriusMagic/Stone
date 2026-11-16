@@ -49,7 +49,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
     }
 
+    private var lyricsJob: Job? = null
+
+    /** Refreshes which songs have lyrics (background, cached per file). */
+    private fun indexLyrics() {
+        lyricsJob?.cancel()
+        lyricsJob = viewModelScope.launch {
+            runCatching { com.zirakusa.stone.nativeapp.data.library.LyricsIndex.scanEmbedded(getApplication(), mutable.value.songs) }
+        }
+    }
+
     init {
+        com.zirakusa.stone.nativeapp.data.library.LyricsIndex.ensureLoaded(getApplication())
+        viewModelScope.launch { loadJob.join(); indexLyrics() }
         viewModelScope.launch {
             com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.collect {
                 mutable.update { it.copy(hasFolder = repository.hasSource) }
@@ -172,6 +184,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 }
                 mutable.update { it.copy(songs = songs, deletedSongs = refreshed.deletedSongs,
                     favoriteIds = favorites, playCounts = counts) }
+                indexLyrics()
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.update { it.copy(failed = true) } }

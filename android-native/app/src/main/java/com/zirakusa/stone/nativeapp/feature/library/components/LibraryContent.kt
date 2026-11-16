@@ -355,7 +355,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
         "recent" -> state.recentIds.mapNotNull { id -> audio.find { it.id == id } }
         "most" -> audio.filter { (state.playCounts[it.id] ?: 0) > 0 }
             .sortedByDescending { state.playCounts[it.id] ?: 0 }
-        "lyrics" -> audio.filter { it.lyrics.isNotEmpty() }
+        "lyrics" -> audio.filter(com.zirakusa.stone.nativeapp.data.library.LyricsIndex::has)
         else -> state.playlists.find { it.id == key }?.songIds.orEmpty().mapNotNull { id -> audio.find { it.id == id } }
     }
     val labels = listOf("favorites" to R.string.favorite_songs, "recent" to R.string.recently_played,

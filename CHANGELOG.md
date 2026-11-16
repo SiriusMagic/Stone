@@ -1,4 +1,8 @@
-# Sin publicar (próxima 1.7.2, APK aún no generado)
+# Stone Kotlin 1.7.2
+
+- Letrero "LETRAS" y lista "Con letras": ahora cuentan las letras guardadas en Stone (a mano, de
+  lrclib.net o del navegador) y las incrustadas en los archivos del escaneo del dispositivo, que se
+  leen en segundo plano una sola vez. El letrero también aparece en la Fila.
 
 - Forma de portada (Ajustes › Personalizado y MCP `appearance_set_artwork_shape`): redonda que gira
   mientras suena, cuadrada, redonda sin girar o pantalla completa. El mini reproductor también la

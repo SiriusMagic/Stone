@@ -23,3 +23,19 @@ class RecommendationsTest {
         assertFalse(current in picks)
     }
 }
+
+class LyricsIndexTest {
+    @Test fun savedLyricsWinOverTheFileAndDeletedOnesHideIt() {
+        val index = com.zirakusa.stone.nativeapp.data.library.LyricsIndex
+        val withFile = Song("content://a.mp3", "A", "x", "", "f", 1, 1, 1, lyrics = listOf("hola"))
+        val plain = Song("content://b.mp3", "B", "x", "", "f", 1, 1, 1)
+        org.junit.Assert.assertTrue(index.has(withFile))
+        assertFalse(index.has(plain))
+        index.onSaved(plain.id, "[00:01.00] letra")
+        org.junit.Assert.assertTrue(index.has(plain))
+        org.junit.Assert.assertTrue(index.has(plain.id))
+        index.onSaved(withFile.id, "")
+        assertFalse(index.has(withFile))
+        index.onSaved(plain.id, null); index.onSaved(withFile.id, null)
+    }
+}
