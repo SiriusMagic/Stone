@@ -73,7 +73,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         val carousel = videoControls.visibleIds.filter { it != VideoControlId.Queue && it != VideoControlId.Options }
                         VideoControlRow(carousel, Modifier.wrapContentWidth(), onAudioOnly = onAudioOnly, onScaleToggle = onScaleToggle,
                             onRotate = { activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE },
-                            arrangement = Arrangement.Start, playback = playback, state = state, circle = true)
+                            arrangement = Arrangement.Start, playback = playback, state = state, circle = true,
+                            scrollable = false)
                         CircleAction(Icons.Default.LockOpen, R.string.video_lock) { locked = true }
                         CircleAction(Icons.Default.Bedtime, R.string.video_night_mode, active = night) { night = !night }
                     }

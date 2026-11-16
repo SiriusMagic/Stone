@@ -50,6 +50,11 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     state: PlaybackState? = null,
     /** Round dark buttons (portrait carousel) instead of bare icons. */
     circle: Boolean = false,
+    /**
+     * False when the caller already scrolls this row (portrait carousel): a scrolling row inside
+     * another one is measured with infinite width and crashes the app.
+     */
+    scrollable: Boolean = true,
 ) {
     val context = LocalContext.current
     val player = playback?.player()
@@ -61,7 +66,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     }
     val muted = state?.volumePercent == 0
     Row(
-        modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        if (scrollable) modifier.fillMaxWidth().horizontalScroll(rememberScrollState()) else modifier,
         horizontalArrangement = arrangement,
     ) {
         controls.forEach { id ->

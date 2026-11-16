@@ -26,14 +26,24 @@ class PortraitPlayerCrashTest {
     private val state = PlaybackState(ready = true, title = song.title, artist = song.artist, playing = true,
         queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
 
-    @Test fun portraitPlayerAndMiniPlayerWhilePlaying() {
+    private var service: org.robolectric.android.controller.ServiceController<com.zirakusa.stone.nativeapp.playback.StonePlaybackService>? = null
+
+    // Robolectric cannot bind a MediaSessionService by itself: hand it the real service's binder.
+    private fun connectPlayback(): PlaybackViewModel {
         val app = ApplicationProvider.getApplicationContext<android.app.Application>()
-        // Robolectric cannot bind a MediaSessionService by itself: hand it the real service's binder.
-        val service = org.robolectric.Robolectric.buildService(com.zirakusa.stone.nativeapp.playback.StonePlaybackService::class.java).create().get()
+        val controller = org.robolectric.Robolectric.buildService(com.zirakusa.stone.nativeapp.playback.StonePlaybackService::class.java).create()
+        service = controller
         val component = android.content.ComponentName(app, com.zirakusa.stone.nativeapp.playback.StonePlaybackService::class.java)
-        val binder = service.onBind(android.content.Intent(androidx.media3.session.MediaSessionService.SERVICE_INTERFACE).setComponent(component))
+        val binder = controller.get().onBind(android.content.Intent(androidx.media3.session.MediaSessionService.SERVICE_INTERFACE).setComponent(component))
         org.robolectric.Shadows.shadowOf(app).setComponentNameAndServiceForBindService(component, binder)
-        val playback = PlaybackViewModel(app)
+        return PlaybackViewModel(app)
+    }
+
+    // One media session per process: release it so the next test can create its own.
+    @org.junit.After fun release() { service?.destroy() }
+
+    @Test fun portraitPlayerAndMiniPlayerWhilePlaying() {
+        val playback = connectPlayback()
         compose.mainClock.autoAdvance = false
         compose.setContent { StoneTheme { Surface {
             PlayerScreen(state, song, playback, back = {}, onDelete = {}, onMetadataChanged = {}, playlists = emptyList(),
@@ -45,5 +55,19 @@ class PortraitPlayerCrashTest {
             repeat(30) { compose.mainClock.advanceTimeBy(100) }
         }
         StoneLook.artworkShape = "square"
+    }
+
+    /** Opening a video from the mini player in portrait (the landscape player already worked). */
+    @Test fun portraitVideoPlayerWhilePlaying() {
+        val playback = connectPlayback()
+        val video = song.copy(uri = "content://fixture/v.mp4", title = "Clip", isVideo = true)
+        val videoState = state.copy(title = video.title, queue = listOf(QueueEntry(video.id, video.title, video.artist)),
+            currentId = video.id)
+        compose.mainClock.autoAdvance = false
+        compose.setContent { StoneTheme { Surface {
+            PlayerScreen(videoState, video, playback, back = {}, onDelete = {}, onMetadataChanged = {}, playlists = emptyList(),
+                onCreatePlaylist = {}, onAddToPlaylist = { _, _ -> })
+        } } }
+        repeat(40) { compose.mainClock.advanceTimeBy(100) }
     }
 }

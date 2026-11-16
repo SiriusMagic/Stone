@@ -1,5 +1,7 @@
 # Sin publicar (próxima versión)
 
+- Arreglo: Stone se cerraba al abrir un vídeo en vertical (desde el mini reproductor). La fila de
+  botones redondos se desplazaba dentro de otra fila desplazable; ahora solo se desplaza una.
 - Letras sincronizadas en el reproductor: el recuadro bajo los controles muestra una frase y, al
   cambiar, sube suavemente mientras la siguiente entra desde abajo (650 ms). Sigue la posición real
   del audio: al adelantar, retroceder, pausar o cambiar la velocidad se actualiza al instante.
