@@ -163,11 +163,11 @@ internal object StoneMediaActions {
             ActionParam("descending", "boolean", "true reverses the order (default false)."))) { args ->
             host().sortLibrary(args.getString("by"), args.optBoolean("descending", false)); ok("Library sorted by ${args.getString("by")}")
         },
-        StoneAction("library.browse", "List the artists, albums or folders of the library with their song counts.", ActionRisk.READ, listOf(
-            ActionParam("kind", "string", "What to list.", true, listOf("artists", "albums", "folders")),
+        StoneAction("library.browse", "List the artists, albums, folders or genres of the library with their song counts.", ActionRisk.READ, listOf(
+            ActionParam("kind", "string", "What to list.", true, listOf("artists", "albums", "folders", "genres")),
             ActionParam("limit", "integer", "Maximum entries (default 100, max 500)."))) { args ->
             val groups = host().songs.filterNot { it.isVideo }.groupBy { when (args.getString("kind")) {
-                "artists" -> it.artist; "albums" -> it.album; else -> it.folder } }.filterKeys { it.isNotBlank() }
+                "artists" -> it.artist; "albums" -> it.album; "genres" -> it.genre.trim(); else -> it.folder } }.filterKeys { it.isNotBlank() }
             JSONObject().put("total", groups.size).put("items", JSONArray(groups.entries.sortedBy { it.key.lowercase() }
                 .take(args.optInt("limit", 100).coerceIn(1, 500)).map { JSONObject().put("name", it.key).put("songs", it.value.size) }))
         },

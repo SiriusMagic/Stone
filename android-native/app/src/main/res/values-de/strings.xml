@@ -590,4 +590,30 @@
     <string name="play_mode_one">Einen Song wiederholen</string>
     <string name="play_mode_shuffle">Alles mischen</string>
     <string name="playlist_no_songs_yet">Noch keine Songs</string>
+    <string name="artwork_shape">Cover-Form</string>
+    <string name="artwork_round">Rund</string>
+    <string name="artwork_round_spin_hint">Dreht sich beim Abspielen</string>
+    <string name="artwork_round_still_hint">Dreht sich nicht</string>
+    <string name="artwork_square">Quadratisch</string>
+    <string name="artwork_fullscreen">Vollbild</string>
+    <string name="artwork_fullscreen_hint">Das Cover füllt den ganzen Player hinter den Steuerelementen</string>
+    <string name="genres">Genres</string>
+    <string name="genre_unknown">Ohne Genre</string>
+    <plurals name="genre_count"><item quantity="one">%1$d Genre</item><item quantity="other">%1$d Genres</item></plurals>
+    <string name="custom_font_style">Schriftstil</string>
+    <string name="custom_font_roman">Normal</string>
+    <string name="custom_font_italic">Kursiv</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_intro">Füge ein Widget zum Startbildschirm hinzu, um Musik ohne Öffnen von Stone zu steuern.</string>
+    <string name="widget_player_name">Musikplayer</string>
+    <string name="widget_add">Hinzufügen</string>
+    <string name="widget_manual">Dein Launcher kann es nicht von hier hinzufügen: Startbildschirm lang drücken › Widgets › Stone.</string>
+    <string name="widget_idle">Tippen, um Stone zu öffnen</string>
+    <string name="widget_description">Musik vom Startbildschirm steuern</string>
+    <string name="theme_background_and_color">Hintergrund und Farbe</string>
+    <string name="theme_add_background">Hintergrundbild laden</string>
+    <string name="theme_remove_background">Hintergrundbild entfernen</string>
+    <string name="theme_more_in_custom">Deckkraft, Fokus und freie Palette: Einstellungen › Personalisiert.</string>
+    <string name="recommendations_title">Empfehlungen für dich</string>
+    <string name="recommendations_empty">Füge mehr Musik hinzu, um Empfehlungen zu erhalten.</string>
 </resources>

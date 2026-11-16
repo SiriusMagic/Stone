@@ -253,6 +253,9 @@ class StonePlaybackService : MediaSessionService() {
             instance?.ecoEngine?.let { engine -> activePlayer?.let { engine.setGaplessRequired(gapless, it) } }
         }
 
+        /** The service's player, for the home-screen widget (null when the service is not running). */
+        fun currentPlayer(): Player? = activePlayer
+
         fun hasActivePlayback(): Boolean = activePlayer?.mediaItemCount?.let { it > 0 } == true
 
         fun hideVolumeOverlay(forRevision: Long) {
@@ -378,6 +381,7 @@ class StonePlaybackService : MediaSessionService() {
         player.setHandleAudioBecomingNoisy(true)
         player.setWakeMode(C.WAKE_MODE_LOCAL)
         activePlayer = player
+        player.addListener(StoneWidgetProvider.listener(applicationContext))
         AudioDiagnostics.log(this, "service.player-created", before,
             diagnosticState(player), includeSystemEffects = true)
         // Android is the source of truth at service start. Never restore a saved Stone volume.
@@ -429,6 +433,7 @@ class StonePlaybackService : MediaSessionService() {
         session?.run { player.release(); release() }
         session = null
         activePlayer = null
+        StoneWidgetProvider.refresh(applicationContext)
         volumeBoost?.release()
         volumeBoost = null
         ecoEngine = null

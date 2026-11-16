@@ -42,8 +42,11 @@ class DeviceMediaScanner(private val context: Context) {
             " AND ${MediaStore.Audio.Media.IS_RINGTONE} = 0 AND ${MediaStore.Audio.Media.IS_ALARM} = 0" +
             " AND ${MediaStore.Audio.Media.IS_NOTIFICATION} = 0"
         return query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, selection, video = false,
-            arrayOf(MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM))
+            arrayOf(MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM) + genreColumn())
     }
+
+    /** MediaStore has a genre column for audio since Android 11. */
+    private fun genreColumn(): Array<String> = if (Build.VERSION.SDK_INT >= 30) arrayOf(MediaStore.Audio.Media.GENRE) else emptyArray()
 
     private fun video(): List<Song> =
         query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "${MediaStore.Video.Media.DURATION} > 0", video = true,
@@ -62,7 +65,8 @@ class DeviceMediaScanner(private val context: Context) {
                     val name = text(2).substringBeforeLast('.')
                     val folder = text(6).let { if (folderColumn() == FOLDER_LEGACY) it.substringBeforeLast('/').substringAfterLast('/') else it }
                     songs += Song(uri.toString(), text(1).ifBlank { name }, text(7), text(8),
-                        folder, cursor.getLong(3), cursor.getLong(4), cursor.getLong(5) * 1000L, isVideo = video)
+                        folder, cursor.getLong(3), cursor.getLong(4), cursor.getLong(5) * 1000L, isVideo = video,
+                        genre = if (cursor.columnCount > 9) text(9) else "")
                 }
             }
         }

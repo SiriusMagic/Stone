@@ -590,4 +590,30 @@
     <string name="play_mode_one">Répéter une chanson</string>
     <string name="play_mode_shuffle">Tout mélanger</string>
     <string name="playlist_no_songs_yet">Pas encore de chansons</string>
+    <string name="artwork_shape">Forme de la pochette</string>
+    <string name="artwork_round">Ronde</string>
+    <string name="artwork_round_spin_hint">Tourne pendant la lecture</string>
+    <string name="artwork_round_still_hint">Ne tourne pas</string>
+    <string name="artwork_square">Carrée</string>
+    <string name="artwork_fullscreen">Plein écran</string>
+    <string name="artwork_fullscreen_hint">La pochette remplit tout le lecteur, derrière les commandes</string>
+    <string name="genres">Genres</string>
+    <string name="genre_unknown">Sans genre</string>
+    <plurals name="genre_count"><item quantity="one">%1$d genre</item><item quantity="many">%1$d genres</item><item quantity="other">%1$d genres</item></plurals>
+    <string name="custom_font_style">Style de police</string>
+    <string name="custom_font_roman">Romain</string>
+    <string name="custom_font_italic">Italique</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_intro">Ajoute un widget à l\'écran d\'accueil pour contrôler la musique sans ouvrir Stone.</string>
+    <string name="widget_player_name">Lecteur de musique</string>
+    <string name="widget_add">Ajouter</string>
+    <string name="widget_manual">Ton lanceur ne peut pas l\'ajouter d\'ici : appui long sur l\'écran d\'accueil › Widgets › Stone.</string>
+    <string name="widget_idle">Touche pour ouvrir Stone</string>
+    <string name="widget_description">Contrôle la musique depuis l\'écran d\'accueil</string>
+    <string name="theme_background_and_color">Fond et couleur</string>
+    <string name="theme_add_background">Charger une image de fond</string>
+    <string name="theme_remove_background">Retirer l\'image de fond</string>
+    <string name="theme_more_in_custom">Opacité, mode Focus et palette libre : Réglages › Personnalisé.</string>
+    <string name="recommendations_title">Recommandé pour toi</string>
+    <string name="recommendations_empty">Ajoute plus de musique pour avoir des recommandations.</string>
 </resources>

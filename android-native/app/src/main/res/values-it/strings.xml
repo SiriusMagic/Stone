@@ -590,4 +590,30 @@
     <string name="play_mode_one">Ripeti un brano</string>
     <string name="play_mode_shuffle">Mescola tutto</string>
     <string name="playlist_no_songs_yet">Ancora nessun brano</string>
+    <string name="artwork_shape">Forma della copertina</string>
+    <string name="artwork_round">Rotonda</string>
+    <string name="artwork_round_spin_hint">Ruota durante la riproduzione</string>
+    <string name="artwork_round_still_hint">Non ruota</string>
+    <string name="artwork_square">Quadrata</string>
+    <string name="artwork_fullscreen">Schermo intero</string>
+    <string name="artwork_fullscreen_hint">La copertina riempie tutto il lettore, dietro i comandi</string>
+    <string name="genres">Generi</string>
+    <string name="genre_unknown">Senza genere</string>
+    <plurals name="genre_count"><item quantity="one">%1$d genere</item><item quantity="many">%1$d generi</item><item quantity="other">%1$d generi</item></plurals>
+    <string name="custom_font_style">Stile del carattere</string>
+    <string name="custom_font_roman">Tondo</string>
+    <string name="custom_font_italic">Corsivo</string>
+    <string name="widgets_title">Widget</string>
+    <string name="widget_intro">Aggiungi un widget alla schermata Home per controllare la musica senza aprire Stone.</string>
+    <string name="widget_player_name">Lettore musicale</string>
+    <string name="widget_add">Aggiungi</string>
+    <string name="widget_manual">Il launcher non può aggiungerlo da qui: tieni premuta la Home › Widget › Stone.</string>
+    <string name="widget_idle">Tocca per aprire Stone</string>
+    <string name="widget_description">Controlla la musica dalla schermata Home</string>
+    <string name="theme_background_and_color">Sfondo e colore</string>
+    <string name="theme_add_background">Carica immagine di sfondo</string>
+    <string name="theme_remove_background">Rimuovi immagine di sfondo</string>
+    <string name="theme_more_in_custom">Opacità, modalità Focus e tavolozza: Impostazioni › Personalizzato.</string>
+    <string name="recommendations_title">Consigliati per te</string>
+    <string name="recommendations_empty">Aggiungi altra musica per ricevere consigli.</string>
 </resources>

@@ -25,6 +25,8 @@ internal object StoneLookActions {
                 .put("textColor", StoneLook.textInk.key).put("iconColor", StoneLook.iconInk.key).put("colors", JSONArray(inks))
                 .put("fontScale", StoneLook.fontScale.toDouble()).put("iconScale", StoneLook.iconScale.toDouble())
                 .put("appTitle", StoneLook.appTitle).put("songLayout", StoneLook.songLayout).put("songLayouts", JSONArray(layouts))
+                .put("fontStyle", StoneLook.fontStyle).put("fontStyles", JSONArray(StoneLook.FONT_STYLES))
+                .put("artworkShape", StoneLook.artworkShape).put("artworkShapes", JSONArray(StoneLook.ARTWORK_SHAPES))
                 .put("launcherIcon", LauncherIcon.current.key).put("launcherIcons", JSONArray(LauncherIcon.entries.map { it.key }))
                 .put("language", host().language).put("languages", JSONArray(SUPPORTED_LANGUAGES))
         },
@@ -49,6 +51,15 @@ internal object StoneLookActions {
                 ActionParam("songLayout", "string", "Songs list layout.", options = layouts),
                 ActionParam("launcherIcon", "string", "Home-screen icon colour.", options = LauncherIcon.entries.map { it.key }))) { args ->
             applyLook(args); StoneLook.persist(); ok("Look updated")
+        },
+        StoneAction("appearance.set_font_style", "Letter style of the whole app: roman (upright, default) or italic (cursiva).",
+            ActionRisk.REVERSIBLE, listOf(ActionParam("style", "string", "Font style.", true, StoneLook.FONT_STYLES))) { args ->
+            StoneLook.fontStyle = args.getString("style"); StoneLook.persist(); ok("Font style: ${args.getString("style")}")
+        },
+        StoneAction("appearance.set_artwork_shape", "How the cover looks in the player: round_spin (round, turns while " +
+            "playing), square, round (round, still) or fullscreen (the cover fills the whole player screen).",
+            ActionRisk.REVERSIBLE, listOf(ActionParam("shape", "string", "Artwork shape.", true, StoneLook.ARTWORK_SHAPES))) { args ->
+            StoneLook.artworkShape = args.getString("shape"); StoneLook.persist(); ok("Artwork shape: ${args.getString("shape")}")
         },
         StoneAction("appearance.reset_look", "Reset every Personalizado value to Stone's defaults (theme and home icon are kept).",
             ActionRisk.REVERSIBLE) { StoneLook.resetDefaults(); ok("Look reset") },

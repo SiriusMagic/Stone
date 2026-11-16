@@ -553,4 +553,30 @@
     <string name="play_mode_one">Repetir una canción</string>
     <string name="play_mode_shuffle">Mezclar todo</string>
     <string name="playlist_no_songs_yet">Sin canciones aún</string>
+    <string name="artwork_shape">Forma de portada</string>
+    <string name="artwork_round">Forma redonda</string>
+    <string name="artwork_round_spin_hint">Gira mientras suena</string>
+    <string name="artwork_round_still_hint">Sin girar</string>
+    <string name="artwork_square">Forma cuadrada</string>
+    <string name="artwork_fullscreen">Pantalla completa</string>
+    <string name="artwork_fullscreen_hint">La portada ocupa todo el reproductor, detrás de los controles</string>
+    <string name="genres">Géneros</string>
+    <string name="genre_unknown">Sin género</string>
+    <plurals name="genre_count"><item quantity="one">%1$d género</item><item quantity="many">%1$d géneros</item><item quantity="other">%1$d géneros</item></plurals>
+    <string name="custom_font_style">Tipo de letra</string>
+    <string name="custom_font_roman">Romana</string>
+    <string name="custom_font_italic">Cursiva</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_intro">Añade un widget a tu pantalla principal para controlar la música sin abrir Stone.</string>
+    <string name="widget_player_name">Reproductor de música</string>
+    <string name="widget_add">Agregar</string>
+    <string name="widget_manual">Tu pantalla de inicio no permite añadirlo desde aquí: mantén pulsado el escritorio › Widgets › Stone.</string>
+    <string name="widget_idle">Toca para abrir Stone</string>
+    <string name="widget_description">Controla la música desde la pantalla de inicio</string>
+    <string name="theme_background_and_color">Fondo y color</string>
+    <string name="theme_add_background">Cargar imagen de fondo</string>
+    <string name="theme_remove_background">Quitar imagen de fondo</string>
+    <string name="theme_more_in_custom">Opacidad, modo Foco y paleta libre: Ajustes › Personalizado.</string>
+    <string name="recommendations_title">Recomendaciones para ti</string>
+    <string name="recommendations_empty">Añade más música para recibir recomendaciones.</string>
 </resources>

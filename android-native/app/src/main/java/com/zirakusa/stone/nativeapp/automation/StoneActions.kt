@@ -10,7 +10,7 @@ internal object StoneActions {
     private fun ok(message: String) = JSONObject().put("ok", true).put("message", message)
 
     private fun Song.json() = JSONObject().put("id", id).put("title", title).put("artist", artist)
-        .put("album", album).put("folder", folder).put("durationMs", durationMs).put("isVideo", isVideo)
+        .put("album", album).put("genre", genre).put("folder", folder).put("durationMs", durationMs).put("isVideo", isVideo)
 
     private fun song(id: String): Song = host().songs.firstOrNull { it.id == id }
         ?: throw ActionException("No song with id '$id'. Use library_search to get valid ids.")

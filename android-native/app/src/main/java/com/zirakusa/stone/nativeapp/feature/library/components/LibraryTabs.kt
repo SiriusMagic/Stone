@@ -24,7 +24,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 enum class LibraryTab(val label: Int) {
     Videos(R.string.videos), Songs(R.string.songs),
-    Playlists(R.string.playlists), Folders(R.string.folders), Artists(R.string.artists), Albums(R.string.albums);
+    Playlists(R.string.playlists), Folders(R.string.folders), Artists(R.string.artists), Albums(R.string.albums), Genres(R.string.genres);
 
     val isVideo: Boolean get() = this == Videos
 

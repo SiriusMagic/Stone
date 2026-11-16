@@ -489,4 +489,30 @@
     <string name="play_mode_one">Repeat one song</string>
     <string name="play_mode_shuffle">Shuffle all</string>
     <string name="playlist_no_songs_yet">No songs yet</string>
+    <string name="artwork_shape">Cover shape</string>
+    <string name="artwork_round">Round</string>
+    <string name="artwork_round_spin_hint">Turns while playing</string>
+    <string name="artwork_round_still_hint">Does not turn</string>
+    <string name="artwork_square">Square</string>
+    <string name="artwork_fullscreen">Full screen</string>
+    <string name="artwork_fullscreen_hint">The cover fills the whole player, behind the controls</string>
+    <string name="genres">Genres</string>
+    <string name="genre_unknown">No genre</string>
+    <plurals name="genre_count"><item quantity="one">%1$d genre</item><item quantity="other">%1$d genres</item></plurals>
+    <string name="custom_font_style">Letter style</string>
+    <string name="custom_font_roman">Roman</string>
+    <string name="custom_font_italic">Italic</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_intro">Add a widget to your home screen to control music without opening Stone.</string>
+    <string name="widget_player_name">Music player</string>
+    <string name="widget_add">Add</string>
+    <string name="widget_manual">Your launcher cannot add it from here: long-press the home screen › Widgets › Stone.</string>
+    <string name="widget_idle">Tap to open Stone</string>
+    <string name="widget_description">Control music from the home screen</string>
+    <string name="theme_background_and_color">Background and colour</string>
+    <string name="theme_add_background">Load background image</string>
+    <string name="theme_remove_background">Remove background image</string>
+    <string name="theme_more_in_custom">Opacity, Focus mode and free palette: Settings › Custom.</string>
+    <string name="recommendations_title">Recommended for you</string>
+    <string name="recommendations_empty">Add more music to get recommendations.</string>
 </resources>

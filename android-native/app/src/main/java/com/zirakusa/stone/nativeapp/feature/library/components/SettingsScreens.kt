@@ -133,6 +133,8 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Palette, stringResource(R.string.custom_title), "",
                             "personalizado color acento letras iconos tamaño fondo imagen nombre icono app audio nivel",
                             { onPage("custom") }),
+                        SettingsMenuItem(Icons.Default.Widgets, stringResource(R.string.widgets_title), "",
+                            "personalización widget pantalla principal escritorio inicio reproductor", { onPage("widgets") }),
                         SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
                             "personalización tema apariencia colores", { onPage("theme") }),
                         SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
@@ -173,13 +175,15 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     Text(pageTitle(page), fontSize = 24.sp, fontWeight = FontWeight.Black)
                 }
                 when (page) {
-                    "theme" -> listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
+                    "theme" -> { listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
                         "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled,
                         "coffee" to R.string.theme_coffee, "golden" to R.string.theme_golden,
                         "ocean" to R.string.theme_ocean, "forest" to R.string.theme_forest,
                         "wine" to R.string.theme_wine, "violet" to R.string.theme_violet,
                         "slate" to R.string.theme_slate).forEach { (value, label) ->
                         SettingsChoice(label, theme == value) { onTheme(value) }
+                    }
+                        ThemeExtras(store)
                     }
                     "language" -> languages.forEach { item ->
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
@@ -189,6 +193,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "custom" -> LookSettings(store)
                     "audio-levels" -> AudioLevelSettings(store, playback)
                     "api-mode" -> ApiModeSettings()
+                    "widgets" -> WidgetSettings()
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "playback" -> {
                         PlaybackDetail(store, playback, { onPage("audio-mode") },
@@ -238,6 +243,7 @@ private val legalPages = setOf("privacy", "terms", "licenses")
     "custom" -> R.string.custom_title
     "audio-levels" -> R.string.audio_levels_title
     "api-mode" -> R.string.api_title
+    "widgets" -> R.string.widgets_title
     "playback" -> R.string.settings_playback; "audio-mode" -> R.string.audio_mode
     "video", "video-controls" -> R.string.video_settings
     "hardware-acceleration" -> R.string.hardware_acceleration

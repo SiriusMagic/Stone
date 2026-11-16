@@ -14,10 +14,12 @@ data class Song(
     val isVideo: Boolean = false,
     /** Optional artwork extracted from a Stone package. Normal files use embedded artwork. */
     val artworkUri: String = "",
+    /** Genre tag ("Electrónica", "Rock"…); empty when the file has none. */
+    val genre: String = "",
 ) {
     val id: String get() = "local:$uri"
     val artworkSource: String get() = artworkUri.ifBlank { uri }
-    fun matches(query: String) = listOf(title, artist, album, folder).any {
+    fun matches(query: String) = listOf(title, artist, album, folder, genre).any {
         it.contains(query.trim(), ignoreCase = true)
     }
     fun canReuse(newSize: Long, newModifiedMs: Long) =

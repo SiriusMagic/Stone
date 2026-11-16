@@ -91,6 +91,7 @@ import kotlinx.coroutines.delay
         onVideoScale = { videoScale = VideoScale.fromKey(it); settingsStore.setVideoScale(videoScale.key) })
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
     var playerOpen by rememberSaveable { mutableStateOf(false) }
+    var recommendationsOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
@@ -324,6 +325,17 @@ import kotlinx.coroutines.delay
             val miniContainerModifier = Modifier.fillMaxSize().then(
                 if (immersiveRequest) Modifier else Modifier.navigationBarsPadding()
             )
+            if (recommendationsOpen) {
+                val tint = com.zirakusa.stone.nativeapp.feature.player.rememberSongTint(currentSong)
+                val picks = remember(currentSong?.id, state.songs.size, player.queue.size) {
+                    com.zirakusa.stone.nativeapp.feature.player.recommendations(state.songs, currentSong,
+                        player.queue.mapTo(HashSet()) { it.id }, state.playCounts, state.favoriteIds)
+                }
+                com.zirakusa.stone.nativeapp.feature.player.RecommendationsSheet(picks, tint,
+                    onPlay = { song -> playback.play(song, picks); recommendationsOpen = false },
+                    onPlayNext = { song -> playback.playNext(listOf(song)) },
+                    onClose = { recommendationsOpen = false })
+            }
             Box(miniContainerModifier) {
                 MiniPlayer(
                     state = player,
@@ -333,6 +345,9 @@ import kotlinx.coroutines.delay
                     previous = playback::previous,
                     next = playback::next,
                     onPlayMode = { cyclePlayMode(context, player, playback) },
+                    onSwipeUp = { recommendationsOpen = true },
+                    progress = { playback.progress().let { (position, duration) ->
+                        if (duration > 0) position.toFloat() / duration else 0f } },
                     modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged {
                         miniPlayerHeightPx = it.height
                     }

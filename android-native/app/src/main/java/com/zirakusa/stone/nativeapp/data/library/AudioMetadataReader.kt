@@ -21,6 +21,7 @@ class AudioMetadataReader(private val context: Context) {
                 title = text(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: fallback.title,
                 artist = text(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: fallback.artist,
                 album = text(MediaMetadataRetriever.METADATA_KEY_ALBUM) ?: fallback.album,
+                genre = text(MediaMetadataRetriever.METADATA_KEY_GENRE).orEmpty(),
                 durationMs = text(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0,
                 lyrics = lyrics.plain,
                 syncedLyrics = lyrics.synced,

@@ -64,8 +64,13 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
     LookSection(R.string.custom_font_size)
     ScaleSlider(StoneLook.fontScale, .8f..1.4f) { StoneLook.fontScale = it; persist() }
+    LookSection(R.string.custom_font_style)
+    LookFontStyle(::persist)
     LookSection(R.string.custom_icon_size)
     ScaleSlider(StoneLook.iconScale, .8f..1.5f) { StoneLook.iconScale = it; persist() }
+
+    LookSection(R.string.artwork_shape)
+    LookArtworkShape(::persist)
 
     LookSection(R.string.custom_background)
     ImageChoice(StoneLook.backgroundImage != null, { backgroundPicker.launch("image/*") }) {

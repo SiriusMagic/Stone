@@ -1,3 +1,17 @@
+# Sin publicar (próxima 1.7.2, APK aún no generado)
+
+- Forma de portada (Ajustes › Personalizado y MCP `appearance_set_artwork_shape`): redonda que gira
+  mientras suena, cuadrada, redonda sin girar o pantalla completa. El mini reproductor también la
+  usa y su botón de pausa tiene un anillo que se llena con el avance de la canción.
+- Tipo de letra: Romana (por defecto) o Cursiva para toda la app (MCP `appearance_set_font_style`).
+- Pestaña Géneros con tarjetas de color; el género se lee de MediaStore (Android 11+) y de las
+  etiquetas de las carpetas, entra en la búsqueda y en `library_browse` (`kind: genres`).
+- Widget de pantalla de inicio (4×2) con portada, título, anterior / reproducir / siguiente / me
+  gusta; Ajustes › Widgets lo añade con un toque.
+- Tema: cargar imagen de fondo y elegir el color de acento desde la propia página.
+- Deslizar hacia arriba el mini reproductor abre "Recomendaciones para ti" (mismo artista, género
+  o álbum, favoritas y más escuchadas).
+
 # Stone Kotlin 1.7.1
 
 - Navegador de letras en su propia ventana a pantalla completa (dentro de la hoja se veía en

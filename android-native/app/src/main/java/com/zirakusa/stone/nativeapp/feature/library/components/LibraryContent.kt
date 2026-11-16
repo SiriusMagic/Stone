@@ -55,13 +55,15 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
             onSetPlaylistCover, onRestorePlaylistCover)
         return
     }
+    val noGenre = stringResource(R.string.genre_unknown)
     val groupKey: (Song) -> String = when (tab) {
         LibraryTab.Folders -> { song -> song.folder }
         LibraryTab.Artists -> { song -> song.artist }
         LibraryTab.Albums -> { song -> song.album }
+        LibraryTab.Genres -> { song -> song.genre.trim().ifBlank { noGenre } }
         else -> { _ -> "" }
     }
-    val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums)
+    val grouped = tab in listOf(LibraryTab.Folders, LibraryTab.Artists, LibraryTab.Albums, LibraryTab.Genres)
     val mediaSongs = songs.filter(tab::accepts)
     if (tab.isVideo) {
         VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder,
@@ -126,7 +128,19 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 if (searching) Text(stringResource(R.string.no_results), Modifier.padding(vertical = 32.dp), color = StonePalette.Muted)
                 else LibraryEmptyState(videos = tab.isVideo)
             }
-            if (grouped && collection == null && !managing) {
+            if (tab == LibraryTab.Genres && collection == null && !managing) {
+                val genres = mediaSongs.groupBy(groupKey).toList().sortedBy { (name, _) -> if (name == noGenre) "\uFFFF" else name.lowercase() }
+                item {
+                    Text(pluralStringResource(R.plurals.genre_count, genres.size, genres.size),
+                        Modifier.padding(horizontal = 4.dp, vertical = 6.dp), color = StonePalette.SongSubtitle, fontSize = 15.sp)
+                }
+                items(genres.chunked(2), key = { it.first().first }) { pair ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        pair.forEach { (name, tracks) -> GenreCard(name, tracks, Modifier.weight(1f)) { select(name) } }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            } else if (grouped && collection == null && !managing) {
                 items(mediaSongs.groupBy(groupKey).toList(), key = { it.first }) { (name, tracks) ->
                     if (tab == LibraryTab.Albums) {
                         AlbumCard(name, tracks) { select(name) }

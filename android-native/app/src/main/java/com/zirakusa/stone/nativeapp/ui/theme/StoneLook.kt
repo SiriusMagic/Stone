@@ -58,6 +58,10 @@ object StoneLook {
     var backgroundOpacity by mutableFloatStateOf(DEFAULT_OPACITY)
     /** "wallpaper": the whole image evenly; "focus": clear in the centre, darker towards the edges. */
     var backgroundMode by mutableStateOf("wallpaper")
+    /** Player artwork: "square", "round_spin" (turns while playing), "round" or "fullscreen". */
+    var artworkShape by mutableStateOf("square")
+    /** Letter style of the whole app: "roman" (upright, the default) or "italic" (cursiva). */
+    var fontStyle by mutableStateOf("roman")
     /** App-private copy of the image that replaces the penguin, or null. */
     var avatarImage by mutableStateOf<String?>(null)
     /** Name shown inside Stone (the launcher label itself can't be changed by an app). */
@@ -86,6 +90,8 @@ object StoneLook {
         iconScale = store.look("iconScale", "1").toFloatOrNull()?.coerceIn(.8f, 1.5f) ?: 1f
         backgroundImage = store.look("backgroundImage", "").ifBlank { null }
         backgroundOpacity = store.look("backgroundOpacity", "").toFloatOrNull()?.coerceIn(.1f, .9f) ?: DEFAULT_OPACITY
+        fontStyle = store.look("fontStyle", "roman").takeIf { it in FONT_STYLES } ?: "roman"
+        artworkShape = store.look("artworkShape", "square").takeIf { it in ARTWORK_SHAPES } ?: "square"
         backgroundMode = store.look("backgroundMode", "wallpaper").takeIf { it in setOf("wallpaper", "focus") } ?: "wallpaper"
         avatarImage = store.look("avatarImage", "").ifBlank { null }
         appTitle = store.look("appTitle", "")
@@ -101,6 +107,8 @@ object StoneLook {
         store.setLook("backgroundImage", backgroundImage.orEmpty())
         store.setLook("backgroundOpacity", backgroundOpacity.toString())
         store.setLook("backgroundMode", backgroundMode)
+        store.setLook("artworkShape", artworkShape)
+        store.setLook("fontStyle", fontStyle)
         store.setLook("avatarImage", avatarImage.orEmpty())
         store.setLook("appTitle", appTitle)
     }
@@ -111,11 +119,13 @@ object StoneLook {
     fun resetDefaults() {
         accent = StoneAccent.GOLD; customAccent = Color(0xFFF5C518); textInk = StoneInk.WHITE; iconInk = StoneInk.WHITE
         fontScale = 1f; iconScale = 1f; backgroundImage = null; avatarImage = null; appTitle = ""
-        backgroundOpacity = DEFAULT_OPACITY; backgroundMode = "wallpaper"
+        backgroundOpacity = DEFAULT_OPACITY; backgroundMode = "wallpaper"; artworkShape = "square"; fontStyle = "roman"
         persist()
     }
 
     const val DEFAULT_OPACITY = .38f
+    val FONT_STYLES = listOf("roman", "italic")
+    val ARTWORK_SHAPES = listOf("round_spin", "square", "round", "fullscreen")
 
     /** "#RRGGBB" for a colour (alpha is always opaque). */
     fun hex(color: Color): String = "#%06X".format(color.toArgb() and 0xFFFFFF)

@@ -69,6 +69,7 @@ import com.zirakusa.stone.nativeapp.data.library.SongActions
 import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
+import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.components.SleepTimerIndicator
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
@@ -140,7 +141,10 @@ import kotlin.math.roundToInt
         }, videoScale = videoScale,
         onVideoScaleChange = onVideoScaleChange, videoControls = videoControls,
         onSpeed = { sheets.tool = PlayerTool.Speed })
-    else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
+    else {
+    val artworkShape = StoneLook.artworkShape
+    if (song != null && artworkShape == "fullscreen") FullscreenArtwork(song, animatedBackground)
+    Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)
             .windowInsetsPadding(WindowInsets.displayCutout)) {
@@ -165,8 +169,10 @@ import kotlin.math.roundToInt
             }, update = { it.player = playback.player(); it.resizeMode = videoScale.resolve(0, 0, false).resizeMode }, modifier = Modifier.fillMaxSize()
                 .clip(RoundedCornerShape(20.dp)))
         }
-        else if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs,
-            Modifier.weight(1f).aspectRatio(1f).fillMaxWidth().clip(RoundedCornerShape(28.dp))
+        else if (song != null && artworkShape == "fullscreen") Box(Modifier.weight(1f).fillMaxWidth()
+            .pointerInput(song.id) { detectTapGestures { audioControls.show() } })
+        else if (song != null) PlayerArtwork(song, artworkShape, state.playing,
+            Modifier.weight(1f).aspectRatio(1f).fillMaxWidth()
                 .pointerInput(song.id) { detectTapGestures { audioControls.show() } })
         else Box(Modifier.weight(1f).aspectRatio(1f).fillMaxWidth()
             .pointerInput(Unit) { detectTapGestures { audioControls.show() } })
@@ -215,6 +221,7 @@ import kotlin.math.roundToInt
                 }
             }
         }
+    }
     }
     }
     val playerOptionExtras = if (song?.isVideo == true) listOf(
