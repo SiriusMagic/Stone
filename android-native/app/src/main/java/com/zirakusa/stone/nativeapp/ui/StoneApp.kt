@@ -223,7 +223,7 @@ import kotlinx.coroutines.delay
                 onArtist = {
                     artistDestination = player.artist
                     playerOpen = false
-                }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
+                }, onRecommendations = { recommendationsOpen = true }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
@@ -321,21 +321,21 @@ import kotlinx.coroutines.delay
                 })
             }
         }
+        if (recommendationsOpen) {
+            val tint = com.zirakusa.stone.nativeapp.feature.player.rememberSongTint(currentSong)
+            val picks = remember(currentSong?.id, state.songs.size, player.queue.size) {
+                com.zirakusa.stone.nativeapp.feature.player.recommendations(state.songs, currentSong,
+                    player.queue.mapTo(HashSet()) { it.id }, state.playCounts, state.favoriteIds)
+            }
+            com.zirakusa.stone.nativeapp.feature.player.RecommendationsSheet(picks, tint,
+                onPlay = { song -> playback.play(song, picks); recommendationsOpen = false },
+                onPlayNext = { song -> playback.playNext(listOf(song)) },
+                onClose = { recommendationsOpen = false })
+        }
         if (layout.showMiniPlayer) {
             val miniContainerModifier = Modifier.fillMaxSize().then(
                 if (immersiveRequest) Modifier else Modifier.navigationBarsPadding()
             )
-            if (recommendationsOpen) {
-                val tint = com.zirakusa.stone.nativeapp.feature.player.rememberSongTint(currentSong)
-                val picks = remember(currentSong?.id, state.songs.size, player.queue.size) {
-                    com.zirakusa.stone.nativeapp.feature.player.recommendations(state.songs, currentSong,
-                        player.queue.mapTo(HashSet()) { it.id }, state.playCounts, state.favoriteIds)
-                }
-                com.zirakusa.stone.nativeapp.feature.player.RecommendationsSheet(picks, tint,
-                    onPlay = { song -> playback.play(song, picks); recommendationsOpen = false },
-                    onPlayNext = { song -> playback.playNext(listOf(song)) },
-                    onClose = { recommendationsOpen = false })
-            }
             Box(miniContainerModifier) {
                 MiniPlayer(
                     state = player,

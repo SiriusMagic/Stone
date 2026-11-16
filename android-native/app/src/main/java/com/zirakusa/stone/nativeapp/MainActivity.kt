@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.zirakusa.stone.nativeapp.data.persistence.CrashLog.install(this)
         super.onCreate(savedInstanceState)
         // ImmersiveSystemBarsController is the single owner of edge-to-edge and
         // system-bar visibility for the Activity and its Compose windows.

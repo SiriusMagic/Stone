@@ -10,9 +10,9 @@ android {
         // Preview can coexist with Stone 1.3.2; never overwrite its user data.
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
-        targetSdk = 36
-        versionCode = 37
-        versionName = "1.7.3"
+        targetSdk = 35
+        versionCode = 38
+        versionName = "1.7.4"
         // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
         // Set it with -PstoneRelayUrl=https://… or stoneRelayUrl in gradle.properties.
         val relayUrl = (project.findProperty("stoneRelayUrl") as String?).orEmpty().trimEnd('/')
@@ -66,9 +66,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
-    implementation("androidx.media3:media3-exoplayer:1.11.1")
-    implementation("androidx.media3:media3-session:1.11.1")
-    implementation("androidx.media3:media3-ui:1.11.1")
+    implementation("androidx.media3:media3-exoplayer:1.6.1")
+    implementation("androidx.media3:media3-session:1.6.1")
+    implementation("androidx.media3:media3-ui:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // WebSocket to the Stone relay (fixed public link for the MCP server).
     implementation("com.squareup.okhttp3:okhttp:5.3.2")

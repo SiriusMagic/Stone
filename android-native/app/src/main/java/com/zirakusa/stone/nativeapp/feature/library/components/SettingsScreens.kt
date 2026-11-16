@@ -53,9 +53,13 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     onShakeToReportChange: (Boolean) -> Unit = {},
     onShortcutChange: (String, Boolean) -> Unit = { _, _ -> }) {
     var settingsQuery by rememberSaveable { mutableStateOf("") }
-    BackHandler(enabled = page != null, onBack = { onPage(if (page in legalPages) "about" else null) })
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    // In a sub-page the back gesture returns to the settings menu; on the menu it closes the sheet.
+    ModalBottomSheet(onDismissRequest = { if (page != null) onPage(if (page in legalPages) "about" else null) else onClose() },
+        containerColor = StonePalette.Surface,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true,
+            confirmValueChange = { it != SheetValue.Hidden || page == null }),
+        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = page == null)) {
+        BackHandler(enabled = page != null, onBack = { onPage(if (page in legalPages) "about" else null) })
         ImmersiveWindowEffect()
         Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
             if (page == null) {

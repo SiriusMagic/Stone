@@ -1,3 +1,16 @@
+# Stone Kotlin 1.7.4
+
+- Arreglo: la 1.7.3 se cerraba al reproducir música. Se vuelve al motor de reproducción probado
+  (Media3 1.6.1) y al SDK objetivo 35; el resto de actualizaciones se mantiene.
+- Si Stone vuelve a cerrarse, el error queda guardado en Ajustes › Sistema › Diagnóstico para copiarlo
+  o compartirlo.
+- El icono de luna del volumen sale solo en Dormilón (antes aparecía en cualquier modo con ganancia baja).
+- Dormilón: volumen máximo 10 % y ganancia suave (80 %). Cine al tope (300 %, ganancia 100 %) y Ahorro de
+  batería al 100 % sin cambios. Los iconos de cada modo son los mismos en toda la app.
+- Ajustes: el gesto de volver (deslizar desde el borde) regresa al menú de Ajustes en vez de cerrarlo.
+- Reproductor: deslizar hacia arriba desde la zona de Letras abre las letras; desde el centro, las
+  recomendaciones.
+
 # Stone Kotlin 1.7.3
 
 - Dependencias al día: Android Gradle Plugin 8.13.2, Kotlin 2.4.21, SDK 36, Compose BOM 2026.06.01,

@@ -613,4 +613,7 @@
     <string name="api_token_validity">Validez</string>
     <string name="api_token_forever">Siempre</string>
     <string name="api_token_days">%1$d d</string>
+    <string name="crash_last_title">Último cierre inesperado</string>
+    <string name="crash_last_hint">Cópialo o compártelo para que podamos arreglarlo. Solo está guardado en este teléfono.</string>
+    <string name="crash_copy">Copiar</string>
 </resources>

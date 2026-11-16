@@ -52,7 +52,8 @@ import kotlin.math.abs
     back: () -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
-    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
+    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, onRecommendations: () -> Unit = {},
+    isPictureInPicture: Boolean = false,
     onAudioOnly: (Song) -> Unit = {},
     sheets: PlayerSheetsState = rememberPlayerSheetsState(),
     videoScale: VideoScale = VideoScale.AUTO,
@@ -86,7 +87,8 @@ import kotlin.math.abs
     val progress = rememberPlayerProgress(state, playback)
     val audioControls = rememberPlaybackControls(song?.id.orEmpty())
     val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
-        detectTrackSwipe(playback::previous, playback::next) { sheets.lyricsVisible = true }
+        detectTrackSwipe(playback::previous, playback::next, onUpFromBottom = { sheets.lyricsVisible = true },
+            onUpFromMiddle = onRecommendations)
     } else Modifier
     BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
     // Decide by the window, not this box: while the player animates closed the box becomes
@@ -210,7 +212,12 @@ import kotlin.math.abs
 
 
 /** Horizontal swipe changes tracks; a deliberate swipe up opens the lyrics ([onUp]). */
-private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit, onUp: () -> Unit = {}) {
+/**
+ * Horizontal swipe changes tracks. A swipe up depends on where it starts: from the bottom area
+ * (the Letras bar) it opens the lyrics, from the middle it opens the recommendations.
+ */
+private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit,
+    onUpFromBottom: () -> Unit = {}, onUpFromMiddle: () -> Unit = {}) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
@@ -226,7 +233,11 @@ private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, o
             if (distance > viewConfiguration.touchSlop) {
                 if (abs(totalY) > abs(totalX)) {
                     if (totalY > 0f) break
-                    if (-totalY >= maxOf(viewConfiguration.touchSlop * 3f, density * 72f)) { change.consume(); onUp(); break }
+                    if (-totalY >= maxOf(viewConfiguration.touchSlop * 3f, density * 72f)) {
+                        change.consume()
+                        if (down.position.y > size.height * .78f) onUpFromBottom() else onUpFromMiddle()
+                        break
+                    }
                     continue
                 }
                 if (abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {

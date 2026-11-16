@@ -40,6 +40,9 @@ class StonePlaybackService : MediaSessionService() {
         /** Software gain of the current mode (Dormilón attenuates; others are 1). */
         @Volatile private var modeGain: Float = 1f
         val currentModeGain: Float get() = modeGain
+        /** Mode in use, so the volume overlay shows the moon only for Dormilón. */
+        @Volatile var currentMode: AudioMode = AudioMode.BALANCED
+            private set
         @Volatile private var lastAppliedNativeLevel: Int = -1
         @Volatile private var revision: Long = 0
         @Volatile private var diagnosticBoostDisabled = false
@@ -309,6 +312,7 @@ class StonePlaybackService : MediaSessionService() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        com.zirakusa.stone.nativeapp.data.persistence.CrashLog.install(this)
         instance = this
         reportedAudioSessionId = 0
         AudioDiagnostics.reset()
@@ -448,6 +452,7 @@ class StonePlaybackService : MediaSessionService() {
     fun applyAudioMode(mode: AudioMode) {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = false)
         modeGain = mode.gain
+        currentMode = mode
         applyPlayerVolume()
         setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }

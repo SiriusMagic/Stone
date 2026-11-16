@@ -9,10 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,9 +36,9 @@ private class ModeCard(val mode: AudioMode, val label: Int, val hint: Int, val i
 
 private val cards = listOf(
     ModeCard(AudioMode.SLEEPY, R.string.audio_mode_sleepy, R.string.audio_levels_sleepy_hint, Icons.Default.Bedtime),
-    ModeCard(AudioMode.BALANCED, R.string.audio_mode_balanced, R.string.audio_levels_balanced_hint, Icons.Default.Tune),
-    ModeCard(AudioMode.HIFI, R.string.audio_mode_hifi, R.string.audio_levels_hifi_hint, Icons.Default.Movie),
-    ModeCard(AudioMode.CUSTOM, R.string.audio_mode_custom, R.string.audio_levels_custom_hint, Icons.Default.Equalizer))
+    ModeCard(AudioMode.BALANCED, R.string.audio_mode_balanced, R.string.audio_levels_balanced_hint, Icons.Default.Balance),
+    ModeCard(AudioMode.HIFI, R.string.audio_mode_hifi, R.string.audio_levels_hifi_hint, Icons.Default.GraphicEq),
+    ModeCard(AudioMode.CUSTOM, R.string.audio_mode_custom, R.string.audio_levels_custom_hint, Icons.Default.Tune))
 
 /**
  * Ajustes › Niveles de audio: pick a mode (it becomes the active one) and tune its own volume

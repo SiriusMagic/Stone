@@ -63,7 +63,7 @@ import kotlin.math.roundToInt
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically) {
                 Icon(when {
-                    gain < 1f -> Icons.Default.Bedtime
+                    StonePlaybackService.currentMode == com.zirakusa.stone.nativeapp.playback.AudioMode.SLEEPY -> Icons.Default.Bedtime
                     percent == 0 -> Icons.Default.VolumeMute
                     percent < 50 -> Icons.Default.VolumeDown
                     else -> Icons.Default.VolumeUp

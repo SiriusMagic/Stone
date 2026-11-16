@@ -33,7 +33,8 @@ data class QueueEntry(val id: String, val title: String, val artist: String, val
  */
 enum class AudioMode(val key: String, val defaultMaxPercent: Int, val defaultGain: Float = 1f) {
     BATTERY("battery", 100), BALANCED("balanced", 150), HIFI("hifi", 300),
-    SLEEPY("sleepy", 100, defaultGain = 0.1f),
+    /** Dormilón: for sleeping next to someone; at most 10 % with a soft gain. */
+    SLEEPY("sleepy", 10, defaultGain = 0.8f),
     /** The user's own level. */
     CUSTOM("custom", 150);
 

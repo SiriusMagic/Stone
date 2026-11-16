@@ -4,7 +4,7 @@ Generado por `tools/update_map.py`. Lee este mapa, abre solo el archivo que nece
 si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/
-- `MainActivity.kt` (131) Volume keys drive Stone's own overlay;
+- `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
 - `AccessMode.kt` (51) What a token lets an agent do.
@@ -62,6 +62,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `VideoMetadata.kt` (283) Comma separated keywords, stored as the MP4 `keyw` tag.
 
 ## app/data/persistence
+- `CrashLog.kt` (43) Keeps the last crash on the phone ("Stone se detuvo"), so it can be read and sent from Ajustes › Diagnóstico.
 - `LookImages.kt` (42) Private copies of images chosen in Personalizado (background, avatar, shortcut icon).
 - `PlaybackDataStore.kt` (52) Optional extracted cover used to rebuild system media artwork after restart.
 - `StoneDatabase.kt` (91) Versioned source of truth for user-created Stone data.
@@ -88,6 +89,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiTokenRow.kt` (91) One token:
 - `ArtistCard.kt` (54)
 - `AudioLevelSettings.kt` (112) Ajustes › Niveles de audio:
+- `CrashReportCard.kt` (41) Ajustes › Diagnóstico:
 - `FeedbackFormParts.kt` (117) Visual pieces of the feedback form;
 - `FeedbackReport.kt` (166)
 - `GenreCards.kt` (44) Card colours;
@@ -119,10 +121,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `SettingsMiscDetails.kt` (74)
 - `SettingsParts.kt` (42)
 - `SettingsPlaybackDetails.kt` (187)
-- `SettingsScreens.kt` (241) Languages Stone ships complete translations for (names in their own language).
+- `SettingsScreens.kt` (245) Languages Stone ships complete translations for (names in their own language).
 - `SettingsShortcutsDetail.kt` (180) A tap moves once;
 - `SongGridCard.kt` (40) Song card of the "Grande" layout:
-- `SystemDiagnosticsDetail.kt` (224)
+- `SystemDiagnosticsDetail.kt` (225)
 - `ThemeExtras.kt` (49) Top of "Temas y personalización":
 - `TransitionSettings.kt` (40) Reproducción sin pausas and Crossfade switches;
 - `VideoControlSettings.kt` (80)
@@ -155,7 +157,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `PlayerArtwork.kt` (57) Cover in the portrait player, in the shape chosen in Ajustes › Personalizado:
 - `PlayerLyricChip.kt` (82)
 - `PlayerProgress.kt` (72)
-- `PlayerScreen.kt` (243) Horizontal swipe changes tracks;
+- `PlayerScreen.kt` (254) Horizontal swipe changes tracks;
 - `PlayerSheetsHost.kt` (87) Shared by the full player and the home dock;
 - `PlayerSheetsState.kt` (37) Item whose shared options menu is open;
 - `PlayerToolsSheets.kt` (389) Song currently played as audio only;
@@ -183,10 +185,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `DiagnosticsReportExporter.kt` (33)
 - `PerformanceDiagnostics.kt` (88) /proc exposes this count without allocating a stack trace for every thread.
 - `PlaybackEqualizer.kt` (89) Read-only state used by the audio investigation;
-- `PlaybackViewModel.kt` (669) [gain] is a software attenuation applied on top of Android's volume.
+- `PlaybackViewModel.kt` (670) [gain] is a software attenuation applied on top of Android's volume.
 - `PlaybackVolumeBoost.kt` (163) A percentage above 100 maps to a logarithmic gain;
 - `StoneEcoEngine.kt` (140) Lightweight playback policy.
-- `StonePlaybackService.kt` (489) Sole owner of playback;
+- `StonePlaybackService.kt` (494) Sole owner of playback;
 - `StoneWidgetProvider.kt` (109) Home-screen player (4×2):
 - `SystemArtworkOverlay.kt` (114) Builds the artwork sent to Android's media controls without changing the artwork embedded in, or next to, the user's media file.
 - `TrackTransitions.kt` (120) Song-to-song transitions on Stone's single player (no second decoder):

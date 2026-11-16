@@ -29,6 +29,7 @@ import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
 import kotlinx.coroutines.launch
 
 @Composable internal fun SystemDiagnosticsDetail(playback: PlaybackViewModel?) {
+    CrashReportCard()
     val context = LocalContext.current
     val mode = playback?.state?.collectAsState()?.value?.audioMode ?: AudioMode.BALANCED
     var snapshot by remember { mutableStateOf(PerformanceDiagnostics.read(context)) }
