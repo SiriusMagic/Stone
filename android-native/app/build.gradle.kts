@@ -11,8 +11,8 @@ android {
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "1.6.9"
+        versionCode = 34
+        versionName = "1.7.0"
         // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
         // Set it with -PstoneRelayUrl=https://… or stoneRelayUrl in gradle.properties.
         val relayUrl = (project.findProperty("stoneRelayUrl") as String?).orEmpty().trimEnd('/')

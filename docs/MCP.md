@@ -107,7 +107,10 @@ una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de ped
 
 - `dryRun: true` en cualquier herramienta de edición devuelve qué cambiaría sin escribir nada.
 - `metadata_update_many`, `metadata_set_lyrics_many`: array JSON en `changes`.
-- `metadata_fetch_lyrics`: descarga letras de lrclib.net (sincronizadas si existen).
+- `metadata_search_lyrics`: candidatos de lrclib.net para una canción, con `confidence` 0-1.
+- `metadata_fetch_lyrics`: busca, empareja cada resultado con su canción y guarda por lote solo los
+  que superan `minConfidence` (0.75). El resto vuelve como `LOW_CONFIDENCE` con candidatos; se
+  guardan con `choices: [{"songId":"…","lrclibId":123}]`.
 - `metadata_rename`: plantillas `{title} {artist} {album} {file} {date} {n} {n:2}`, `clean`
   (quita `_`, extensiones, `[1080p]`, `x264`, IDs de YouTube…) y `find`/`replace` con regex.
 - Los lotes devuelven `total`, `updated`, `failed`, `durationMs`, `batchId` y un resultado por elemento.

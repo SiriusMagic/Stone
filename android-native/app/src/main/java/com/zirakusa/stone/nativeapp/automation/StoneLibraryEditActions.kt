@@ -5,11 +5,14 @@ import com.zirakusa.stone.nativeapp.automation.MetadataBatch.context
 import com.zirakusa.stone.nativeapp.automation.MetadataBatch.dryRunParam
 import com.zirakusa.stone.nativeapp.automation.MetadataBatch.host
 import com.zirakusa.stone.nativeapp.data.library.LrcLibClient
+import com.zirakusa.stone.nativeapp.data.library.LyricsCandidate
+import com.zirakusa.stone.nativeapp.data.library.LyricsMatcher
 import com.zirakusa.stone.nativeapp.data.library.MediaFileIo
 import com.zirakusa.stone.nativeapp.data.library.RenameSource
 import com.zirakusa.stone.nativeapp.data.library.RenameTemplate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 /** Bulk tools: import lyrics from lrclib.net and rename many songs/videos with a template. */
@@ -27,30 +30,56 @@ internal object StoneLibraryEditActions {
     private val queryParam = ActionParam("query", "string", "Only items whose title, artist or folder contains this text.")
 
     fun all(): List<StoneAction> = listOf(
-        StoneAction("metadata.fetch_lyrics", "Download lyrics from lrclib.net (free, synced LRC when available) and save them " +
-            "in Stone. Without songIds it takes songs that have no lyrics yet. Backed up: metadata_undo reverts it.",
+        StoneAction("metadata.search_lyrics", "Look up lyrics candidates on lrclib.net for one song, each with a confidence " +
+            "(0-1) that it is the same song (title, artist and duration). Save one with metadata_fetch_lyrics 'choices'.",
+            ActionRisk.READ, listOf(ActionParam("songId", "string", "Id returned by library_search.", true))) { args ->
+            val song = MetadataBatch.song(args.getString("songId"))
+            val query = LyricsMatcher.query(song.title, song.artist, song.album, song.durationMs)
+            val found = withContext(Dispatchers.IO) { LrcLibClient.candidates(query) }
+            JSONObject().put("songId", song.id).put("query", JSONObject().put("title", query.title).put("artist", query.artist))
+                .put("candidates", JSONArray(found.map { it.brief().put("preview", it.text.lineSequence()
+                    .map { line -> line.substringAfter(']').trim() }.filter { line -> line.isNotBlank() }.take(2).joinToString(" / ")) }))
+        },
+        StoneAction("metadata.fetch_lyrics", "Find lyrics on lrclib.net for many songs, match each result to the right song " +
+            "(title, artist, duration → confidence) and save the confident ones in one batch. Results below minConfidence " +
+            "are not saved: they come back as LOW_CONFIDENCE with candidates; save the right ones with 'choices'. " +
+            "Without songIds it takes songs that have no lyrics yet. Backed up: metadata_undo reverts it.",
             ActionRisk.PERSISTENT, listOf(
                 ActionParam("songIds", "string", "Comma separated ids. Omit to use kind/query."), kindParam, queryParam,
+                ActionParam("choices", "string", "JSON array [{\"songId\":\"…\",\"lrclibId\":123}] from metadata_search_lyrics; saves exactly those."),
+                ActionParam("minConfidence", "number", "0-1, default 0.75. Lower saves more but risks wrong lyrics."),
                 ActionParam("overwrite", "boolean", "Replace lyrics that already exist (default false)."),
                 ActionParam("limit", "integer", "Maximum songs per call (default 25, max 100; each takes about a second)."),
                 dryRunParam)) { args ->
-            val context = context()
-            val edits = MetadataEdits(context)
-            val overwrite = args.optBoolean("overwrite", false)
-            val songs = targets(args, "audio").filter { overwrite || args.has("songIds") || edits.lyricsOf(it).isBlank() }
-                .take(args.optInt("limit", 25).coerceIn(1, 100))
-            if (songs.isEmpty()) throw ActionException("No songs need lyrics with those filters.", "NOT_FOUND")
-            val found = HashMap<String, String>()
-            val items = songs.map { BatchItem(it.id, it, JSONObject()) }
-            MetadataBatch.run("metadata_fetch_lyrics", items, args.optBoolean("dryRun"), preview = { song, _ ->
-                lookup(song, found).put("id", song.id).put("title", song.title)
-            }) { item, batch ->
+            val edits = MetadataEdits(context())
+            val minimum = args.optDouble("minConfidence", LyricsMatcher.CONFIDENT).coerceIn(0.0, 1.0)
+            val chosen = args.optString("choices").takeIf { it.isNotBlank() }?.let { raw ->
+                MetadataBatch.items(raw, setOf("lrclibId")).onEach {
+                    if (it.change.optLong("lrclibId", 0) <= 0) throw ActionException("Each choice needs lrclibId.", "INVALID_PARAM")
+                }
+            }
+            val overwrite = args.optBoolean("overwrite", false) || chosen != null || args.has("songIds")
+            val items = chosen ?: targets(args, "audio").filter { overwrite || edits.lyricsOf(it).isBlank() }
+                .take(args.optInt("limit", 25).coerceIn(1, 100)).map { BatchItem(it.id, it, JSONObject()) }
+            if (items.isEmpty()) throw ActionException("No songs need lyrics with those filters.", "NOT_FOUND")
+            val picks = HashMap<String, LyricsCandidate>()
+            fun match(song: Song, change: JSONObject): JSONObject {
+                val pick = picks[song.id] ?: if (change.has("lrclibId")) {
+                    LrcLibClient.byId(change.getLong("lrclibId")) ?: throw ActionException("lrclib id not found.", "NOT_FOUND")
+                } else {
+                    val all = LrcLibClient.candidates(LyricsMatcher.query(song.title, song.artist, song.album, song.durationMs))
+                    all.firstOrNull { it.confidence >= minimum } ?: throw ActionException(
+                        if (all.isEmpty()) "No lyrics found on lrclib.net." else "No result is clearly this song.",
+                        if (all.isEmpty()) "LYRICS_NOT_FOUND" else "LOW_CONFIDENCE",
+                        if (all.isEmpty()) null else "Candidates: " + all.take(3).joinToString { c ->
+                            "lrclibId ${c.id} '${c.title}' by ${c.artist} (${"%.2f".format(c.confidence)})" })
+                }
+                picks[song.id] = pick
+                return JSONObject().put("id", song.id).put("title", song.title).put("match", pick.brief())
+            }
+            MetadataBatch.run("metadata_fetch_lyrics", items, args.optBoolean("dryRun"), preview = ::match) { item, batch ->
                 val song = item.song!!
-                if (!overwrite && !args.has("songIds") && edits.lyricsOf(song).isNotBlank())
-                    throw ActionException("Already has lyrics.", "SKIPPED")
-                val result = lookup(song, found)
-                val text = found[song.id] ?: throw ActionException("No lyrics found on lrclib.net.", "LYRICS_NOT_FOUND")
-                result.put("id", song.id).put("title", song.title).put("backupId", edits.setLyrics(song, text, batch))
+                match(song, item.change).put("backupId", edits.setLyrics(song, picks.getValue(song.id).text, batch))
             }
         },
         StoneAction("metadata.rename", "Rename many songs or videos at once with a template and/or clean-up. Template " +
@@ -94,12 +123,7 @@ internal object StoneLibraryEditActions {
         },
     )
 
-    /** Looks lyrics up once per song (dry run and real run share the cache). */
-    private fun lookup(song: Song, cache: MutableMap<String, String>): JSONObject {
-        val found = LrcLibClient.find(song.title, song.artist, song.album, song.durationMs)
-            ?: return JSONObject().put("found", false)
-        cache[song.id] = found.text
-        return JSONObject().put("found", true).put("synced", found.synced).put("source", found.source)
-            .put("preview", found.text.lineSequence().filter { it.isNotBlank() }.take(2).joinToString(" / "))
-    }
+    private fun LyricsCandidate.brief() = JSONObject().put("lrclibId", id).put("title", title).put("artist", artist)
+        .put("album", album).put("durationSeconds", durationSeconds).put("synced", synced)
+        .put("confidence", Math.round(confidence * 100) / 100.0)
 }

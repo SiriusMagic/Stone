@@ -67,8 +67,6 @@
     <string name="search_lyrics">Buscar letra</string>
     <string name="lyrics_browser_title">Buscar letra</string>
     <string name="lyrics_browser_copy">Copiar</string>
-    <string name="lyrics_browser_select_hint">Se não forem detectadas automaticamente, selecione a letra na página e toque em Copiar.</string>
-    <string name="lyrics_copied">Letra copiada</string>
     <string name="lyrics_select_to_copy">Primeiro selecione o texto da letra.</string>
     <string name="go_to_current_song">Ir para a música atual</string>
     <string name="clear_queue">Limpar fila</string>
@@ -575,4 +573,13 @@
     <string name="api_waiting">Aguardando sua aprovação</string>
     <string name="api_risk_hint">↺ com cópia, pode ser desfeito · escudo = crítico: pede aprovação em Leitura e escrita. Ferramentas desligadas ficam ocultas.</string>
     <string name="api_tools_hint">Ative só o que o agente pode usar.</string>
+    <string name="lyrics_auto_title">Buscar automaticamente</string>
+    <string name="lyrics_auto_searching">Buscando em lrclib.net…</string>
+    <string name="lyrics_auto_none">Música não encontrada. Tente na web.</string>
+    <string name="lyrics_auto_offline">Sem conexão com lrclib.net. Tente na web.</string>
+    <string name="lyrics_auto_web">Buscar na web</string>
+    <string name="lyrics_auto_synced">sincronizada</string>
+    <string name="lyrics_auto_plain">texto</string>
+    <string name="lyrics_auto_match">Correspondência: %1$d%%</string>
+    <string name="lyrics_browser_select_hint">Toque em Copiar: o Stone encontra a letra e abre no editor. Se não, selecione-a na página.</string>
 </resources>

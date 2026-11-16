@@ -31,7 +31,7 @@
     <string name="more_options">More options</string><string name="equalizer">Equalizer</string><string name="lyrics">Lyrics</string><string name="lyrics_badge">LYRICS</string>
     <string name="lyrics_add">Add lyrics</string><string name="lyrics_edit">Edit lyrics</string><string name="lyrics_paste">Paste</string><string name="save">Save</string>
     <string name="lyrics_placeholder">Paste lyrics or LRC content…</string><string name="no_lyrics">No lyrics</string>
-    <string name="search_lyrics">Search lyrics</string><string name="lyrics_browser_title">Search lyrics</string><string name="lyrics_browser_copy">Copy</string><string name="lyrics_browser_select_hint">If they are not detected automatically, select the lyrics on the page, then tap Copy.</string><string name="lyrics_copied">Lyrics copied</string><string name="lyrics_select_to_copy">Select the lyric text first.</string><string name="go_to_current_song">Go to current song</string>
+    <string name="search_lyrics">Search lyrics</string><string name="lyrics_browser_title">Search lyrics</string><string name="lyrics_browser_copy">Copy</string><string name="lyrics_select_to_copy">Select the lyric text first.</string><string name="go_to_current_song">Go to current song</string>
     <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
     <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
@@ -472,4 +472,13 @@
     <string name="api_waiting">Waiting for your approval</string>
     <string name="api_risk_hint">↺ backed up, can be undone · shield = critical: asks you in Read and write. Switched-off tools are hidden from every agent.</string>
     <string name="api_tools_hint">Turn on only what you want the agent to use.</string>
+    <string name="lyrics_auto_title">Search automatically</string>
+    <string name="lyrics_auto_searching">Searching lrclib.net…</string>
+    <string name="lyrics_auto_none">This song was not found. Try the web.</string>
+    <string name="lyrics_auto_offline">Could not reach lrclib.net. Try the web.</string>
+    <string name="lyrics_auto_web">Search the web</string>
+    <string name="lyrics_auto_synced">synced</string>
+    <string name="lyrics_auto_plain">plain text</string>
+    <string name="lyrics_auto_match">Match: %1$d%%</string>
+    <string name="lyrics_browser_select_hint">Tap Copy: Stone finds the lyrics and opens them in the editor. If it cannot, select them on the page.</string>
 </resources>

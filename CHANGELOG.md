@@ -1,3 +1,14 @@
+# Stone Kotlin 1.7.0
+
+- Letras: "Buscar automáticamente" (lrclib.net) muestra resultados con su porcentaje de
+  coincidencia (título, artista y duración) y abre el elegido en el editor, sincronizado si existe.
+- Navegador de letras: chips Google, Letras.com, Genius y Musixmatch. "Copiar" detecta la letra
+  (también la parte oculta tras "Más" en Google), quita créditos como "Fuente: Musixmatch" o
+  "Compositores" y vuelve al editor con la letra puesta.
+- Modo API: `metadata_search_lyrics` (candidatos con confianza) y `metadata_fetch_lyrics` empareja
+  cada resultado con su canción, guarda solo los seguros (`minConfidence`, 0.75 por defecto),
+  devuelve `LOW_CONFIDENCE` con candidatos para el resto y acepta `choices` para guardar los elegidos.
+
 # Stone Kotlin 1.6.9
 
 - Modo API rediseñado en pestañas: General, Herramientas, Seguridad, Enlace y Actividad.

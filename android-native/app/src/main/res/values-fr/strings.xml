@@ -67,8 +67,6 @@
     <string name="search_lyrics">Chercher les paroles</string>
     <string name="lyrics_browser_title">Chercher les paroles</string>
     <string name="lyrics_browser_copy">Copier</string>
-    <string name="lyrics_browser_select_hint">Si elles ne sont pas détectées automatiquement, sélectionnez les paroles sur la page et touchez Copier.</string>
-    <string name="lyrics_copied">Paroles copiées</string>
     <string name="lyrics_select_to_copy">Sélectionnez d\'abord le texte des paroles.</string>
     <string name="go_to_current_song">Aller à la chanson en cours</string>
     <string name="clear_queue">Vider la file</string>
@@ -575,4 +573,13 @@
     <string name="api_waiting">En attente de ton accord</string>
     <string name="api_risk_hint">↺ sauvegardé, annulable · bouclier = critique : te demande en Lecture et écriture. Les outils désactivés sont cachés aux agents.</string>
     <string name="api_tools_hint">Active seulement ce que l\'agent peut utiliser.</string>
+    <string name="lyrics_auto_title">Chercher automatiquement</string>
+    <string name="lyrics_auto_searching">Recherche sur lrclib.net…</string>
+    <string name="lyrics_auto_none">Chanson introuvable. Essaie sur le web.</string>
+    <string name="lyrics_auto_offline">lrclib.net injoignable. Essaie sur le web.</string>
+    <string name="lyrics_auto_web">Chercher sur le web</string>
+    <string name="lyrics_auto_synced">synchronisées</string>
+    <string name="lyrics_auto_plain">texte</string>
+    <string name="lyrics_auto_match">Correspondance : %1$d%%</string>
+    <string name="lyrics_browser_select_hint">Touche Copier : Stone trouve les paroles et les ouvre dans l\'éditeur. Sinon, sélectionne-les sur la page.</string>
 </resources>
