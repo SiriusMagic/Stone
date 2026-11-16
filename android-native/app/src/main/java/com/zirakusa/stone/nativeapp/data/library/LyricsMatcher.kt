@@ -18,7 +18,8 @@ object LyricsMatcher {
 
     /** Builds the search; "Linkin Park - In the End (Official Video)" with no artist becomes title + artist. */
     fun query(title: String, artist: String, album: String, durationMs: Long): LyricsQuery {
-        var cleanTitle = RenameTemplate.clean(title).replace(brackets, " ").trim()
+        // Extras such as "(Official Video)", "[Lyrics]", "slowed + reverb" or "| Channel" first, then any other bracket.
+        var cleanTitle = TitleCleaner.clean(title, artist).replace(brackets, " ").trim()
         var cleanArtist = artist.trim().takeUnless { it.lowercase() in unknownArtists }.orEmpty()
         if (cleanArtist.isEmpty() && " - " in cleanTitle) {
             cleanArtist = cleanTitle.substringBefore(" - ").trim()

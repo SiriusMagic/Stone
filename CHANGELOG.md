@@ -1,5 +1,20 @@
 # Sin publicar (próxima versión)
 
+- Modo API: cada token muestra su propio enlace con botón de copiar, para dar uno distinto a cada agente
+  (pueden trabajar a la vez). Caducidad por token: sin fecha, 7, 30, 90 días, 1 año o personalizada, también
+  al editar (renueva un token caducado).
+- Agentes: lrclib.net e iTunes se consultan con pausas compartidas; ante un HTTP 429 Stone espera y, si
+  sigue, responde RATE_LIMITED con los segundos a esperar y las canciones pendientes.
+- Lotes de más de 10 canciones pasan a segundo plano (jobId) con progreso y resultado por canción; esperan
+  solos ante límites y se pueden reanudar o cancelar. Ya no caducan por el tiempo del enlace.
+- Nuevas herramientas: stone_activity (últimas llamadas y errores, guardadas aunque Stone se cierre),
+  stone_troubleshoot (diccionario de soluciones por código y flujos recomendados), stone_job_status /
+  resume / cancel, metadata_suggest_tags_many (géneros en lote solo con confianza ≥ 0,8) y
+  metadata_prepare_write (pedir el permiso de Android una vez antes de un lote).
+- Las búsquedas de letras y etiquetas usan los datos actuales del archivo: ya no hace falta reescanear tras
+  cambiar un título. Avisan TITLE_HAS_EXTRAS con el título limpio sugerido; metadata_rename stripExtras=true
+  quita "lyrics", "official video", "slowed + reverb", "| canal"… y conserva remix, live, acoustic, sped up.
+- Las letras guardadas por agentes también se escriben dentro del archivo cuando Android lo permite.
 - Al guardar o borrar letras, también se guardan o se quitan dentro del archivo de la canción (MP3,
   FLAC y M4A). Al compartir la canción o abrirla en otro reproductor, la letra va incluida, con sus
   tiempos si es sincronizada. Stone avisa si se guardó en el archivo o si el formato no lo admite.

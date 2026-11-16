@@ -553,6 +553,9 @@
     <string name="api_token_validity">Valid for</string>
     <string name="api_token_forever">Never expires</string>
     <string name="api_token_days">%1$d d</string>
+    <string name="api_token_year">1 year</string>
+    <string name="api_token_custom">Custom</string>
+    <string name="api_token_custom_days">Number of days</string>
     <string name="crash_last_title">Last unexpected close</string>
     <string name="crash_last_hint">Copy or share it so it can be fixed. It is only stored on this phone.</string>
     <string name="crash_copy">Copy</string>

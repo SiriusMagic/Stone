@@ -651,6 +651,9 @@
     <string name="api_token_validity">Gültigkeit</string>
     <string name="api_token_forever">Unbegrenzt</string>
     <string name="api_token_days">%1$d T</string>
+    <string name="api_token_year">1 Jahr</string>
+    <string name="api_token_custom">Benutzerdefiniert</string>
+    <string name="api_token_custom_days">Anzahl der Tage</string>
     <string name="crash_last_title">Letzter unerwarteter Absturz</string>
     <string name="crash_last_hint">Kopiere oder teile ihn zur Behebung. Er ist nur auf diesem Telefon gespeichert.</string>
     <string name="crash_copy">Kopieren</string>

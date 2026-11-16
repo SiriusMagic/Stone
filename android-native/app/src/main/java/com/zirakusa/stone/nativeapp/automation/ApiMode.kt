@@ -43,6 +43,7 @@ object ApiMode {
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         ApiTokens.load(store, "Principal")
+        ActivityLog.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
         relaySecret = store.look("api.relaySecret", "").ifBlank { newToken(32).also { store.setLook("api.relaySecret", it) } }
         apply()

@@ -51,7 +51,24 @@ class StoneAction(
  * telling it how to recover.
  */
 class ActionException(message: String, val code: String = "ACTION_FAILED", val hint: String? = null) : Exception(message) {
-    fun json(): JSONObject = JSONObject().put("code", code).put("message", message).apply { hint?.let { put("hint", it) } }
+    fun json(): JSONObject = JSONObject().put("code", code).put("message", message).apply {
+        hint?.let { put("hint", it) }
+        if (StoneSolutions.has(code)) put("solution", "stone_troubleshoot code=$code")
+    }
+
+    companion object {
+        /** Any failure as an error with a stable code: web limits and network problems included. */
+        fun of(error: Throwable): ActionException = when (error) {
+            is ActionException -> error
+            is com.zirakusa.stone.nativeapp.data.library.RateLimitedException -> ActionException(error.message.orEmpty(),
+                "RATE_LIMITED", "Wait ${error.retryAfterSeconds} s, then continue with 5-10 songs per call " +
+                    "(or use background=true so Stone waits and resumes by itself).")
+            is java.net.SocketTimeoutException, is java.net.UnknownHostException, is java.net.ConnectException,
+            is javax.net.ssl.SSLException -> ActionException("Network problem: ${error.message ?: error.javaClass.simpleName}",
+                "NETWORK", "Check the phone's internet connection and try again.")
+            else -> ActionException(error.message ?: "Action failed")
+        }
+    }
 }
 
 /** Outcome of an agent request, as shown in Ajustes › Modo API › Actividad. */
@@ -60,4 +77,6 @@ enum class RecordStatus { OK, FAILED, DENIED }
 /** Entry of the in-app activity list. [risk] tells queries from changes. */
 data class ActionRecord(val timeMs: Long, val action: String, val ok: Boolean, val detail: String,
     val status: RecordStatus = if (ok) RecordStatus.OK else RecordStatus.FAILED, val risk: ActionRisk = ActionRisk.READ,
-    val token: String = "")
+    val token: String = "",
+    /** Error code (RATE_LIMITED, LOW_CONFIDENCE…) when the call failed. */
+    val code: String = "")

@@ -30,7 +30,8 @@ class RelayClient(
 
     private val http = OkHttpClient.Builder().pingInterval(25, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS).build()
-    private val workers = Executors.newFixedThreadPool(4)
+    // Several agents (one per token) can call at once; a slow call must not hold up the others.
+    private val workers = Executors.newFixedThreadPool(8)
     private val retry = Executors.newSingleThreadScheduledExecutor()
     @Volatile private var socket: WebSocket? = null
     @Volatile private var running = false

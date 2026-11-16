@@ -40,7 +40,7 @@ import org.json.JSONObject
         ApiTokens.tokens.forEachIndexed { index, token -> ApiTokenRow(token, index == 0, copy) }
     }
     if (creating) ApiTokenDialog(onDismiss = { creating = false }) { name, mode, days ->
-        val token = ApiTokens.create(name, mode, days)
+        val token = ApiTokens.create(name, mode, days ?: 0)
         copy("Stone MCP", ApiMode.linkFor(token.secret))
         creating = false
     }

@@ -2,8 +2,6 @@ package com.zirakusa.stone.nativeapp.data.library
 
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 /** Lyrics found online: synced LRC when available, else plain text. */
@@ -60,16 +58,7 @@ object LrcLibClient {
     private fun get(path: String, query: List<Pair<String, String>>): String? {
         val params = query.filter { it.second.isNotBlank() }
             .joinToString("&") { (key, value) -> "$key=${URLEncoder.encode(value, "UTF-8")}" }
-        val connection = URL("$BASE$path" + if (params.isEmpty()) "" else "?$params").openConnection() as HttpURLConnection
-        return try {
-            connection.connectTimeout = 10_000
-            connection.readTimeout = 15_000
-            connection.setRequestProperty("User-Agent", "Stone music player")
-            when (connection.responseCode) {
-                200 -> connection.inputStream.bufferedReader().use { it.readText() }
-                404 -> null
-                else -> error("lrclib.net answered HTTP ${connection.responseCode}")
-            }
-        } finally { connection.disconnect() }
+        // Paced and shared: many songs in a row (or two agents at once) never burst into a 429.
+        return WebPacer.lrclib.call { WebPacer.get("$BASE$path" + if (params.isEmpty()) "" else "?$params") }
     }
 }

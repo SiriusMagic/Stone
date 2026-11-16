@@ -52,6 +52,23 @@ curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
 2. `library_search` para obtener los `id` de canciones.
 3. `player_play_song`, `player_queue_next`, `playlist_add_songs`… con esos `id`.
 4. `player_state` para confirmar.
+5. Si una herramienta falla: `stone_troubleshoot code=CODIGO` explica la causa y los pasos;
+   `stone_activity onlyErrors=true` muestra los últimos fallos (se guardan aunque Stone se cierre).
+
+### Letras y géneros de muchas canciones
+
+limpiar título → buscar → validar artista/duración/versión → guardar → anotar `batchId`.
+
+1. `metadata_prepare_write`: Android pide permiso una sola vez para todos los archivos.
+2. `metadata_rename stripExtras=true dryRun=true`: deja solo el nombre real (quita `lyrics`, `official video`,
+   `slowed + reverb`, `| canal`…; conserva remix, live, acoustic, sped up). Luego sin `dryRun`.
+3. `metadata_fetch_lyrics` de 5-10 canciones. Stone lee las etiquetas actuales del archivo: no hace falta
+   `library_rescan` entre editar y buscar.
+4. `LOW_CONFIDENCE`: comparar artista, álbum, duración y versión; guardar con `choices`.
+5. Géneros: `metadata_suggest_tags_many onlyMissing=genre`; solo escribe con confianza ≥ 0.8, el resto vuelve
+   con `needsReview=true`.
+
+`stone_troubleshoot code=WORKFLOW_LYRICS` (o `WORKFLOW_GENRES`, `WORKFLOW_BULK`) devuelve estos pasos al agente.
 
 ## Herramientas por categoría
 
@@ -71,6 +88,10 @@ curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
 - **settings**: `get`, `set_language`, `set_audio_mode`, `set_transitions`, `set_hardware_acceleration`,
   `set_play_with_others`, `set_option`.
 - **library / playlist (extra)**: `library_set_favorite`, `playlist_rename`, `playlist_delete`.
+- **metadata (lotes)**: `search_lyrics`, `fetch_lyrics`, `suggest_tags`, `suggest_tags_many`, `rename`,
+  `prepare_write`, `history`, `undo`.
+- **stone**: `help`, `troubleshoot` (diccionario de soluciones), `activity` (últimas llamadas y errores),
+  `job_status`, `job_resume`, `job_cancel` (trabajos en segundo plano).
 
 El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
@@ -88,7 +109,9 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
 ## Permisos y tokens
 
-Stone › Ajustes › Modo API › Seguridad. Cada token tiene un modo:
+Stone › Ajustes › Modo API › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
+fila): da uno distinto a cada agente; varios pueden trabajar a la vez y revocar uno no afecta a los
+demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada token tiene un modo:
 
 | Modo | Qué puede hacer | Qué pide aprobación |
 | --- | --- | --- |
@@ -114,13 +137,27 @@ una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de ped
 - `metadata_rename`: plantillas `{title} {artist} {album} {file} {date} {n} {n:2}`, `clean`
   (quita `_`, extensiones, `[1080p]`, `x264`, IDs de YouTube…) y `find`/`replace` con regex.
 - Los lotes devuelven `total`, `updated`, `failed`, `durationMs`, `batchId` y un resultado por elemento.
+- Las letras guardadas por API también se escriben dentro del archivo (MP3, FLAC, M4A) cuando Android
+  ya lo permite: `embeddedInFile: true`. `metadata_undo` restaura también el archivo.
+
+### Lotes grandes, trabajos y límites de lrclib.net / iTunes
+
+- Hasta 10 elementos responden directamente. Con más (o `background: true`) la herramienta devuelve
+  al instante un `jobId`; el trabajo sigue en el teléfono, canción por canción.
+- `stone_job_status jobId=…` (cada 10-20 s): `status` (`running`, `waiting`, `paused`, `done`,
+  `cancelled`), `done/total`, `percent`, un resultado por canción (`since` para leer solo lo nuevo) y
+  `remainingSongIds`. `stone_job_resume` continúa; `stone_job_cancel` detiene.
+- Stone espacia las peticiones (lrclib.net ~0,7 s, iTunes 3 s) y las comparte entre agentes. Ante un
+  HTTP 429 respeta `Retry-After`; si sigue, devuelve `RATE_LIMITED` con `retryAfterSeconds`. Un lote
+  directo se detiene ahí y devuelve `remainingSongIds`; un trabajo espera (cada vez más) y sigue solo.
 
 ## Códigos de error
 
 `structuredContent.error.code` (y `[CODE]` al inicio del texto): `UNKNOWN_TOOL`, `INVALID_PARAM`,
 `NOT_FOUND`, `READ_ONLY_TOKEN`, `TOOL_DISABLED`, `USER_DENIED`, `ANDROID_CONSENT`,
-`UNSUPPORTED_FORMAT`, `STONE_CLOSED`, `LYRICS_NOT_FOUND`, `SKIPPED`, `ACTION_FAILED`.
-Muchos incluyen `hint` con cómo resolverlo.
+`UNSUPPORTED_FORMAT`, `STONE_CLOSED`, `LYRICS_NOT_FOUND`, `LOW_CONFIDENCE`, `RATE_LIMITED`, `NETWORK`,
+`SKIPPED`, `ACTION_FAILED`. Avisos: `TITLE_HAS_EXTRAS` (con `suggestedTitle`). Muchos incluyen `hint` y
+`solution: "stone_troubleshoot code=…"` con cómo resolverlo.
 
 ## Seguridad
 

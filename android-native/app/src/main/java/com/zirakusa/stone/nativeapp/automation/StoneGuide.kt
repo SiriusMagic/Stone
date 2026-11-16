@@ -20,7 +20,7 @@ internal object StoneGuide {
         "appearance" to "Theme, colours, sizes, home icon",
         "audio" to "Volume ceiling and gain of each audio mode (Niveles de audio)",
         "settings" to "Language, audio mode, gapless/crossfade, hardware acceleration and other switches",
-        "stone" to "Help and tool search")
+        "stone" to "Help, tool search, solutions dictionary (stone_troubleshoot), recent errors (stone_activity), background jobs")
 
     private fun StoneAction.brief() = JSONObject().put("name", toolName).put("description", description)
         .put("risk", risk.name.lowercase()).put("readOnly", risk == ActionRisk.READ)
@@ -40,7 +40,9 @@ internal object StoneGuide {
         return JSONObject().put("categories", JSONObject(categories as Map<*, *>))
             .put("workflow", "1) library_search to get song ids. 2) player_play_song / player_queue_next / playlist_add_songs with those ids. " +
                 "3) player_state to confirm. Edits accept dryRun=true and can be reverted with metadata_undo. " +
-                "Critical tools may wait up to 60 s for the user to accept on the phone.").put("access", access.key)
+                "Critical tools may wait up to 60 s for the user to accept on the phone. " +
+                "Work in batches of 5-10 songs; bigger batches return a jobId (stone_job_status). " +
+                "When a tool fails, stone_troubleshoot code=CODE explains the fix; stone_activity onlyErrors=true lists recent failures.").put("access", access.key)
             .put("total", matches.size).put("tools", JSONArray(matches.map { it.brief() }))
     }
 
@@ -64,7 +66,7 @@ internal object StoneGuide {
                 ".../tools lists every tool with its parameters, and .../call/TOOL_NAME?param=value runs one. " +
                 "Examples: /call/player_state , /call/player_set_volume?percent=40 , /call/library_search?query=love&limit=5")
             .put("health", ".../health needs no token and only says whether Stone is running."))
-        .put("firstSteps", JSONArray(listOf("stone_help", "player_state", "library_search")))
+        .put("firstSteps", JSONArray(listOf("stone_help", "stone_troubleshoot", "player_state", "library_search")))
         .put("access", access.key).put("tools", JSONArray(StoneAutomation.available(access).map { JSONObject().put("name", it.toolName).put("description", it.description) }))
 
     fun toolList(access: AccessMode): JSONObject = StoneAutomation.available(access).let { tools ->

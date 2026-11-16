@@ -651,6 +651,9 @@
     <string name="api_token_validity">Validità</string>
     <string name="api_token_forever">Sempre</string>
     <string name="api_token_days">%1$d g</string>
+    <string name="api_token_year">1 anno</string>
+    <string name="api_token_custom">Personalizzato</string>
+    <string name="api_token_custom_days">Numero di giorni</string>
     <string name="crash_last_title">Ultima chiusura imprevista</string>
     <string name="crash_last_hint">Copialo o condividilo per correggerlo. È salvato solo su questo telefono.</string>
     <string name="crash_copy">Copia</string>

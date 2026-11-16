@@ -39,6 +39,11 @@ object ApiTokens {
             .also { tokens = tokens + it; save(); publish() }
     }
 
+    /** New expiry counted from now ([validDays] 0 = never): renews an expired token or shortens one. */
+    fun setExpiry(id: String, validDays: Int) = change(id) {
+        it.copy(expiresAt = if (validDays > 0) System.currentTimeMillis() + validDays * 86_400_000L else 0)
+    }
+
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim().ifEmpty { it.name }) }
     fun setMode(id: String, mode: AccessMode) = change(id) { it.copy(mode = mode) }
     /** New secret for the same token: whoever had the old link loses access. */

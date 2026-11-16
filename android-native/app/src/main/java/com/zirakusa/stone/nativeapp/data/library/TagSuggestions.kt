@@ -1,8 +1,6 @@
 package com.zirakusa.stone.nativeapp.data.library
 
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 /** A possible set of tags for a song, with how sure Stone is that it is the same song (0-1). */
@@ -17,14 +15,9 @@ object TagSuggestions {
     fun find(title: String, artist: String, album: String, durationMs: Long, limit: Int = 8): List<TagCandidate> {
         val query = LyricsMatcher.query(title, artist, album, durationMs)
         val term = URLEncoder.encode("${query.title} ${query.artist}".trim(), "UTF-8")
-        val connection = URL("https://itunes.apple.com/search?media=music&entity=song&limit=15&term=$term")
-            .openConnection() as HttpURLConnection
-        val body = try {
-            connection.connectTimeout = 10_000; connection.readTimeout = 15_000
-            connection.setRequestProperty("User-Agent", "Stone music player")
-            if (connection.responseCode != 200) error("iTunes answered HTTP ${connection.responseCode}")
-            connection.inputStream.bufferedReader().use { it.readText() }
-        } finally { connection.disconnect() }
+        val body = WebPacer.itunes.call {
+            WebPacer.get("https://itunes.apple.com/search?media=music&entity=song&limit=15&term=$term")
+        } ?: return emptyList()
         val results = JSONObject(body).optJSONArray("results") ?: return emptyList()
         return (0 until results.length()).map { results.getJSONObject(it) }.map { item ->
             val seconds = item.optLong("trackTimeMillis") / 1000.0

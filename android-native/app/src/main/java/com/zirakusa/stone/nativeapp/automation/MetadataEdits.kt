@@ -5,6 +5,7 @@ import android.media.MediaMetadataRetriever
 import androidx.core.net.toUri
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
+import com.zirakusa.stone.nativeapp.data.library.EmbeddedLyricsReader
 import com.zirakusa.stone.nativeapp.data.library.AudioTags
 import com.zirakusa.stone.nativeapp.data.library.CoverDownloader
 import com.zirakusa.stone.nativeapp.data.library.EditBackup
@@ -103,12 +104,23 @@ internal class MetadataEdits(private val context: Context) {
     fun lyricsOf(song: Song): String = lyrics.get(song.id)
         ?: song.lyrics.ifEmpty { song.syncedLyrics.map { it.text } }.joinToString("\n")
 
-    fun setLyrics(song: Song, text: String, batch: String): String {
+    /**
+     * Saves lyrics in Stone and, when the file allows it (MP3, FLAC, M4A already writable), also
+     * inside the file so they travel with it. Returns the backup id and whether the file got them.
+     */
+    fun setLyrics(song: Song, text: String, batch: String): Pair<String, Boolean> {
         val id = UUID.randomUUID().toString().take(12)
         val before = JSONObject().apply { lyrics.get(song.id)?.let { put("lyrics", it) } }
         if (text.isBlank()) lyrics.clear(song.id) else lyrics.put(song.id, text.trim())
+        val canEmbed = !song.isVideo && AudioTagEditor(context).supports(song.uri) &&
+            !MediaFileIo.needsWriteConsent(context, song.uri)
+        val embedded = canEmbed && runCatching {
+            before.put("fileLyrics", EmbeddedLyricsReader(context).read(song.uri.toUri()))
+            AudioTagEditor(context).writeLyrics(song.uri, text.trim())
+        }.isSuccess
+        if (!embedded) before.remove("fileLyrics")
         journal.add(EditBackup(id, System.currentTimeMillis(), batch, song.id, song.uri, song.title, "lyrics", before))
-        return id
+        return id to embedded
     }
 
     /** Puts back what [backup] replaced. */
@@ -116,7 +128,11 @@ internal class MetadataEdits(private val context: Context) {
         val before = backup.before
         val oldCover = backup.coverFile?.let { File(it) }?.takeIf { it.exists() }?.readBytes()
         when (backup.kind) {
-            "lyrics" -> if (before.has("lyrics")) lyrics.put(backup.songId, before.getString("lyrics")) else lyrics.delete(backup.songId)
+            "lyrics" -> {
+                if (before.has("lyrics")) lyrics.put(backup.songId, before.getString("lyrics")) else lyrics.delete(backup.songId)
+                // The file gets back the lyrics it had (none = removed).
+                if (before.has("fileLyrics")) AudioTagEditor(context).writeLyrics(backup.uri, before.getString("fileLyrics"))
+            }
             "video" -> {
                 val editor = VideoMetadataEditor(context)
                 val draft = editor.read(backup.uri).draft

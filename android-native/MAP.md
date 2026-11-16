@@ -8,25 +8,30 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation
 - `AccessMode.kt` (51) What a token lets an agent do.
-- `ApiMode.kt` (131) User switches for the MCP server (Ajustes › Modo API).
-- `ApiTokens.kt` (84) Access tokens of Ajustes › Modo API › Seguridad.
+- `ActivityLog.kt` (65) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
+- `ApiMode.kt` (132) User switches for the MCP server (Ajustes › Modo API).
+- `ApiTokens.kt` (89) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthThrottle.kt` (29) Slows down token guessing:
 - `AutomationHost.kt` (70) What the running app offers to automation.
 - `McpHttp.kt` (114) One parsed HTTP/1.1 request;
 - `McpSelfTest.kt` (50) Result of calling Stone's own MCP address the way an agent would.
 - `McpServer.kt` (271) Model Context Protocol server exposing [StoneAutomation] actions as tools.
-- `MetadataBatch.kt` (80) One item of a batch:
-- `MetadataEdits.kt` (161) Tag, lyrics and cover edits made by agents.
-- `RelayClient.kt` (126) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
-- `StoneAction.kt` (64) How dangerous an action is;
-- `StoneActions.kt` (128) Catalogue of Stone actions, grouped by domain:
-- `StoneAutomation.kt` (149) A CRITICAL action waiting for the user's answer on screen.
-- `StoneGuide.kt` (89) Discovery help for agents:
-- `StoneLibraryEditActions.kt` (142) Bulk tools:
+- `MetadataBatch.kt` (126) One item of a batch:
+- `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
+- `RelayClient.kt` (127) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
+- `StoneAction.kt` (83) How dangerous an action is;
+- `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
+- `StoneAgentActions.kt` (37) Tools that help agents help themselves:
+- `StoneAutomation.kt` (156) A CRITICAL action waiting for the user's answer on screen.
+- `StoneBulkActions.kt` (81) Many songs at once:
+- `StoneGuide.kt` (91) Discovery help for agents:
+- `StoneJobs.kt` (122) Background batches for agents.
+- `StoneLibraryEditActions.kt` (161) Bulk tools:
 - `StoneLookActions.kt` (100) Appearance and settings actions:
 - `StoneMediaActions.kt` (211) Queue, equalizer, video and library-view actions (added in 1.6.7).
-- `StoneMetadataActions.kt` (139) Tags, lyrics and covers of songs and videos:
+- `StoneMetadataActions.kt` (143) Tags, lyrics and covers of songs and videos:
 - `StoneSettingsActions.kt` (118) Favourites by id, playlist management, audio levels and the remaining Ajustes switches.
+- `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
 
 ## app/data/library
 - `ArtworkLoader.kt` (180) Only visible artwork is loaded.
@@ -42,9 +47,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LibraryCache.kt` (62) Disposable index only;
 - `LibraryRepository.kt` (105) Whole-device scanning is on and Android granted the media permission.
 - `LibraryUserStore.kt` (70) One database read, with no zero-count entries retained in the UI state.
-- `LrcLibClient.kt` (76) Lyrics found online:
+- `LrcLibClient.kt` (65) Lyrics found online:
 - `LyricsIndex.kt` (77) Which songs have lyrics, for the "LETRAS" badge, the "Con letras" list and sorting.
-- `LyricsMatcher.kt` (59) What to search for a song:
+- `LyricsMatcher.kt` (60) What to search for a song:
 - `LyricsOverrides.kt` (45) User-entered lyrics are durable data and intentionally live outside the disposable library cache.
 - `LyricsTextCleaner.kt` (27) Cleans lyrics copied from a web page:
 - `MediaFileIo.kt` (175) Shared file access for the tag editors.
@@ -58,8 +63,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `SongDispositionStore.kt` (27) Ids whose file was removed from the device;
 - `SongFileDeleter.kt` (30) Removes the physical media file.
 - `SongJson.kt` (57) Stable representation shared by the library cache and legacy app-private media index.
-- `TagSuggestions.kt` (39) A possible set of tags for a song, with how sure Stone is that it is the same song (0-1).
+- `TagSuggestions.kt` (32) A possible set of tags for a song, with how sure Stone is that it is the same song (0-1).
+- `TitleCleaner.kt` (41) Leaves only the real song title in names copied from YouTube and similar sites:
 - `VideoMetadata.kt` (285) Comma separated keywords, stored as the MP4 `keyw` tag.
+- `WebPacer.kt` (86) The service said "too many requests" (HTTP 429);
 
 ## app/data/persistence
 - `CrashLog.kt` (43) Keeps the last crash on the phone ("Stone se detuvo"), so it can be read and sent from Ajustes › Diagnóstico.
@@ -86,7 +93,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiModeShared.kt` (126) Tabs of Ajustes › Modo API.
 - `ApiModeToolList.kt` (70) Herramientas tab:
 - `ApiSecurityTab.kt` (79) Seguridad tab:
-- `ApiTokenRow.kt` (91) One token:
+- `ApiTokenRow.kt` (121) One token:
 - `ArtistCard.kt` (54)
 - `AudioLevelSettings.kt` (112) Ajustes › Niveles de audio:
 - `CrashReportCard.kt` (41) Ajustes › Diagnóstico:

@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
@@ -61,13 +62,13 @@ object StoneAutomation {
                     "Ask the user, or use a token with 'Acceso completo'.")
             currentAccess = access
             val result = withContext(Dispatchers.Main) { action.run(arguments) }
-            record(action, RecordStatus.OK, arguments.toString(), token)
+            record(action, RecordStatus.OK, arguments.toString(), token, "")
             result
         } catch (error: Exception) {
-            val failure = error as? ActionException ?: ActionException(error.message ?: "Action failed")
+            val failure = ActionException.of(error)
             val status = if (failure.code in setOf("USER_DENIED", "READ_ONLY_TOKEN", "TOOL_DISABLED", "ANDROID_CONSENT"))
                 RecordStatus.DENIED else RecordStatus.FAILED
-            record(action, status, failure.message ?: failure.code, token)
+            record(action, status, failure.message ?: failure.code, token, failure.code)
             throw failure
         }
     }
@@ -134,10 +135,16 @@ object StoneAutomation {
 
     fun reportProgress(progress: BatchProgress?) { mutableProgress.value = progress }
 
-    private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String) {
-        val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(160),
-            status, action.risk, token)
-        mutableHistory.update { (listOf(entry) + it).take(HISTORY_SIZE) }
+    private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String, code: String) {
+        val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(240),
+            status, action.risk, token, code)
+        val history = mutableHistory.updateAndGet { (listOf(entry) + it).take(HISTORY_SIZE) }
+        ActivityLog.recorded(history, status != RecordStatus.OK)
+    }
+
+    /** Activity saved by [ActivityLog] in a previous run. */
+    internal fun loadHistory(saved: List<ActionRecord>) {
+        mutableHistory.update { current -> (current + saved).distinct().sortedByDescending { it.timeMs }.take(HISTORY_SIZE) }
     }
 
     internal fun requireHost(): AutomationHost =

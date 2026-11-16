@@ -1,0 +1,175 @@
+package com.zirakusa.stone.nativeapp
+
+import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.automation.ActionException
+import com.zirakusa.stone.nativeapp.automation.ActionRecord
+import com.zirakusa.stone.nativeapp.automation.ActionRisk
+import com.zirakusa.stone.nativeapp.automation.ActivityLog
+import com.zirakusa.stone.nativeapp.automation.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.BatchItem
+import com.zirakusa.stone.nativeapp.automation.MetadataBatch
+import com.zirakusa.stone.nativeapp.automation.RecordStatus
+import com.zirakusa.stone.nativeapp.automation.StoneAutomation
+import com.zirakusa.stone.nativeapp.automation.StoneJobs
+import com.zirakusa.stone.nativeapp.automation.StoneSolutions
+import com.zirakusa.stone.nativeapp.data.library.RateLimitedException
+import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
+import com.zirakusa.stone.nativeapp.data.library.TitleCleaner
+import com.zirakusa.stone.nativeapp.data.library.WebPacer
+import com.zirakusa.stone.nativeapp.playback.AudioMode
+import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
+import org.junit.After
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/** Rate limits, title clean-up, background jobs, activity log and the solutions dictionary. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class AgentToolsTest {
+    private val songs = (1..6).map { Song("content://fixture/$it.mp3", "Song $it", "A", "B", "M", 100_000, 1, 1) }
+    private var refreshes = 0
+
+    @Before fun host() {
+        StoneJobs.minWaitMs = 10
+        StoneAutomation.host = object : AutomationHost {
+            override val playback = PlaybackState()
+            override val songs get() = this@AgentToolsTest.songs
+            override val playlists = emptyList<StonePlaylist>()
+            override val theme = "dark"; override val language = "es"
+            override fun progress() = 0L to 0L
+            override fun toggle() = Unit; override fun next() = Unit; override fun previous() = Unit
+            override fun seek(positionMs: Long) = Unit; override fun setSpeed(speed: Float) = Unit
+            override fun setVolume(percent: Int) = Unit; override fun play(song: Song, queue: List<Song>) = Unit
+            override fun playNext(songs: List<Song>) = Unit; override fun setAudioMode(mode: AudioMode) = Unit
+            override fun createPlaylist(name: String) = Unit; override fun addToPlaylist(playlistId: String, song: Song) = Unit
+            override fun setTheme(key: String) = Unit; override fun setLanguage(code: String) = Unit
+            override fun refreshLibrary() { refreshes++ }
+            override fun setSleepTimer(minutes: Int, finishTrack: Boolean, fadeOut: Boolean) = Unit
+            override fun extendSleepTimer(minutes: Int) = Unit; override fun setLauncherIcon(key: String) = Unit
+            override fun setFavorite(songId: String, favorite: Boolean) = Unit
+        }
+    }
+    @After fun clear() { StoneAutomation.host = null }
+
+    private fun items() = songs.map { BatchItem(it.id, it, JSONObject()) }
+
+    @Test fun pacerSpacesRequestsHonoursRetryAfterAndFailsFastDuringCoolDown() {
+        var now = 0L
+        val slept = mutableListOf<Long>()
+        val pacer = WebPacer("test", minGapMs = 700, clock = { now }, sleep = { slept += it; now += it })
+        assertEquals("a", pacer.call { 200 to "a" })
+        assertEquals("b", pacer.call { 200 to "b" })
+        assertEquals(listOf(700L), slept) // second request waited its turn
+        var calls = 0
+        assertEquals("ok", pacer.call { if (calls++ == 0) 429 to "3" else 200 to "ok" })
+        assertTrue(3_000L in slept) // Retry-After: 3
+        val blocked = assertThrows(RateLimitedException::class.java) { pacer.call { 429 to "60" } }
+        assertEquals(60, blocked.retryAfterSeconds) // too long to wait inside the call
+        assertThrows(RateLimitedException::class.java) { pacer.call { error("must not be called during cool-down") } }
+        now += 61_000 // cool-down over
+        assertNull(pacer.call { 404 to null })
+    }
+
+    @Test fun rateLimitErrorsHaveACodeAndASolution() {
+        val error = ActionException.of(RateLimitedException("iTunes", 30)).json()
+        assertEquals("RATE_LIMITED", error.getString("code"))
+        assertEquals("stone_troubleshoot code=RATE_LIMITED", error.getString("solution"))
+        listOf("LOW_CONFIDENCE", "LYRICS_NOT_FOUND", "ANDROID_CONSENT", "TITLE_HAS_EXTRAS", "NETWORK", "WORKFLOW_LYRICS")
+            .forEach { assertTrue(it, StoneSolutions.has(it)) }
+        assertEquals("RATE_LIMITED", StoneSolutions.lookup("rate_limited", null).getString("key"))
+        assertTrue(StoneSolutions.lookup(null, "genre").getInt("total") >= 1)
+    }
+
+    @Test fun titlesKeepOnlyTheSongName() {
+        assertEquals("In the End", TitleCleaner.clean("Linkin Park - In the End (Official Video)", "Linkin Park"))
+        assertEquals("Faded", TitleCleaner.clean("Faded [Lyrics] | Alan Walker", "Alan Walker"))
+        assertEquals("After Dark", TitleCleaner.clean("After Dark (slowed + reverb)", "Mr.Kitty"))
+        assertEquals("Demons (Remix)", TitleCleaner.clean("Demons (Remix) (Letra)", ""))
+        assertEquals("Alone (Sped Up)", TitleCleaner.clean("Alone (Sped Up) HD", ""))
+        assertEquals("Alan Walker Mashup", TitleCleaner.clean("Alan Walker Mashup | Naresh Parmar | On My Way | Faded", "Naresh Parmar"))
+        assertFalse(TitleCleaner.hasExtras("Another Love", "Tom Odell"))
+    }
+
+    @Test fun syncBatchStopsAtARateLimitAndListsWhatIsLeft() = runBlocking {
+        val result = MetadataBatch.run("t", items(), false, preview = { _, c -> c }) { item, _ ->
+            if (item.songId == songs[2].id) throw RateLimitedException("lrclib.net", 20)
+            JSONObject().put("id", item.songId)
+        }
+        assertEquals(2, result.getInt("updated"))
+        assertEquals(20, result.getInt("retryAfterSeconds"))
+        assertEquals("RATE_LIMITED", result.getJSONObject("stoppedBy").getString("code"))
+        assertEquals(4, result.getJSONArray("remainingSongIds").length())
+    }
+
+    @Test fun bigBatchesBecomeJobsThatWaitOnRateLimitsAndReportEachSong() {
+        var limitedOnce = false
+        val started = runBlocking { MetadataBatch.runOrStart("t", items(), JSONObject(), preview = { _, c -> c }) { item, _ ->
+            if (item.songId == songs[3].id && !limitedOnce) { limitedOnce = true; throw RateLimitedException("iTunes", 1) }
+            if (item.songId == songs[4].id) throw ActionException("nope", "LOW_CONFIDENCE")
+            JSONObject().put("id", item.songId)
+        } }
+        // 6 items are under SYNC_LIMIT: answered directly. Below, background=true forces a job.
+        assertFalse(started.has("jobId"))
+        limitedOnce = false
+        val job = runBlocking { MetadataBatch.runOrStart("t", items(), JSONObject().put("background", true), preview = { _, c -> c }) { item, _ ->
+            if (item.songId == songs[1].id && !limitedOnce) { limitedOnce = true; throw RateLimitedException("iTunes", 1) }
+            JSONObject().put("id", item.songId)
+        } }
+        val id = job.getString("jobId")
+        // The job refreshes the library on the main thread: keep it running while waiting.
+        val deadline = System.currentTimeMillis() + 10_000
+        while (StoneJobs.status(id, 0).getString("status") != "done" && System.currentTimeMillis() < deadline) {
+            org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle(); Thread.sleep(10)
+        }
+        assertTrue(limitedOnce)
+        val status = StoneJobs.status(id, 0)
+        assertEquals("done", status.getString("status"))
+        assertEquals(6, status.getInt("done")); assertEquals(100, status.getInt("percent"))
+        assertEquals(6, status.getJSONArray("results").length())
+        assertEquals(2, StoneJobs.status(id, 4).getJSONArray("results").length())
+        assertTrue(status.has("batchId"))
+    }
+
+    @Test fun activitySurvivesAsJsonAndFiltersErrors() {
+        val records = listOf(
+            ActionRecord(3, "metadata.suggest_tags", false, "iTunes is limiting requests", RecordStatus.FAILED, ActionRisk.READ, "Principal", "RATE_LIMITED"),
+            ActionRecord(2, "player.state", true, "{}", RecordStatus.OK, ActionRisk.READ, "GPT"),
+            ActionRecord(1, "metadata.fetch_lyrics", false, "No result", RecordStatus.FAILED, ActionRisk.PERSISTENT, "GPT", "LOW_CONFIDENCE"))
+        val restored = ActivityLog.parse(ActivityLog.serialize(records))
+        assertEquals(records, restored)
+        val errors = ActivityLog.query(restored, onlyErrors = true, tool = null, token = null, limit = 10)
+        assertEquals(2, errors.getInt("total"))
+        assertEquals(1, errors.getJSONObject("errorCodes").getInt("RATE_LIMITED"))
+        assertEquals("metadata_suggest_tags", errors.getJSONArray("calls").getJSONObject(0).getString("tool"))
+        assertEquals(1, ActivityLog.query(restored, true, null, "gpt", 10).getInt("total"))
+    }
+
+    @Test fun newToolsAreRegisteredForAgents() {
+        listOf("stone_activity", "stone_troubleshoot", "stone_job_status", "stone_job_resume", "stone_job_cancel",
+            "metadata_suggest_tags_many", "metadata_prepare_write").forEach { assertNotNull(it, StoneAutomation.find(it)) }
+        val help = runBlocking { StoneAutomation.find("stone_troubleshoot")!!.run(JSONObject().put("code", "LOW_CONFIDENCE")) }
+        assertEquals("LOW_CONFIDENCE", (help as JSONObject).getString("key"))
+    }
+
+    @Test fun eachTokenCanGetItsOwnExpiryAndBeRenewed() {
+        val now = System.currentTimeMillis()
+        com.zirakusa.stone.nativeapp.automation.ApiTokens.replaceForTests(listOf(
+            com.zirakusa.stone.nativeapp.automation.ApiToken("a", "GPT", "s1", com.zirakusa.stone.nativeapp.automation.AccessMode.FULL, now, expiresAt = now - 1),
+            com.zirakusa.stone.nativeapp.automation.ApiToken("b", "Claude", "s2", com.zirakusa.stone.nativeapp.automation.AccessMode.FULL, now)))
+        val tokens = com.zirakusa.stone.nativeapp.automation.ApiTokens
+        assertTrue(tokens.tokens[0].expired)
+        tokens.setExpiry("a", 365)
+        val renewed = tokens.tokens.first { it.id == "a" }
+        assertFalse(renewed.expired)
+        assertEquals(365L, (renewed.expiresAt - now + 60_000) / 86_400_000L)
+        assertEquals(0L, tokens.tokens.first { it.id == "b" }.expiresAt) // the other token is untouched
+        tokens.setExpiry("a", 0)
+        assertEquals(0L, tokens.tokens.first { it.id == "a" }.expiresAt)
+    }
+}

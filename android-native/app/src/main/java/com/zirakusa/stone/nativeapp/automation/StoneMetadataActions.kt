@@ -34,22 +34,25 @@ internal object StoneMetadataActions {
         ActionParam("removeCover", "boolean", "true removes the current cover."), dryRunParam)
 
     /** Update many with one Android dialog at most; used by metadata_update and metadata_update_many. */
-    private suspend fun updateItems(tool: String, items: List<BatchItem>, dryRun: Boolean): JSONObject {
+    private suspend fun updateItems(tool: String, items: List<BatchItem>, args: JSONObject): JSONObject {
         val edits = MetadataEdits(context())
+        val dryRun = args.optBoolean("dryRun")
         val locked = if (dryRun) emptySet() else edits.ensureWriteAccess(items.mapNotNull { it.song })
-        return MetadataBatch.run(tool, items, dryRun, locked, edits::preview) { item, batch ->
+        return MetadataBatch.runOrStart(tool, items, args, locked, edits::preview) { item, batch ->
             edits.apply(item.song!!, item.change, batch)
         }
     }
 
-    private suspend fun lyricsItems(tool: String, items: List<BatchItem>, dryRun: Boolean): JSONObject {
+    /** Lyrics are saved in Stone always, and inside the file whenever Android already allows it. */
+    private suspend fun lyricsItems(tool: String, items: List<BatchItem>, args: JSONObject): JSONObject {
         val edits = MetadataEdits(context())
-        return MetadataBatch.run(tool, items, dryRun, preview = { song, change ->
+        return MetadataBatch.runOrStart(tool, items, args, preview = { song, change ->
             val now = edits.lyricsOf(song)
             JSONObject().put("id", song.id).put("title", song.title).put("hadLyrics", now.isNotBlank())
                 .put("newLines", change.getString("lyrics").lines().count { it.isNotBlank() })
         }) { item, batch ->
-            JSONObject().put("id", item.songId).put("backupId", edits.setLyrics(item.song!!, item.change.getString("lyrics"), batch))
+            val (backup, embedded) = edits.setLyrics(item.song!!, item.change.getString("lyrics"), batch)
+            JSONObject().put("id", item.songId).put("backupId", backup).put("embeddedInFile", embedded)
         }
     }
 
@@ -73,7 +76,7 @@ internal object StoneMetadataActions {
             ActionRisk.PERSISTENT, listOf(ActionParam("songId", "string", "Id returned by library_search.", true)) + editParams) { args ->
             val change = JSONObject(args.toString()).apply { remove("dryRun") }
             val item = BatchItem(args.getString("songId"), song(args.getString("songId")), change)
-            val summary = updateItems("metadata_update", listOf(item), args.optBoolean("dryRun"))
+            val summary = updateItems("metadata_update", listOf(item), args)
             val result = summary.getJSONArray("results").getJSONObject(0)
             if (!result.getBoolean("ok")) result.getJSONObject("error").let {
                 throw ActionException(it.getString("message"), it.getString("code"), it.optString("hint").ifBlank { null })
@@ -85,24 +88,25 @@ internal object StoneMetadataActions {
             "plus any field of metadata_update. Returns a summary with progress per item and a batchId for metadata_undo.",
             ActionRisk.PERSISTENT, listOf(ActionParam("changes", "string",
                 "JSON array, e.g. [{\"songId\":\"…\",\"title\":\"New name\"},{\"songId\":\"…\",\"album\":\"X\"}]. Max 500.", true),
-                dryRunParam)) { args ->
-            updateItems("metadata_update_many", MetadataBatch.items(args.getString("changes"), editFields), args.optBoolean("dryRun"))
+                dryRunParam, MetadataBatch.backgroundParam)) { args ->
+            updateItems("metadata_update_many", MetadataBatch.items(args.getString("changes"), editFields), args)
         },
-        StoneAction("metadata.set_lyrics", "Save (or delete with empty text) the lyrics of a song or video in Stone. " +
-            "Plain text or LRC with [mm:ss.xx] timestamps for synced lyrics. Backed up: metadata_undo reverts it.",
+        StoneAction("metadata.set_lyrics", "Save (or delete with empty text) the lyrics of a song or video in Stone and, " +
+            "for MP3/FLAC/M4A that Android lets Stone write, inside the file too (embeddedInFile), so they travel when shared. " +
+            "Plain text or LRC with [mm:ss.xx] timestamps for synced lyrics. Backed up: metadata_undo reverts both.",
             ActionRisk.PERSISTENT, listOf(
                 ActionParam("songId", "string", "Id returned by library_search.", true),
                 ActionParam("lyrics", "string", "Lyrics text; empty string deletes them.", true), dryRunParam)) { args ->
             val item = BatchItem(args.getString("songId"), song(args.getString("songId")), JSONObject().put("lyrics", args.getString("lyrics")))
-            lyricsItems("metadata_set_lyrics", listOf(item), args.optBoolean("dryRun"))
+            lyricsItems("metadata_set_lyrics", listOf(item), args)
         },
         StoneAction("metadata.set_lyrics_many", "Save lyrics for many songs at once. 'changes' is a JSON array of " +
             "{songId, lyrics} (empty lyrics deletes). Backed up as one batch.", ActionRisk.PERSISTENT, listOf(
             ActionParam("changes", "string", "JSON array, e.g. [{\"songId\":\"…\",\"lyrics\":\"[00:12.00] …\"}]. Max 500.", true),
-            dryRunParam)) { args ->
+            dryRunParam, MetadataBatch.backgroundParam)) { args ->
             val items = MetadataBatch.items(args.getString("changes"), setOf("lyrics"))
             items.forEach { if (!it.change.has("lyrics")) throw ActionException("Item for ${it.songId} has no lyrics.", "INVALID_PARAM") }
-            lyricsItems("metadata_set_lyrics_many", items, args.optBoolean("dryRun"))
+            lyricsItems("metadata_set_lyrics_many", items, args)
         },
         StoneAction("metadata.history", "Recent edits made through the API, newest first, with their backupId and batchId.",
             ActionRisk.READ, listOf(ActionParam("limit", "integer", "Maximum entries (default 30, max 300)."))) { args ->

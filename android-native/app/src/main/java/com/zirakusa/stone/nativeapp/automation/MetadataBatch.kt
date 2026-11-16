@@ -2,6 +2,8 @@ package com.zirakusa.stone.nativeapp.automation
 
 import android.content.Context
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
+import com.zirakusa.stone.nativeapp.data.library.RateLimitedException
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,6 +21,16 @@ internal object MetadataBatch {
         ?: throw ActionException("Playback service not running; open Stone.", "STONE_CLOSED")
     fun song(id: String): Song = host().songs.firstOrNull { it.id == id }
         ?: throw ActionException("No song or video with id '$id'.", "NOT_FOUND", "Use library_search to get valid ids.")
+
+    /**
+     * The song with the tags its file has right now. The library index can lag behind an edit
+     * (Android re-reads files later), so searches use this and need no rescan in between.
+     */
+    fun fresh(song: Song): Song = if (song.isVideo) song else runCatching {
+        val tags = AudioTagEditor(context()).read(song.uri)
+        song.copy(title = tags.title.ifBlank { song.title }, artist = tags.artist.ifBlank { song.artist },
+            album = tags.album.ifBlank { song.album }, genre = tags.genre.ifBlank { song.genre })
+    }.getOrDefault(song)
 
     val dryRunParam = ActionParam("dryRun", "boolean", "true = only show what would change; nothing is written.")
 
@@ -42,31 +54,65 @@ internal object MetadataBatch {
     fun ids(raw: String): List<Song> = raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct().map(::song)
 
     /**
+     * One item: the edit (or its preview) as a JSON result with ok=true, or ok=false with an error
+     * code. A rate limit is not an item failure: it is thrown so the caller can wait and resume.
+     */
+    fun runItem(item: BatchItem, dryRun: Boolean, locked: Set<String>, preview: ((Song, JSONObject) -> JSONObject)?,
+        work: (BatchItem, String) -> JSONObject, batch: String): JSONObject = try {
+        val song = item.song ?: throw ActionException("No song or video with id '${item.songId}'.", "NOT_FOUND")
+        if (!dryRun && song.id in locked && !song.isVideo) throw ActionException(
+            "Android did not allow Stone to write '${song.title}'.", "ANDROID_CONSENT", MetadataEdits.ANDROID_HINT)
+        (if (dryRun && preview != null) preview(song, item.change) else work(item, batch)).put("ok", true)
+    } catch (limited: RateLimitedException) {
+        throw limited
+    } catch (failure: Exception) {
+        JSONObject().put("id", item.songId).put("ok", false).put("error", ActionException.of(failure).json())
+    }
+
+    /**
      * Runs [work] for every item on a background thread with progress and one summary. Failed
-     * items do not stop the batch; each result says why with an error code.
+     * items do not stop the batch; each result says why with an error code. If a web service
+     * starts limiting requests the batch stops there and lists the songs still to do.
      */
     suspend fun run(tool: String, items: List<BatchItem>, dryRun: Boolean, locked: Set<String> = emptySet(),
         preview: (Song, JSONObject) -> JSONObject, work: (BatchItem, String) -> JSONObject): JSONObject {
         val batch = UUID.randomUUID().toString().take(8)
         val started = System.currentTimeMillis()
+        var limited: RateLimitedException? = null
         val results = withContext(Dispatchers.IO) {
-            items.mapIndexed { index, item ->
+            val done = mutableListOf<JSONObject>()
+            for ((index, item) in items.withIndex()) {
                 if (!dryRun) StoneAutomation.reportProgress(BatchProgress(tool, index, items.size))
-                try {
-                    val song = item.song ?: throw ActionException("No song or video with id '${item.songId}'.", "NOT_FOUND")
-                    if (!dryRun && song.id in locked && !song.isVideo) throw ActionException(
-                        "Android did not allow Stone to write '${song.title}'.", "ANDROID_CONSENT", MetadataEdits.ANDROID_HINT)
-                    (if (dryRun) preview(song, item.change) else work(item, batch)).put("ok", true)
-                } catch (failure: Exception) {
-                    val error = failure as? ActionException ?: ActionException(failure.message ?: "failed")
-                    JSONObject().put("id", item.songId).put("ok", false).put("error", error.json())
-                }
+                try { done += runItem(item, dryRun, locked, preview, work, batch) }
+                catch (stop: RateLimitedException) { limited = stop; break }
             }
+            done
         }
         StoneAutomation.reportProgress(null)
         if (!dryRun && results.any { it.getBoolean("ok") }) host().refreshLibrary()
-        return summary(results, dryRun, batch, started)
+        return summary(results, dryRun, batch, started).apply {
+            limited?.let { stop ->
+                put("stoppedBy", ActionException.of(stop).json())
+                put("retryAfterSeconds", stop.retryAfterSeconds)
+                put("remainingSongIds", JSONArray(items.drop(results.size).map { it.songId }))
+            }
+        }
     }
+
+    /**
+     * Small batches answer directly; bigger ones (or background=true) become a [StoneJobs] job so
+     * the relay never times out.
+     */
+    suspend fun runOrStart(tool: String, items: List<BatchItem>, args: JSONObject, locked: Set<String> = emptySet(),
+        preview: (Song, JSONObject) -> JSONObject, work: (BatchItem, String) -> JSONObject): JSONObject {
+        val dryRun = args.optBoolean("dryRun")
+        val background = args.optBoolean("background", items.size > StoneJobs.SYNC_LIMIT)
+        return if (background && !dryRun) StoneJobs.start(tool, items, locked, work)
+        else run(tool, items, dryRun, locked, preview, work)
+    }
+
+    val backgroundParam = ActionParam("background", "boolean",
+        "Run as a background job and get a jobId (poll stone_job_status). Default: automatic above ${StoneJobs.SYNC_LIMIT} items.")
 
     fun summary(results: List<JSONObject>, dryRun: Boolean, batch: String, started: Long): JSONObject {
         val ok = results.count { it.getBoolean("ok") }
