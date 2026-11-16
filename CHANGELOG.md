@@ -1,3 +1,24 @@
+# Stone Kotlin 1.7.1
+
+- Navegador de letras en su propia ventana a pantalla completa (dentro de la hoja se veía en
+  blanco), con barra de carga y aviso si la página no carga.
+- Notificación de archivos nuevos: ahora funciona (antes el interruptor no hacía nada); pide el
+  permiso de notificaciones en Android 13+.
+- Biblioteca: se quitan las pestañas Películas y Shorts (todos los vídeos van a Vídeos) y hay un
+  separador entre Vídeos y Canciones.
+- Iconos de inicio: se quitan Mezclar todo, Favoritos y Ecualizador.
+- Personalizado: paleta de colores táctil; la foto de fondo tiene opacidad, modo Fondo de pantalla
+  o Foco y vista previa.
+- Playlists en tarjetas (Nueva playlist, Canciones favoritas, Recientemente reproducido, Más
+  reproducido, Con letras) con portada, número y las dos primeras canciones; mantener pulsado
+  cambia la portada.
+- Mini reproductor: los tres puntos pasan a ser el modo de reproducción (Repetir todo → Repetir una
+  canción → Mezclar todo).
+- Fila: modos excluyentes, título "Repetir una canción" con la canción fijada arriba y el resto
+  atenuado, texto oscuro sobre portadas claras y álbum junto al artista.
+- Política de privacidad, términos y licencias actualizados (tokens, copias, lrclib.net,
+  navegador de letras, acceso a todos los archivos, notificaciones).
+
 # Stone Kotlin 1.7.0
 
 - Letras: "Buscar automáticamente" (lrclib.net) muestra resultados con su porcentaje de

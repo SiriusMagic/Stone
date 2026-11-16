@@ -161,8 +161,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun scan(manual: Boolean) {
         mutable.update { it.copy(scanning = true, failed = false) }
         try {
+            val known = mutable.value.songs.mapTo(HashSet()) { it.id }
             repository.refresh(manual)?.let { refreshed ->
                 val songs = refreshed.songs
+                // Only after a first index exists, so a fresh install does not announce the whole library.
+                if (known.isNotEmpty() && settings.read().notifyNewFiles) com.zirakusa.stone.nativeapp.data.library
+                    .NewFilesNotifier.notify(getApplication(), songs.filter { it.id !in known })
                 val (favorites, counts) = withContext(Dispatchers.IO) {
                     userStore.favoriteIds() to userStore.playCounts(songs)
                 }

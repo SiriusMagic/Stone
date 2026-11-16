@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.LyricLine
 import com.zirakusa.stone.core.LyricsDocument
@@ -79,16 +81,21 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
         draft = TextFieldValue(text, TextRange(text.length))
         browserVisible = false; autoSearch = false; editor = true
     }
+    // Full-screen window of its own: a WebView inside the sliding sheet can stay blank.
+    if (browserVisible) Dialog(onDismissRequest = { browserVisible = false },
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        Surface(Modifier.fillMaxSize(), color = StonePalette.Background) {
+            Box(Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
+                LyricsSearchBrowser(song, onClose = { browserVisible = false }, onLyrics = ::openInEditor)
+            }
+        }
+    }
     if (autoSearch) LyricsAutoSearchDialog(song, ::openInEditor, onWeb = { autoSearch = false; browserVisible = true },
         onDismiss = { autoSearch = false })
 
     ModalBottomSheet(onDismissRequest = onClose, containerColor = Color(0xFF17151B),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF3A353D)) }) {
         ImmersiveWindowEffect()
-        if (browserVisible) {
-            LyricsSearchBrowser(song, onClose = { browserVisible = false }, onLyrics = ::openInEditor)
-            return@ModalBottomSheet
-        }
         if (editor) {
             Column(Modifier.fillMaxSize().padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

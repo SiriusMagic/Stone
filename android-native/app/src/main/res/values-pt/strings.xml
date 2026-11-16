@@ -305,10 +305,8 @@
     <string name="crossfade">Crossfade</string>
     <string name="crossfade_hint">Abaixa o volume no fim de cada música e o aumenta quando a próxima começa.</string>
     <string name="notify_new_files">Notificação de novos arquivos</string>
-    <string name="notify_new_files_hint">Avisar quando novos arquivos forem detectados ao escanear.</string>
     <string name="push_notifications">Notificação push</string>
     <string name="push_notifications_hint">As recomendações musicais ainda não estão disponíveis.</string>
-    <string name="notifications_unavailable">As notificações locais de novos arquivos ainda não estão disponíveis.</string>
     <string name="audio_output_intro">Veja a saída que o Android está usando agora. A seleção avançada depende do sistema e do aparelho conectado.</string>
     <string name="audio_output_current">Saída atual</string>
     <string name="audio_output_open_settings">Abrir configurações de som do sistema</string>
@@ -319,7 +317,6 @@
     <string name="playlist_cover_message">Escolha uma capa personalizada ou volte ao mosaico automático de capas.</string>
     <string name="choose_cover">Escolher capa</string>
     <string name="restore_automatic_cover">Restaurar automática</string>
-    <string name="playlist_cover_options">Opções de capa</string>
     <string name="playing">Tocando</string>
     <string name="empty_playlist">Playlist vazia</string>
     <string name="video_metadata_description">Descrição ou comentário</string>
@@ -352,9 +349,6 @@
     <string name="audio_mode_sleepy">Dorminhoco</string>
     <string name="audio_mode_sleepy_info" formatted="false">Para ouvir na cama sem incomodar: o volume máximo fica em 10&#160;% e até o nível mais baixo soa suave. Economiza bateria.</string>
     <plurals name="folder_count"><item quantity="one">%1$d pasta</item><item quantity="many">%1$d pastas</item><item quantity="other">%1$d pastas</item></plurals>
-    <string name="shorts">Shorts</string>
-    <string name="movies">Filmes</string>
-    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="many">%1$d shorts</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Girar tela</string>
     <string name="video_rewind_10">Voltar 10 s</string>
     <string name="video_forward_10">Avançar 10 s</string>
@@ -582,4 +576,18 @@
     <string name="lyrics_auto_plain">texto</string>
     <string name="lyrics_auto_match">Correspondência: %1$d%%</string>
     <string name="lyrics_browser_select_hint">Toque em Copiar: o Stone encontra a letra e abre no editor. Se não, selecione-a na página.</string>
+    <string name="custom_palette">Paleta de cores</string>
+    <string name="custom_palette_hint">Toque ou arraste para escolher qualquer cor.</string>
+    <string name="custom_background_wallpaper">Papel de parede</string>
+    <string name="custom_background_focus">Foco</string>
+    <string name="custom_background_opacity">Opacidade: %1$d%%</string>
+    <string name="custom_background_hint">Mais opacidade mostra mais a foto, mas o texto fica menos legível. Foco clareia o centro e escurece as bordas.</string>
+    <string name="lyrics_browser_failed">A página não carregou. Verifique a conexão ou tente outra fonte acima.</string>
+    <string name="new_files_split">Músicas: %1$d · Vídeos: %2$d</string>
+    <string name="notify_new_files_hint">Avisa quando uma varredura encontra músicas ou vídeos novos.</string>
+    <plurals name="new_files_title"><item quantity="one">%1$d arquivo novo no Stone</item><item quantity="many">%1$d arquivos novos no Stone</item><item quantity="other">%1$d arquivos novos no Stone</item></plurals>
+    <string name="play_mode_all">Repetir tudo</string>
+    <string name="play_mode_one">Repetir uma música</string>
+    <string name="play_mode_shuffle">Misturar tudo</string>
+    <string name="playlist_no_songs_yet">Sem músicas ainda</string>
 </resources>

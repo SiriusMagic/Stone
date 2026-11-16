@@ -144,11 +144,6 @@ private val legacyDefinitions = listOf(
         showQuickActionConfirmation(id)
         when (id) {
             "sort" -> sheet = "sort"
-            "shuffle_all" -> state.songs.filterNot { it.isVideo }.shuffled().let { mix ->
-                if (mix.isNotEmpty()) onPlay(mix.first(), mix)
-            }
-            "favorites" -> { tab = LibraryTab.Playlists; collection = "favorites" }
-            "equalizer" -> onEqualizer()
             "sleep_timer" -> { onOpenSettings(); onSettingsPage("sleep"); onSettingsSheetVisible(true) }
             "api_mode" -> { onOpenSettings(); onSettingsPage("api-mode"); onSettingsSheetVisible(true) }
             "audio_mode_battery" -> {

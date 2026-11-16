@@ -65,13 +65,10 @@ class HorizontalSettingsTest {
         store.setImmersiveEnabled(true)
     }
 
-    @Test fun videoTabsSplitByDuration() {
+    @Test fun videosTabHoldsEveryVideo() {
         fun video(ms: Long) = com.zirakusa.stone.core.Song("content://v/$ms.mp4", "v", "a", "", "f", ms, 1, 1, isVideo = true)
-        assertTrue(LibraryTab.Shorts.accepts(video(60_000)))
-        assertTrue(LibraryTab.Videos.accepts(video(90_000)))
-        assertTrue(LibraryTab.Videos.accepts(video(3_600_000)))
-        assertTrue(LibraryTab.Movies.accepts(video(3_700_000)))
-        assertTrue(LibraryTab.Videos.accepts(video(0)))
-        assertFalse(LibraryTab.Videos.accepts(video(60_000)))
+        listOf(0L, 60_000L, 3_700_000L).forEach { assertTrue(LibraryTab.Videos.accepts(video(it))) }
+        assertFalse(LibraryTab.Songs.accepts(video(60_000)))
+        assertEquals(LibraryTab.Videos, LibraryTab.entries.first())
     }
 }

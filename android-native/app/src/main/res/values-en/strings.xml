@@ -141,9 +141,7 @@
     <string name="gapless">Gapless playback</string><string name="gapless_hint">Joins songs with no silence between them and skips the silence recorded at the start and end of each file.</string>
     <string name="crossfade">Crossfade</string><string name="crossfade_hint">Fades the volume out at the end of each song and back in as the next one starts.</string>
     <string name="notify_new_files">New file notifications</string>
-    <string name="notify_new_files_hint">Notify when new files are found during a scan.</string>
     <string name="push_notifications">Push notifications</string><string name="push_notifications_hint">Music recommendations are not available yet.</string>
-    <string name="notifications_unavailable">Local notifications for new files are not available yet.</string>
     <string name="settings_home_shortcuts">Home shortcuts</string>
     <string name="home_shortcut_hint">Choose which shortcuts appear in the main toolbar.</string>
     <string name="analyze_audio">Analyze audio</string>
@@ -217,7 +215,6 @@
     <string name="playlist_cover_message">Choose a custom cover or restore the automatic artwork mosaic.</string>
     <string name="choose_cover">Choose cover</string>
     <string name="restore_automatic_cover">Restore automatic</string>
-    <string name="playlist_cover_options">Cover options</string>
     <string name="playing">Playing</string>
     <string name="empty_playlist">Empty playlist</string>
     <string name="video_metadata_description">Description or comment</string>
@@ -251,9 +248,6 @@
     <string name="audio_mode_sleepy">Sleepy</string>
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
     <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
-    <string name="shorts">Shorts</string>
-    <string name="movies">Movies</string>
-    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Rotate screen</string>
     <string name="video_rewind_10">Back 10 s</string>
     <string name="video_forward_10">Forward 10 s</string>
@@ -481,4 +475,18 @@
     <string name="lyrics_auto_plain">plain text</string>
     <string name="lyrics_auto_match">Match: %1$d%%</string>
     <string name="lyrics_browser_select_hint">Tap Copy: Stone finds the lyrics and opens them in the editor. If it cannot, select them on the page.</string>
+    <string name="custom_palette">Colour palette</string>
+    <string name="custom_palette_hint">Tap or drag to choose any accent colour.</string>
+    <string name="custom_background_wallpaper">Wallpaper</string>
+    <string name="custom_background_focus">Focus</string>
+    <string name="custom_background_opacity">Opacity: %1$d%%</string>
+    <string name="custom_background_hint">More opacity shows more of the photo but makes text harder to read. Focus keeps the centre clear and darkens the edges.</string>
+    <string name="lyrics_browser_failed">The page did not load. Check the connection or try another source above.</string>
+    <string name="new_files_split">Songs: %1$d · Videos: %2$d</string>
+    <string name="notify_new_files_hint">Notifies you when a scan finds new songs or videos.</string>
+    <plurals name="new_files_title"><item quantity="one">%1$d new file in Stone</item><item quantity="other">%1$d new files in Stone</item></plurals>
+    <string name="play_mode_all">Repeat all</string>
+    <string name="play_mode_one">Repeat one song</string>
+    <string name="play_mode_shuffle">Shuffle all</string>
+    <string name="playlist_no_songs_yet">No songs yet</string>
 </resources>

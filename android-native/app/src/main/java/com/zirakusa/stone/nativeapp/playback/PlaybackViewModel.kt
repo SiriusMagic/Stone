@@ -25,7 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null)
+data class QueueEntry(val id: String, val title: String, val artist: String, val uri: String? = null, val album: String = "")
 /**
  * [gain] is a software attenuation applied on top of Android's volume. Dormilón uses 0.1
  * (-20 dB): the whole volume range maps to 0-10 % of the normal output, so even Android's
@@ -237,7 +237,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 val item = player.getMediaItemAt(it)
                 QueueEntry(item.mediaId, item.mediaMetadata.title?.toString().orEmpty(),
                     item.mediaMetadata.artist?.toString().orEmpty(),
-                    item.localConfiguration?.uri?.toString())
+                    item.localConfiguration?.uri?.toString(), item.mediaMetadata.albumTitle?.toString().orEmpty())
             }, index = player.currentMediaItemIndex, failed = player.playerError != null,
             currentId = player.currentMediaItem?.mediaId.orEmpty(),
             favorite = data.isFavorite(player.currentMediaItem?.mediaId.orEmpty()),

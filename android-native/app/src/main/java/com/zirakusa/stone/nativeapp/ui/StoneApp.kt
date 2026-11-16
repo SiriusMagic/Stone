@@ -332,12 +332,7 @@ import kotlinx.coroutines.delay
                     song = currentSong,
                     previous = playback::previous,
                     next = playback::next,
-                    showOptions = true,
-                    onOptions = {
-                        playerSheets.optionsSong = null
-                        playerSheets.optionsSidePanel = landscape && !layout.fullPlayer
-                        playerSheets.optionsVisible = true
-                    },
+                    onPlayMode = { cyclePlayMode(context, player, playback) },
                     modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged {
                         miniPlayerHeightPx = it.height
                     }
@@ -412,4 +407,17 @@ import kotlinx.coroutines.delay
             onboardingDone = true
         }
     } } } }
+}
+
+/** Mini player button: repeat all → repeat one → shuffle all, with a short notice of the new mode. */
+private fun cyclePlayMode(context: android.content.Context, state: com.zirakusa.stone.nativeapp.playback.PlaybackState,
+    playback: com.zirakusa.stone.nativeapp.playback.PlaybackViewModel) {
+    val label = when {
+        state.shuffle -> { playback.setShuffle(false); playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ALL); R.string.play_mode_all }
+        state.repeat == androidx.media3.common.Player.REPEAT_MODE_ONE -> {
+            playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ALL); playback.setShuffle(true); R.string.play_mode_shuffle
+        }
+        else -> { playback.setShuffle(false); playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ONE); R.string.play_mode_one }
+    }
+    android.widget.Toast.makeText(context, label, android.widget.Toast.LENGTH_SHORT).show()
 }

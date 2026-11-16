@@ -58,6 +58,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     Swatches(StoneInk.entries.map { it.resolve(accent) to it.label }, StoneLook.iconInk.ordinal) {
         StoneLook.iconInk = StoneInk.entries[it]; persist()
     }
+    LookSection(R.string.custom_palette)
+    LookColorPalette(StoneLook.accentColor) { StoneLook.accent = StoneAccent.CUSTOM; StoneLook.customAccent = it; persist() }
+    Text(stringResource(R.string.custom_palette_hint), color = StonePalette.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
 
     LookSection(R.string.custom_font_size)
     ScaleSlider(StoneLook.fontScale, .8f..1.4f) { StoneLook.fontScale = it; persist() }
@@ -68,6 +71,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     ImageChoice(StoneLook.backgroundImage != null, { backgroundPicker.launch("image/*") }) {
         StoneLook.backgroundImage = null; persist()
     }
+    if (StoneLook.backgroundImage != null) LookBackgroundEditor(::persist)
     LookSection(R.string.custom_avatar)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         StoneAvatar(Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))

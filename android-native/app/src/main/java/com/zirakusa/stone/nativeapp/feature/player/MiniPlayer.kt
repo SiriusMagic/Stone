@@ -10,7 +10,10 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOne
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.media3.common.Player
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +42,7 @@ import kotlin.math.abs
 @Composable fun MiniPlayer(state: PlaybackState, open: () -> Unit, toggle: () -> Unit,
     modifier: Modifier = Modifier,
     song: Song? = null, previous: () -> Unit = {}, next: () -> Unit = {},
-    showOptions: Boolean = false, onOptions: () -> Unit = {}) {
+    onPlayMode: (() -> Unit)? = null) {
     if (state.queue.isEmpty()) return
     val context = LocalContext.current.applicationContext
     var videoFrame by remember(song?.uri, song?.modifiedMs) { mutableStateOf<ArtworkLoader.VideoFrame?>(null) }
@@ -69,10 +72,14 @@ import kotlin.math.abs
                     Modifier.padding(top = 4.dp), color = StonePalette.MiniSubtitle, fontSize = 12.sp,
                     maxLines = 1, letterSpacing = 0.sp)
             }
-            if (showOptions) {
-                IconButton(onClick = onOptions) {
-                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options), tint = Color.White)
+            // Play mode: repeat all → repeat one → shuffle; the icon shows the current one.
+            if (onPlayMode != null) IconButton(onClick = onPlayMode) {
+                val (icon, label) = when {
+                    state.shuffle -> Icons.Default.Shuffle to R.string.play_mode_shuffle
+                    state.repeat == Player.REPEAT_MODE_ONE -> Icons.Default.RepeatOne to R.string.play_mode_one
+                    else -> Icons.Default.Repeat to R.string.play_mode_all
                 }
+                Icon(icon, stringResource(label), tint = Color.White)
             }
             StoneIconButton(if (state.playing) StoneGlyph.Pause else StoneGlyph.Play,
                 stringResource(if (state.playing) R.string.pause else R.string.play), toggle,

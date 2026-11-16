@@ -305,10 +305,8 @@
     <string name="crossfade">Fondu enchaîné</string>
     <string name="crossfade_hint">Baisse le volume à la fin de chaque chanson et le remonte au début de la suivante.</string>
     <string name="notify_new_files">Notification des nouveaux fichiers</string>
-    <string name="notify_new_files_hint">Prévenir quand de nouveaux fichiers sont détectés lors d\'une analyse.</string>
     <string name="push_notifications">Notification push</string>
     <string name="push_notifications_hint">Les recommandations musicales ne sont pas encore disponibles.</string>
-    <string name="notifications_unavailable">Les notifications locales de nouveaux fichiers ne sont pas encore disponibles.</string>
     <string name="audio_output_intro">Consultez la sortie qu\'Android utilise actuellement. La sélection avancée dépend du système et de l\'appareil connecté.</string>
     <string name="audio_output_current">Sortie actuelle</string>
     <string name="audio_output_open_settings">Ouvrir les paramètres son du système</string>
@@ -319,7 +317,6 @@
     <string name="playlist_cover_message">Choisissez une pochette personnalisée ou revenez à la mosaïque automatique.</string>
     <string name="choose_cover">Choisir une pochette</string>
     <string name="restore_automatic_cover">Rétablir l\'automatique</string>
-    <string name="playlist_cover_options">Options de pochette</string>
     <string name="playing">Lecture en cours</string>
     <string name="empty_playlist">Playlist vide</string>
     <string name="video_metadata_description">Description ou commentaire</string>
@@ -352,9 +349,6 @@
     <string name="audio_mode_sleepy">Dodo</string>
     <string name="audio_mode_sleepy_info" formatted="false">Pour écouter au lit sans déranger : le volume maximal reste à 10&#160;% et même le niveau le plus bas reste doux. Économise la batterie.</string>
     <plurals name="folder_count"><item quantity="one">%1$d dossier</item><item quantity="many">%1$d dossiers</item><item quantity="other">%1$d dossiers</item></plurals>
-    <string name="shorts">Shorts</string>
-    <string name="movies">Films</string>
-    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="many">%1$d shorts</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Pivoter l\'écran</string>
     <string name="video_rewind_10">Reculer de 10 s</string>
     <string name="video_forward_10">Avancer de 10 s</string>
@@ -582,4 +576,18 @@
     <string name="lyrics_auto_plain">texte</string>
     <string name="lyrics_auto_match">Correspondance : %1$d%%</string>
     <string name="lyrics_browser_select_hint">Touche Copier : Stone trouve les paroles et les ouvre dans l\'éditeur. Sinon, sélectionne-les sur la page.</string>
+    <string name="custom_palette">Palette de couleurs</string>
+    <string name="custom_palette_hint">Touche ou glisse pour choisir n\'importe quelle couleur.</string>
+    <string name="custom_background_wallpaper">Fond d\'écran</string>
+    <string name="custom_background_focus">Focus</string>
+    <string name="custom_background_opacity">Opacité : %1$d%%</string>
+    <string name="custom_background_hint">Plus d\'opacité montre plus la photo mais le texte se lit moins bien. Focus garde le centre clair et assombrit les bords.</string>
+    <string name="lyrics_browser_failed">La page ne s\'est pas chargée. Vérifie la connexion ou essaie une autre source.</string>
+    <string name="new_files_split">Chansons : %1$d · Vidéos : %2$d</string>
+    <string name="notify_new_files_hint">Te prévient quand un scan trouve de nouvelles chansons ou vidéos.</string>
+    <plurals name="new_files_title"><item quantity="one">%1$d nouveau fichier dans Stone</item><item quantity="many">%1$d nouveaux fichiers dans Stone</item><item quantity="other">%1$d nouveaux fichiers dans Stone</item></plurals>
+    <string name="play_mode_all">Tout répéter</string>
+    <string name="play_mode_one">Répéter une chanson</string>
+    <string name="play_mode_shuffle">Tout mélanger</string>
+    <string name="playlist_no_songs_yet">Pas encore de chansons</string>
 </resources>

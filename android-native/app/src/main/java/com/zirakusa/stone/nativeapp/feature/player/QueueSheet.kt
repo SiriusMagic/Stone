@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -55,13 +56,21 @@ private val QueueDark = Color(0xFF4A292B)
     val swipeState = remember { mutableStateMapOf<String, Float>() }
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
+    // Light artwork gives a light sheet: switch text and icons to dark so they stay readable.
+    val light = tint.luminance() > .5f
+    val ink = if (light) Color(0xFF1E1A1C) else Color.White
+    val subInk = ink.copy(alpha = .72f)
+    val repeatOne = state.repeat == Player.REPEAT_MODE_ONE
+    val current = state.queue.getOrNull(state.index)
     ModalBottomSheet(onDismissRequest = onClose, containerColor = tint,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF7A5759)) }) {
         ImmersiveWindowEffect()
+        CompositionLocalProvider(LocalContentColor provides ink) {
         Column(Modifier.fillMaxHeight(0.78f).padding(horizontal = 18.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.queue), Modifier.weight(1f), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(if (repeatOne) R.string.play_mode_one else R.string.queue), Modifier.weight(1f),
+                    fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                 IconButton(onClick = { if (state.index >= 0) scope.launch { listState.animateScrollToItem(state.index) } }) {
                     Icon(Icons.Default.MyLocation, stringResource(R.string.go_to_current_song))
                 }
@@ -69,7 +78,18 @@ private val QueueDark = Color(0xFF4A292B)
                     Icon(Icons.Default.Delete, stringResource(R.string.clear_queue))
                 }
             }
-            LazyColumn(Modifier.weight(1f), state = listState) {
+            // Repeat one: the looping song stays pinned on top and the rest of the queue is dimmed.
+            if (repeatOne && current != null) {
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    QueueArtwork(current.uri, Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)))
+                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                        Text(current.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
+                        Text(subtitle(current), maxLines = 1, overflow = TextOverflow.Ellipsis, color = subInk, fontSize = 13.sp)
+                    }
+                }
+                HorizontalDivider(color = ink.copy(alpha = .15f))
+            }
+            LazyColumn(Modifier.weight(1f).graphicsLayer { alpha = if (repeatOne) .45f else 1f }, state = listState) {
                 itemsIndexed(state.queue, key = { _, item -> item.id }) { index, item ->
                     val isDragging = draggingId == item.id
                     Box(Modifier.fillMaxWidth().height(66.dp)
@@ -114,8 +134,8 @@ private val QueueDark = Color(0xFF4A292B)
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(item.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.Bold)
-                            Text(item.artist, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                color = Color(0xFFD0BFC0), fontSize = 13.sp)
+                            Text(subtitle(item), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                color = subInk, fontSize = 13.sp)
                         }
                         Icon(Icons.Default.DragHandle, stringResource(R.string.hold_to_reorder),
                             Modifier.size(38.dp).pointerInput(item.id, state.queue.size) {
@@ -149,23 +169,17 @@ private val QueueDark = Color(0xFF4A292B)
                     }
                 }
             }
-            // Intentionally outside LazyColumn: these controls never scroll away.
+            // Intentionally outside LazyColumn: these controls never scroll away. One mode at a time.
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QueueModeButton(state.repeat == Player.REPEAT_MODE_ONE, Modifier.weight(1f), {
-                    playback.setRepeat(if (state.repeat == Player.REPEAT_MODE_ONE) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE)
-                }) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Repeat, stringResource(R.string.repeat_one))
-                        if (state.repeat == Player.REPEAT_MODE_ONE) Text("1", fontSize = 10.sp,
-                            fontWeight = FontWeight.Black, modifier = Modifier.align(Alignment.Center))
-                    }
-                }
-                QueueModeButton(state.repeat == Player.REPEAT_MODE_ALL, Modifier.weight(1f), {
-                    playback.setRepeat(if (state.repeat == Player.REPEAT_MODE_ALL) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ALL)
-                }) { Icon(Icons.Default.Repeat, stringResource(R.string.repeat_all)) }
-                QueueModeButton(state.shuffle, Modifier.weight(1f), { playback.setShuffle(!state.shuffle) }) {
-                    Icon(Icons.Default.Shuffle, stringResource(R.string.shuffle))
-                }
+                QueueModeButton(repeatOne, tint, Modifier.weight(1f), {
+                    playback.setShuffle(false); playback.setRepeat(Player.REPEAT_MODE_ONE)
+                }) { Icon(Icons.Default.RepeatOne, stringResource(R.string.play_mode_one)) }
+                QueueModeButton(!repeatOne && !state.shuffle && state.repeat == Player.REPEAT_MODE_ALL, tint, Modifier.weight(1f), {
+                    playback.setShuffle(false); playback.setRepeat(Player.REPEAT_MODE_ALL)
+                }) { Icon(Icons.Default.Repeat, stringResource(R.string.play_mode_all)) }
+                QueueModeButton(state.shuffle && !repeatOne, tint, Modifier.weight(1f), {
+                    playback.setRepeat(Player.REPEAT_MODE_ALL); playback.setShuffle(true)
+                }) { Icon(Icons.Default.Shuffle, stringResource(R.string.play_mode_shuffle)) }
             }
             if (clearDialog) AlertDialog(
                 onDismissRequest = { clearDialog = false },
@@ -182,8 +196,12 @@ private val QueueDark = Color(0xFF4A292B)
                     }
                 })
         }
+        }
     }
 }
+
+private fun subtitle(item: com.zirakusa.stone.nativeapp.playback.QueueEntry) =
+    listOf(item.artist, item.album).filter { it.isNotBlank() }.joinToString(" - ")
 
 @Composable private fun QueueArtwork(uri: String?, modifier: Modifier) {
     val context = LocalContext.current.applicationContext
@@ -196,11 +214,16 @@ private val QueueDark = Color(0xFF4A292B)
     else StoneArtwork(uri, 0L, modifier)
 }
 
-@Composable private fun QueueModeButton(active: Boolean, modifier: Modifier, onClick: () -> Unit,
+@Composable private fun QueueModeButton(active: Boolean, tint: Color, modifier: Modifier, onClick: () -> Unit,
     content: @Composable () -> Unit) {
+    // Selected: a pale (or, on light sheets, dark) pill; the others blend with the sheet colour.
+    val light = tint.luminance() > .5f
+    val selected = if (light) Color(0xFF1E1A1C) else Color.White.copy(alpha = .85f).compositeOver(tint)
+    val idle = (if (light) Color.Black.copy(alpha = .06f) else Color.Black.copy(alpha = .14f)).compositeOver(tint)
+    val idleInk = if (light) Color(0xFF1E1A1C) else Color.White
     Surface(onClick = onClick, modifier = modifier.height(48.dp), shape = RoundedCornerShape(24.dp),
-        color = if (active) Color(0xFFE8E6EE) else QueueDark,
-        contentColor = if (active) QueueDark else Color(0xFFE8E6EE)) {
+        color = if (active) selected else idle,
+        contentColor = if (active) (if (light) Color.White else Color(0xFF1E1A1C)) else idleInk) {
         Box(contentAlignment = Alignment.Center) { content() }
     }
 }

@@ -54,6 +54,10 @@ object StoneLook {
     var iconScale by mutableFloatStateOf(1f)
     /** App-private copy of the chosen background image, or null. */
     var backgroundImage by mutableStateOf<String?>(null)
+    /** How much of the background image shows through (0.1-0.9); the rest is the theme colour. */
+    var backgroundOpacity by mutableFloatStateOf(DEFAULT_OPACITY)
+    /** "wallpaper": the whole image evenly; "focus": clear in the centre, darker towards the edges. */
+    var backgroundMode by mutableStateOf("wallpaper")
     /** App-private copy of the image that replaces the penguin, or null. */
     var avatarImage by mutableStateOf<String?>(null)
     /** Name shown inside Stone (the launcher label itself can't be changed by an app). */
@@ -81,6 +85,8 @@ object StoneLook {
         fontScale = store.look("fontScale", "1").toFloatOrNull()?.coerceIn(.8f, 1.4f) ?: 1f
         iconScale = store.look("iconScale", "1").toFloatOrNull()?.coerceIn(.8f, 1.5f) ?: 1f
         backgroundImage = store.look("backgroundImage", "").ifBlank { null }
+        backgroundOpacity = store.look("backgroundOpacity", "").toFloatOrNull()?.coerceIn(.1f, .9f) ?: DEFAULT_OPACITY
+        backgroundMode = store.look("backgroundMode", "wallpaper").takeIf { it in setOf("wallpaper", "focus") } ?: "wallpaper"
         avatarImage = store.look("avatarImage", "").ifBlank { null }
         appTitle = store.look("appTitle", "")
     }
@@ -93,6 +99,8 @@ object StoneLook {
         store.setLook("fontScale", fontScale.toString())
         store.setLook("iconScale", iconScale.toString())
         store.setLook("backgroundImage", backgroundImage.orEmpty())
+        store.setLook("backgroundOpacity", backgroundOpacity.toString())
+        store.setLook("backgroundMode", backgroundMode)
         store.setLook("avatarImage", avatarImage.orEmpty())
         store.setLook("appTitle", appTitle)
     }
@@ -103,8 +111,11 @@ object StoneLook {
     fun resetDefaults() {
         accent = StoneAccent.GOLD; customAccent = Color(0xFFF5C518); textInk = StoneInk.WHITE; iconInk = StoneInk.WHITE
         fontScale = 1f; iconScale = 1f; backgroundImage = null; avatarImage = null; appTitle = ""
+        backgroundOpacity = DEFAULT_OPACITY; backgroundMode = "wallpaper"
         persist()
     }
+
+    const val DEFAULT_OPACITY = .38f
 
     /** "#RRGGBB" for a colour (alpha is always opaque). */
     fun hex(color: Color): String = "#%06X".format(color.toArgb() and 0xFFFFFF)

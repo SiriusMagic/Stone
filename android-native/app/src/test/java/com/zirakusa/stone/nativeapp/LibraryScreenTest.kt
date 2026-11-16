@@ -182,16 +182,15 @@ class LibraryScreenTest {
         assertEquals(1, opens)
     }
 
-    @Test fun miniPlayerOptionsButtonIsOptInForHorizontalLayout() {
+    @Test fun miniPlayerShowsThePlayModeButton() {
         val song = Song("content://fixture/options", "After Dark", "Mr.Kitty", "Time", "Music", 1000, 1, 1)
         val player = PlaybackState(ready = true, title = song.title, artist = song.artist,
-            queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
-        val showOptions = mutableStateOf(true)
-        compose.setContent { StoneTheme {
-            MiniPlayer(player, {}, {}, song = song, showOptions = showOptions.value)
-        } }
-        compose.onNodeWithContentDescription(text(R.string.more_options)).assertIsDisplayed()
-        compose.runOnIdle { showOptions.value = false }
+            queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id,
+            repeat = androidx.media3.common.Player.REPEAT_MODE_ONE)
+        var taps = 0
+        compose.setContent { StoneTheme { MiniPlayer(player, {}, {}, song = song, onPlayMode = { taps++ }) } }
+        compose.onNodeWithContentDescription(text(R.string.play_mode_one)).assertIsDisplayed().performClick()
+        assertEquals(1, taps)
         compose.onNodeWithContentDescription(text(R.string.more_options)).assertDoesNotExist()
     }
 

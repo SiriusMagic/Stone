@@ -65,8 +65,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     val mediaSongs = songs.filter(tab::accepts)
     if (tab.isVideo) {
         VideoLibraryContent(mediaSongs, state, currentId, modifier, onPlay, onFolder,
-            compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions, onDelete, selectionActions.onTagsSaved,
-            shorts = tab == LibraryTab.Shorts)
+            compact, videoLibraryLayout, onVideoLibraryLayoutChange, onVideoOptions, onDelete, selectionActions.onTagsSaved)
         return
     }
     val visible = if (collection != null) mediaSongs.filter { groupKey(it) == collection } else mediaSongs
@@ -232,7 +231,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     onPlay: (Song, List<Song>) -> Unit, onFolder: () -> Unit,
     compact: Boolean, videoLibraryLayout: VideoLibraryLayout,
     onVideoLibraryLayoutChange: (VideoLibraryLayout) -> Unit,
-    onVideoOptions: (Song) -> Unit, onDelete: (Song) -> Unit, onTagsSaved: () -> Unit, shorts: Boolean = false) {
+    onVideoOptions: (Song) -> Unit, onDelete: (Song) -> Unit, onTagsSaved: () -> Unit) {
     val selection = remember { VideoSelectionState() }
     var folderBrowser by rememberSaveable { mutableStateOf(false) }
     var selectedFolder by rememberSaveable { mutableStateOf<String?>(null) }
@@ -250,7 +249,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
             }
             Text(if (selectedFolder != null) selectedFolder.orEmpty()
-                else pluralStringResource(if (shorts) R.plurals.shorts_count else R.plurals.video_count,
+                else pluralStringResource(R.plurals.video_count,
                     videos.size, videos.size), Modifier.weight(1f),
                 color = StonePalette.SongSubtitle, fontSize = 15.sp)
             IconButton(onClick = onFolder, enabled = !state.scanning) {
@@ -281,7 +280,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
             }
             visible.isNotEmpty() && effectiveLayout == VideoLibraryLayout.GRID ->
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(if (shorts) 150.dp else 170.dp),
+                    columns = GridCells.Adaptive(170.dp),
                     modifier = Modifier.weight(1f).fillMaxWidth().testTag("video-grid"),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp,
                         top = 4.dp, bottom = 24.dp),
@@ -290,11 +289,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 ) {
                     items(visible, key = { it.id }) { video ->
                         val edit: (() -> Unit)? = if (selection.editable(video)) { { selection.editing = video } } else null
-                        if (shorts) ShortCard(video, video.id == currentId,
-                            play = { selection.click(video) { onPlay(video, visible) } },
-                            onOptions = { onVideoOptions(video) }, checked = selection.checked(video),
-                            onLongClick = { if (!selection.active) selection.start(video) }, onEdit = edit)
-                        else VideoGridCard(video, selected = video.id == currentId,
+                        VideoGridCard(video, selected = video.id == currentId,
                             play = { selection.click(video) { onPlay(video, visible) } },
                             onOptions = { onVideoOptions(video) }, checked = selection.checked(video),
                             onLongClick = { if (!selection.active) selection.start(video) },
@@ -356,24 +351,16 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
         ?: state.playlists.find { it.id == key }?.name.orEmpty() }.orEmpty()
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp)) {
         if (collection == null) {
-            item { Button(onClick = { createVisible = true }, Modifier.fillMaxWidth()) {
-                Icon(Icons.Default.Add, null); Text(stringResource(R.string.new_playlist)) } }
+            item { NewPlaylistCard { createVisible = true } }
             items(labels) { (id, label) ->
-                PlaylistRow(
-                    title = stringResource(label), count = tracks(id).size,
-                    coverUri = state.playlistCovers[id], coverSongs = tracks(id).take(4),
-                    playing = tracks(id).any { it.id == currentId }, compact = compact,
-                    open = { select(id) }, onCoverOptions = { coverTarget = id }
-                )
+                val list = tracks(id)
+                PlaylistCard(id, stringResource(label), list, state.playlistCovers[id], list.any { it.id == currentId },
+                    compact, open = { select(id) }, onCoverOptions = { coverTarget = id })
             }
             items(state.playlists, key = { it.id }) { playlist ->
-                val playlistTracks = tracks(playlist.id)
-                PlaylistRow(
-                    title = playlist.name, count = playlistTracks.size,
-                    coverUri = state.playlistCovers[playlist.id], coverSongs = playlistTracks.take(4),
-                    playing = playlistTracks.any { it.id == currentId }, compact = compact,
-                    open = { select(playlist.id) }, onCoverOptions = { coverTarget = playlist.id }
-                )
+                val list = tracks(playlist.id)
+                PlaylistCard(playlist.id, playlist.name, list, state.playlistCovers[playlist.id], list.any { it.id == currentId },
+                    compact, open = { select(playlist.id) }, onCoverOptions = { coverTarget = playlist.id })
             }
         } else {
             item {
@@ -418,60 +405,6 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
                 }) { Text(stringResource(R.string.restore_automatic_cover)) }
             }
         )
-    }
-}
-
-@Composable private fun PlaylistRow(title: String, count: Int, coverUri: String?, coverSongs: List<Song>,
-    playing: Boolean, compact: Boolean, open: () -> Unit, onCoverOptions: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable(onClick = open),
-        shape = MaterialTheme.shapes.medium,
-        color = if (playing) StonePalette.PlayingCover.copy(alpha = .28f) else StonePalette.Surface,
-        tonalElevation = if (playing) 3.dp else 0.dp,
-    ) {
-        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            PlaylistArtwork(coverUri, coverSongs, Modifier.size(if (compact) 52.dp else 64.dp))
-            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(title, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(pluralStringResource(R.plurals.song_count, count, count), color = StonePalette.Muted)
-            }
-            if (playing) Icon(Icons.Default.Equalizer, stringResource(R.string.playing),
-                tint = StonePalette.Yellow, modifier = Modifier.padding(end = 4.dp))
-            IconButton(onClick = onCoverOptions) {
-                Icon(Icons.Default.MoreVert, stringResource(R.string.playlist_cover_options))
-            }
-            Icon(Icons.Default.ChevronRight, null, tint = StonePalette.Muted)
-        }
-    }
-}
-
-@Composable private fun PlaylistArtwork(customUri: String?, songs: List<Song>, modifier: Modifier) {
-    val shape = MaterialTheme.shapes.medium
-    Box(modifier.clip(shape).background(StonePalette.Cover), contentAlignment = Alignment.Center) {
-        if (!customUri.isNullOrBlank()) {
-            StoneArtwork(customUri, 0L, Modifier.fillMaxSize())
-        } else if (songs.isEmpty()) {
-            Icon(Icons.Default.QueueMusic, stringResource(R.string.empty_playlist),
-                tint = StonePalette.Yellow, modifier = Modifier.size(28.dp))
-        } else {
-            val tiles = songs.take(4)
-            if (tiles.size == 1) {
-                StoneArtwork(tiles.first().artworkSource, tiles.first().modifiedMs, Modifier.fillMaxSize())
-            } else {
-                Column(Modifier.fillMaxSize()) {
-                    Row(Modifier.weight(1f).fillMaxWidth()) {
-                        tiles.take(2).forEach { song ->
-                            StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.weight(1f).fillMaxHeight())
-                        }
-                    }
-                    if (tiles.size > 2) Row(Modifier.weight(1f).fillMaxWidth()) {
-                        tiles.drop(2).take(2).forEach { song ->
-                            StoneArtwork(song.artworkSource, song.modifiedMs, Modifier.weight(1f).fillMaxHeight())
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 

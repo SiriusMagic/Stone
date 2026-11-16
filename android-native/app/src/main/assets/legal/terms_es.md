@@ -1,4 +1,4 @@
-Vigentes desde el 15 de noviembre de 2026.
+Vigentes desde el 16 de noviembre de 2026.
 
 Al instalar o usar Stone aceptas estos términos. Si no estás de acuerdo, no uses la aplicación.
 
@@ -12,16 +12,16 @@ Stone se ofrece gratis. Su código se publica bajo la Licencia Apache 2.0; los c
 Tú eres responsable de los archivos que reproduces, editas o compartes con Stone y de contar con los derechos o permisos necesarios. No uses Stone para infringir derechos de autor ni otras leyes.
 
 ## 4. Funciones que modifican archivos
-El editor de etiquetas, el cambio de carátulas y la eliminación de archivos actúan sobre tus archivos originales cuando tú lo pides. Algunos cambios no se pueden deshacer. Conserva copias de seguridad de lo que te importe.
+El editor de etiquetas, el cambio de carátulas, las letras y la eliminación de archivos actúan sobre tus archivos originales cuando tú lo pides o cuando lo pide un asistente con un token de escritura. Stone guarda una copia de las etiquetas, letras y portadas que cambia un asistente para poder deshacerlas, pero esa copia es limitada y algunos cambios (como borrar archivos) no se pueden deshacer. Conserva copias de seguridad de lo que te importe.
 
 ## 5. Volumen y audición
 Stone permite amplificar el sonido por encima del 100 %. Escuchar a volumen alto durante mucho tiempo puede dañar tu audición y tus altavoces o auriculares. Tú decides el nivel y asumes ese riesgo.
 
 ## 6. Modo API
-El Modo API permite que un asistente de IA que tú conectes controle Stone. Eres responsable de con quién compartes tu enlace: quien lo tenga puede controlar la reproducción. Los asistentes de terceros se rigen por sus propios términos. El relevo que da el enlace público se ofrece sin garantía de disponibilidad y puede cambiar o dejar de funcionar.
+El Modo API permite que los asistentes de IA a los que des un token consulten o controlen Stone. Tú eliges el modo de cada token (Solo lectura, Lectura y escritura o Acceso completo) y qué herramientas pueden usar, y eres responsable de las acciones que hagan con los permisos que les diste y de con quién compartes tus enlaces. Los asistentes de terceros se rigen por sus propios términos. El relevo que da el enlace público se ofrece sin garantía de disponibilidad y puede cambiar o dejar de funcionar.
 
 ## 7. Servicios de terceros
-Stone puede abrir sitios o servicios de terceros (buscador, GitHub, asistentes de IA). No los controlamos ni respondemos por ellos.
+Stone puede usar o abrir servicios y sitios de terceros (lrclib.net, buscadores y sitios de letras, GitHub, asistentes de IA). No los controlamos ni respondemos por ellos. Las letras y otros contenidos que obtengas de esos servicios pertenecen a sus titulares: úsalos solo para tu disfrute personal y según las condiciones de cada sitio.
 
 ## 8. Sin garantías
 Stone se entrega "tal cual" y "según disponibilidad", sin garantías de ningún tipo, expresas o implícitas, incluidas las de comerciabilidad, idoneidad para un fin determinado y no infracción, en la máxima medida que permita la ley. No garantizamos que funcione sin errores ni interrupciones.

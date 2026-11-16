@@ -826,11 +826,14 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
         Text(stringResource(R.string.reminder_not_implemented), color = StonePalette.Muted,
             fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
     }
-    ToggleSetting(R.string.notify_new_files, R.string.notify_new_files_hint, newFiles) { enabled ->
-        store?.setBoolean("notifyNewFiles", enabled); newFiles = enabled
+    val permission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+        store?.setBoolean("notifyNewFiles", granted); newFiles = granted
     }
-    Text(stringResource(R.string.notifications_unavailable), color = StonePalette.Muted,
-        modifier = Modifier.padding(bottom = 18.dp))
+    ToggleSetting(R.string.notify_new_files, R.string.notify_new_files_hint, newFiles) { enabled ->
+        if (enabled && android.os.Build.VERSION.SDK_INT >= 33) permission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        else { store?.setBoolean("notifyNewFiles", enabled); newFiles = enabled }
+    }
     ToggleSetting(R.string.push_notifications, R.string.push_notifications_hint, push) { enabled ->
         store?.setBoolean("pushNotifications", enabled); push = enabled
     }

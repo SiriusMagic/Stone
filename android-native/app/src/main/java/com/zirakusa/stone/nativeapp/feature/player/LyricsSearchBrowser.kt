@@ -2,6 +2,11 @@ package com.zirakusa.stone.nativeapp.feature.player
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -47,6 +52,8 @@ private val lyricsSites = listOf(
     }
     var site by remember { mutableIntStateOf(0) }
     var browserView by remember { mutableStateOf<WebView?>(null) }
+    var loading by remember { mutableIntStateOf(0) }
+    var failed by remember { mutableStateOf(false) }
     BackHandler { browserView?.takeIf { it.canGoBack() }?.goBack() ?: onClose() }
     DisposableEffect(browserView) {
         val view = browserView
@@ -64,13 +71,31 @@ private val lyricsSites = listOf(
                 FilterChip(site == index, { site = index; browserView?.loadUrl(url(query)) }, { Text(name) })
             }
         }
+        if (loading in 1..99) LinearProgressIndicator({ loading / 100f }, Modifier.fillMaxWidth(), color = StonePalette.Yellow)
+        if (failed) Text(stringResource(R.string.lyrics_browser_failed), Modifier.padding(16.dp), color = StonePalette.Muted)
         AndroidView(factory = { webContext ->
             WebView(webContext).apply {
+                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                setBackgroundColor(android.graphics.Color.WHITE)
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.loadWithOverviewMode = true
+                settings.useWideViewPort = true
                 settings.builtInZoomControls = true
                 settings.displayZoomControls = false
-                webViewClient = WebViewClient()
+                CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                webChromeClient = object : WebChromeClient() {
+                    override fun onProgressChanged(view: WebView, newProgress: Int) { loading = newProgress }
+                }
+                webViewClient = object : WebViewClient() {
+                    override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) { failed = false }
+                    override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                        if (request.isForMainFrame) failed = true
+                    }
+                    // Links stay inside this browser, except app links (intent:, market:) which are ignored.
+                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) =
+                        request.url.scheme !in setOf("http", "https")
+                }
                 loadUrl(lyricsSites[0].second(query))
             }.also { browserView = it }
         }, modifier = Modifier.weight(1f).fillMaxWidth())
