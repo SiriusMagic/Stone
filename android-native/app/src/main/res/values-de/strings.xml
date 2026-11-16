@@ -400,8 +400,6 @@
     <string name="custom_shortcut_hint">Android erlaubt einer App nicht, ihr eigenes Symbol oder ihren Namen in der App-Übersicht zu ändern; die Verknüpfung erscheint auf dem Startbildschirm mit Bild und Namen deiner Wahl.</string>
     <string name="custom_shortcut_unsupported">Dein Launcher unterstützt keine angehefteten Verknüpfungen.</string>
     <string name="custom_reset">Gestaltung zurücksetzen</string>
-    <string name="custom_audio_max">Höchstlautstärke: %1$d%%</string>
-    <string name="custom_audio_gain">Verstärkung: %1$d%%</string>
     <string name="audio_mode_custom">Eigene</string>
     <string name="audio_mode_custom_info">Deine eigene Höchstlautstärke und Verstärkung (Einstellungen › Audiopegel).</string>
     <string name="audio_levels_title">Audiopegel</string>
@@ -617,4 +615,18 @@
     <string name="reminder_text">Tippen, um Stone zu öffnen und weiterzuhören.</string>
     <string name="notify_inexact">Android kann geplante Hinweise zum Akkusparen um einige Minuten verschieben.</string>
     <string name="settings_output_and_alerts">Audioausgabe</string>
+    <string name="audio_levels_pick">Wähle einen Modus, um seinen Klang anzupassen.</string>
+    <string name="audio_levels_sleepy_hint">Sanfter Klang</string>
+    <string name="audio_levels_balanced_hint">Für jeden Tag</string>
+    <string name="audio_levels_hifi_hint">Mehr Intensität</string>
+    <string name="audio_levels_custom_hint">Nach deinem Geschmack</string>
+    <string name="audio_levels_active">Aktiv</string>
+    <string name="audio_levels_independent">Eigene Einstellungen dieses Modus</string>
+    <string name="audio_levels_max">Maximale Lautstärke</string>
+    <string name="audio_levels_gain">Verstärkung</string>
+    <string name="audio_levels_saved">Änderungen werden in diesem Modus gespeichert.</string>
+    <string name="tags_auto_title">Automatisch ausfüllen</string>
+    <string name="tags_auto_searching">Song wird gesucht…</string>
+    <string name="tags_auto_none">Song nicht gefunden.</string>
+    <string name="tags_auto_offline">Katalog nicht erreichbar. Prüfe die Verbindung.</string>
 </resources>

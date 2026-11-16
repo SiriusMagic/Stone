@@ -255,7 +255,7 @@ class McpServerTest {
         fun names(secret: String) = rpcAs(secret, "tools/list").getJSONObject("result").getJSONArray("tools")
             .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
         assertTrue(names(token).containsAll(listOf("metadata_update", "metadata_undo", "metadata_rename", "playlist_delete",
-            "appearance_set_artwork_shape", "appearance_set_font_style")))
+            "appearance_set_artwork_shape", "appearance_set_font_style", "metadata_suggest_tags")))
         val readable = names("read-token")
         assertFalse("player_play" in readable)
         assertTrue(readable.containsAll(listOf("library_search", "metadata_get", "metadata_history", "player_state")))

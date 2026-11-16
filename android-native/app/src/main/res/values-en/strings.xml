@@ -302,8 +302,6 @@
     <string name="custom_shortcut_hint">Android doesn\'t let an app change its own drawer icon or name; the shortcut appears on your home screen with the image and name you choose.</string>
     <string name="custom_shortcut_unsupported">Your launcher doesn\'t support pinned shortcuts.</string>
     <string name="custom_reset">Reset customisation</string>
-    <string name="custom_audio_max">Maximum volume: %1$d%%</string>
-    <string name="custom_audio_gain">Gain: %1$d%%</string>
     <string name="audio_mode_custom">Custom</string>
     <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Audio levels).</string>
     <string name="audio_levels_title">Audio levels</string>
@@ -519,4 +517,18 @@
     <string name="reminder_text">Tap to open Stone and keep listening.</string>
     <string name="notify_inexact">Android may shift scheduled notices by a few minutes to save battery.</string>
     <string name="settings_output_and_alerts">Audio output</string>
+    <string name="audio_levels_pick">Pick a mode to tune its sound.</string>
+    <string name="audio_levels_sleepy_hint">Soft sound</string>
+    <string name="audio_levels_balanced_hint">Everyday use</string>
+    <string name="audio_levels_hifi_hint">More intensity</string>
+    <string name="audio_levels_custom_hint">Your way</string>
+    <string name="audio_levels_active">Active</string>
+    <string name="audio_levels_independent">Settings of this mode only</string>
+    <string name="audio_levels_max">Maximum volume</string>
+    <string name="audio_levels_gain">Gain</string>
+    <string name="audio_levels_saved">Changes are saved in this mode.</string>
+    <string name="tags_auto_title">Fill in automatically</string>
+    <string name="tags_auto_searching">Looking the song up…</string>
+    <string name="tags_auto_none">This song was not found.</string>
+    <string name="tags_auto_offline">Could not reach the catalogue. Check the connection.</string>
 </resources>

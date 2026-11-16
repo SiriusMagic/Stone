@@ -400,8 +400,6 @@
     <string name="custom_shortcut_hint">Android non consente a un\'app di cambiare la propria icona o il nome nel cassetto; la scorciatoia compare nella schermata home con l\'immagine e il nome che scegli.</string>
     <string name="custom_shortcut_unsupported">Il tuo launcher non supporta le scorciatoie fissate.</string>
     <string name="custom_reset">Ripristina personalizzazione</string>
-    <string name="custom_audio_max">Volume massimo: %1$d%%</string>
-    <string name="custom_audio_gain">Guadagno: %1$d%%</string>
     <string name="audio_mode_custom">Personalizzato</string>
     <string name="audio_mode_custom_info">Il tuo volume massimo e guadagno (Impostazioni › Livelli audio).</string>
     <string name="audio_levels_title">Livelli audio</string>
@@ -617,4 +615,18 @@
     <string name="reminder_text">Tocca per aprire Stone e continuare ad ascoltare.</string>
     <string name="notify_inexact">Android può spostare di qualche minuto gli avvisi programmati per risparmiare batteria.</string>
     <string name="settings_output_and_alerts">Uscita audio</string>
+    <string name="audio_levels_pick">Scegli una modalità per regolarne il suono.</string>
+    <string name="audio_levels_sleepy_hint">Suono morbido</string>
+    <string name="audio_levels_balanced_hint">Uso quotidiano</string>
+    <string name="audio_levels_hifi_hint">Più intensità</string>
+    <string name="audio_levels_custom_hint">Su misura</string>
+    <string name="audio_levels_active">Attivo</string>
+    <string name="audio_levels_independent">Impostazioni di questa modalità</string>
+    <string name="audio_levels_max">Volume massimo</string>
+    <string name="audio_levels_gain">Guadagno</string>
+    <string name="audio_levels_saved">Le modifiche si salvano in questa modalità.</string>
+    <string name="tags_auto_title">Compila automaticamente</string>
+    <string name="tags_auto_searching">Ricerca del brano…</string>
+    <string name="tags_auto_none">Brano non trovato.</string>
+    <string name="tags_auto_offline">Catalogo non raggiungibile. Controlla la connessione.</string>
 </resources>

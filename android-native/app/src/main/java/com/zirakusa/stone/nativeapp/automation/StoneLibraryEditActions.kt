@@ -82,6 +82,18 @@ internal object StoneLibraryEditActions {
                 match(song, item.change).put("backupId", edits.setLyrics(song, picks.getValue(song.id).text, batch))
             }
         },
+        StoneAction("metadata.suggest_tags", "Look a song up in the public iTunes catalogue and return possible tags " +
+            "(title, artist, album, genre, year, coverUrl) with a confidence 0-1. Apply one with metadata_update.",
+            ActionRisk.READ, listOf(ActionParam("songId", "string", "Id returned by library_search.", true))) { args ->
+            val song = MetadataBatch.song(args.getString("songId"))
+            val found = withContext(Dispatchers.IO) {
+                com.zirakusa.stone.nativeapp.data.library.TagSuggestions.find(song.title, song.artist, song.album, song.durationMs)
+            }
+            JSONObject().put("songId", song.id).put("candidates", JSONArray(found.map {
+                JSONObject().put("title", it.title).put("artist", it.artist).put("album", it.album).put("genre", it.genre)
+                    .put("year", it.year).put("coverUrl", it.coverUrl).put("confidence", Math.round(it.confidence * 100) / 100.0)
+            }))
+        },
         StoneAction("metadata.rename", "Rename many songs or videos at once with a template and/or clean-up. Template " +
             "placeholders: {title} {artist} {album} {file} (file name) {date} {n} {n:2} (counter). 'clean' removes technical " +
             "noise (underscores, extensions, [1080p], x264, YouTube ids…). Optional regex find/replace. Use dryRun first.",

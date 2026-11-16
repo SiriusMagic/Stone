@@ -400,8 +400,6 @@
     <string name="custom_shortcut_hint">Android ne permet pas à une application de changer sa propre icône ou son nom dans le tiroir ; le raccourci apparaît sur l\'écran d\'accueil avec l\'image et le nom choisis.</string>
     <string name="custom_shortcut_unsupported">Votre lanceur ne prend pas en charge les raccourcis épinglés.</string>
     <string name="custom_reset">Réinitialiser la personnalisation</string>
-    <string name="custom_audio_max">Volume maximal : %1$d%%</string>
-    <string name="custom_audio_gain">Gain : %1$d%%</string>
     <string name="audio_mode_custom">Personnalisé</string>
     <string name="audio_mode_custom_info">Votre propre volume maximal et gain (Paramètres › Niveaux audio).</string>
     <string name="audio_levels_title">Niveaux audio</string>
@@ -617,4 +615,18 @@
     <string name="reminder_text">Touche pour ouvrir Stone et continuer.</string>
     <string name="notify_inexact">Android peut décaler les avis programmés de quelques minutes pour économiser la batterie.</string>
     <string name="settings_output_and_alerts">Sortie audio</string>
+    <string name="audio_levels_pick">Choisis un mode pour régler son son.</string>
+    <string name="audio_levels_sleepy_hint">Son doux</string>
+    <string name="audio_levels_balanced_hint">Usage quotidien</string>
+    <string name="audio_levels_hifi_hint">Plus d\'intensité</string>
+    <string name="audio_levels_custom_hint">À ta mesure</string>
+    <string name="audio_levels_active">Actif</string>
+    <string name="audio_levels_independent">Réglages propres à ce mode</string>
+    <string name="audio_levels_max">Volume maximum</string>
+    <string name="audio_levels_gain">Gain</string>
+    <string name="audio_levels_saved">Les changements sont enregistrés dans ce mode.</string>
+    <string name="tags_auto_title">Remplir automatiquement</string>
+    <string name="tags_auto_searching">Recherche de la chanson…</string>
+    <string name="tags_auto_none">Chanson introuvable.</string>
+    <string name="tags_auto_offline">Catalogue injoignable. Vérifie la connexion.</string>
 </resources>

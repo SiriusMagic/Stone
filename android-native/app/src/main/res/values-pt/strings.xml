@@ -400,8 +400,6 @@
     <string name="custom_shortcut_hint">O Android não deixa um app mudar o próprio ícone ou nome na gaveta; o atalho aparece na tela inicial com a imagem e o nome que você escolher.</string>
     <string name="custom_shortcut_unsupported">Seu launcher não suporta atalhos fixados.</string>
     <string name="custom_reset">Redefinir personalização</string>
-    <string name="custom_audio_max">Volume máximo: %1$d%%</string>
-    <string name="custom_audio_gain">Ganho: %1$d%%</string>
     <string name="audio_mode_custom">Personalizado</string>
     <string name="audio_mode_custom_info">Seu próprio volume máximo e ganho (Configurações › Níveis de áudio).</string>
     <string name="audio_levels_title">Níveis de áudio</string>
@@ -617,4 +615,18 @@
     <string name="reminder_text">Toque para abrir o Stone e continuar ouvindo.</string>
     <string name="notify_inexact">O Android pode adiantar ou atrasar alguns minutos os avisos programados para economizar bateria.</string>
     <string name="settings_output_and_alerts">Saída de áudio</string>
+    <string name="audio_levels_pick">Escolha um modo para ajustar o som.</string>
+    <string name="audio_levels_sleepy_hint">Som suave</string>
+    <string name="audio_levels_balanced_hint">Uso diário</string>
+    <string name="audio_levels_hifi_hint">Mais intensidade</string>
+    <string name="audio_levels_custom_hint">Do seu jeito</string>
+    <string name="audio_levels_active">Ativo</string>
+    <string name="audio_levels_independent">Configuração própria deste modo</string>
+    <string name="audio_levels_max">Volume máximo</string>
+    <string name="audio_levels_gain">Ganho</string>
+    <string name="audio_levels_saved">As mudanças ficam salvas neste modo.</string>
+    <string name="tags_auto_title">Preencher automaticamente</string>
+    <string name="tags_auto_searching">Procurando a música…</string>
+    <string name="tags_auto_none">Música não encontrada.</string>
+    <string name="tags_auto_offline">Sem conexão com o catálogo. Verifique a internet.</string>
 </resources>

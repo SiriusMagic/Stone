@@ -1,5 +1,11 @@
 # Sin publicar (APK aún no generado)
 
+- Niveles de audio rediseñado: tarjetas Dormilón / Balanceado / Cine / Personalizado (tocar una
+  la activa), etiqueta "Activo", volumen máximo y ganancia con su valor, y restablecer arriba.
+- Ajustes ocupa toda la pantalla (antes dejaba un hueco abajo).
+- Editor de etiquetas: "Completar automáticamente" busca la canción en el catálogo público de iTunes
+  y rellena nombre, artista, álbum, género y portada (se guarda solo al pulsar Guardar). MCP:
+  `metadata_suggest_tags`.
 - Ajustes reordenados por secciones: Biblioteca, Audio, Vídeo, Notificaciones, Temas y
   personalización, Sistema y Ayuda. Tema y Personalizado son ahora una sola página, con los temas
   en miniatura arriba.

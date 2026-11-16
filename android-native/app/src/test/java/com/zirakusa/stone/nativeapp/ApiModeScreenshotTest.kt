@@ -53,4 +53,13 @@ class ApiModeScreenshotTest {
             onView(isRoot()).captureRoboImage("build/screenshots/stone-api-$file.png")
         }
     }
+
+    @Test fun audioLevels() {
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+                com.zirakusa.stone.nativeapp.feature.library.components.AudioLevelSettings(null, null)
+            }
+        } } }
+        onView(isRoot()).captureRoboImage("build/screenshots/stone-audio-levels.png")
+    }
 }

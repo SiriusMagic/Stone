@@ -365,8 +365,6 @@
     <string name="custom_shortcut_hint">Android no permite que una app cambie su propio icono o nombre del cajón; el acceso directo aparece en tu pantalla de inicio con la imagen y el nombre que elijas.</string>
     <string name="custom_shortcut_unsupported">Tu lanzador no admite accesos directos fijados.</string>
     <string name="custom_reset">Restablecer personalización</string>
-    <string name="custom_audio_max">Volumen máximo: %1$d%%</string>
-    <string name="custom_audio_gain">Ganancia: %1$d%%</string>
     <string name="audio_mode_custom">Personalizado</string>
     <string name="audio_mode_custom_info">Tu propio volumen máximo y ganancia (Ajustes › Niveles de audio).</string>
     <string name="audio_levels_title">Niveles de audio</string>
@@ -582,4 +580,18 @@
     <string name="reminder_text">Toca para abrir Stone y seguir escuchando.</string>
     <string name="notify_inexact">Android puede adelantar o retrasar unos minutos los avisos programados para ahorrar batería.</string>
     <string name="settings_output_and_alerts">Salida de audio</string>
+    <string name="audio_levels_pick">Selecciona un modo para ajustar su sonido.</string>
+    <string name="audio_levels_sleepy_hint">Sonido suave</string>
+    <string name="audio_levels_balanced_hint">Uso diario</string>
+    <string name="audio_levels_hifi_hint">Mayor intensidad</string>
+    <string name="audio_levels_custom_hint">A tu medida</string>
+    <string name="audio_levels_active">Activo</string>
+    <string name="audio_levels_independent">Configuración independiente de este modo</string>
+    <string name="audio_levels_max">Volumen máximo</string>
+    <string name="audio_levels_gain">Ganancia</string>
+    <string name="audio_levels_saved">Los cambios se guardan en este modo.</string>
+    <string name="tags_auto_title">Completar automáticamente</string>
+    <string name="tags_auto_searching">Buscando la canción…</string>
+    <string name="tags_auto_none">No se encontró esta canción.</string>
+    <string name="tags_auto_offline">Sin conexión con el catálogo. Revisa internet.</string>
 </resources>

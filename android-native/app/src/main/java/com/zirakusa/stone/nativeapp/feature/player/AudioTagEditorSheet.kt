@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.MusicNote
@@ -55,6 +56,7 @@ import java.io.ByteArrayOutputStream
     var error by remember(song.id) { mutableStateOf<String?>(null) }
     var path by remember(song.id) { mutableStateOf("") }
     var suggestionDismissed by remember(song.id) { mutableStateOf(false) }
+    var autoFill by remember(song.id) { mutableStateOf(false) }
     val supported = remember(song.id) { editor.supports(song.uri) }
     LaunchedEffect(song.id) {
         withContext(Dispatchers.IO) {
@@ -90,6 +92,23 @@ import java.io.ByteArrayOutputStream
                 onReplace = { tags = tags.copy(title = suggestion.first, artist = suggestion.second); suggestionDismissed = true },
                 onDismiss = { suggestionDismissed = true })
         }
+        // Fill name, artist, album, genre and cover from the internet; nothing is written until Guardar.
+        FilledTonalButton(onClick = { autoFill = true }, enabled = supported, modifier = Modifier.padding(top = 12.dp)) {
+            Icon(Icons.Default.AutoAwesome, null, tint = StonePalette.Yellow, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.tags_auto_title))
+        }
+        if (autoFill) TagSuggestDialog(tags.title, tags.artist, tags.album, song.durationMs, onDismiss = { autoFill = false },
+            onPick = { pick ->
+                autoFill = false
+                tags = tags.copy(title = pick.title, artist = pick.artist, album = pick.album.ifBlank { tags.album },
+                    genre = pick.genre.ifBlank { tags.genre })
+                if (pick.coverUrl.isNotBlank()) scope.launch {
+                    val cover = withContext(Dispatchers.IO) {
+                        runCatching { com.zirakusa.stone.nativeapp.data.library.CoverDownloader.download(pick.coverUrl) }.getOrNull()
+                    }
+                    if (cover != null) { tags = tags.copy(cover = cover, removeCover = false); preview = BitmapFactory.decodeByteArray(cover, 0, cover.size) }
+                }
+            })
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp)) }
         if (!supported) Text(stringResource(R.string.tags_format_unsupported), color = StonePalette.Yellow,
             fontSize = 13.sp, modifier = Modifier.padding(top = 12.dp))

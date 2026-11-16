@@ -89,7 +89,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
     ModalBottomSheet(onDismissRequest = onClose, containerColor = StonePalette.Surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         ImmersiveWindowEffect()
-        Column(Modifier.fillMaxHeight(.88f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
+        Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
             if (page == null) {
                 Text(stringResource(R.string.settings), fontSize = 27.sp, fontWeight = FontWeight.Black)
                 OutlinedTextField(value = settingsQuery, onValueChange = { settingsQuery = it.take(60) },
