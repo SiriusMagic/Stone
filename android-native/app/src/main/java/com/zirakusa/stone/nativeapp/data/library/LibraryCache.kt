@@ -3,7 +3,6 @@ package com.zirakusa.stone.nativeapp.data.library
 import android.content.Context
 import android.util.AtomicFile
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.core.LyricLine
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -35,7 +34,7 @@ class LibraryCache(context: Context) {
                 item.optJSONArray("lyrics")?.let { values -> List(values.length()) { values.getString(it) } }
                     ?: emptyList(),
                 item.optJSONArray("syncedLyrics")?.let { values -> List(values.length()) {
-                    values.getJSONObject(it).let { line -> LyricLine(line.getLong("timeMs"), line.getString("text")) }
+                    SongJson.line(values.getJSONObject(it))
                 } } ?: emptyList(), item.optBoolean("isVideo", false))
                 .copy(artworkUri = item.optString("artworkUri", ""))
         }
@@ -50,7 +49,7 @@ class LibraryCache(context: Context) {
                 .put("isVideo", song.isVideo)
                 .put("artworkUri", song.artworkUri)
                 .put("lyrics", JSONArray(song.lyrics)).put("syncedLyrics", JSONArray().apply {
-                    song.syncedLyrics.forEach { line -> put(JSONObject().put("timeMs", line.timeMs).put("text", line.text)) }
+                    song.syncedLyrics.forEach { line -> put(SongJson.lineJson(line)) }
                 }))
         }
         val bytes = JSONObject().put("tree", tree).put("songs", entries).toString().toByteArray()

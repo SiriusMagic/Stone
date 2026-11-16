@@ -1,3 +1,13 @@
+# Sin publicar (próxima versión)
+
+- Letras sincronizadas en el reproductor: el recuadro bajo los controles muestra una frase y, al
+  cambiar, sube suavemente mientras la siguiente entra desde abajo (650 ms). Sigue la posición real
+  del audio: al adelantar, retroceder, pausar o cambiar la velocidad se actualiza al instante.
+- LRC: marcas por palabra (`<mm:ss.xx>`), líneas vacías como pausa instrumental (♪) y marcas
+  repetidas sin saltos. Las letras sin tiempos ya no marcan la última línea como actual.
+- En la vista completa de letras, tocar una frase salta a ese momento de la canción.
+- Con "Quitar animaciones" de Android, las letras cambian sin movimiento.
+
 # Stone Kotlin 1.7.5
 
 - Arreglo del cierre en vertical: Kotlin 2.4 era más nuevo que el optimizador R8 del APK, que no

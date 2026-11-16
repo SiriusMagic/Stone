@@ -35,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.LyricLine
+import com.zirakusa.stone.core.LyricTimeline
 import com.zirakusa.stone.core.LyricsDocument
 import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
@@ -73,12 +74,15 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
     }
     val lines = if (document.synced.isNotEmpty()) document.synced else
         document.plain.mapIndexed { index, value -> LyricLine(index.toLong(), value) }
-    val active = if (document.synced.isNotEmpty()) LyricsParser.activeIndex(document.synced,
-        progress.first) else -1
+    // Same player-driven clock as the compact chip, so both views always show the same line.
+    val timeline = remember(document) { LyricTimeline(document) }
+    val cursor by rememberLyricCursor(playback, timeline)
+    val active = if (timeline.isTimed) cursor.line else -1
+    val reduced = rememberReducedMotion()
     val listState = rememberLazyListState()
     LaunchedEffect(active, lines.size, autoScroll) {
         if (autoScroll && active in lines.indices && active != listState.firstVisibleItemIndex) {
-            listState.animateScrollToItem(active, -180)
+            if (reduced) listState.scrollToItem(active, -180) else listState.animateScrollToItem(active, -180)
         }
     }
     BackHandler(enabled = browserVisible) { browserVisible = false }
@@ -162,11 +166,14 @@ private fun LyricsDocument.editableText(): String = if (synced.isNotEmpty()) {
                     val emphasis by animateFloatAsState(
                         if (selected) 1f else .96f,
                         animationSpec = tween(220), label = "lyric-emphasis")
+                    // Tapping a timed line jumps the song there and resumes following it.
                     Surface(
+                        onClick = { playback.seek(line.timeMs); autoScroll = true },
+                        enabled = timeline.isTimed,
                         color = Color.Transparent,
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(line.text, color = color,
+                        Text(line.text.ifBlank { "♪" }, color = color,
                             fontSize = if (selected) 26.sp else 23.sp,
                             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)

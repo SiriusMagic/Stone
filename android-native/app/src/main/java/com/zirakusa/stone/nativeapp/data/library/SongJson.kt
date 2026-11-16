@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.data.library
 
 import com.zirakusa.stone.core.LyricLine
+import com.zirakusa.stone.core.LyricWord
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.LyricsParser
 import org.json.JSONArray
@@ -22,9 +23,21 @@ object SongJson {
         put("genre", song.genre)
         put("lyrics", JSONArray(song.lyrics))
         put("syncedLyrics", JSONArray().apply {
-            song.syncedLyrics.forEach { put(JSONObject().put("timeMs", it.timeMs).put("text", it.text)) }
+            song.syncedLyrics.forEach { put(lineJson(it)) }
         })
     }
+
+    /** One timed line; word timings (enhanced LRC) only when present, so old caches stay readable. */
+    fun lineJson(line: LyricLine): JSONObject = JSONObject().put("timeMs", line.timeMs).put("text", line.text).apply {
+        if (line.words.isNotEmpty()) put("words", JSONArray().apply {
+            line.words.forEach { put(JSONObject().put("timeMs", it.timeMs).put("text", it.text)) }
+        })
+    }
+
+    fun line(item: JSONObject): LyricLine = LyricLine(item.optLong("timeMs"), item.optString("text"),
+        item.optJSONArray("words")?.let { words -> List(words.length()) {
+            words.getJSONObject(it).let { word -> LyricWord(word.optLong("timeMs"), word.optString("text")) }
+        } } ?: emptyList())
 
     fun fromJson(item: JSONObject): Song = Song(
         item.getString("uri"), item.optString("title", ""), item.optString("artist", ""),
@@ -33,7 +46,7 @@ object SongJson {
         item.optJSONArray("lyrics")?.let { values -> List(values.length()) { values.getString(it) } }
             ?: emptyList(),
         item.optJSONArray("syncedLyrics")?.let { values -> List(values.length()) {
-            values.getJSONObject(it).let { line -> LyricLine(line.optLong("timeMs"), line.optString("text")) }
+            line(values.getJSONObject(it))
         } } ?: emptyList(), item.optBoolean("isVideo", false), item.optString("artworkUri", ""),
         item.optString("genre", ""))
 

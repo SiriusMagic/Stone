@@ -39,7 +39,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `EmbeddedLyricsReader.kt` (69) Reads the same ID3 USLT frame supported by Stone 1.3.2, without a React bridge.
 - `FolderScanner.kt` (76) Uses Stone's selected SAF folder;
 - `ImportedLibraryStore.kt` (39) Legacy app-private media index kept so imports from older releases remain playable.
-- `LibraryCache.kt` (63) Disposable index only;
+- `LibraryCache.kt` (62) Disposable index only;
 - `LibraryRepository.kt` (105) Whole-device scanning is on and Android granted the media permission.
 - `LibraryUserStore.kt` (70) One database read, with no zero-count entries retained in the UI state.
 - `LrcLibClient.kt` (76) Lyrics found online:
@@ -57,7 +57,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `SongActions.kt` (125) Shares several songs or videos in one chooser.
 - `SongDispositionStore.kt` (27) Ids whose file was removed from the device;
 - `SongFileDeleter.kt` (30) Removes the physical media file.
-- `SongJson.kt` (44) Stable representation shared by the library cache and legacy app-private media index.
+- `SongJson.kt` (57) Stable representation shared by the library cache and legacy app-private media index.
 - `TagSuggestions.kt` (39) A possible set of tags for a song, with how sure Stone is that it is the same song (0-1).
 - `VideoMetadata.kt` (283) Comma separated keywords, stored as the MP4 `keyw` tag.
 
@@ -146,18 +146,20 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LandscapeVideoPreviewPanel.kt` (310) Video-specific preview used by the horizontal library layout.
 - `LandscapeVinylPlayer.kt` (194) One full turn of the record moves the song this far (like scratching a real vinyl).
 - `LibraryPlaybackPane.kt` (73)
+- `LyricPhrase.kt` (45) One phrase on a single line, left aligned.
 - `LyricsAutoSearch.kt` (67) "Buscar automáticamente":
+- `LyricsClock.kt` (91) The song's lyrics:
 - `LyricsSearchBrowser.kt` (118) Search engines offered as chips;
-- `LyricsSheet.kt` (215)
+- `LyricsSheet.kt` (222)
 - `LyricsWebExtractor.kt` (60) Finds the lyrics on the page open in the lyrics browser.
 - `MediaWriteGate.kt` (35) Runs a write action on a media file, first asking Android for write consent when the file comes from the device-wide MediaStore index (Android 11+).
 - `MiniPlayer.kt` (135)
 - `MiniPlayerOptionsPanel.kt` (62) Right-side options panel used only by the horizontal mini player.
 - `PlaybackControls.kt` (33)
 - `PlayerArtwork.kt` (57) Cover in the portrait player, in the shape chosen in Ajustes › Personalizado:
-- `PlayerLyricChip.kt` (82)
+- `PlayerLyricChip.kt` (89) Compact lyric window under the player controls:
 - `PlayerProgress.kt` (72)
-- `PlayerScreen.kt` (254) Horizontal swipe changes tracks;
+- `PlayerScreen.kt` (256) Horizontal swipe changes tracks;
 - `PlayerSheetsHost.kt` (87) Shared by the full player and the home dock;
 - `PlayerSheetsState.kt` (37) Item whose shared options menu is open;
 - `PlayerToolsSheets.kt` (389) Song currently played as audio only;
@@ -214,5 +216,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## core/
 - `HomeLayout.kt` (39) Pure window policy:
+- `LyricTimeline.kt` (33) Where playback is inside the lyrics:
+- `Lyrics.kt` (106) One word of an enhanced LRC line (`<mm:ss.xx>word`);
 - `RefreshPolicy.kt` (21) Event-triggered only.
-- `Song.kt` (91) Optional artwork extracted from a Stone package.
+- `Song.kt` (28) Optional artwork extracted from a Stone package.

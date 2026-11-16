@@ -190,7 +190,9 @@ import kotlin.math.abs
                             if (state.equalizerEnabled) Text("ON", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         }
                     }
-                    CurrentLyricChip(song, progress.first, { sheets.lyricsVisible = true }, Modifier.weight(1f))
+                    // Reloads after the lyrics sheet closes, in case lyrics were edited there.
+                    CurrentLyricChip(song, playback, { sheets.lyricsVisible = true }, Modifier.weight(1f),
+                        refreshKey = sheets.lyricsVisible)
                     IconButton(onClick = { sheets.queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
                 }
             }
