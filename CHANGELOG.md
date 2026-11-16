@@ -1,4 +1,4 @@
-# Sin publicar (próxima versión)
+# Stone Kotlin 1.7.6
 
 - Arreglo: al tocar una canción, la marca ya no salta a la primera de la lista y vuelve; la canción
   tocada queda marcada hasta que el reproductor la tiene cargada.
