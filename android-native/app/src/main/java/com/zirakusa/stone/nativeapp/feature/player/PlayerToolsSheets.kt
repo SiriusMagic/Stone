@@ -240,6 +240,14 @@ private val EqMuted = Color(0xFF91A4A4)
                     fontSize = 26.sp, fontWeight = FontWeight.Black)
                 Switch(state.equalizerEnabled, playback::setEqualizerEnabled)
             }
+            // Each new song gets the preset of its genre; songs without one keep the user's bands.
+            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.eq_by_genre), color = EqText, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.eq_by_genre_hint), color = EqMuted, fontSize = 12.sp, lineHeight = 15.sp)
+                }
+                Switch(state.equalizerByGenre, playback::setEqualizerByGenre)
+            }
             if (state.equalizerEnabled) {
                 TextButton(onClick = { playback.setEqualizerEnabled(false) }) {
                     Text(stringResource(R.string.compare_original))

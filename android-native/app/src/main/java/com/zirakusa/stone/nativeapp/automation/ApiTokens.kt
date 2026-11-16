@@ -3,6 +3,7 @@ package com.zirakusa.stone.nativeapp.automation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.security.SecureRandom
 
@@ -21,9 +22,11 @@ object ApiTokens {
     /** Loads the tokens; the single token of 1.6.8 and earlier becomes "Principal" with its old permissions. */
     fun load(store: StoneSettingsStore, defaultName: String) {
         this.store = store
-        tokens = ApiToken.parse(store.look("api.tokens", "[]"))
+        val stored = store.look("api.tokens", "[]")
+        tokens = ApiToken.parse(SecretBox.open(stored).ifBlank { "[]" })
+        if (tokens.isNotEmpty() && !SecretBox.isSealed(stored)) save() // seal what older versions stored in plain text
         if (tokens.isEmpty()) {
-            val legacy = store.look("api.token", "").ifBlank { secret() }
+            val legacy = store.look("api.token", "").takeUnless(SecretBox::isSealed).orEmpty().ifBlank { secret() }
             val mode = if (store.look("api.readOnly", "false").toBoolean()) AccessMode.READ else AccessMode.WRITE
             tokens = listOf(ApiToken(id(), defaultName, legacy, mode, System.currentTimeMillis()))
             save()
@@ -71,8 +74,9 @@ object ApiTokens {
 
     private fun save() {
         lastSaved = System.currentTimeMillis()
-        store?.setLook("api.tokens", ApiToken.serialize(tokens))
-        primary?.let { store?.setLook("api.token", it.secret) }
+        // Encrypted with a key kept in the Android Keystore; the old plain-text copy is wiped.
+        store?.setLook("api.tokens", SecretBox.seal(ApiToken.serialize(tokens)))
+        store?.setLook("api.token", "")
     }
 
     private fun publish() = McpServer.updateTokens(tokens)

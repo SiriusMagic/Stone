@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.BuildConfig
+import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -15,6 +16,12 @@ object ApiMode {
     var enabled by mutableStateOf(false)
         private set
     var localNetwork by mutableStateOf(false)
+        private set
+    /**
+     * Whether the token may travel in the link (?token=). Needed by apps that only take a URL
+     * (ChatGPT); off = only the Authorization: Bearer header is accepted, links carry no secret.
+     */
+    var urlTokens by mutableStateOf(true)
         private set
     /** Secret of the main token (the one behind the big Copy button). */
     val token: String get() = ApiTokens.primary?.secret.orEmpty()
@@ -39,17 +46,24 @@ object ApiMode {
         this.store = store
         enabled = store.look("api.enabled", "false").toBoolean()
         localNetwork = store.look("api.lan", "false").toBoolean()
+        urlTokens = store.look("api.urlToken", "true").toBoolean()
+        McpServer.allowQueryToken = urlTokens
         disabledTools = store.look("api.disabled", "").split(',').filter { it.isNotBlank() }.toSet()
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         ApiTokens.load(store, "Principal")
         ActivityLog.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
-        relaySecret = store.look("api.relaySecret", "").ifBlank { newToken(32).also { store.setLook("api.relaySecret", it) } }
+        // Stored encrypted with a Keystore key; values from older versions are re-sealed here.
+        relaySecret = SecretBox.open(store.look("api.relaySecret", "")).ifBlank { newToken(32) }
+            .also { if (!SecretBox.isSealed(store.look("api.relaySecret", ""))) store.setLook("api.relaySecret", SecretBox.seal(it)) }
         apply()
     }
 
     fun enable(value: Boolean) { enabled = value; store?.setLook("api.enabled", value.toString()); apply() }
+    fun allowUrlTokens(value: Boolean) {
+        urlTokens = value; McpServer.allowQueryToken = value; store?.setLook("api.urlToken", value.toString())
+    }
     fun allowLocalNetwork(value: Boolean) { localNetwork = value; store?.setLook("api.lan", value.toString()); apply() }
     /** Access mode of the main token (the cards of the General tab). */
     val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
@@ -91,10 +105,16 @@ object ApiMode {
 
     /** The one link users paste into Claude or ChatGPT; changing the token revokes the old one. */
     fun publicLink(secret: String = token): String? =
-        if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}?token=$secret" else null
+        if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}${tokenQuery(secret)}" else null
 
     /** Internet link when there is a relay, else this phone's address. */
-    fun linkFor(secret: String = token): String = publicLink(secret) ?: "http://127.0.0.1:$port${McpServer.PATH}?token=$secret"
+    fun linkFor(secret: String = token): String = publicLink(secret) ?: "http://127.0.0.1:$port${McpServer.PATH}${tokenQuery(secret)}"
+
+    private fun tokenQuery(secret: String) = if (urlTokens) "?token=$secret" else ""
+
+    /** What the copy buttons give: the link, plus the header line when the token may not go in it. */
+    fun shareText(secret: String = token): String =
+        if (urlTokens) linkFor(secret) else "${linkFor(secret)}\nAuthorization: Bearer $secret"
 
     /** Wi-Fi addresses of this phone (only when the local network is allowed). */
     fun lanHosts(): List<String> = if (!localNetwork) emptyList() else runCatching {
@@ -108,8 +128,8 @@ object ApiMode {
     /** Address other devices should use: the Wi-Fi one when allowed, else this phone only. */
     private fun mainHost() = lanHosts().firstOrNull() ?: "127.0.0.1"
 
-    fun urlWithToken() = "http://${mainHost()}:$port${McpServer.PATH}?token=$token"
-    fun sseUrlWithToken() = "http://${mainHost()}:$port/sse?token=$token"
+    fun urlWithToken() = "http://${mainHost()}:$port${McpServer.PATH}${tokenQuery(token)}"
+    fun sseUrlWithToken() = "http://${mainHost()}:$port/sse${tokenQuery(token)}"
     fun claudeCodeCommand() =
         "claude mcp add --transport http stone http://${mainHost()}:$port${McpServer.PATH} --header \"Authorization: Bearer $token\""
     fun jsonConfig() = """{

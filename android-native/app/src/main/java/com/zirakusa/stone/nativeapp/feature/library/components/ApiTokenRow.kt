@@ -45,13 +45,13 @@ import java.util.Date
                 else stringResource(R.string.api_token_expires, format.format(Date(token.expiresAt))),
                 color = if (token.expired) ApiRed else StonePalette.Muted, fontSize = 11.sp)
         }
-        IconButton(onClick = { copy("Stone MCP · ${token.name}", ApiMode.linkFor(token.secret)) }) {
+        IconButton(onClick = { copy("Stone MCP · ${token.name}", ApiMode.shareText(token.secret)) }) {
             Icon(Icons.Default.ContentCopy, stringResource(R.string.api_token_copy_link))
         }
         Box {
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, null) }
             DropdownMenu(menu, { menu = false }) {
-                DropdownMenuItem({ Text(stringResource(R.string.api_token_copy_link)) }, { menu = false; copy("Stone MCP", ApiMode.linkFor(token.secret)) })
+                DropdownMenuItem({ Text(stringResource(R.string.api_token_copy_link)) }, { menu = false; copy("Stone MCP", ApiMode.shareText(token.secret)) })
                 DropdownMenuItem({ Text(stringResource(R.string.api_token_rename)) }, { menu = false; renaming = true })
                 DropdownMenuItem({ Text(stringResource(R.string.api_token_rotate)) }, { menu = false; ApiTokens.rotate(token.id) })
                 DropdownMenuItem({ Text(stringResource(R.string.api_token_revoke), color = ApiRed) }, { menu = false; ApiTokens.revoke(token.id) })

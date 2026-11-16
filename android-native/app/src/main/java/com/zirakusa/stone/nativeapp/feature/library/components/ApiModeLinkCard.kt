@@ -20,14 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.automation.ApiMode
-import com.zirakusa.stone.nativeapp.automation.McpServer
 import com.zirakusa.stone.nativeapp.automation.RelayClient
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 /** The two-click part of API mode: the user's link, a big Copy button and "change link". */
 @Composable internal fun ApiModeLinkCard(copy: (String, String) -> Unit) {
-    val link = ApiMode.publicLink()
-        ?: "http://127.0.0.1:${ApiMode.port}${McpServer.PATH}?token=${ApiMode.token}"
+    val link = ApiMode.shareText()
     Column(Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(22.dp))
         .background(StonePalette.Chip).padding(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {

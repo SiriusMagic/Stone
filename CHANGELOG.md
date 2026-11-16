@@ -1,5 +1,13 @@
 # Sin publicar (próxima versión)
 
+- Ecualizador «Según el género»: con el ecualizador encendido, cada canción aplica el ajuste de su género
+  (Electrónica, Rock, Latín, Heavy metal…) al empezar. Las canciones sin género usan tu propio ajuste, que nunca
+  se sobrescribe. También desde la API: equalizer_set_by_genre.
+- Seguridad del Modo API: los tokens y la clave del relay se guardan cifrados con una clave del Android
+  Keystore (se borra la copia antigua en texto plano). Interruptor «Token dentro del enlace»: apagado, los
+  enlaces no llevan el secreto y solo se acepta Authorization: Bearer. Las sesiones SSE exigen el token en cada
+  mensaje, pertenecen al token que las abrió y se cierran al revocarlo o rotarlo. Aviso de que la red local
+  usa HTTP sin cifrar.
 - Modo API: cada token muestra su propio enlace con botón de copiar, para dar uno distinto a cada agente
   (pueden trabajar a la vez). Caducidad por token: sin fecha, 7, 30, 90 días, 1 año o personalizada, también
   al editar (renueva un token caducado).

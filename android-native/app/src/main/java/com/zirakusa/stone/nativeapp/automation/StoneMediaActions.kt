@@ -38,6 +38,7 @@ internal object StoneMediaActions {
     private fun equalizer(): JSONObject {
         val playback = host().playback
         return JSONObject().put("enabled", playback.equalizerEnabled).put("preset", playback.equalizerPreset)
+            .put("byGenre", playback.equalizerByGenre)
             .put("bands", JSONArray(playback.equalizerValues.mapIndexed { index, value ->
                 JSONObject().put("band", index).put("frequency", bandLabels[index]).put("value", value) }))
             .put("range", "-10..10").put("presets", JSONArray(presets.keys))
@@ -126,6 +127,12 @@ internal object StoneMediaActions {
             listOf(ActionParam("preset", "string", "Preset key.", true, presets.keys.toList()))) { args ->
             val (name, values) = presets.getValue(args.getString("preset"))
             host().setEqualizerPreset(name, values); ok("Preset $name applied")
+        },
+        StoneAction("equalizer.set_by_genre", "Equalizer by genre: on every song change Stone applies the preset of the " +
+            "song's genre tag (Electrónica, Rock, Latín…); songs without a known genre use the user's own bands. " +
+            "Turning it on also turns the equalizer on. Fill missing genres first with metadata_suggest_tags_many.",
+            ActionRisk.REVERSIBLE, listOf(ActionParam("enabled", "boolean", "true = follow the genre.", true))) { args ->
+            host().setEqualizerByGenre(args.getBoolean("enabled")); ok("Equalizer by genre " + if (args.getBoolean("enabled")) "on" else "off")
         },
         // ---- video / screen ----
         StoneAction("video.get", "Video settings: how the picture is fitted (scale) and the options available.", ActionRisk.READ) {

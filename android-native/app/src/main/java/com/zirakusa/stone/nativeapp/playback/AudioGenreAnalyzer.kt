@@ -21,6 +21,15 @@ class AudioGenreAnalyzer(private val context: Context) {
         } finally { retriever.release() }
     }.getOrDefault(AudioAnalysis(null, null, 0))
 
+    /** The genre tag exactly as the file has it (null when empty or unreadable). */
+    fun rawGenre(uri: String): String? = runCatching {
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, uri.toUri())
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)?.trim()?.takeIf { it.isNotEmpty() }
+        } finally { retriever.release() }
+    }.getOrNull()
+
     private fun normalize(value: String?): String? {
         val genre = value?.lowercase() ?: return null
         return when {

@@ -91,6 +91,7 @@ import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
             override fun setEqualizerEnabled(enabled: Boolean) = playback.setEqualizerEnabled(enabled)
             override fun setEqualizerBand(index: Int, value: Int) = playback.setEqualizerBand(index, value)
             override fun setEqualizerPreset(name: String, values: List<Int>) = playback.setEqualizerPreset(name, values)
+            override fun setEqualizerByGenre(enabled: Boolean) = playback.setEqualizerByGenre(enabled)
             override fun removeFromPlaylist(playlistId: String, song: Song) = library.removeFromPlaylist(playlistId, song)
             override fun sortLibrary(key: String, descending: Boolean) {
                 LibrarySort.entries.firstOrNull { it.name.equals(key, ignoreCase = true) }?.let { LibraryViewState.sort = it }

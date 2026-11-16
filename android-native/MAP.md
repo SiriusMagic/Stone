@@ -9,13 +9,13 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/automation
 - `AccessMode.kt` (51) What a token lets an agent do.
 - `ActivityLog.kt` (65) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `ApiMode.kt` (132) User switches for the MCP server (Ajustes › Modo API).
-- `ApiTokens.kt` (89) Access tokens of Ajustes › Modo API › Seguridad.
+- `ApiMode.kt` (152) User switches for the MCP server (Ajustes › Modo API).
+- `ApiTokens.kt` (93) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthThrottle.kt` (29) Slows down token guessing:
-- `AutomationHost.kt` (70) What the running app offers to automation.
+- `AutomationHost.kt` (71) What the running app offers to automation.
 - `McpHttp.kt` (114) One parsed HTTP/1.1 request;
 - `McpSelfTest.kt` (50) Result of calling Stone's own MCP address the way an agent would.
-- `McpServer.kt` (271) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (292) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `MetadataBatch.kt` (126) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `RelayClient.kt` (127) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
@@ -28,7 +28,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneJobs.kt` (122) Background batches for agents.
 - `StoneLibraryEditActions.kt` (161) Bulk tools:
 - `StoneLookActions.kt` (100) Appearance and settings actions:
-- `StoneMediaActions.kt` (211) Queue, equalizer, video and library-view actions (added in 1.6.7).
+- `StoneMediaActions.kt` (218) Queue, equalizer, video and library-view actions (added in 1.6.7).
 - `StoneMetadataActions.kt` (143) Tags, lyrics and covers of songs and videos:
 - `StoneSettingsActions.kt` (118) Favourites by id, playlist management, audio levels and the remaining Ajustes switches.
 - `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
@@ -72,6 +72,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `CrashLog.kt` (43) Keeps the last crash on the phone ("Stone se detuvo"), so it can be read and sent from Ajustes › Diagnóstico.
 - `LookImages.kt` (42) Private copies of images chosen in Personalizado (background, avatar, shortcut icon).
 - `PlaybackDataStore.kt` (52) Optional extracted cover used to rebuild system media artwork after restart.
+- `SecretBox.kt` (53) Encrypts API secrets (agent tokens, the relay key) before they are stored, with an AES-GCM key that lives in the Android Keystore and never leaves it.
 - `StoneDatabase.kt` (91) Versioned source of truth for user-created Stone data.
 - `StoneSettings.kt` (147) Last custom duration chosen in the sleep timer (minutes).
 
@@ -88,11 +89,11 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiGeneralTab.kt` (67) General tab:
 - `ApiLinkTab.kt` (53) Enlace tab:
 - `ApiModeConnect.kt` (63) Port, "Probar conexión" and ready-to-paste client configurations.
-- `ApiModeLinkCard.kt` (59) The two-click part of API mode:
+- `ApiModeLinkCard.kt` (57) The two-click part of API mode:
 - `ApiModeSettings.kt` (102) Ajustes › Modo API:
 - `ApiModeShared.kt` (126) Tabs of Ajustes › Modo API.
 - `ApiModeToolList.kt` (70) Herramientas tab:
-- `ApiSecurityTab.kt` (79) Seguridad tab:
+- `ApiSecurityTab.kt` (81) Seguridad tab:
 - `ApiTokenRow.kt` (121) One token:
 - `ArtistCard.kt` (54)
 - `AudioLevelSettings.kt` (112) Ajustes › Niveles de audio:
@@ -170,7 +171,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `PlayerScreen.kt` (256) Horizontal swipe changes tracks;
 - `PlayerSheetsHost.kt` (87) Shared by the full player and the home dock;
 - `PlayerSheetsState.kt` (37) Item whose shared options menu is open;
-- `PlayerToolsSheets.kt` (389) Song currently played as audio only;
+- `PlayerToolsSheets.kt` (397) Song currently played as audio only;
 - `PortraitVideoChrome.kt` (120) Portrait video controls:
 - `QueueSheet.kt` (244) Outlined "LETRAS" label in front of the subtitle of songs that have lyrics.
 - `RecommendationsSheet.kt` (80) Songs to play after [current]:
@@ -191,11 +192,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/playback
 - `AndroidVolumeMapper.kt` (33) Conversion between Android's discrete STREAM_MUSIC levels and Stone's native 0..100% display.
 - `AudioDiagnostics.kt` (213) Read-only audio tracing used while investigating volume changes.
-- `AudioGenreAnalyzer.kt` (41) On-demand metadata classifier.
+- `AudioGenreAnalyzer.kt` (50) On-demand metadata classifier.
 - `DiagnosticsReportExporter.kt` (33)
+- `GenreEqualizer.kt` (45) Equalizer by genre:
 - `PerformanceDiagnostics.kt` (88) /proc exposes this count without allocating a stack trace for every thread.
 - `PlaybackEqualizer.kt` (89) Read-only state used by the audio investigation;
-- `PlaybackViewModel.kt` (679) [gain] is a software attenuation applied on top of Android's volume.
+- `PlaybackViewModel.kt` (702) [gain] is a software attenuation applied on top of Android's volume.
 - `PlaybackVolumeBoost.kt` (163) A percentage above 100 maps to a logarithmic gain;
 - `RequestedItemGuard.kt` (26) Keeps the song the user just tapped as the current one while the player loads the new list.
 - `StoneEcoEngine.kt` (140) Lightweight playback policy.
@@ -205,7 +207,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `TrackTransitions.kt` (120) Song-to-song transitions on Stone's single player (no second decoder):
 
 ## app/ui
-- `AutomationBridge.kt` (159) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
+- `AutomationBridge.kt` (160) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
 - `ImmersiveSystemBarsController.kt` (416) The single owner of system-bar visibility for Stone's Activity and Compose dialog windows.
 - `ShakeDetector.kt` (53) Detects a deliberate shake from linear acceleration, not from the constant pull of gravity.
 - `StoneApp.kt` (439) Mini player button:

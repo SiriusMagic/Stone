@@ -117,6 +117,8 @@
     <string name="eq_treble">Potenzia alti</string>
     <string name="eq_pop">Pop</string>
     <string name="eq_custom">Personalizzato</string>
+    <string name="eq_by_genre">In base al genere</string>
+    <string name="eq_by_genre_hint">A ogni brano applica il preset del suo genere (Elettronica, Rock, Latino…). Senza genere: la tua impostazione.</string>
     <string name="eq_hiphop">HipHop</string>
     <string name="eq_rock">Rock</string>
     <string name="eq_electronic">Elettronica</string>
@@ -417,7 +419,9 @@
     <string name="api_enable">Attiva MCP</string>
     <string name="api_enable_hint">Funziona finché Stone è aperto o in riproduzione.</string>
     <string name="api_lan">Consenti rete locale (Wi-Fi)</string>
-    <string name="api_lan_hint">Disattivato: solo da questo telefono. Attivato: altri dispositivi del tuo Wi-Fi con il token.</string>
+    <string name="api_lan_hint">Disattivo: solo da questo telefono. Attivo: altri dispositivi del tuo Wi-Fi con il token. È HTTP non cifrato: su reti altrui il token potrebbe essere intercettato; usalo solo sul tuo Wi-Fi di fiducia.</string>
+    <string name="api_url_token">Token nel link</string>
+    <string name="api_url_token_hint">Attivo: il link contiene ?token= (necessario per ChatGPT). Disattivo: il link non contiene il segreto e l’agente invia l’intestazione Authorization: Bearer; più sicuro se condividi screenshot o cronologie.</string>
         <string name="api_failed">Avvio non riuscito: un altro programma usa la porta. Prova un\'altra porta.</string>
     <string name="api_address">Indirizzo (tocca per copiare)</string>
     <string name="api_token">Token di accesso</string>

@@ -38,10 +38,12 @@ import org.json.JSONObject
     var creating by remember { mutableStateOf(false) }
     ApiSection(R.string.api_tokens_title, Icons.Default.Key, R.string.api_tokens_hint, R.string.api_token_create to { creating = true }) {
         ApiTokens.tokens.forEachIndexed { index, token -> ApiTokenRow(token, index == 0, copy) }
+        // Off: links carry no secret (nothing to leak in histories, logs or screenshots); agents send the header.
+        ToggleSetting(R.string.api_url_token, R.string.api_url_token_hint, ApiMode.urlTokens, ApiMode::allowUrlTokens)
     }
     if (creating) ApiTokenDialog(onDismiss = { creating = false }) { name, mode, days ->
         val token = ApiTokens.create(name, mode, days ?: 0)
-        copy("Stone MCP", ApiMode.linkFor(token.secret))
+        copy("Stone MCP", ApiMode.shareText(token.secret))
         creating = false
     }
     if (Build.VERSION.SDK_INT >= 30) {

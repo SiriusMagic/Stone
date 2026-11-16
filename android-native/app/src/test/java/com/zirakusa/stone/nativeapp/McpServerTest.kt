@@ -134,13 +134,45 @@ class McpServerTest {
             assertTrue(reader.readLine().startsWith("HTTP/1.1 200"))
             val endpoint = generateSequence { reader.readLine() }.first { it.startsWith("data: /messages") }.removePrefix("data: ")
             val init = """{"jsonrpc":"2.0","id":7,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}"""
-            // The session id alone is enough: some clients only put the token in the SSE URL.
-            val posted = raw("POST ${endpoint.substringBefore("&token")} HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
+            // A leaked session id alone is not enough; the announced endpoint carries the token for clients
+            // that only put it in the SSE URL.
+            val bare = raw("POST ${endpoint.substringBefore("&token")} HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
+            assertTrue(bare.startsWith("HTTP/1.1 401"))
+            val posted = raw("POST $endpoint HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
             assertTrue(posted.startsWith("HTTP/1.1 202"))
             val message = generateSequence { reader.readLine() }.first { it.startsWith("data: {") }
             assertEquals("stone", JSONObject(message.removePrefix("data: ")).getJSONObject("result")
                 .getJSONObject("serverInfo").getString("name"))
         }
+    }
+
+    @Test fun sseSessionsBelongToTheirTokenAndDieWithIt() {
+        val first = ApiToken("a", "GPT", token, AccessMode.WRITE, 0)
+        val second = ApiToken("b", "Claude", "other-token", AccessMode.WRITE, 0)
+        assertTrue(McpServer.start(listOf(first, second), localNetwork = false))
+        java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { stream ->
+            stream.soTimeout = 5_000
+            stream.getOutputStream().write("GET /sse HTTP/1.1\r\nAuthorization: Bearer $token\r\nAccept: text/event-stream\r\n\r\n".toByteArray())
+            val reader = stream.getInputStream().bufferedReader()
+            val endpoint = generateSequence { reader.readLine() }.first { it.startsWith("data: /messages") }.removePrefix("data: ")
+            val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+            val foreign = raw("POST $endpoint HTTP/1.1\r\nAuthorization: Bearer other-token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+            assertTrue(foreign.startsWith("HTTP/1.1 403"))
+            // Revoking the token closes its session: the same request with the old token now fails.
+            McpServer.updateTokens(listOf(second))
+            val revoked = raw("POST $endpoint HTTP/1.1\r\nAuthorization: Bearer $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+            assertTrue(revoked.startsWith("HTTP/1.1 401"))
+        }
+    }
+
+    @Test fun tokenInTheUrlCanBeTurnedOff() {
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        McpServer.allowQueryToken = false
+        try {
+            val viaQuery = raw("POST ${McpServer.PATH}?token=$token HTTP/1.1\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+            assertTrue(viaQuery.startsWith("HTTP/1.1 401") && viaQuery.contains("only accepts the token in the header"))
+            assertEquals(200, post(ping).first) // the header still works
+        } finally { McpServer.allowQueryToken = true }
     }
 
     /** Plain GET the way a browser or a non-MCP agent does it. */

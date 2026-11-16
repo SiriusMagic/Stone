@@ -50,7 +50,19 @@ object McpServer {
     fun start(token: String, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean =
         start(listOf(ApiToken("main", "Principal", token, AccessMode.WRITE, 0)), localNetwork, port)
 
-    fun updateTokens(tokens: List<ApiToken>) { grants = tokens.associateBy { it.secret } }
+    /** Whether ?token= in the URL is accepted (Ajustes › Modo API › Seguridad); the header always is. */
+    @Volatile var allowQueryToken = true
+
+    fun updateTokens(tokens: List<ApiToken>) {
+        grants = tokens.associateBy { it.secret }
+        // Revoked, rotated or expired tokens also lose their open SSE sessions at once.
+        val now = System.currentTimeMillis()
+        streamGrants.forEach { (id, grant) ->
+            if (tokens.none { it.id == grant.id && it.secret == grant.secret && (it.expiresAt == 0L || it.expiresAt > now) }) {
+                streamGrants.remove(id); streams.remove(id)
+            }
+        }
+    }
 
     @Synchronized fun start(tokens: List<ApiToken>, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean {
         stop()
@@ -95,10 +107,13 @@ object McpServer {
         val caller = client.inetAddress?.hostAddress.orEmpty() + "|" + request.header("x-forwarded-for").orEmpty()
         if (AuthThrottle.blocked(caller)) return McpHttp.respond(out, 429, error(null, -32001,
             "Stone: too many wrong tokens. Wait a minute and use the current link."), listOf("Retry-After: 60"))
-        val grant = grantFor(request) ?: session?.let { streamGrants[it] }
+        // Every request needs the token, SSE messages included: a leaked sessionId alone is not enough.
+        val grant = grantFor(request)
         if (grant == null) AuthThrottle.failed(caller)
         if (grant == null) return McpHttp.respond(out, 401,
-            error(null, -32001, if (givenToken(request) == null)
+            error(null, -32001, if (!allowQueryToken && request.query["token"] != null && headerToken(request) == null)
+                "Stone: this phone only accepts the token in the header 'Authorization: Bearer TOKEN', not in the URL."
+            else if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
             else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo API."),
             listOf("WWW-Authenticate: Bearer"))
@@ -173,6 +188,9 @@ object McpServer {
     private fun postToStream(out: OutputStream, request: McpRequest, session: String?, grant: ApiToken) {
         val stream = session?.let { streams[it] }
             ?: return McpHttp.respond(out, 404, error(null, -32000, "Stone: unknown or closed SSE session"))
+        // The session belongs to the token that opened it; another valid token cannot post into it.
+        if (streamGrants[session]?.id != grant.id) return McpHttp.respond(out, 403,
+            error(null, -32001, "Stone: this SSE session was opened with a different token."))
         McpHttp.respond(out, 202, null)
         val (reply, _) = dispatch(request.body, grant)
         if (reply != null) runCatching { McpHttp.event(stream, "message", reply.toString()) }
@@ -252,10 +270,13 @@ object McpServer {
         }
     }
 
-    private fun givenToken(request: McpRequest): String? {
+    private fun headerToken(request: McpRequest): String? {
         val bearer = request.header("authorization")?.takeIf { it.startsWith("Bearer ", ignoreCase = true) }?.substring(7)?.trim()
-        return (bearer ?: request.header("x-api-key")?.trim() ?: request.query["token"]?.trim())?.takeIf { it.isNotEmpty() }
+        return (bearer ?: request.header("x-api-key")?.trim())?.takeIf { it.isNotEmpty() }
     }
+
+    private fun givenToken(request: McpRequest): String? = headerToken(request)
+        ?: request.query["token"]?.trim()?.takeIf { it.isNotEmpty() && allowQueryToken }
 
     /** The token the request carries, compared in constant time, or null when missing or revoked. */
     private fun grantFor(request: McpRequest): ApiToken? {

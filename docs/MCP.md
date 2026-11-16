@@ -123,6 +123,12 @@ En Herramientas cada función tiene su interruptor: las apagadas no se ofrecen a
 Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
 `metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
 
+Seguridad: los tokens se guardan cifrados (Android Keystore). Con «Token dentro del enlace» apagado, Stone
+rechaza `?token=` y solo acepta `Authorization: Bearer TOKEN` (más seguro; ChatGPT necesita el token en el
+enlace). En SSE cada `POST /messages` debe llevar el token de la sesión; revocar o rotar un token cierra sus
+sesiones. Tras 20 tokens erróneos en un minuto, ese origen recibe HTTP 429 durante un minuto. La red local
+(Wi-Fi) es HTTP sin cifrar: úsala solo en redes de confianza.
+
 Android exige su propio permiso para editar archivos de la biblioteca del teléfono. Stone lo pide
 una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de pedirlo.
 

@@ -49,6 +49,8 @@
     <string name="cancel">Cancel</string>
     <string name="eq_normal">Normal</string><string name="eq_bass">Bass boost</string><string name="eq_voice">Voice boost</string>
     <string name="eq_treble">Treble boost</string><string name="eq_pop">Pop</string><string name="eq_custom">Custom</string>
+    <string name="eq_by_genre">By genre</string>
+    <string name="eq_by_genre_hint">When the song changes, applies its genre\'s preset (Electronic, Rock, Latin…). No genre: your own setting.</string>
     <string name="eq_hiphop">HipHop</string><string name="eq_rock">Rock</string><string name="favorite_songs">Favorite songs</string>
     <string name="recently_played">Recently played</string><string name="most_played">Most played</string><string name="with_lyrics">With lyrics</string>
     <string name="new_playlist">New playlist</string><string name="playlist_name">Playlist name</string><string name="create">Create</string>
@@ -319,7 +321,9 @@
     <string name="api_enable">Turn on MCP</string>
     <string name="api_enable_hint">Works while Stone is open or playing.</string>
     <string name="api_lan">Allow local network (Wi-Fi)</string>
-    <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
+    <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token. It is unencrypted HTTP: on someone else\'s network the token could be captured; use it only on Wi-Fi you trust.</string>
+    <string name="api_url_token">Token inside the link</string>
+    <string name="api_url_token_hint">On: the link carries ?token= (needed by ChatGPT). Off: the link has no secret and the agent must send the Authorization: Bearer header; safer if you share screenshots or histories.</string>
         <string name="api_failed">Could not start: another program is using the port. Try another port.</string>
     <string name="api_address">Address (tap to copy)</string>
     <string name="api_token">Access token</string>

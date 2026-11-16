@@ -52,6 +52,7 @@ interface AutomationHost {
     fun setEqualizerEnabled(enabled: Boolean) {}
     fun setEqualizerBand(index: Int, value: Int) {}
     fun setEqualizerPreset(name: String, values: List<Int>) {}
+    fun setEqualizerByGenre(enabled: Boolean) {}
     fun removeFromPlaylist(playlistId: String, song: Song) {}
     fun sortLibrary(key: String, descending: Boolean) {}
     fun setVideoScale(key: String) {}

@@ -86,7 +86,9 @@ data class PlaybackState(val ready: Boolean = false, val title: String = "", val
     val queue: List<QueueEntry> = emptyList(), val index: Int = -1, val failed: Boolean = false,
     val currentId: String = "", val favorite: Boolean = false, val speed: Float = 1f,
     val equalizerEnabled: Boolean = false, val equalizerValues: List<Int> = List(10) { 0 },
-    val equalizerPreset: String = "Personalizado", val sleepMinutes: Int = 0,
+    val equalizerPreset: String = "Personalizado",
+    /** Equalizer follows each song's genre (Electrónica, Rock…) while it is on. */
+    val equalizerByGenre: Boolean = false, val sleepMinutes: Int = 0,
     val sleepEndAtMs: Long = 0L,
     val sleepFinishTrack: Boolean = false, val sleepFadeOut: Boolean = true,
     /** Last duration set through "Tiempo personalizado", to prefill the picker. */
@@ -115,6 +117,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private var equalizerEnabled = data.boolean("equalizer-enabled", false)
     private var equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
     private var equalizerPreset = data.string("equalizer-preset", "Personalizado")
+    private var equalizerByGenre = data.boolean("equalizer-by-genre", false)
+    private var genreJob: kotlinx.coroutines.Job? = null
     private var volumePercent = 100
     private var audioMode = runCatching { AudioMode.valueOf(settings.read().audioMode.uppercase()) }
         .getOrDefault(AudioMode.BALANCED)
@@ -145,6 +149,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            followGenre(mediaItem)
             publish()
             requestSystemArtwork()
             AudioDiagnostics.log(getApplication(), "MediaController.onMediaItemTransition(reason=$reason)",
@@ -250,7 +255,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
             currentId = currentId,
             favorite = data.isFavorite(currentId),
             speed = speed, equalizerEnabled = equalizerEnabled,
-            equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset,
+            equalizerValues = equalizerValues.toList(), equalizerPreset = equalizerPreset, equalizerByGenre = equalizerByGenre,
             sleepMinutes = sleepMinutes, sleepEndAtMs = sleepEndAtMs,
             sleepFinishTrack = sleepFinishTrack, sleepFadeOut = sleepFadeOut,
             sleepCustomMinutes = sleepCustomMinutes,
@@ -424,16 +429,47 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizerEnabled = value
         data.put("equalizer-enabled", value)
         configureEqualizer(value); publish()
+        if (value) followGenre(controller?.currentMediaItem)
+    }
+
+    /** "Según el género": each new song gets the preset of its genre tag. */
+    fun setEqualizerByGenre(value: Boolean) {
+        equalizerByGenre = value
+        data.put("equalizer-by-genre", value)
+        if (value) { if (!equalizerEnabled) setEqualizerEnabled(true) else followGenre(controller?.currentMediaItem) }
+        else { genreJob?.cancel(); restoreOwnEqualizer(); configureEqualizer(equalizerEnabled) }
+        publish()
+    }
+
+    /**
+     * Applies the preset of [item]'s genre without saving it, so the user's own bands stay stored
+     * and come back for songs with no (or an unknown) genre and when the mode is turned off.
+     */
+    private fun followGenre(item: MediaItem?) {
+        if (!equalizerByGenre || !equalizerEnabled) return
+        val uri = item?.localConfiguration?.uri?.toString() ?: return
+        genreJob?.cancel()
+        genreJob = viewModelScope.launch {
+            val genre = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { analyzer.rawGenre(uri) }
+            val preset = GenreEqualizer.presetFor(genre)
+            if (preset == null) restoreOwnEqualizer() else {
+                equalizerPreset = preset.name
+                equalizerValues = IntArray(10) { preset.values.getOrElse(it) { 0 } }
+            }
+            configureEqualizer(true); publish()
+        }
+    }
+
+    private fun restoreOwnEqualizer() {
+        equalizerValues = IntArray(10) { data.int("equalizer-$it", 0) }
+        equalizerPreset = data.string("equalizer-preset", "Personalizado")
     }
     fun analyzeAndApply(song: Song, result: (AudioAnalysis) -> Unit = {}) {
         viewModelScope.launch {
             val analysis = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 analyzer.analyze(song.uri)
             }
-            analysis.genre?.let { genre ->
-                val values = genrePreset(genre)
-                if (values != null) setEqualizerPreset(genre, values)
-            }
+            GenreEqualizer.presetFor(analysis.genre)?.let { setEqualizerPreset(it.name, it.values) }
             result(analysis)
         }
     }
@@ -462,19 +498,6 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         equalizer.configure(enabled && audioMode != AudioMode.BATTERY, equalizerValues)
         AudioDiagnostics.log(getApplication(), "PlaybackEqualizer.configure(enabled=$enabled,mode=${audioMode.key})",
             before, diagnosticState(), includeSystemEffects = true)
-    }
-    private fun genrePreset(genre: String): List<Int>? = when (genre) {
-        "Electrónica" -> listOf(4,7,6,-1,-2,0,5,8,3,5)
-        "Rock" -> listOf(5,3,2,0,0,1,0,2,2,4)
-        "HipHop" -> listOf(5,5,3,0,-2,-2,2,3,4,4)
-        "R&B" -> listOf(5,5,4,0,-2,-1,2,2,2,3)
-        "Jazz" -> listOf(3,3,2,0,-1,-1,0,2,3,4)
-        "Clásico" -> listOf(0,1,-2,0,-1,0,2,-2,-2,3)
-        "Folk" -> listOf(0,2,3,0,0,0,6,3,2,-1)
-        "Latín" -> listOf(1,3,2,0,0,-1,0,-1,0,3)
-        "Pop" -> listOf(-1,-1,0,1,1,2,2,1,0,-1)
-        "Baile" -> listOf(5,5,4,2,1,3,4,3,2,0)
-        else -> null
     }
     fun setSleepTimer(minutes: Int, finishTrack: Boolean = sleepFinishTrack) {
         sleepFinishTrack = finishTrack

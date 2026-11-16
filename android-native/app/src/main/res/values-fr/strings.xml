@@ -117,6 +117,8 @@
     <string name="eq_treble">Renfort des aigus</string>
     <string name="eq_pop">Pop</string>
     <string name="eq_custom">Personnalisé</string>
+    <string name="eq_by_genre">Selon le genre</string>
+    <string name="eq_by_genre_hint">À chaque chanson, applique le préréglage de son genre (Électronique, Rock, Latino…). Sans genre : votre réglage.</string>
     <string name="eq_hiphop">HipHop</string>
     <string name="eq_rock">Rock</string>
     <string name="eq_electronic">Électronique</string>
@@ -417,7 +419,9 @@
     <string name="api_enable">Activer MCP</string>
     <string name="api_enable_hint">Fonctionne tant que Stone est ouvert ou en lecture.</string>
     <string name="api_lan">Autoriser le réseau local (Wi-Fi)</string>
-    <string name="api_lan_hint">Désactivé : uniquement depuis ce téléphone. Activé : autres appareils de votre Wi-Fi avec le jeton.</string>
+    <string name="api_lan_hint">Désactivé : seulement depuis ce téléphone. Activé : les autres appareils de votre Wi-Fi avec le jeton. HTTP non chiffré : sur un réseau inconnu le jeton pourrait être intercepté ; à utiliser seulement sur un Wi-Fi de confiance.</string>
+    <string name="api_url_token">Jeton dans le lien</string>
+    <string name="api_url_token_hint">Activé : le lien contient ?token= (nécessaire pour ChatGPT). Désactivé : le lien ne contient pas le secret et l’agent envoie l’en-tête Authorization: Bearer ; plus sûr si vous partagez captures ou historiques.</string>
         <string name="api_failed">Démarrage impossible : un autre programme utilise le port. Essayez un autre port.</string>
     <string name="api_address">Adresse (touchez pour copier)</string>
     <string name="api_token">Jeton d\'accès</string>
