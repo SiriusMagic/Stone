@@ -13,6 +13,7 @@ internal class McpRequest(val method: String, val path: String, val query: Map<S
 
     companion object {
         private const val MAX_BODY = 1 shl 20
+        private const val MAX_HEADERS = 64
 
         /** Reads the request line, headers and body; null when the client sent nothing usable. */
         fun read(client: Socket): McpRequest? {
@@ -23,6 +24,7 @@ internal class McpRequest(val method: String, val path: String, val query: Map<S
             while (true) {
                 val line = readLine(input) ?: break
                 if (line.isEmpty()) break
+                if (headers.size >= MAX_HEADERS) return null
                 val colon = line.indexOf(':')
                 if (colon > 0) headers[line.substring(0, colon).trim().lowercase()] = line.substring(colon + 1).trim()
             }
@@ -75,6 +77,8 @@ internal object McpHttp {
             if (bytes.isNotEmpty()) append("Content-Type: $contentType; charset=utf-8\r\n")
             append("Content-Length: ${bytes.size}\r\nConnection: close\r\n")
             append("X-Stone-Server: ${McpServer.identity}\r\n")
+            // Answers carry library data and tokens never belong in caches or other pages.
+            append("Cache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\n")
             (cors + extraHeaders).forEach { append(it).append("\r\n") }
             append("\r\n")
         }
@@ -102,6 +106,7 @@ internal object McpHttp {
     }
 
     private fun reason(status: Int) = when (status) {
+        429 -> "Too Many Requests"
         200 -> "OK"; 202 -> "Accepted"; 204 -> "No Content"; 400 -> "Bad Request"; 401 -> "Unauthorized"
         404 -> "Not Found"; 405 -> "Method Not Allowed"; else -> "Error"
     }

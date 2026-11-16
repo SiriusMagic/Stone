@@ -92,7 +92,11 @@ object McpServer {
         if (path == "/health") return McpHttp.respond(out, 200, JSONObject().put("status", "ok").put("server", "Stone")
             .put("version", BuildConfig.VERSION_NAME).put("mcpPath", PATH).put("tokenRequired", true))
         val session = request.query["sessionId"]?.takeIf { streams.containsKey(it) }
+        val caller = client.inetAddress?.hostAddress.orEmpty() + "|" + request.header("x-forwarded-for").orEmpty()
+        if (AuthThrottle.blocked(caller)) return McpHttp.respond(out, 429, error(null, -32001,
+            "Stone: too many wrong tokens. Wait a minute and use the current link."), listOf("Retry-After: 60"))
         val grant = grantFor(request) ?: session?.let { streamGrants[it] }
+        if (grant == null) AuthThrottle.failed(caller)
         if (grant == null) return McpHttp.respond(out, 401,
             error(null, -32001, if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
@@ -256,7 +260,9 @@ object McpServer {
     /** The token the request carries, compared in constant time, or null when missing or revoked. */
     private fun grantFor(request: McpRequest): ApiToken? {
         val given = givenToken(request)?.toByteArray() ?: return null
+        val now = System.currentTimeMillis()
         return grants.values.firstOrNull { MessageDigest.isEqual(given, it.secret.toByteArray()) }
+            ?.takeIf { it.expiresAt == 0L || it.expiresAt > now }
     }
 
     private fun error(id: Any?, code: Int, message: String) = JSONObject().put("jsonrpc", "2.0")

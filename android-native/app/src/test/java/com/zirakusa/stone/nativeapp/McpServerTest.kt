@@ -275,6 +275,20 @@ class McpServerTest {
         assertEquals(401, post("""{"jsonrpc":"2.0","id":1,"method":"ping"}""", auth = "Bearer revoked").first)
     }
 
+    @Test fun expiredTokensAndGuessingAreRefused() {
+        McpServer.updateTokens(listOf(ApiToken("w", "Claude", token, AccessMode.WRITE, 0),
+            ApiToken("old", "Viejo", "old-token", AccessMode.FULL, 0, expiresAt = 1)))
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        assertEquals(401, post(ping, auth = "Bearer old-token").first)
+        com.zirakusa.stone.nativeapp.automation.AuthThrottle.reset()
+        repeat(20) { post(ping, auth = "Bearer guess-$it") }
+        assertEquals(429, post(ping, auth = "Bearer guess-x").first)
+        com.zirakusa.stone.nativeapp.automation.AuthThrottle.reset()
+        assertEquals(200, post(ping).first)
+        val secret = com.zirakusa.stone.nativeapp.automation.ApiTokens.secret()
+        assertTrue(secret.startsWith("stn_") && secret.length >= 46)
+    }
+
     @Test fun accessModesOnlyAskForCriticalActions() {
         assertFalse(AccessMode.WRITE.needsApproval(ActionRisk.PERSISTENT))
         assertTrue(AccessMode.WRITE.needsApproval(ActionRisk.CRITICAL))

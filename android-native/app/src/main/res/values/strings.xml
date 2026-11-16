@@ -608,4 +608,9 @@
     <string name="video_resolution">Resolución</string>
     <string name="video_file_size">Tamaño del archivo</string>
     <string name="video_modified">Modificado</string>
+    <string name="api_token_expired">Caducado</string>
+    <string name="api_token_expires">Caduca %1$s</string>
+    <string name="api_token_validity">Validez</string>
+    <string name="api_token_forever">Siempre</string>
+    <string name="api_token_days">%1$d d</string>
 </resources>

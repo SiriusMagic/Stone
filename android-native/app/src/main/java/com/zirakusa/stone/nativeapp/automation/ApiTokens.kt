@@ -31,9 +31,13 @@ object ApiTokens {
         publish()
     }
 
-    fun create(name: String, mode: AccessMode): ApiToken =
-        ApiToken(id(), name.trim().ifEmpty { "Agente ${tokens.size + 1}" }, secret(), mode, System.currentTimeMillis())
+    /** [validDays] 0 = never expires. */
+    fun create(name: String, mode: AccessMode, validDays: Int = 0): ApiToken {
+        val now = System.currentTimeMillis()
+        return ApiToken(id(), name.trim().ifEmpty { "Agente ${tokens.size + 1}" }, secret(), mode, now,
+            expiresAt = if (validDays > 0) now + validDays * 86_400_000L else 0)
             .also { tokens = tokens + it; save(); publish() }
+    }
 
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim().ifEmpty { it.name }) }
     fun setMode(id: String, mode: AccessMode) = change(id) { it.copy(mode = mode) }
@@ -69,6 +73,11 @@ object ApiTokens {
     private fun publish() = McpServer.updateTokens(tokens)
 
     private fun id() = random(6)
-    fun secret() = random(24)
+    /**
+     * New secrets: "stn_" + 256 random bits in URL-safe Base64. The prefix lets secret scanners
+     * recognise a leaked Stone token; older hex tokens keep working.
+     */
+    fun secret(): String = "stn_" + java.util.Base64.getUrlEncoder().withoutPadding()
+        .encodeToString(ByteArray(32).also(SecureRandom()::nextBytes))
     fun random(size: Int): String = ByteArray(size).also(SecureRandom()::nextBytes).joinToString("") { "%02x".format(it) }
 }

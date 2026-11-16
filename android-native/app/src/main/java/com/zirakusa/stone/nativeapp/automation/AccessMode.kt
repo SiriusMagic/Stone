@@ -22,13 +22,17 @@ enum class AccessMode(val key: String) {
 
 /** One access token. Each agent (Claude, ChatGPT, tests…) can have its own, revocable on its own. */
 data class ApiToken(val id: String, val name: String, val secret: String, val mode: AccessMode,
-    val createdAt: Long, val lastUsedAt: Long = 0) {
+    val createdAt: Long, val lastUsedAt: Long = 0,
+    /** 0 = never; after this time the server rejects the token. */
+    val expiresAt: Long = 0) {
+    val expired: Boolean get() = expiresAt in 1..System.currentTimeMillis()
+
 
     fun json(): JSONObject = JSONObject().put("id", id).put("name", name).put("secret", secret).put("mode", mode.key)
-        .put("createdAt", createdAt).put("lastUsedAt", lastUsedAt)
+        .put("createdAt", createdAt).put("lastUsedAt", lastUsedAt).put("expiresAt", expiresAt)
 
     /** Shown in lists: first and last characters only. */
-    val preview: String get() = if (secret.length <= 10) secret else "${secret.take(6)}•••••${secret.takeLast(4)}"
+    val preview: String get() = if (secret.length <= 10) secret else "${secret.take(8)}•••••${secret.takeLast(4)}"
 
     companion object {
         fun parse(text: String): List<ApiToken> = runCatching {
@@ -36,7 +40,8 @@ data class ApiToken(val id: String, val name: String, val secret: String, val mo
             (0 until array.length()).map { index ->
                 val item = array.getJSONObject(index)
                 ApiToken(item.getString("id"), item.optString("name"), item.getString("secret"),
-                    AccessMode.from(item.optString("mode")), item.optLong("createdAt"), item.optLong("lastUsedAt"))
+                    AccessMode.from(item.optString("mode")), item.optLong("createdAt"), item.optLong("lastUsedAt"),
+                    item.optLong("expiresAt"))
             }.filter { it.secret.isNotBlank() }
         }.getOrDefault(emptyList())
 

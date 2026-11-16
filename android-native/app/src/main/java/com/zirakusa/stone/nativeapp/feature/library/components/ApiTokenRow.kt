@@ -35,6 +35,9 @@ import java.util.Date
             Text(stringResource(R.string.api_token_created, format.format(Date(token.createdAt))) + " · " +
                 if (token.lastUsedAt > 0) stringResource(R.string.api_token_used, format.format(Date(token.lastUsedAt)))
                 else stringResource(R.string.api_token_never), color = StonePalette.Muted, fontSize = 11.sp)
+            if (token.expiresAt > 0) Text(if (token.expired) stringResource(R.string.api_token_expired)
+                else stringResource(R.string.api_token_expires, format.format(Date(token.expiresAt))),
+                color = if (token.expired) ApiRed else StonePalette.Muted, fontSize = 11.sp)
         }
         Box {
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, null) }
@@ -51,16 +54,17 @@ import java.util.Date
             FilterChip(token.mode == mode, { ApiTokens.setMode(token.id, mode) }, { Text(stringResource(mode.label()), fontSize = 12.sp) })
         }
     }
-    if (renaming) ApiTokenDialog(token.name, token.mode, onDismiss = { renaming = false }) { name, mode ->
+    if (renaming) ApiTokenDialog(token.name, token.mode, onDismiss = { renaming = false }) { name, mode, _ ->
         ApiTokens.rename(token.id, name); ApiTokens.setMode(token.id, mode); renaming = false
     }
 }
 
 /** Create or edit a token: name and access mode. */
 @Composable internal fun ApiTokenDialog(initialName: String = "", initialMode: AccessMode = AccessMode.WRITE,
-    onDismiss: () -> Unit, onSave: (String, AccessMode) -> Unit) {
+    onDismiss: () -> Unit, onSave: (String, AccessMode, Int) -> Unit) {
     var name by remember { mutableStateOf(initialName) }
     var mode by remember { mutableStateOf(initialMode) }
+    var days by remember { mutableIntStateOf(0) }
     AlertDialog(onDismissRequest = onDismiss,
         title = { Text(stringResource(if (initialName.isEmpty()) R.string.api_token_create else R.string.api_token_rename)) },
         text = {
@@ -68,9 +72,19 @@ import java.util.Date
                 OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth(), singleLine = true,
                     label = { Text(stringResource(R.string.api_token_name)) })
                 AccessMode.entries.forEach { item -> ApiModeCard(item, mode == item) { mode = item } }
+                // Expiry only when creating: a token for a test or a friend can end by itself.
+                if (initialName.isEmpty()) {
+                    Text(stringResource(R.string.api_token_validity), Modifier.padding(top = 12.dp), fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(0, 7, 30, 90).forEach { option ->
+                            FilterChip(days == option, { days = option }, { Text(if (option == 0) stringResource(R.string.api_token_forever)
+                                else stringResource(R.string.api_token_days, option), fontSize = 12.sp) })
+                        }
+                    }
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(name, mode) }) {
+        confirmButton = { TextButton(onClick = { onSave(name, mode, days) }) {
             Text(stringResource(if (initialName.isEmpty()) R.string.create else R.string.save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } })
 }
