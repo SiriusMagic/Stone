@@ -629,4 +629,18 @@
     <string name="tags_auto_searching">Song wird gesucht…</string>
     <string name="tags_auto_none">Song nicht gefunden.</string>
     <string name="tags_auto_offline">Katalog nicht erreichbar. Prüfe die Verbindung.</string>
+    <string name="video_unlock">Entsperren</string>
+    <string name="video_lock">Bildschirm sperren</string>
+    <string name="video_subtitles">Untertitel</string>
+    <string name="video_size">Größe</string>
+    <string name="video_background_play">Wiedergabe im Hintergrund</string>
+    <string name="video_floating_window">Schwebendes Fenster</string>
+    <string name="video_night_mode">Nachtmodus</string>
+    <string name="video_brightness">Helligkeit</string>
+    <string name="video_volume">Lautstärke</string>
+    <string name="video_properties">Eigenschaften</string>
+    <string name="video_duration">Dauer</string>
+    <string name="video_resolution">Auflösung</string>
+    <string name="video_file_size">Dateigröße</string>
+    <string name="video_modified">Geändert</string>
 </resources>

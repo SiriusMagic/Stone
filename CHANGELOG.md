@@ -1,5 +1,13 @@
 # Sin publicar (APK aún no generado)
 
+- Vídeo en horizontal rediseñado: título con HD, subtítulos, lista y menú; accesos con texto a los
+  lados (Girar, Tamaño | Repetir, Reproducción en segundo plano, Mudo); barra de tiempo y fila
+  candado · anterior · −10 · pausa · +10 · siguiente · velocidad · ventana flotante. Panel lateral
+  con la lista de vídeos y menú lateral con temporizador, modo nocturno, brillo, volumen,
+  ecualizador, audio, propiedades y compartir. Bloqueo de pantalla y modo nocturno.
+- Vídeo en vertical: carrusel de botones redondos (los elegidos en Ajustes › Vídeo, más bloqueo y
+  modo nocturno), velocidad junto a la barra y fila ventana flotante · anterior · pausa ·
+  siguiente · pantalla completa. Al cerrar el reproductor, la rotación vuelve a ser automática.
 - Niveles de audio rediseñado: tarjetas Dormilón / Balanceado / Cine / Personalizado (tocar una
   la activa), etiqueta "Activo", volumen máximo y ganancia con su valor, y restablecer arriba.
 - Ajustes ocupa toda la pantalla (antes dejaba un hueco abajo).

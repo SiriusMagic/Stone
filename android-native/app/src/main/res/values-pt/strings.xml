@@ -629,4 +629,18 @@
     <string name="tags_auto_searching">Procurando a música…</string>
     <string name="tags_auto_none">Música não encontrada.</string>
     <string name="tags_auto_offline">Sem conexão com o catálogo. Verifique a internet.</string>
+    <string name="video_unlock">Desbloquear</string>
+    <string name="video_lock">Bloquear tela</string>
+    <string name="video_subtitles">Legendas</string>
+    <string name="video_size">Tamanho</string>
+    <string name="video_background_play">Reprodução em segundo plano</string>
+    <string name="video_floating_window">Janela flutuante</string>
+    <string name="video_night_mode">Modo noturno</string>
+    <string name="video_brightness">Brilho</string>
+    <string name="video_volume">Volume</string>
+    <string name="video_properties">Propriedades</string>
+    <string name="video_duration">Duração</string>
+    <string name="video_resolution">Resolução</string>
+    <string name="video_file_size">Tamanho do arquivo</string>
+    <string name="video_modified">Modificado</string>
 </resources>

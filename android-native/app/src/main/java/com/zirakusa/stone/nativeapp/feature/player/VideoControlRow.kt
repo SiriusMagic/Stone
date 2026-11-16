@@ -6,10 +6,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.RepeatOne
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -45,6 +48,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     arrangement: Arrangement.Horizontal = Arrangement.SpaceEvenly,
     playback: PlaybackViewModel? = null,
     state: PlaybackState? = null,
+    /** Round dark buttons (portrait carousel) instead of bare icons. */
+    circle: Boolean = false,
 ) {
     val context = LocalContext.current
     val player = playback?.player()
@@ -91,7 +96,10 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             val icon = if (id == VideoControlId.Repeat && state?.repeat == Player.REPEAT_MODE_ONE) Icons.Default.RepeatOne
                 else definition.icon
             action?.let {
-                IconButton(onClick = it, modifier = Modifier.size(48.dp)) {
+                if (circle) FilledIconButton(onClick = it, modifier = Modifier.padding(horizontal = 6.dp).size(52.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = .14f))) {
+                    Icon(icon, stringResource(definition.label), tint = if (active) StonePalette.Yellow else Color.White)
+                } else IconButton(onClick = it, modifier = Modifier.size(48.dp)) {
                     Icon(icon, stringResource(definition.label), tint = if (active) StonePalette.Yellow else Color.White)
                 }
             }

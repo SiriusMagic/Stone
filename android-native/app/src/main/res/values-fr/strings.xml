@@ -629,4 +629,18 @@
     <string name="tags_auto_searching">Recherche de la chanson…</string>
     <string name="tags_auto_none">Chanson introuvable.</string>
     <string name="tags_auto_offline">Catalogue injoignable. Vérifie la connexion.</string>
+    <string name="video_unlock">Déverrouiller</string>
+    <string name="video_lock">Verrouiller l\'écran</string>
+    <string name="video_subtitles">Sous-titres</string>
+    <string name="video_size">Taille</string>
+    <string name="video_background_play">Lecture en arrière-plan</string>
+    <string name="video_floating_window">Fenêtre flottante</string>
+    <string name="video_night_mode">Mode nuit</string>
+    <string name="video_brightness">Luminosité</string>
+    <string name="video_volume">Volume</string>
+    <string name="video_properties">Propriétés</string>
+    <string name="video_duration">Durée</string>
+    <string name="video_resolution">Résolution</string>
+    <string name="video_file_size">Taille du fichier</string>
+    <string name="video_modified">Modifié</string>
 </resources>

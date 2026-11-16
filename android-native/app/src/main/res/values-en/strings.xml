@@ -531,4 +531,18 @@
     <string name="tags_auto_searching">Looking the song up…</string>
     <string name="tags_auto_none">This song was not found.</string>
     <string name="tags_auto_offline">Could not reach the catalogue. Check the connection.</string>
+    <string name="video_unlock">Unlock</string>
+    <string name="video_lock">Lock screen</string>
+    <string name="video_subtitles">Subtitles</string>
+    <string name="video_size">Size</string>
+    <string name="video_background_play">Background playback</string>
+    <string name="video_floating_window">Floating window</string>
+    <string name="video_night_mode">Night mode</string>
+    <string name="video_brightness">Brightness</string>
+    <string name="video_volume">Volume</string>
+    <string name="video_properties">Properties</string>
+    <string name="video_duration">Duration</string>
+    <string name="video_resolution">Resolution</string>
+    <string name="video_file_size">File size</string>
+    <string name="video_modified">Modified</string>
 </resources>

@@ -92,6 +92,10 @@ import kotlin.math.roundToInt
     videoControls: VideoControlSettings = VideoControlSettings.defaults()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
+    // Girar / pantalla completa lock the orientation; closing the player gives rotation back to the sensor.
+    DisposableEffect(Unit) {
+        onDispose { context.findActivity()?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
+    }
     val dynamicBackground by produceState(
         Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
     ) {
@@ -127,7 +131,7 @@ import kotlin.math.roundToInt
             onVideoScaleChange = onVideoScaleChange,
             videoControls = videoControls,
             onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
-            onSpeed = { sheets.tool = PlayerTool.Speed },
+            onSpeed = { sheets.tool = PlayerTool.Speed }, onTool = { sheets.tool = it },
         )
     } else if (landscape) {
         LandscapeVinylPlayer(state, song, progress, playback, back,
@@ -283,7 +287,7 @@ private fun Context.findActivity(): Activity? = when (this) {
     onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
     onVideoScaleChange: (VideoScale) -> Unit, videoControls: VideoControlSettings,
     onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null, onSpeed: () -> Unit = {}) {
+    onQueue: (() -> Unit)? = null, onSpeed: () -> Unit = {}, onTool: (PlayerTool) -> Unit = {}) {
     val controls = rememberPlaybackControls(song.id)
     val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -300,16 +304,9 @@ private fun Context.findActivity(): Activity? = when (this) {
                 seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
             }, onPrevious = playback::previous, onNext = playback::next,
         )
-        if (controls.visible) {
-            VideoTopBar(song, state, close, onSpeed = onSpeed, onOptions = onOptions,
-                modifier = Modifier.align(Alignment.TopCenter))
-            VideoBottomControls(song, state, progress, playback, landscape = true, controls = videoControls,
-                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
-                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0xCC000000)))))
-        }
+        LandscapeVideoChrome(song, state, progress, playback, controls.visible, onBack = close,
+            onAudioOnly = { onAudioOnly(song) }, onScaleToggle = { onVideoScaleChange(videoScale.next()) },
+            onTool = onTool)
     }
 }
 
@@ -335,16 +332,9 @@ private fun Context.findActivity(): Activity? = when (this) {
                 seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
             }, onPrevious = playback::previous, onNext = playback::next,
         )
-        if (controls.visible) {
-            VideoTopBar(song, state, back, onSpeed = onSpeed, onOptions = onOptions,
-                modifier = Modifier.align(Alignment.TopCenter))
-            VideoBottomControls(song, state, progress, playback, landscape = false, controls = videoControls,
-                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
-                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0xCC000000)))))
-        }
+        PortraitVideoChrome(song, state, progress, playback, controls.visible, videoControls, onBack = back,
+            onQueue = onQueue, onOptions = onOptions, onAudioOnly = { onAudioOnly(song) },
+            onScaleToggle = { onVideoScaleChange(videoScale.next()) }, onSpeed = onSpeed)
     }
 }
 
@@ -671,12 +661,12 @@ private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, o
     }
 }
 
-private fun currentWindowBrightness(context: Context): Float {
+internal fun currentWindowBrightness(context: Context): Float {
     val value = context.findActivity()?.window?.attributes?.screenBrightness ?: -1f
     return if (value in .02f..1f) value else .5f
 }
 
-private fun setWindowBrightness(context: Context, value: Float) {
+internal fun setWindowBrightness(context: Context, value: Float) {
     context.findActivity()?.let { activity ->
         val attributes = activity.window.attributes
         attributes.screenBrightness = value.coerceIn(.02f, 1f)
