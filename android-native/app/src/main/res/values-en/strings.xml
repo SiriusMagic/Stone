@@ -119,12 +119,7 @@
     <string name="feedback_slow">App is slow</string><string name="feedback_other">Other</string>
     <string name="feedback_details">Details *</string><string name="feedback_details_hint">Describe your feedback, suggestion or problem…</string>
     <string name="feedback_attachments">Screenshots or videos (optional)</string>
-    <string name="music_reminders">Music reminders</string><string name="music_reminders_hint">Receive up to two invitations to listen to music each day.</string>
-    <string name="morning_reminder">Morning</string><string name="morning_reminder_time">Between 8:00 and 9:00</string>
-    <string name="evening_reminder">Evening</string><string name="evening_reminder_time">Between 20:00 and 21:00</string>
-    <string name="reminder_play_choice">What to play when tapped</string>
-    <string name="reminder_not_implemented">Scheduling and playback actions will be added without permanent services.</string>
-    <string name="version_label">Version %1$s</string><string name="rate_stone">Rate Stone</string>
+    <string name="music_reminders">Music reminders</string>    <string name="version_label">Version %1$s</string><string name="rate_stone">Rate Stone</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
     <string name="copyright_stone">© 2026 Stone.</string>
@@ -141,7 +136,6 @@
     <string name="gapless">Gapless playback</string><string name="gapless_hint">Joins songs with no silence between them and skips the silence recorded at the start and end of each file.</string>
     <string name="crossfade">Crossfade</string><string name="crossfade_hint">Fades the volume out at the end of each song and back in as the next one starts.</string>
     <string name="notify_new_files">New file notifications</string>
-    <string name="push_notifications">Push notifications</string><string name="push_notifications_hint">Music recommendations are not available yet.</string>
     <string name="settings_home_shortcuts">Home shortcuts</string>
     <string name="home_shortcut_hint">Choose which shortcuts appear in the main toolbar.</string>
     <string name="analyze_audio">Analyze audio</string>
@@ -204,7 +198,6 @@
     <string name="settings_section_about">About</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_library">Library</string>
-    <string name="settings_section_playback">Playback</string>
     <string name="sleep_timer_active">Sleep timer active</string>
     <string name="sort_lyrics">Lyrics</string>
     <string name="start_diagnostics">Start diagnostics</string>
@@ -263,7 +256,6 @@
     <string name="video_scale_short_zoom">Fill</string>
     <string name="video_scale_short_fill">Stretch</string>
     <string name="repeat_off">No repeat</string>
-    <string name="settings_output_and_alerts">Output and alerts</string>
     <string name="hold_speed_banner">playback speed</string>
     <string name="selection_add_to">Add to</string>
     <string name="selection_play_next">Play next</string>
@@ -294,7 +286,6 @@
     <string name="color_accent">Same as accent</string>
     <string name="theme_coffee">Coffee</string>
     <string name="theme_golden">Dark gold</string>
-    <string name="custom_title">Custom</string>
     <string name="custom_intro">Change Stone\'s colours, sizes, images and name. Changes apply instantly.</string>
     <string name="custom_accent">Accent colour (lines, highlights, active icons)</string>
     <string name="custom_text_color">Text colour</string>
@@ -509,11 +500,23 @@
     <string name="widget_manual">Your launcher cannot add it from here: long-press the home screen › Widgets › Stone.</string>
     <string name="widget_idle">Tap to open Stone</string>
     <string name="widget_description">Control music from the home screen</string>
-    <string name="theme_background_and_color">Background and colour</string>
-    <string name="theme_add_background">Load background image</string>
-    <string name="theme_remove_background">Remove background image</string>
-    <string name="theme_more_in_custom">Opacity, Focus mode and free palette: Settings › Custom.</string>
     <string name="recommendations_title">Recommended for you</string>
     <string name="recommendations_empty">Add more music to get recommendations.</string>
     <string name="lyrics_follow">Follow the song</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_section_video">Video</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="personalization_title">Themes and customization</string>
+    <string name="notify_songs">New songs</string>
+    <string name="notify_videos">New videos</string>
+    <string name="notify_when">When to notify</string>
+    <string name="notify_instant">Right away</string>
+    <string name="notify_scheduled">In a daily summary at a set time</string>
+    <string name="notify_time">Summary time</string>
+    <string name="reminder_time">Reminder time</string>
+    <string name="music_reminders_hint">A daily invitation to listen to music, at the time you choose.</string>
+    <string name="reminder_title">Time for your music</string>
+    <string name="reminder_text">Tap to open Stone and keep listening.</string>
+    <string name="notify_inexact">Android may shift scheduled notices by a few minutes to save battery.</string>
+    <string name="settings_output_and_alerts">Audio output</string>
 </resources>

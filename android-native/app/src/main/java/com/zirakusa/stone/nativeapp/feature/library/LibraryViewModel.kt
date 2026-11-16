@@ -61,6 +61,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     init {
         com.zirakusa.stone.nativeapp.data.library.LyricsIndex.ensureLoaded(getApplication())
+        runCatching { com.zirakusa.stone.nativeapp.data.library.NotificationScheduler.schedule(getApplication()) }
         viewModelScope.launch { loadJob.join(); indexLyrics() }
         viewModelScope.launch {
             com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.collect {

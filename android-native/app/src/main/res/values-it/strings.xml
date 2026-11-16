@@ -183,7 +183,6 @@
     <string name="settings_search_hint">Cerca un\'impostazione…</string>
     <string name="settings_no_results">Nessuna impostazione trovata con questa ricerca.</string>
     <string name="settings_section_library">Libreria</string>
-    <string name="settings_section_playback">Riproduzione</string>
     <string name="settings_section_system">Sistema</string>
     <string name="settings_section_appearance">Personalizzazione</string>
     <string name="settings_section_about">Aiuto e informazioni su Stone</string>
@@ -280,13 +279,6 @@
     <string name="feedback_details_hint">Descrivi la tua opinione, suggerimento o problema…</string>
     <string name="feedback_attachments">Screenshot o video (facoltativo)</string>
     <string name="music_reminders">Promemoria musicali</string>
-    <string name="music_reminders_hint">Ricevi fino a due inviti al giorno ad ascoltare musica.</string>
-    <string name="morning_reminder">Al mattino</string>
-    <string name="morning_reminder_time">Tra le 8:00 e le 9:00</string>
-    <string name="evening_reminder">Alla sera</string>
-    <string name="evening_reminder_time">Tra le 20:00 e le 21:00</string>
-    <string name="reminder_play_choice">Cosa riprodurre al tocco</string>
-    <string name="reminder_not_implemented">La pianificazione e le azioni di riproduzione verranno aggiunte senza servizi permanenti.</string>
     <string name="version_label">Versione %1$s</string>
     <string name="rate_stone">Valutaci</string>
     <string name="privacy_policy">Informativa sulla privacy</string>
@@ -305,8 +297,6 @@
     <string name="crossfade">Dissolvenza incrociata</string>
     <string name="crossfade_hint">Abbassa il volume alla fine di ogni brano e lo rialza all\'inizio del successivo.</string>
     <string name="notify_new_files">Notifica nuovi file</string>
-    <string name="push_notifications">Notifica push</string>
-    <string name="push_notifications_hint">I consigli musicali non sono ancora disponibili.</string>
     <string name="audio_output_intro">Controlla l\'uscita che Android sta usando ora. La selezione avanzata dipende dal sistema e dal dispositivo collegato.</string>
     <string name="audio_output_current">Uscita attuale</string>
     <string name="audio_output_open_settings">Apri impostazioni audio di sistema</string>
@@ -364,7 +354,6 @@
     <string name="video_scale_short_zoom">Riempi</string>
     <string name="video_scale_short_fill">Allunga</string>
     <string name="repeat_off">Nessuna ripetizione</string>
-    <string name="settings_output_and_alerts">Uscita e avvisi</string>
     <string name="hold_speed_banner">velocità di riproduzione</string>
     <string name="selection_add_to">Aggiungi a</string>
     <string name="selection_play_next">Riproduci dopo</string>
@@ -395,7 +384,6 @@
     <string name="color_accent">Come l\'accento</string>
     <string name="theme_coffee">Caffè</string>
     <string name="theme_golden">Oro scuro</string>
-    <string name="custom_title">Personalizzato</string>
     <string name="custom_intro">Cambia colori, dimensioni, immagini e nome di Stone. Le modifiche si vedono subito.</string>
     <string name="custom_accent">Colore d\'accento (linee, selezioni, icone attive)</string>
     <string name="custom_text_color">Colore del testo</string>
@@ -610,11 +598,23 @@
     <string name="widget_manual">Il launcher non può aggiungerlo da qui: tieni premuta la Home › Widget › Stone.</string>
     <string name="widget_idle">Tocca per aprire Stone</string>
     <string name="widget_description">Controlla la musica dalla schermata Home</string>
-    <string name="theme_background_and_color">Sfondo e colore</string>
-    <string name="theme_add_background">Carica immagine di sfondo</string>
-    <string name="theme_remove_background">Rimuovi immagine di sfondo</string>
-    <string name="theme_more_in_custom">Opacità, modalità Focus e tavolozza: Impostazioni › Personalizzato.</string>
     <string name="recommendations_title">Consigliati per te</string>
     <string name="recommendations_empty">Aggiungi altra musica per ricevere consigli.</string>
     <string name="lyrics_follow">Segui il brano</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_section_video">Video</string>
+    <string name="settings_section_notifications">Notifiche</string>
+    <string name="personalization_title">Temi e personalizzazione</string>
+    <string name="notify_songs">Nuovi brani</string>
+    <string name="notify_videos">Nuovi video</string>
+    <string name="notify_when">Quando avvisare</string>
+    <string name="notify_instant">Subito</string>
+    <string name="notify_scheduled">In un riepilogo giornaliero a un\'ora fissa</string>
+    <string name="notify_time">Ora del riepilogo</string>
+    <string name="reminder_time">Ora del promemoria</string>
+    <string name="music_reminders_hint">Un invito quotidiano ad ascoltare musica, all\'ora che scegli.</string>
+    <string name="reminder_title">È l\'ora della tua musica</string>
+    <string name="reminder_text">Tocca per aprire Stone e continuare ad ascoltare.</string>
+    <string name="notify_inexact">Android può spostare di qualche minuto gli avvisi programmati per risparmiare batteria.</string>
+    <string name="settings_output_and_alerts">Uscita audio</string>
 </resources>

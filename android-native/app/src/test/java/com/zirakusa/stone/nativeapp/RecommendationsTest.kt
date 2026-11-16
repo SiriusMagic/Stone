@@ -39,3 +39,13 @@ class LyricsIndexTest {
         index.onSaved(plain.id, null); index.onSaved(withFile.id, null)
     }
 }
+
+class NotificationTimeTest {
+    @Test fun parsesAndFormatsScheduledTimes() {
+        val scheduler = com.zirakusa.stone.nativeapp.data.library.NotificationScheduler
+        assertEquals(20 * 60 + 5, scheduler.minutes("20:05", 0))
+        assertEquals(99, scheduler.minutes("nope", 99))
+        assertEquals(23 * 60 + 59, scheduler.minutes("27:75", 0))
+        assertEquals("07:30", scheduler.format(7 * 60 + 30))
+    }
+}

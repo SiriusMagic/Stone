@@ -108,17 +108,34 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                         SettingsMenuItem(Icons.Default.Delete, stringResource(R.string.recently_deleted), "",
                             "biblioteca papelera eliminados restaurar", { onClose(); onLibrarySheet("deleted") })
                     )),
-                    SettingsMenuSection(R.string.settings_section_playback, listOf(
+                    SettingsMenuSection(R.string.settings_section_audio, listOf(
                         SettingsMenuItem(Icons.Default.Headphones, stringResource(R.string.settings_playback), "",
-                            "reproducción audio sonido modos salida altavoz bluetooth usb notificaciones avisos diagnóstico", { onPage("playback") }),
+                            "audio reproducción sonido modos salida altavoz bluetooth usb transiciones crossfade aceleración", { onPage("playback") }),
                         SettingsMenuItem(Icons.Default.Equalizer, stringResource(R.string.audio_levels_title), "",
-                            "reproducción niveles audio ganancia volumen máximo dormilón cine balanceado altavoz sonido",
-                            { onPage("audio-levels") }),
+                            "audio niveles ganancia volumen máximo dormilón cine balanceado altavoz sonido", { onPage("audio-levels") }),
                         SettingsMenuItem(Icons.Default.Timer, stringResource(R.string.sleep_timer), "",
-                            "reproducción temporizador dormir", { onPage("sleep") }),
+                            "audio reproducción temporizador dormir", { onPage("sleep") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_video, listOf(
                         SettingsMenuItem(Icons.Default.Movie, stringResource(R.string.video_settings), "",
-                            "reproducción vídeo video inmersivo pantalla horizontal encuadre escala controles iconos personalizar",
-                            { onPage("video") })
+                            "vídeo video inmersivo pantalla horizontal encuadre escala controles iconos", { onPage("video") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_notifications, listOf(
+                        SettingsMenuItem(Icons.Default.Notifications, stringResource(R.string.settings_section_notifications), "",
+                            "notificaciones avisos archivos nuevos canciones vídeos hora horario resumen recordatorio", { onPage("notifications") })
+                    )),
+                    SettingsMenuSection(R.string.settings_section_appearance, listOf(
+                        SettingsMenuItem(Icons.Default.Palette, stringResource(R.string.personalization_title), themeLabel(theme),
+                            "tema temas personalizado personalización apariencia colores acento letras cursiva iconos tamaño fondo imagen portada nombre icono app",
+                            { onPage("custom") }),
+                        SettingsMenuItem(Icons.Default.Fullscreen, stringResource(R.string.immersive_screen), "",
+                            "personalización apariencia pantalla inmersiva barras sistema reproductor biblioteca", { onPage("immersive") }),
+                        SettingsMenuItem(Icons.Default.Widgets, stringResource(R.string.widgets_title), "",
+                            "personalización widget pantalla principal escritorio inicio reproductor", { onPage("widgets") }),
+                        SettingsMenuItem(Icons.Default.Apps, stringResource(R.string.settings_home_shortcuts), "",
+                            "personalización inicio iconos accesos rápidos barra", { onPage("shortcuts") }),
+                        SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
+                            languages.find { it.code == language }?.label.orEmpty(), "personalización idioma lenguaje", { onPage("language") })
                     )),
                     SettingsMenuSection(R.string.settings_section_system, listOf(
                         SettingsMenuItem(Icons.Default.Hub, stringResource(R.string.api_title), "",
@@ -126,21 +143,6 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                             { onPage("api-mode") }),
                         SettingsMenuItem(Icons.Default.Memory, stringResource(R.string.system_diagnostics), "",
                             "sistema diagnóstico avanzado cpu ram memoria batería temperatura", { onPage("system-diagnostics") })
-                    )),
-                    SettingsMenuSection(R.string.settings_section_appearance, listOf(
-                        SettingsMenuItem(Icons.Default.Fullscreen, stringResource(R.string.immersive_screen), "",
-                            "personalización apariencia pantalla inmersiva barras sistema reproductor biblioteca", { onPage("immersive") }),
-                        SettingsMenuItem(Icons.Default.Palette, stringResource(R.string.custom_title), "",
-                            "personalizado color acento letras iconos tamaño fondo imagen nombre icono app audio nivel",
-                            { onPage("custom") }),
-                        SettingsMenuItem(Icons.Default.Widgets, stringResource(R.string.widgets_title), "",
-                            "personalización widget pantalla principal escritorio inicio reproductor", { onPage("widgets") }),
-                        SettingsMenuItem(Icons.Default.Checkroom, stringResource(R.string.settings_theme), themeLabel(theme),
-                            "personalización tema apariencia colores", { onPage("theme") }),
-                        SettingsMenuItem(Icons.Default.Language, stringResource(R.string.settings_language),
-                            languages.find { it.code == language }?.label.orEmpty(), "personalización idioma lenguaje", { onPage("language") }),
-                        SettingsMenuItem(Icons.Default.Apps, stringResource(R.string.settings_home_shortcuts), "",
-                            "personalización inicio iconos accesos rápidos barra", { onPage("shortcuts") })
                     )),
                     SettingsMenuSection(R.string.settings_section_about, listOf(
                         SettingsMenuItem(Icons.Default.ThumbUp, stringResource(R.string.feedback_title), "",
@@ -175,22 +177,17 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     Text(pageTitle(page), fontSize = 24.sp, fontWeight = FontWeight.Black)
                 }
                 when (page) {
-                    "theme" -> { listOf("dark" to R.string.theme_dark, "gray" to R.string.theme_gray,
-                        "midnight" to R.string.theme_midnight, "amoled" to R.string.theme_amoled,
-                        "coffee" to R.string.theme_coffee, "golden" to R.string.theme_golden,
-                        "ocean" to R.string.theme_ocean, "forest" to R.string.theme_forest,
-                        "wine" to R.string.theme_wine, "violet" to R.string.theme_violet,
-                        "slate" to R.string.theme_slate).forEach { (value, label) ->
-                        SettingsChoice(label, theme == value) { onTheme(value) }
-                    }
-                        ThemeExtras(store)
-                    }
                     "language" -> languages.forEach { item ->
                         SettingsChoiceText(item.label, language == item.code) { onLanguage(item.code) }
                     }
                     "shortcuts" -> HomeShortcutDetail(store, onShortcutChange)
                     "library-scan" -> LibraryScanSettings(store)
-                    "custom" -> LookSettings(store)
+                    // Temas y personalización in one page: the theme first, then every Personalizado option.
+                    "custom", "theme" -> {
+                        ThemeGrid(theme, onTheme)
+                        LookSettings(store)
+                    }
+                    "notifications" -> NotificationSettings(store)
                     "audio-levels" -> AudioLevelSettings(store, playback)
                     "api-mode" -> ApiModeSettings()
                     "widgets" -> WidgetSettings()
@@ -198,11 +195,9 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     "playback" -> {
                         PlaybackDetail(store, playback, { onPage("audio-mode") },
                             { onPage("hardware-acceleration") })
-                        // Former "Salida de audio" and "Notificaciones" pages, now one section.
                         Text(stringResource(R.string.settings_output_and_alerts), color = StonePalette.Yellow,
                             fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
                         AudioOutputDetail()
-                        NotificationDetail(store)
                     }
                     // Framing and the icon row live together in one Vídeo section.
                     "video", "video-controls" -> {
@@ -227,7 +222,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
 /** Pages opened from "Sobre Stone"; back returns there instead of the settings root. */
 private val legalPages = setOf("privacy", "terms", "licenses")
 
-@Composable private fun themeLabel(theme: String) = stringResource(when (theme) {
+@Composable internal fun themeLabel(theme: String) = stringResource(when (theme) {
     "light" -> R.string.theme_light; "gray" -> R.string.theme_gray
     "midnight" -> R.string.theme_midnight; "amoled" -> R.string.theme_amoled
     "coffee" -> R.string.theme_coffee; "golden" -> R.string.theme_golden
@@ -236,11 +231,11 @@ private val legalPages = setOf("privacy", "terms", "licenses")
 })
 
 @Composable private fun pageTitle(page: String) = stringResource(when (page) {
-    "theme" -> R.string.settings_theme; "language" -> R.string.settings_language
+    "theme", "custom" -> R.string.personalization_title; "language" -> R.string.settings_language
+    "notifications" -> R.string.settings_section_notifications
     "shortcuts" -> R.string.settings_home_shortcuts
     "immersive" -> R.string.immersive_screen
     "library-scan" -> R.string.device_scan
-    "custom" -> R.string.custom_title
     "audio-levels" -> R.string.audio_levels_title
     "api-mode" -> R.string.api_title
     "widgets" -> R.string.widgets_title
@@ -810,40 +805,6 @@ private fun diagnosticStatus(snapshot: com.zirakusa.stone.nativeapp.playback.Per
     }
     Text(stringResource(R.string.hardware_acceleration_note), color = StonePalette.Muted,
         fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp, bottom = 20.dp))
-}
-
-@Composable private fun NotificationDetail(store: StoneSettingsStore?) {
-    var reminders by remember(store) { mutableStateOf(store?.read()?.musicReminders ?: false) }
-    var newFiles by remember(store) { mutableStateOf(store?.read()?.notifyNewFiles ?: false) }
-    var push by remember(store) { mutableStateOf(store?.read()?.pushNotifications ?: false) }
-    ToggleSetting(R.string.music_reminders, R.string.music_reminders_hint, reminders) { enabled ->
-        store?.setBoolean("musicReminders", enabled)
-        reminders = enabled
-    }
-    if (reminders) {
-        Text(stringResource(R.string.morning_reminder), fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 18.dp))
-        Text(stringResource(R.string.morning_reminder_time), color = StonePalette.Muted)
-        Text(stringResource(R.string.evening_reminder), fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 14.dp))
-        Text(stringResource(R.string.evening_reminder_time), color = StonePalette.Muted)
-        Text(stringResource(R.string.reminder_play_choice), fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 18.dp))
-        Text(stringResource(R.string.reminder_not_implemented), color = StonePalette.Muted,
-            fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
-    }
-    val permission = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-        store?.setBoolean("notifyNewFiles", granted); newFiles = granted
-    }
-    ToggleSetting(R.string.notify_new_files, R.string.notify_new_files_hint, newFiles) { enabled ->
-        if (enabled && android.os.Build.VERSION.SDK_INT >= 33) permission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-        else { store?.setBoolean("notifyNewFiles", enabled); newFiles = enabled }
-    }
-    ToggleSetting(R.string.push_notifications, R.string.push_notifications_hint, push) { enabled ->
-        store?.setBoolean("pushNotifications", enabled); push = enabled
-    }
-    Text(stringResource(R.string.push_notifications_hint), color = StonePalette.Muted)
 }
 
 @Composable private fun SleepDetail(playback: PlaybackViewModel?, onClose: () -> Unit) {

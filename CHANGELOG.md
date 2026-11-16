@@ -1,5 +1,11 @@
 # Sin publicar (APK aún no generado)
 
+- Ajustes reordenados por secciones: Biblioteca, Audio, Vídeo, Notificaciones, Temas y
+  personalización, Sistema y Ayuda. Tema y Personalizado son ahora una sola página, con los temas
+  en miniatura arriba.
+- Notificaciones en su propia sección: avisos de canciones y/o vídeos nuevos, al momento o en un
+  resumen diario a la hora que elijas, y un recordatorio musical diario a su propia hora. Los
+  avisos programados se restablecen tras reiniciar el teléfono.
 - Letras: deslizar hacia arriba en el reproductor las abre. Se abren a pantalla completa (antes a
   media altura), con el color de la portada, la canción arriba y la línea actual marcada según el
   tiempo; editar, borrar y "seguir la canción" pasan a una cápsula flotante abajo a la derecha.

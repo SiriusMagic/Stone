@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Optional "Acceso a todos los archivos": lets agents edit tags without Android's per-file dialog. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <application android:label="@string/app_name" android:theme="@style/Theme.Stone"
@@ -63,6 +64,15 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/stone_file_paths" />
         </provider>
+        <!-- Scheduled notifications (summary of new files, music reminder); restored after reboot. -->
+        <receiver android:name=".data.library.NotificationAlarmReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!-- Home-screen player widget (Ajustes > Widgets). -->
         <receiver android:name=".playback.StoneWidgetProvider" android:exported="false">
             <intent-filter>
