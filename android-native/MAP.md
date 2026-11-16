@@ -9,7 +9,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/automation
 - `AccessMode.kt` (58) What a token lets an agent do.
 - `ActivityLog.kt` (67) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `ApiMode.kt` (146) User switches for the MCP server (Ajustes › Modo API).
+- `ApiMode.kt` (147) User switches for the MCP server (Ajustes › Modo API).
 - `ApiTokens.kt` (102) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
@@ -20,7 +20,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MetadataBatch.kt` (126) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
-- `RelayClient.kt` (210) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
+- `RelayClient.kt` (209) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
 - `RelayGuard.kt` (84) Safety rules for requests that arrive through the internet relay.
 - `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
 - `ServerMetrics.kt` (86) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:

@@ -1,4 +1,4 @@
-# Sin publicar (próxima versión)
+# Stone Kotlin 1.7.9
 
 - Seguridad con varios agentes: cada petición usa solo los permisos de su token (antes, con varios agentes a la
   vez, `stone_help` podía mostrar a un token de solo lectura herramientas de otro). Cada agente ve solo su
