@@ -25,8 +25,9 @@ object ApiTokens {
         val stored = store.look("api.tokens", "[]")
         tokens = ApiToken.parse(SecretBox.open(stored).ifBlank { "[]" })
         if (tokens.isNotEmpty() && !SecretBox.isSealed(stored)) save() // seal what older versions stored in plain text
-        if (tokens.isEmpty()) {
-            val legacy = store.look("api.token", "").takeUnless(SecretBox::isSealed).orEmpty().ifBlank { secret() }
+        // Only a token from 1.6.8 or earlier is migrated; otherwise the user creates tokens with "Crear token".
+        val legacy = store.look("api.token", "").takeUnless(SecretBox::isSealed).orEmpty()
+        if (tokens.isEmpty() && legacy.isNotBlank()) {
             val mode = if (store.look("api.readOnly", "false").toBoolean()) AccessMode.READ else AccessMode.WRITE
             tokens = listOf(ApiToken(id(), defaultName, legacy, mode, System.currentTimeMillis()))
             save()
@@ -35,9 +36,11 @@ object ApiTokens {
     }
 
     /** [validDays] 0 = never expires. */
-    fun create(name: String, mode: AccessMode, validDays: Int = 0): ApiToken {
+    fun create(name: String, mode: AccessMode, validDays: Int = 0, secret: String = secret(),
+        disabledTools: Set<String> = emptySet()): ApiToken {
         val now = System.currentTimeMillis()
-        return ApiToken(id(), name.trim().ifEmpty { "Agente ${tokens.size + 1}" }, secret(), mode, now,
+        return ApiToken(id(), name.trim().ifEmpty { "Agente ${tokens.size + 1}" }, secret, mode, now,
+            disabledTools = disabledTools - "stone_help",
             expiresAt = if (validDays > 0) now + validDays * 86_400_000L else 0)
             .also { tokens = tokens + it; save(); publish() }
     }
@@ -50,14 +53,17 @@ object ApiTokens {
     /** Tools this token may not use (the agent no longer sees them in tools/list). */
     fun setDisabledTools(id: String, tools: Set<String>) = change(id) { it.copy(disabledTools = tools - "stone_help") }
 
+    /** A paused token is rejected (its open sessions close) until it is resumed; its link stays the same. */
+    fun setPaused(id: String, paused: Boolean) = change(id) { it.copy(paused = paused) }
+
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim().ifEmpty { it.name }) }
     fun setMode(id: String, mode: AccessMode) = change(id) { it.copy(mode = mode) }
     /** New secret for the same token: whoever had the old link loses access. */
     fun rotate(id: String) = change(id) { it.copy(secret = secret(), lastUsedAt = 0) }
 
     /** Removes a token; the last one is rotated instead so the link card always has something to show. */
+    /** Removes a token for good: its link stops working at once. */
     fun revoke(id: String) {
-        if (tokens.size <= 1) return rotate(id)
         tokens = tokens.filterNot { it.id == id }; save(); publish(); RequestStats.forget(id)
     }
 

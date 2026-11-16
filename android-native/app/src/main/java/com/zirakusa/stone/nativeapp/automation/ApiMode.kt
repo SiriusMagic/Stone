@@ -45,10 +45,10 @@ object ApiMode {
     fun load(store: StoneSettingsStore) {
         this.store = store
         enabled = store.look("api.enabled", "false").toBoolean()
-        localNetwork = store.look("api.lan", "false").toBoolean()
+        // Wi-Fi access (plain HTTP) is no longer offered: always this phone and the encrypted relay only.
+        localNetwork = false
         urlTokens = store.look("api.urlToken", "true").toBoolean()
         McpServer.allowQueryToken = urlTokens
-        disabledTools = store.look("api.disabled", "").split(',').filter { it.isNotBlank() }.toSet()
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
             ?: McpServer.DEFAULT_PORT
         ApiTokens.load(store, "Principal")
@@ -74,22 +74,9 @@ object ApiMode {
     val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
     fun changeMode(value: AccessMode) { ApiTokens.primary?.let { ApiTokens.setMode(it.id, value) } }
 
-    /** Tools the user switched off one by one (MCP names). */
-    var disabledTools by mutableStateOf(emptySet<String>())
-        private set
-
-    fun allowTool(toolName: String, allowed: Boolean) {
-        disabledTools = if (allowed) disabledTools - toolName else disabledTools + toolName
-        store?.setLook("api.disabled", disabledTools.sorted().joinToString(","))
-    }
-    fun allowAllTools(allowed: Boolean, toolNames: List<String>) {
-        disabledTools = if (allowed) emptySet() else toolNames.toSet() - "stone_help"
-        store?.setLook("api.disabled", disabledTools.sorted().joinToString(","))
-    }
-
     /** Whether a token with [access] may use [action]: allowed by its mode and not switched off. */
     fun permits(action: StoneAction, access: AccessMode = mode): Boolean =
-        access.permits(action.risk) && action.toolName !in disabledTools
+        access.permits(action.risk) // tools are allowed per token (ApiToken.disabledTools)
 
     /** Revokes every agent that knows the old main token. */
     fun regenerateToken() { ApiTokens.primary?.let { ApiTokens.rotate(it.id) } }

@@ -1,3 +1,12 @@
+# Sin publicar (próxima versión)
+
+- Modo API más simple: solo dos pestañas. General: «Activar MCP», «Crear token» y una tarjeta por token con
+  nombre, enlace (copiar) y Revocar · Pausar · Configurar. Analítica aparte, con la actividad debajo.
+- Crear token: nombre, su enlace, duración, modo y herramientas (categorías plegadas) en una sola pantalla;
+  al guardar se copia el enlace. Nuevo «Pausar»: el token se rechaza hasta reanudarlo, sin cambiar su enlace.
+- Se quitan las pestañas Herramientas, Seguridad y Enlace: los permisos son por token, la red local (HTTP sin
+  cifrar), el puerto y las configuraciones manuales desaparecen. Revocar pide confirmación y borra el token.
+
 # Stone Kotlin 1.7.7
 
 - APK completo (sin optimizar): `Stone-1.7.7-completo.apk`.

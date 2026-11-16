@@ -56,8 +56,6 @@ object StoneAutomation {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName", "UNKNOWN_TOOL",
             "Call tools/list or stone_help.")
         return try {
-            if (action.toolName in ApiMode.disabledTools) throw ActionException("The user turned off '${action.toolName}' for agents.",
-                "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo API > Herramientas.")
             if (action.toolName in blocked) throw ActionException("The user turned off '${action.toolName}' for this token.",
                 "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo API > Seguridad > (this token).")
             if (!access.permits(action.risk)) throw ActionException("This token is read-only.", "READ_ONLY_TOKEN",

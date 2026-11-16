@@ -58,7 +58,7 @@ object McpServer {
         // Revoked, rotated or expired tokens also lose their open SSE sessions at once.
         val now = System.currentTimeMillis()
         streamGrants.forEach { (id, grant) ->
-            if (tokens.none { it.id == grant.id && it.secret == grant.secret && (it.expiresAt == 0L || it.expiresAt > now) }) {
+            if (tokens.none { it.id == grant.id && it.secret == grant.secret && !it.paused && (it.expiresAt == 0L || it.expiresAt > now) }) {
                 streamGrants.remove(id); streams.remove(id)
             }
         }
@@ -115,6 +115,7 @@ object McpServer {
                 "Stone: this phone only accepts the token in the header 'Authorization: Bearer TOKEN', not in the URL."
             else if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
+            else if (isPaused(request)) "Stone: this token is paused. The user can resume it in Stone > Ajustes > Modo API."
             else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo API."),
             listOf("WWW-Authenticate: Bearer"))
         ApiTokens.touch(grant.id)
@@ -283,7 +284,12 @@ object McpServer {
         val given = givenToken(request)?.toByteArray() ?: return null
         val now = System.currentTimeMillis()
         return grants.values.firstOrNull { MessageDigest.isEqual(given, it.secret.toByteArray()) }
-            ?.takeIf { it.expiresAt == 0L || it.expiresAt > now }
+            ?.takeIf { (it.expiresAt == 0L || it.expiresAt > now) && !it.paused }
+    }
+
+    private fun isPaused(request: McpRequest): Boolean {
+        val given = givenToken(request)?.toByteArray() ?: return false
+        return grants.values.any { it.paused && MessageDigest.isEqual(given, it.secret.toByteArray()) }
     }
 
     private fun error(id: Any?, code: Int, message: String) = JSONObject().put("jsonrpc", "2.0")

@@ -119,15 +119,16 @@ demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada tok
 | Lectura y escritura | Todo | Solo lo crítico (`playlist_delete`) |
 | Acceso completo | Todo | Nada |
 
-En Herramientas cada función tiene su interruptor: las apagadas no se ofrecen a ningún agente.
+Cada token tiene sus propias herramientas (Configurar token › Herramientas autorizadas): las apagadas
+no aparecen en `tools/list` y se rechazan con `TOOL_DISABLED`. Un token puede pausarse (se rechaza hasta
+reanudarlo, con el mismo enlace) o revocarse (para siempre, previa confirmación).
 Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
 `metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
 
-Seguridad: los tokens se guardan cifrados (Android Keystore). Con «Token dentro del enlace» apagado, Stone
-rechaza `?token=` y solo acepta `Authorization: Bearer TOKEN` (más seguro; ChatGPT necesita el token en el
-enlace). En SSE cada `POST /messages` debe llevar el token de la sesión; revocar o rotar un token cierra sus
-sesiones. Tras 20 tokens erróneos en un minuto, ese origen recibe HTTP 429 durante un minuto. La red local
-(Wi-Fi) es HTTP sin cifrar: úsala solo en redes de confianza.
+Seguridad: los tokens se guardan cifrados (Android Keystore). Se acepta el token en el enlace (`?token=`,
+necesario para ChatGPT) o en `Authorization: Bearer TOKEN`. En SSE cada `POST /messages` debe llevar el token de la sesión; revocar o rotar un token cierra sus
+sesiones. Tras 20 tokens erróneos en un minuto, ese origen recibe HTTP 429 durante un minuto. El acceso por la red local
+(Wi-Fi, HTTP sin cifrar) ya no se ofrece: solo este teléfono y el enlace cifrado del relay.
 
 Android exige su propio permiso para editar archivos de la biblioteca del teléfono. Stone lo pide
 una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de pedirlo.

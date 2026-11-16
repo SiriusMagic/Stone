@@ -32,11 +32,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 internal val ApiGreen = Color(0xFF4CD27A)
 internal val ApiRed = Color(0xFFFF5C5C)
 
-/** Tabs of Ajustes › Modo API. */
+/** Tabs of Ajustes › Modo API: everything about tokens in General, the numbers in Analítica. */
 internal enum class ApiTab(val label: Int, val icon: ImageVector) {
-    GENERAL(R.string.api_tab_general, Icons.Default.Home), TOOLS(R.string.api_tab_tools, Icons.Default.Layers),
-    SECURITY(R.string.api_tab_security, Icons.Default.Shield), LINK(R.string.api_tab_link, Icons.Default.Link),
-    ACTIVITY(R.string.api_tab_activity, Icons.Default.MonitorHeart)
+    GENERAL(R.string.api_tab_general, Icons.Default.Home), ANALYTICS(R.string.api_analytics, Icons.Default.MonitorHeart)
 }
 
 /** Category key (first part of an action name) → label and icon. */
@@ -82,6 +80,23 @@ internal fun RecordStatus.color() = when (this) { RecordStatus.OK -> ApiGreen; R
         }
         Spacer(Modifier.height(10.dp))
         content()
+    }
+}
+
+/** Card of the General tab: icon, title, explanation and a control on the right (switch or button). */
+@Composable internal fun ApiActionCard(icon: ImageVector, title: Int, subtitle: Int, trailing: @Composable () -> Unit,
+    footer: @Composable ColumnScope.() -> Unit = {}) {
+    Column(Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(20.dp)).background(StonePalette.Chip)
+        .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(20.dp)).padding(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, Modifier.size(30.dp), tint = StonePalette.Text)
+            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(stringResource(title), fontWeight = FontWeight.Black, fontSize = 19.sp)
+                Text(stringResource(subtitle), color = StonePalette.Secondary, fontSize = 13.sp)
+            }
+            trailing()
+        }
+        footer()
     }
 }
 

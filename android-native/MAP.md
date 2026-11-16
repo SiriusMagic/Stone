@@ -7,15 +7,15 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `AccessMode.kt` (55) What a token lets an agent do.
+- `AccessMode.kt` (58) What a token lets an agent do.
 - `ActivityLog.kt` (65) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `ApiMode.kt` (153) User switches for the MCP server (Ajustes › Modo API).
-- `ApiTokens.kt` (96) Access tokens of Ajustes › Modo API › Seguridad.
+- `ApiMode.kt` (144) User switches for the MCP server (Ajustes › Modo API).
+- `ApiTokens.kt` (102) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthThrottle.kt` (29) Slows down token guessing:
 - `AutomationHost.kt` (71) What the running app offers to automation.
 - `McpHttp.kt` (114) One parsed HTTP/1.1 request;
 - `McpSelfTest.kt` (50) Result of calling Stone's own MCP address the way an agent would.
-- `McpServer.kt` (292) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (298) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `MetadataBatch.kt` (126) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `RelayClient.kt` (127) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
@@ -23,7 +23,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneAction.kt` (83) How dangerous an action is;
 - `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
 - `StoneAgentActions.kt` (37) Tools that help agents help themselves:
-- `StoneAutomation.kt` (165) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAutomation.kt` (163) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
 - `StoneGuide.kt` (91) Discovery help for agents:
 - `StoneJobs.kt` (122) Background batches for agents.
@@ -88,16 +88,11 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `AlbumCard.kt` (57)
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (67) General tab:
-- `ApiLinkTab.kt` (53) Enlace tab:
-- `ApiModeConnect.kt` (63) Port, "Probar conexión" and ready-to-paste client configurations.
-- `ApiModeLinkCard.kt` (57) The two-click part of API mode:
-- `ApiModeSettings.kt` (102) Ajustes › Modo API:
-- `ApiModeShared.kt` (126) Tabs of Ajustes › Modo API.
-- `ApiModeToolList.kt` (70) Herramientas tab:
-- `ApiSecurityTab.kt` (81) Seguridad tab:
-- `ApiTokenEditor.kt` (142) Full-screen editor of one token:
-- `ApiTokenRow.kt` (108) One token:
+- `ApiGeneralTab.kt` (61) General:
+- `ApiModeSettings.kt` (67) Ajustes › Modo API:
+- `ApiModeShared.kt` (141) Tabs of Ajustes › Modo API:
+- `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
+- `ApiTokenRow.kt` (73) Compact token card:
 - `ArtistCard.kt` (54)
 - `AudioLevelSettings.kt` (112) Ajustes › Niveles de audio:
 - `CrashReportCard.kt` (41) Ajustes › Diagnóstico:

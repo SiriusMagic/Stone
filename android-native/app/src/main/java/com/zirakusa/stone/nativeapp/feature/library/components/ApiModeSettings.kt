@@ -33,7 +33,7 @@ import com.zirakusa.stone.nativeapp.automation.RelayClient
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-/** Ajustes › Modo API: status, then five tabs (General, Herramientas, Seguridad, Enlace, Actividad). */
+/** Ajustes › Modo API: General (MCP on/off, create tokens, the tokens) and Analítica, on its own. */
 @Composable internal fun ApiModeSettings() {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(ApiTab.GENERAL) }
@@ -41,47 +41,12 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(label, value))
         Toast.makeText(context, R.string.api_copied, Toast.LENGTH_SHORT).show()
     }
-    Text(stringResource(R.string.api_intro), color = StonePalette.Muted)
-    ApiStatusCard()
     ApiTabRow(tab) { tab = it }
     when (tab) {
-        ApiTab.GENERAL -> ApiGeneralTab(::copy) { tab = it }
-        ApiTab.TOOLS -> ApiModeToolList()
-        ApiTab.SECURITY -> ApiSecurityTab(::copy)
-        ApiTab.LINK -> ApiLinkTab(::copy)
-        ApiTab.ACTIVITY -> ApiActivityTab()
+        ApiTab.GENERAL -> ApiGeneralTab(::copy)
+        ApiTab.ANALYTICS -> ApiActivityTab()
     }
     Spacer(Modifier.height(16.dp))
-}
-
-/** Running state, internet link, tools the main token can use and requests so far. */
-@Composable private fun ApiStatusCard() {
-    val history by StoneAutomation.history.collectAsState()
-    val (color, label) = when {
-        !ApiMode.enabled -> StonePalette.Muted to R.string.api_status_inactive
-        !ApiMode.running -> MaterialTheme.colorScheme.error to R.string.api_status_error
-        else -> ApiGreen to R.string.api_status_active
-    }
-    val relay = when {
-        !ApiMode.enabled -> null
-        !ApiMode.relayAvailable -> R.string.api_relay_missing
-        ApiMode.relayState == RelayClient.State.ONLINE -> R.string.api_relay_online
-        ApiMode.relayState == RelayClient.State.CONNECTING -> R.string.api_relay_connecting
-        else -> R.string.api_relay_offline
-    }
-    Row(Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(20.dp)).background(StonePalette.Chip)
-        .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(14.dp).clip(CircleShape).background(color))
-        Column(Modifier.weight(1f).padding(start = 12.dp)) {
-            Text(stringResource(label), color = color, fontWeight = FontWeight.Black, fontSize = 20.sp)
-            relay?.let { Text(stringResource(it), color = StonePalette.Muted, fontSize = 13.sp) }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(stringResource(R.string.api_status_tools, StoneAutomation.available(ApiMode.mode).size,
-                StoneAutomation.actions.size), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.api_status_requests, history.size), color = StonePalette.Muted, fontSize = 13.sp)
-        }
-    }
 }
 
 @Composable private fun ApiTabRow(selected: ApiTab, onSelect: (ApiTab) -> Unit) {

@@ -344,15 +344,26 @@ class McpServerTest {
         val like = call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", true))
         assertFalse(like.getBoolean("isError"))
         assertEquals(setOf(songs[1].id), liked)
+        val main = ApiToken("main", "Principal", token, AccessMode.WRITE, 0)
         try {
-            ApiMode.allowTool("library_set_favorite", false)
+            McpServer.updateTokens(listOf(main.copy(disabledTools = setOf("library_set_favorite"))))
             val names = rpc("tools/list").getJSONObject("result").getJSONArray("tools")
                 .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
             assertFalse("library_set_favorite" in names)
             assertTrue(names.containsAll(listOf("audio_set_level", "settings_set_transitions", "playlist_rename")))
             assertTrue(call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", false)).getBoolean("isError"))
             assertEquals(setOf(songs[1].id), liked)
-        } finally { ApiMode.allowTool("library_set_favorite", true) }
+        } finally { McpServer.updateTokens(listOf(main)) }
+    }
+
+    @Test fun pausedTokensAreRejectedUntilResumed() {
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        val main = ApiToken("main", "Principal", token, AccessMode.WRITE, 0)
+        McpServer.updateTokens(listOf(main.copy(paused = true)))
+        val paused = raw("POST ${McpServer.PATH} HTTP/1.1\r\nAuthorization: Bearer $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(paused.startsWith("HTTP/1.1 401") && paused.contains("paused"))
+        McpServer.updateTokens(listOf(main))
+        assertEquals(200, post(ping).first)
     }
 
     @Test fun customisationAndSleepTimerTools() {
