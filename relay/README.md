@@ -54,3 +54,14 @@ El relay añade al mensaje `client` (la dirección del cliente según Cloudflare
 teléfono con `{t:"timeout", id}` cuando responde 504. Ambos son compatibles: un Stone anterior los ignora, y un
 Stone nuevo sigue funcionando con el relay anterior (cuenta los tokens erróneos de todo el relay juntos y
 detecta las respuestas tardías por tiempo). Para activarlos: `npx wrangler deploy`.
+
+## Protecciones (desde 1.7.9+)
+
+- Solo HTTPS: una petición por `http://` a la dirección pública se rechaza (400), no se redirige.
+- Cabeceras de seguridad en todas las respuestas (HSTS, `nosniff`, `no-store`, `no-referrer`, CSP, sin iframes).
+- Cuerpo máximo de 1 MiB (413), igual que Stone.
+- Límite de 120 peticiones por minuto por dirección y teléfono (429), y como máximo 72 en espera por teléfono.
+- Los intentos de ocupar el enlace de otro teléfono y los bloqueos por límite se registran
+  (`npx wrangler tail`).
+
+Para activarlas hay que volver a publicar: `npx wrangler deploy`.
