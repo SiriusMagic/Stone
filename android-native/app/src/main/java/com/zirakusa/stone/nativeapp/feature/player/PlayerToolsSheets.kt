@@ -177,7 +177,6 @@ internal data class PlayerOptionExtra(val icon: androidx.compose.ui.graphics.vec
 
 private data class EqPreset(val name: Int, val values: List<Int>)
 private val EqSurface = Color(0xFF203436)
-private val EqCard = Color(0xFF243A3C)
 private val EqOutline = Color(0xFF405456)
 private val EqText = Color(0xFFE3ECEB)
 private val EqMuted = Color(0xFF91A4A4)

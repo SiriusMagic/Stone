@@ -52,9 +52,6 @@ class StonePlaybackService : MediaSessionService() {
         val volumeUi = mutableVolumeUi.asStateFlow()
         val audioDiagnosticUi = mutableAudioDiagnosticUi.asStateFlow()
 
-        val currentVolumePercent: Int get() = volumePercent
-        val currentLastAppliedNativeLevel: Int get() = lastAppliedNativeLevel
-
         private fun effectSessionId(): Int =
             reportedAudioSessionId.takeIf { it > 0 } ?: playbackAudioSessionId
 
@@ -258,8 +255,6 @@ class StonePlaybackService : MediaSessionService() {
 
         /** The service's player, for the home-screen widget (null when the service is not running). */
         fun currentPlayer(): Player? = activePlayer
-
-        fun hasActivePlayback(): Boolean = activePlayer?.mediaItemCount?.let { it > 0 } == true
 
         fun hideVolumeOverlay(forRevision: Long) {
             if (mutableVolumeUi.value.revision == forRevision)

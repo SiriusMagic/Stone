@@ -7,8 +7,6 @@ import com.zirakusa.stone.nativeapp.automation.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.ApiToken
 import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.McpCheck
-import com.zirakusa.stone.nativeapp.automation.McpSelfTest
 import com.zirakusa.stone.nativeapp.automation.McpServer
 import com.zirakusa.stone.nativeapp.automation.StoneAutomation
 import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
@@ -174,17 +172,7 @@ class McpServerTest {
         assertTrue(call.contains("TOOL_DISABLED"))
     }
 
-        @Test fun tokenInTheUrlCanBeTurnedOff() {
-        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
-        McpServer.allowQueryToken = false
-        try {
-            val viaQuery = raw("POST ${McpServer.PATH}?token=$token HTTP/1.1\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
-            assertTrue(viaQuery.startsWith("HTTP/1.1 401") && viaQuery.contains("only accepts the token in the header"))
-            assertEquals(200, post(ping).first) // the header still works
-        } finally { McpServer.allowQueryToken = true }
-    }
-
-    /** Plain GET the way a browser or a non-MCP agent does it. */
+        /** Plain GET the way a browser or a non-MCP agent does it. */
     private fun get(path: String, accept: String? = null): Pair<Int, String> {
         val call = CompletableFuture.supplyAsync {
             val connection = URL("http://127.0.0.1:${McpServer.DEFAULT_PORT}$path").openConnection(Proxy.NO_PROXY) as HttpURLConnection
@@ -241,14 +229,6 @@ class McpServerTest {
         val bands = rpc("tools/call", JSONObject().put("name", "equalizer_set_bands")
             .put("arguments", JSONObject().put("values", "5,4,2,0,0,0,1,2,3,4"))).getJSONObject("result")
         assertFalse(bands.getBoolean("isError"))
-    }
-
-    @Test fun selfTestRecognisesStone() {
-        val url = "http://127.0.0.1:${McpServer.DEFAULT_PORT}${McpServer.PATH}"
-        val results = kotlinx.coroutines.runBlocking { McpSelfTest.run(listOf(url), token) }
-        assertTrue(results.single() is McpCheck.Ok)
-        val wrong = kotlinx.coroutines.runBlocking { McpSelfTest.run(listOf(url), "nope") }
-        assertTrue(wrong.single() is McpCheck.NoAnswer)
     }
 
     @Test fun initializeAndListTools() {

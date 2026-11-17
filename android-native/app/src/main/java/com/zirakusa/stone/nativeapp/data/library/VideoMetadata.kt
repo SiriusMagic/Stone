@@ -117,7 +117,6 @@ data class VideoMetadataDocument(
 
 data class VideoMetadataSaveResult(
     val nativeFileWritten: Boolean,
-    val internalMetadataSaved: Boolean = true,
     val nativeFailureMessage: String? = null,
 )
 

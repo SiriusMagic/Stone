@@ -21,9 +21,6 @@ class WebPacer(val service: String, private val minGapMs: Long, private val maxR
     private var nextAllowedAt = 0L
     @Volatile var coolDownUntil = 0L; private set
 
-    /** Seconds left before this service may be asked again (0 = free now). */
-    fun coolDownSeconds(): Int = ((coolDownUntil - clock()).coerceAtLeast(0) / 1000).toInt()
-
     /** Runs [request] (returns the HTTP status and body) respecting the pace; null body for 404. */
     fun call(request: () -> Pair<Int, String?>): String? {
         var attempt = 0

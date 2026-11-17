@@ -129,14 +129,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun recordPlay(song: Song) { userStore.recordPlay(song.id); mutable.update { it.copy(
         recentIds = userStore.recentIds(), playCounts = it.playCounts + (song.id to userStore.playCount(song.id))) } }
     fun syncFavorites() { mutable.update { it.copy(favoriteIds = userStore.favoriteIds()) } }
-    fun reloadUserData() { viewModelScope.launch {
-        val cached = repository.cached(); val songs = cached.songs
-        val user = readUserSnapshot(songs)
-        mutable.update { it.copy(songs = songs, playlists = user.playlists,
-            favoriteIds = user.favorites, recentIds = user.recent,
-            playCounts = user.counts,
-            deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
-    } }
     fun createPlaylist(name: String) { if (name.isNotBlank()) { userStore.createPlaylist(name)
         mutable.update { it.copy(playlists = userStore.playlists()) } } }
     fun addToPlaylist(playlistId: String, song: Song) { userStore.add(playlistId, song.id)

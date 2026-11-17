@@ -28,7 +28,6 @@ object StonePalette {
     val Hint = Color(0xFF6B6B72)
     val EmptyIcon = Color(0xFF2A2A35)
     val Purple = Color(0xFF3A2674)
-    val PurpleText = Color(0xFFF5EEFF)
     val Cover = Color(0xFF1C1A24)
     val PlayingCover = Color(0xFF244AA8)
     val SongSubtitle = Color(0xFFAEA7B8)

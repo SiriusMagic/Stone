@@ -50,9 +50,6 @@ object McpServer {
     fun start(token: String, port: Int = DEFAULT_PORT): Boolean =
         start(listOf(ApiToken("main", "Principal", token, AccessMode.WRITE, 0)), port)
 
-    /** Whether ?token= in the URL is accepted (Ajustes › Modo API › Seguridad); the header always is. */
-    @Volatile var allowQueryToken = true
-
     fun updateTokens(tokens: List<ApiToken>) {
         grants = tokens.associateBy { it.secret }
         // Revoked, rotated or expired tokens also lose their open SSE sessions at once.
@@ -145,9 +142,7 @@ object McpServer {
             AuthThrottle.failed(origin); ServerMetrics.event("authRejected")
         }
         if (grant == null) return McpHttp.respond(out, 401,
-            error(null, -32001, if (!allowQueryToken && request.query["token"] != null && headerToken(request) == null)
-                "Stone: this phone only accepts the token in the header 'Authorization: Bearer TOKEN', not in the URL."
-            else if (givenToken(request) == null)
+            error(null, -32001, if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
             else if (isPaused(request)) "Stone: this token is paused. The user can resume it in Stone > Ajustes > Modo API."
             else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo API."),
@@ -312,7 +307,7 @@ object McpServer {
     }
 
     private fun givenToken(request: McpRequest): String? = headerToken(request)
-        ?: request.query["token"]?.trim()?.takeIf { it.isNotEmpty() && allowQueryToken }
+        ?: request.query["token"]?.trim()?.takeIf { it.isNotEmpty() }
 
     /** The token the request carries, compared in constant time, or null when missing or revoked. */
     private fun grantFor(request: McpRequest): ApiToken? {

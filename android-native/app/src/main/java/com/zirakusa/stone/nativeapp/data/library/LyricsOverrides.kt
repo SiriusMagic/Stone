@@ -30,12 +30,6 @@ class LyricsOverrides(context: Context) {
         JSONObject(database.getString("lyrics-offsets") ?: "{}").optLong(songId, 0L)
     }.getOrDefault(0L)
 
-    fun putOffset(songId: String, value: Long) {
-        val offsets = runCatching { JSONObject(database.getString("lyrics-offsets") ?: "{}") }
-            .getOrDefault(JSONObject())
-        database.putString("lyrics-offsets", offsets.put(songId, value.coerceIn(-120_000L, 120_000L)).toString())
-    }
-
     fun deleteOffset(songId: String) {
         val offsets = runCatching { JSONObject(database.getString("lyrics-offsets") ?: "{}") }
             .getOrDefault(JSONObject())

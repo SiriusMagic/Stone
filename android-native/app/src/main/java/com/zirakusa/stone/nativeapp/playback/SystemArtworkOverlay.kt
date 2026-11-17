@@ -104,10 +104,4 @@ object SystemArtworkOverlay {
 
     internal fun composeForTest(original: Bitmap, watermark: Bitmap): Bitmap? =
         compose(original, watermark)
-
-    internal fun clearForTest() {
-        cache.evictAll()
-        missing.evictAll()
-        logo = null
-    }
 }

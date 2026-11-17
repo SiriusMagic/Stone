@@ -1,7 +1,6 @@
 package com.zirakusa.stone.nativeapp.automation
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.BuildConfig
@@ -13,16 +12,10 @@ import java.security.SecureRandom
 object ApiMode {
     var enabled by mutableStateOf(false)
         private set
-    /**
-     * Whether the token may travel in the link (?token=). Needed by apps that only take a URL
-     * (ChatGPT); off = only the Authorization: Bearer header is accepted, links carry no secret.
-     */
-    var urlTokens by mutableStateOf(true)
-        private set
     /** Secret of the main token (the one behind the big Copy button). */
     val token: String get() = ApiTokens.primary?.secret.orEmpty()
-    var port by mutableIntStateOf(McpServer.DEFAULT_PORT)
-        private set
+    /** Fixed: the app offers no way to change it. */
+    val port: Int get() = McpServer.DEFAULT_PORT
     var running by mutableStateOf(false)
         private set
     /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
@@ -44,12 +37,8 @@ object ApiMode {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
-        // Wi-Fi access (plain HTTP) was removed: only this phone and the encrypted relay. Old setting wiped.
-        if (store.look("api.lan", "").isNotEmpty()) store.setLook("api.lan", "")
-        urlTokens = store.look("api.urlToken", "true").toBoolean()
-        McpServer.allowQueryToken = urlTokens
-        port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
-            ?: McpServer.DEFAULT_PORT
+        // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
+        for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")
         ActivityLog.attach(store)
         RequestStats.attach(store)
@@ -65,26 +54,12 @@ object ApiMode {
     }
 
     fun enable(value: Boolean) { enabled = value; store?.setLook("api.enabled", value.toString()); apply() }
-    fun allowUrlTokens(value: Boolean) {
-        urlTokens = value; McpServer.allowQueryToken = value; store?.setLook("api.urlToken", value.toString())
-    }
     /** Access mode of the main token (the cards of the General tab). */
     val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
-    fun changeMode(value: AccessMode) { ApiTokens.primary?.let { ApiTokens.setMode(it.id, value) } }
 
     /** Whether a token with [access] may use [action]: allowed by its mode and not switched off. */
     fun permits(action: StoneAction, access: AccessMode = mode): Boolean =
         access.permits(action.risk) // tools are allowed per token (ApiToken.disabledTools)
-
-    /** Revokes every agent that knows the old main token. */
-    fun regenerateToken() { ApiTokens.primary?.let { ApiTokens.rotate(it.id) } }
-
-    /** Changes the port (1024-65535); false when the value is not valid. */
-    fun changePort(value: Int): Boolean {
-        if (value !in PORTS) return false
-        port = value; store?.setLook("api.port", value.toString()); apply()
-        return true
-    }
 
     private fun apply() {
         running = if (enabled) McpServer.start(ApiTokens.tokens, port) else { McpServer.stop(); false }
@@ -100,16 +75,13 @@ object ApiMode {
     /** Internet link when there is a relay, else this phone's address. */
     fun linkFor(secret: String = token): String = publicLink(secret) ?: "http://127.0.0.1:$port${McpServer.PATH}${tokenQuery(secret)}"
 
-    private fun tokenQuery(secret: String) = if (urlTokens) "?token=$secret" else ""
+    private fun tokenQuery(secret: String) = "?token=$secret"
 
-    /** What the copy buttons give: the link, plus the header line when the token may not go in it. */
-    fun shareText(secret: String = token): String =
-        if (urlTokens) linkFor(secret) else "${linkFor(secret)}\nAuthorization: Bearer $secret"
+    /** What the copy buttons give: the link with its token. */
+    fun shareText(secret: String = token): String = linkFor(secret)
 
     private fun newToken(size: Int = 24): String {
         val bytes = ByteArray(size).also(SecureRandom()::nextBytes)
         return bytes.joinToString("") { "%02x".format(it) }
     }
-
-    private val PORTS = 1024..65535
 }

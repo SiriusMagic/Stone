@@ -50,8 +50,6 @@ class RelayClient(
     private var pending: ScheduledFuture<*>? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
-    val publicBase: String get() = "$relayUrl/d/$device"
-
     fun start() {
         if (running) return
         running = true; stopped = false; attempt = 0

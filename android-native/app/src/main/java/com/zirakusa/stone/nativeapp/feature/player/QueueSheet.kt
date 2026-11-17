@@ -47,7 +47,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val QueueBrown = Color(0xFF5A3436)
-private val QueueDark = Color(0xFF4A292B)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable fun QueueSheet(state: PlaybackState, playback: PlaybackViewModel, tint: Color = QueueBrown,

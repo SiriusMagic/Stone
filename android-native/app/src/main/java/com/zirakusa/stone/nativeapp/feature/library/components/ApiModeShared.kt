@@ -125,16 +125,3 @@ internal fun RecordStatus.color() = when (this) { RecordStatus.OK -> ApiGreen; R
         .background(color.copy(alpha = .12f)).padding(horizontal = 8.dp, vertical = 3.dp), color = color,
         fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
 }
-
-/** Box for an informative note at the end of a tab. */
-@Composable internal fun ApiNote(title: Int, text: Int) {
-    Row(Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(18.dp))
-        .border(1.dp, StonePalette.Yellow.copy(alpha = .6f), RoundedCornerShape(18.dp))
-        .background(StonePalette.Yellow.copy(alpha = .07f)).padding(14.dp)) {
-        Icon(Icons.Default.Info, null, tint = StonePalette.Yellow)
-        Column(Modifier.padding(start = 12.dp)) {
-            Text(stringResource(title), color = StonePalette.Yellow, fontWeight = FontWeight.Bold)
-            Text(stringResource(text), color = StonePalette.Secondary, fontSize = 13.sp)
-        }
-    }
-}

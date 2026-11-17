@@ -104,14 +104,6 @@ class StoneEcoEngine(context: Context) {
             offloadAvailable = offload, strategy = strategy)
     }
 
-    /** Reads the current route only when a mode is applied or diagnostics are requested. */
-    fun refreshDiagnostics(mode: AudioMode): Diagnostics {
-        val output = inspectOutput()
-        val current = mutableDiagnostics.value
-        return current.copy(mode = mode, output = output.first, usb = output.second)
-            .also { mutableDiagnostics.value = it }
-    }
-
     private fun inspectOutput(): Pair<String, Boolean> {
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         val device = devices.firstOrNull { it.type in EXTERNAL_OUTPUTS }
