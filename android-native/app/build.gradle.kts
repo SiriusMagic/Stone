@@ -71,6 +71,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // WebSocket to the Stone relay (fixed public link for the MCP server).
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    constraints {
+        // Media3 brings Guava 33.3.1, affected by GHSA-xxph-c9ww-hj94 (CVE-2026-102554); 33.7.2 is the fixed release.
+        implementation("com.google.guava:guava:33.7.2-android") { because("GHSA-xxph-c9ww-hj94") }
+    }
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.18")
     testImplementation("androidx.compose.ui:ui-test-junit4")
