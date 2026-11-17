@@ -1,3 +1,18 @@
+# Stone Kotlin 1.7.10
+
+- Seguridad: Stone ya no envía nada sin cifrar. Se quitó la última excepción (127.0.0.1) y las portadas
+  solo se descargan por HTTPS.
+- Se eliminó por completo el acceso por Wi-Fi (HTTP sin cifrar), que seguía en el código aunque no se
+  mostraba. El servidor MCP solo escucha dentro del teléfono; desde fuera se llega solo por el enlace
+  cifrado. Los ajustes antiguos sin pantalla (Wi-Fi, puerto, token solo en cabecera) se borran.
+- El enlace del relay nunca se conecta sin cifrar.
+- Relay (ya publicado): solo HTTPS, cabeceras de seguridad, como máximo 120 peticiones por minuto por
+  cliente, cuerpo de hasta 1 MiB y registro de intentos de quedarse con el enlace de otro teléfono.
+- Código sin uso eliminado y carpetas reorganizadas por función (ver `ARQUITECTURA.md`). Los widgets y
+  las alarmas siguen funcionando tras actualizar.
+- Dependencias revisadas contra OSV.dev: Guava pasa a 33.7.2 (CVE-2026-102554). Ver `DEPENDENCIAS.md`
+  y `THIRD-PARTY-SERVICES.md`.
+
 # Stone Kotlin 1.7.9
 
 - Seguridad con varios agentes: cada petición usa solo los permisos de su token (antes, con varios agentes a la

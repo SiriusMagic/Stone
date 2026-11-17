@@ -7,7 +7,7 @@ incluidas las que llegan arrastradas por otras.
 | Parte | Paquetes | Vulnerables | Licencias |
 |---|---|---|---|
 | App (va dentro del APK) | 168 | **0** | Todas Apache-2.0 |
-| Compilación (Gradle, Kotlin) | 2 plugins | **0** | Apache-2.0 |
+| Compilación (Gradle, Kotlin) | 2 plugins | **1 pendiente** (solo afecta al ordenador que compila, ver abajo) | Apache-2.0 |
 | Solo pruebas (no van en el APK) | 63 | **0** | Apache-2.0, MIT, BSD, EPL-1.0, CDDL+GPLv2-CE, Bouncy Castle, Unicode |
 | Relay (`npm`, solo herramienta de publicación) | 38 | **0** (`npm audit`) | MIT, Apache-2.0, ISC, 0BSD, CC0, LGPL-3.0 |
 
@@ -18,7 +18,7 @@ Lo que ya es seguro se deja para la migración siguiente (compileSdk 37 + AGP 9,
 
 ```text
 Stone (app)
-├── Kotlin 2.4.21 ............................... stdlib (JetBrains, Apache-2.0)
+├── Kotlin 2.3.21 ............................... stdlib (JetBrains, Apache-2.0)
 ├── kotlinx-coroutines-android 1.11.0 ........... tareas en segundo plano
 ├── :core ...................................... código propio, sin dependencias
 ├── Jetpack Compose (BOM 2026.06.01) ............ interfaz (Google, Apache-2.0)
@@ -43,7 +43,7 @@ Stone (app)
 ```text
 Gradle 8.14.3
 ├── Android Gradle Plugin 8.13.2
-└── Kotlin Gradle Plugin 2.4.21 (+ plugin de Compose 2.4.21)
+└── Kotlin Gradle Plugin 2.3.21 (+ plugin de Compose 2.3.21) ⚠ ver "Pendiente"
 ```
 
 ## Relay (`relay/`)
@@ -61,8 +61,13 @@ El Worker publicado (`relay/src/index.js`) **no tiene ninguna dependencia**: sol
 | Paquete | Antes | Ahora | Motivo |
 |---|---|---|---|
 | Guava (llega con Media3) | 33.3.1-android | **33.7.2-android** | GHSA-xxph-c9ww-hj94 / CVE-2026-102554 (alta): al deserializar ciertas colecciones se podía reservar memoria sin límite. Stone no deserializa objetos de Java, pero se corrige igualmente. Se eligió la versión que lo arregla y no la 33.8.0, publicada hace solo dos semanas. |
-| Kotlin (compilador y stdlib) | 2.3.21 | **2.4.21** | GHSA-r937-wjx7-w2jp / CVE-2026-53914 (moderada): ejecución de código a través de la caché de compilación. Solo afecta al ordenador que compila, no al APK. 2.4.21 es la versión de corrección de la rama 2.4, publicada hace más de un mes. |
 | `ui-tooling-preview` | 1.x | **eliminada** | No se usaba. |
+
+## Pendiente (para la migración a AGP 9)
+
+| Paquete | Versión | Aviso | Por qué no se cambió ahora |
+|---|---|---|---|
+| Kotlin Gradle Plugin | 2.3.21 | GHSA-r937-wjx7-w2jp / CVE-2026-53914 (moderada): ejecución de código a través de la caché de compilación (corregido en 2.4.20) | Solo afecta al ordenador que compila, y solo si alguien con acceso a él manipula la caché. **No está en el APK.** Se probó Kotlin 2.4.21: el R8 de AGP 8.13.2 no entiende sus metadatos ("error parsing kotlin metadata"), y eso puede hacer que la app se cierre en el teléfono. Se arregla junto con AGP 9, que trae un R8 compatible. Mientras tanto se compila siempre en un contenedor nuevo, sin caché compartida. |
 
 ## Cómo repetir la revisión
 
