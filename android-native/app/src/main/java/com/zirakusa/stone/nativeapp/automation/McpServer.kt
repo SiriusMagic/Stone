@@ -24,8 +24,8 @@ import java.util.concurrent.Executors
  * and a guide on a plain `GET /mcp`. `GET /health` is the only route that needs no token.
  *
  * Security: every request needs the token, as `Authorization: Bearer <token>`, `X-Api-Key` or
- * `?token=` (for clients that only take a URL). It listens on loopback unless the user enables
- * the local network. Each response carries `X-Stone-Server` so a different program using the
+ * `?token=` (for clients that only take a URL). It listens only on loopback (127.0.0.1): it is
+ * never reachable from the Wi-Fi, only from this phone and through the encrypted relay. Each response carries `X-Stone-Server` so a different program using the
  * same port is easy to spot.
  */
 object McpServer {
@@ -47,8 +47,8 @@ object McpServer {
     val running: Boolean get() = socket?.isClosed == false
 
     /** Single-token start (tests, older callers): that token gets "Lectura y escritura". */
-    fun start(token: String, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean =
-        start(listOf(ApiToken("main", "Principal", token, AccessMode.WRITE, 0)), localNetwork, port)
+    fun start(token: String, port: Int = DEFAULT_PORT): Boolean =
+        start(listOf(ApiToken("main", "Principal", token, AccessMode.WRITE, 0)), port)
 
     /** Whether ?token= in the URL is accepted (Ajustes › Modo API › Seguridad); the header always is. */
     @Volatile var allowQueryToken = true
@@ -64,13 +64,12 @@ object McpServer {
         }
     }
 
-    @Synchronized fun start(tokens: List<ApiToken>, localNetwork: Boolean, port: Int = DEFAULT_PORT): Boolean {
+    @Synchronized fun start(tokens: List<ApiToken>, port: Int = DEFAULT_PORT): Boolean {
         stop()
         updateTokens(tokens)
         this.port = port
         return runCatching {
-            val address = if (localNetwork) InetAddress.getByName("0.0.0.0") else InetAddress.getLoopbackAddress()
-            val server = ServerSocket(port, 32, address)
+            val server = ServerSocket(port, 32, InetAddress.getLoopbackAddress())
             socket = server
             val pool = Executors.newFixedThreadPool(8).also { workers = it }
             Thread({

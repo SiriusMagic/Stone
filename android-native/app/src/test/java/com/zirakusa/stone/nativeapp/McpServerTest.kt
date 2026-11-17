@@ -73,7 +73,7 @@ class McpServerTest {
             override fun setLauncherIcon(key: String) { launcherIcon = key }
             override fun setFavorite(songId: String, favorite: Boolean) { liked = if (favorite) liked + songId else liked - songId }
         }
-        assertTrue(McpServer.start(token, localNetwork = false))
+        assertTrue(McpServer.start(token))
     }
 
     @After fun stop() { McpServer.stop(); StoneAutomation.host = null }
@@ -149,7 +149,7 @@ class McpServerTest {
     @Test fun sseSessionsBelongToTheirTokenAndDieWithIt() {
         val first = ApiToken("a", "GPT", token, AccessMode.WRITE, 0)
         val second = ApiToken("b", "Claude", "other-token", AccessMode.WRITE, 0)
-        assertTrue(McpServer.start(listOf(first, second), localNetwork = false))
+        assertTrue(McpServer.start(listOf(first, second)))
         java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { stream ->
             stream.soTimeout = 5_000
             stream.getOutputStream().write("GET /sse HTTP/1.1\r\nAuthorization: Bearer $token\r\nAccept: text/event-stream\r\n\r\n".toByteArray())
@@ -167,7 +167,7 @@ class McpServerTest {
 
     @Test fun eachTokenOnlySeesAndUsesItsAllowedTools() {
         val limited = ApiToken("a", "GPT", token, AccessMode.FULL, 0, disabledTools = setOf("player_state"))
-        assertTrue(McpServer.start(listOf(limited), localNetwork = false))
+        assertTrue(McpServer.start(listOf(limited)))
         val list = post("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}""").second
         assertFalse(JSONObject(list).getJSONObject("result").getJSONArray("tools").toString().contains("\"player_state\""))
         val call = post("""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"player_state","arguments":{}}}""").second

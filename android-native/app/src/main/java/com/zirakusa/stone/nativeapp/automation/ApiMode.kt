@@ -7,15 +7,11 @@ import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.security.SecureRandom
 
 /** User switches for the MCP server (Ajustes › Modo API). Off by default. */
 object ApiMode {
     var enabled by mutableStateOf(false)
-        private set
-    var localNetwork by mutableStateOf(false)
         private set
     /**
      * Whether the token may travel in the link (?token=). Needed by apps that only take a URL
@@ -41,15 +37,15 @@ object ApiMode {
     /** Relay address; built in through BuildConfig, replaceable in tests. */
     internal var relayUrl: String = BuildConfig.RELAY_URL
 
-    /** Whether this build has an internet relay (else only this phone / Wi-Fi). */
+    /** Whether this build has an internet relay (else only this phone). */
     val relayAvailable: Boolean get() = relayUrl.isNotBlank()
 
     fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
-        // Wi-Fi access (plain HTTP) is no longer offered: always this phone and the encrypted relay only.
-        localNetwork = false
+        // Wi-Fi access (plain HTTP) was removed: only this phone and the encrypted relay. Old setting wiped.
+        if (store.look("api.lan", "").isNotEmpty()) store.setLook("api.lan", "")
         urlTokens = store.look("api.urlToken", "true").toBoolean()
         McpServer.allowQueryToken = urlTokens
         port = store.look("api.port", McpServer.DEFAULT_PORT.toString()).toIntOrNull()?.takeIf { it in PORTS }
@@ -72,7 +68,6 @@ object ApiMode {
     fun allowUrlTokens(value: Boolean) {
         urlTokens = value; McpServer.allowQueryToken = value; store?.setLook("api.urlToken", value.toString())
     }
-    fun allowLocalNetwork(value: Boolean) { localNetwork = value; store?.setLook("api.lan", value.toString()); apply() }
     /** Access mode of the main token (the cards of the General tab). */
     val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
     fun changeMode(value: AccessMode) { ApiTokens.primary?.let { ApiTokens.setMode(it.id, value) } }
@@ -92,7 +87,7 @@ object ApiMode {
     }
 
     private fun apply() {
-        running = if (enabled) McpServer.start(ApiTokens.tokens, localNetwork, port) else { McpServer.stop(); false }
+        running = if (enabled) McpServer.start(ApiTokens.tokens, port) else { McpServer.stop(); false }
         if (enabled && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
@@ -110,32 +105,6 @@ object ApiMode {
     /** What the copy buttons give: the link, plus the header line when the token may not go in it. */
     fun shareText(secret: String = token): String =
         if (urlTokens) linkFor(secret) else "${linkFor(secret)}\nAuthorization: Bearer $secret"
-
-    /** Wi-Fi addresses of this phone (only when the local network is allowed). */
-    fun lanHosts(): List<String> = if (!localNetwork) emptyList() else runCatching {
-        NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }
-            .flatMap { it.inetAddresses.toList() }.filterIsInstance<Inet4Address>().filter { it.isSiteLocalAddress }
-            .mapNotNull { it.hostAddress }
-    }.getOrDefault(emptyList())
-
-    fun urls(): List<String> = (listOf("127.0.0.1") + lanHosts()).map { "http://$it:$port${McpServer.PATH}" }
-
-    /** Address other devices should use: the Wi-Fi one when allowed, else this phone only. */
-    private fun mainHost() = lanHosts().firstOrNull() ?: "127.0.0.1"
-
-    fun urlWithToken() = "http://${mainHost()}:$port${McpServer.PATH}${tokenQuery(token)}"
-    fun sseUrlWithToken() = "http://${mainHost()}:$port/sse${tokenQuery(token)}"
-    fun claudeCodeCommand() =
-        "claude mcp add --transport http stone http://${mainHost()}:$port${McpServer.PATH} --header \"Authorization: Bearer $token\""
-    fun jsonConfig() = """{
-  "mcpServers": {
-    "stone": {
-      "type": "http",
-      "url": "http://${mainHost()}:$port${McpServer.PATH}",
-      "headers": { "Authorization": "Bearer $token" }
-    }
-  }
-}"""
 
     private fun newToken(size: Int = 24): String {
         val bytes = ByteArray(size).also(SecureRandom()::nextBytes)

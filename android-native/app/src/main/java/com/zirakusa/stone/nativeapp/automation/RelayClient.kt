@@ -72,6 +72,9 @@ class RelayClient(
         if (!running || stopped) return
         onState(State.CONNECTING)
         ServerMetrics.event("relayConnectAttempts")
+        // Encrypted only: the device secret travels in this request. Plain ws:// is allowed only to a
+        // relay on this same machine ("wrangler dev" in tests), never across a network.
+        if (!isAllowedRelay(relayUrl)) { stopped = true; onState(State.OFFLINE); return }
         val wsUrl = relayUrl.replaceFirst("https://", "wss://").replaceFirst("http://", "ws://") + "/connect?device=$device"
         val request = Request.Builder().url(wsUrl).header("X-Stone-Secret", secret).build()
         socket = http.newWebSocket(request, object : WebSocketListener() {
@@ -200,7 +203,10 @@ class RelayClient(
         }
     }
 
-    private companion object {
+    internal companion object {
+        fun isAllowedRelay(url: String): Boolean = url.startsWith("https://") ||
+            Regex("^http://(127\\.0\\.0\\.1|localhost)(:\\d+)?(/.*)?$").matches(url)
+
         val PASSED_BACK = listOf("Content-Type", "Mcp-Session-Id", "X-Stone-Server", "WWW-Authenticate", "Retry-After")
         const val WORKERS = 8
         const val MAX_QUEUED = 64

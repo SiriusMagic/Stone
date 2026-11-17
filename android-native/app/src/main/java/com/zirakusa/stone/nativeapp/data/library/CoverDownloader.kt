@@ -8,7 +8,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Downloads a cover image from the internet (http/https) and returns it as a JPEG of at most
+ * Downloads a cover image from the internet (https only) and returns it as a JPEG of at most
  * 1600 px, ready to embed in a file. Anything that is not a decodable image is rejected.
  */
 object CoverDownloader {
@@ -17,8 +17,9 @@ object CoverDownloader {
 
     fun download(address: String): ByteArray {
         val url = runCatching { URL(address.trim()) }.getOrNull()
-            ?.takeIf { it.protocol == "https" || it.protocol == "http" }
-            ?: error("The cover must be an http(s) image URL")
+            // https only: plain http could only reach services on this phone (see network_security_config).
+            ?.takeIf { it.protocol == "https" }
+            ?: error("The cover must be an https image URL")
         var connection = url.openConnection() as HttpURLConnection
         var redirects = 0
         while (true) {
@@ -32,7 +33,8 @@ object CoverDownloader {
             val next = connection.getHeaderField("Location") ?: break
             connection.disconnect()
             val target = URL(connection.url, next)
-            if (++redirects > 5 || target.protocol !in setOf("http", "https")) error("The cover URL redirects too often")
+            if (target.protocol != "https") error("The cover URL redirects to a non-https address")
+            if (++redirects > 5) error("The cover URL redirects too often")
             connection = target.openConnection() as HttpURLConnection
         }
         try {

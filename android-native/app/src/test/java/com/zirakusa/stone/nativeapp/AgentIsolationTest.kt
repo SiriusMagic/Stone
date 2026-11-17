@@ -57,7 +57,7 @@ class AgentIsolationTest {
             override fun extendSleepTimer(minutes: Int) = Unit; override fun setLauncherIcon(key: String) = Unit
             override fun setFavorite(songId: String, favorite: Boolean) = Unit
         }
-        assertTrue(McpServer.start(listOf(reader, writer, limited), localNetwork = false))
+        assertTrue(McpServer.start(listOf(reader, writer, limited)))
     }
 
     @After fun stop() { McpServer.stop(); StoneAutomation.host = null }

@@ -52,7 +52,7 @@ class McpLiveServerTest {
             override fun extendSleepTimer(minutes: Int) = Unit
             override fun setLauncherIcon(key: String) = Unit
         }
-        check(McpServer.start("live-token", localNetwork = false))
+        check(McpServer.start("live-token"))
         // With STONE_RELAY_URL set, Stone also dials the relay like the app does.
         val relay = System.getenv("STONE_RELAY_URL")?.let { url ->
             RelayClient(url, "livetestdevice01", "s".repeat(40), { McpServer.DEFAULT_PORT }) { println("RELAY_$it") }.also { it.start() }
