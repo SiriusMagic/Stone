@@ -2,16 +2,16 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.automation.AccessMode
-import com.zirakusa.stone.nativeapp.automation.ActionRisk
+import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.ApiMode
-import com.zirakusa.stone.nativeapp.automation.ApiToken
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.McpServer
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import com.zirakusa.stone.nativeapp.ui.theme.StoneInk
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import org.json.JSONObject
@@ -301,12 +301,12 @@ class McpServerTest {
             ApiToken("old", "Viejo", "old-token", AccessMode.FULL, 0, expiresAt = 1)))
         val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
         assertEquals(401, post(ping, auth = "Bearer old-token").first)
-        com.zirakusa.stone.nativeapp.automation.AuthThrottle.reset()
+        com.zirakusa.stone.nativeapp.automation.auth.AuthThrottle.reset()
         repeat(20) { post(ping, auth = "Bearer guess-$it") }
         assertEquals(429, post(ping, auth = "Bearer guess-x").first)
-        com.zirakusa.stone.nativeapp.automation.AuthThrottle.reset()
+        com.zirakusa.stone.nativeapp.automation.auth.AuthThrottle.reset()
         assertEquals(200, post(ping).first)
-        val secret = com.zirakusa.stone.nativeapp.automation.ApiTokens.secret()
+        val secret = com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.secret()
         assertTrue(secret.startsWith("stn_") && secret.length >= 46)
     }
 

@@ -15,7 +15,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 data class CompactPlayerActions(

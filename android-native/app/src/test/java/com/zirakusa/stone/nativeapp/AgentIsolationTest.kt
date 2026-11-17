@@ -2,14 +2,14 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.automation.AccessMode
-import com.zirakusa.stone.nativeapp.automation.ApiToken
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.McpServer
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import kotlinx.coroutines.async
 import org.json.JSONObject
 import org.junit.After
@@ -91,7 +91,7 @@ class AgentIsolationTest {
     }
 
     @Test fun concurrentAgentsOnlySeeTheirOwnTools() {
-        val writeTools = StoneAutomation.available(AccessMode.FULL).filter { it.risk != com.zirakusa.stone.nativeapp.automation.ActionRisk.READ }
+        val writeTools = StoneAutomation.available(AccessMode.FULL).filter { it.risk != com.zirakusa.stone.nativeapp.automation.actions.ActionRisk.READ }
             .map { it.toolName }.toSet()
         val tokens = List(60) { listOf(reader, writer, limited) }.flatten()
         val results = concurrently(tokens.map { token -> { token to toolNames(call(token.secret, "stone_help")) } })
@@ -115,21 +115,21 @@ class AgentIsolationTest {
     }
 
     @Test fun authorizationTravelsWithEachCoroutineNotInSharedState() = kotlinx.coroutines.runBlocking {
-        val a = com.zirakusa.stone.nativeapp.automation.AuthContext("a", "A", AccessMode.READ, setOf("x"))
-        val b = com.zirakusa.stone.nativeapp.automation.AuthContext("b", "B", AccessMode.FULL, emptySet())
+        val a = com.zirakusa.stone.nativeapp.automation.auth.AuthContext("a", "A", AccessMode.READ, setOf("x"))
+        val b = com.zirakusa.stone.nativeapp.automation.auth.AuthContext("b", "B", AccessMode.FULL, emptySet())
         val seen = (1..200).map { index ->
             val auth = if (index % 2 == 0) a else b
             async(kotlinx.coroutines.Dispatchers.Default + auth) {
                 kotlinx.coroutines.delay((index % 7).toLong())
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { kotlinx.coroutines.yield(); auth to com.zirakusa.stone.nativeapp.automation.currentAuth() }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { kotlinx.coroutines.yield(); auth to com.zirakusa.stone.nativeapp.automation.auth.currentAuth() }
             }
         }.map { it.await() }
         seen.forEach { (expected, actual) -> assertSame(expected, actual) }
     }
 
     @Test fun jobsAndActivityBelongToTheTokenThatMadeThem() {
-        val jobs = com.zirakusa.stone.nativeapp.automation.StoneJobs
-        val item = com.zirakusa.stone.nativeapp.automation.BatchItem("x", null, JSONObject())
+        val jobs = com.zirakusa.stone.nativeapp.automation.actions.StoneJobs
+        val item = com.zirakusa.stone.nativeapp.automation.actions.BatchItem("x", null, JSONObject())
         val started = jobs.start("t", listOf(item), owner = writer.id) { _, _ -> JSONObject() }
         val id = started.getString("jobId")
         // The reader asks about the writer's job: it does not exist for it, and it cannot touch it.

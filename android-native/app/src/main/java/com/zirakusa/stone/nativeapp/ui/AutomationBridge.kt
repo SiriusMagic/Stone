@@ -22,16 +22,17 @@ import androidx.compose.ui.res.stringResource
 import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.feature.library.LibraryViewModel
 import com.zirakusa.stone.nativeapp.feature.library.LibraryViewState
 import com.zirakusa.stone.nativeapp.feature.library.components.LibrarySort
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.HardwareAcceleration
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 
 /**
  * Registers the running UI as the automation host (so agents use the same view models as

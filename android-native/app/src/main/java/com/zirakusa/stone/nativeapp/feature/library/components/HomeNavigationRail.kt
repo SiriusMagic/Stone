@@ -27,6 +27,9 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
+import com.zirakusa.stone.nativeapp.feature.settings.api.icon
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable fun HomeNavigationRail(actions: List<QuickActionDefinition>, activeIds: Set<String>,
     expanded: Boolean, onHome: () -> Unit, onAction: (String) -> Unit,

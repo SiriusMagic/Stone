@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
 import androidx.media3.ui.AspectRatioFrameLayout
-import com.zirakusa.stone.nativeapp.feature.player.VideoScale
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

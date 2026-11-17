@@ -3,10 +3,10 @@ package com.zirakusa.stone.nativeapp
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.Mp4MetadataWriter
-import com.zirakusa.stone.nativeapp.data.library.VideoContainer
-import com.zirakusa.stone.nativeapp.data.library.VideoMetadataDraft
-import com.zirakusa.stone.nativeapp.data.library.VideoMetadataStore
+import com.zirakusa.stone.nativeapp.data.library.tags.Mp4MetadataWriter
+import com.zirakusa.stone.nativeapp.data.library.tags.VideoContainer
+import com.zirakusa.stone.nativeapp.data.library.tags.VideoMetadataDraft
+import com.zirakusa.stone.nativeapp.data.library.tags.VideoMetadataStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

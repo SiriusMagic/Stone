@@ -33,6 +33,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.feature.library.QuickActionDefinition
 import com.zirakusa.stone.nativeapp.ui.components.*
 import kotlinx.coroutines.launch
+import com.zirakusa.stone.nativeapp.feature.settings.api.icon
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable fun LibraryHeader(scanning: Boolean, onSearch: () -> Unit, onFolder: () -> Unit,
     onSort: () -> Unit, onSettings: () -> Unit,

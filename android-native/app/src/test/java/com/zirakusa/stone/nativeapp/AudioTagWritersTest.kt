@@ -2,10 +2,10 @@ package com.zirakusa.stone.nativeapp
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.zirakusa.stone.nativeapp.data.library.AudioTagEditor
-import com.zirakusa.stone.nativeapp.data.library.AudioTags
-import com.zirakusa.stone.nativeapp.data.library.FlacTag
-import com.zirakusa.stone.nativeapp.data.library.Id3Tag
+import com.zirakusa.stone.nativeapp.data.library.tags.AudioTagEditor
+import com.zirakusa.stone.nativeapp.data.library.tags.AudioTags
+import com.zirakusa.stone.nativeapp.data.library.tags.FlacTag
+import com.zirakusa.stone.nativeapp.data.library.tags.Id3Tag
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

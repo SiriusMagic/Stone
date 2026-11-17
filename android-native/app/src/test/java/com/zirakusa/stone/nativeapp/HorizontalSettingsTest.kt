@@ -5,8 +5,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.feature.player.VideoControlId
-import com.zirakusa.stone.nativeapp.feature.player.VideoControlSettings
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlId
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlSettings
 import org.junit.Assert.assertFalse
 import org.junit.Assert.*
 import org.junit.Test

@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.feature.player.recommendations
+import com.zirakusa.stone.nativeapp.feature.player.sheets.recommendations
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -26,7 +26,7 @@ class RecommendationsTest {
 
 class LyricsIndexTest {
     @Test fun savedLyricsWinOverTheFileAndDeletedOnesHideIt() {
-        val index = com.zirakusa.stone.nativeapp.data.library.LyricsIndex
+        val index = com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex
         val withFile = Song("content://a.mp3", "A", "x", "", "f", 1, 1, 1, lyrics = listOf("hola"))
         val plain = Song("content://b.mp3", "B", "x", "", "f", 1, 1, 1)
         org.junit.Assert.assertTrue(index.has(withFile))
@@ -42,7 +42,7 @@ class LyricsIndexTest {
 
 class NotificationTimeTest {
     @Test fun parsesAndFormatsScheduledTimes() {
-        val scheduler = com.zirakusa.stone.nativeapp.data.library.NotificationScheduler
+        val scheduler = com.zirakusa.stone.nativeapp.data.library.notifications.NotificationScheduler
         assertEquals(20 * 60 + 5, scheduler.minutes("20:05", 0))
         assertEquals(99, scheduler.minutes("nope", 99))
         assertEquals(23 * 60 + 59, scheduler.minutes("27:75", 0))

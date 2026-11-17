@@ -23,11 +23,12 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable fun LibrarySongRow(song: Song, current: Boolean, enabled: Boolean,
     compact: Boolean = false, onLongClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null, play: () -> Unit) {
-    val hasLyrics = com.zirakusa.stone.nativeapp.data.library.LyricsIndex.has(song)
+    val hasLyrics = com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.has(song)
     val rowShape = RoundedCornerShape(16.dp)
     val rowStyle = Modifier
         .padding(vertical = if (compact) 3.dp else 2.dp)

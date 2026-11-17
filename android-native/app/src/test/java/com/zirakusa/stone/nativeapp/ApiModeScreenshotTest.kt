@@ -14,12 +14,12 @@ import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.zirakusa.stone.nativeapp.automation.AccessMode
+import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.ApiMode
-import com.zirakusa.stone.nativeapp.automation.ApiToken
-import com.zirakusa.stone.nativeapp.automation.ApiTokens
-import com.zirakusa.stone.nativeapp.automation.RequestStats
-import com.zirakusa.stone.nativeapp.feature.library.components.ApiModeSettings
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
+import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
+import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
+import com.zirakusa.stone.nativeapp.feature.settings.api.ApiModeSettings
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import org.junit.After
@@ -73,7 +73,7 @@ class ApiModeScreenshotTest {
         ApiTokens.replaceForTests(listOf(ApiToken("a", "ChatGPT", "7b1c000000000000000000000000000000000000091a0",
             AccessMode.FULL, 1_767_000_000_000, disabledTools = setOf("playlist_delete", "metadata_undo"))))
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
-            com.zirakusa.stone.nativeapp.feature.library.components.ApiTokenEditor(ApiTokens.tokens.first(), { _, _ -> }) {}
+            com.zirakusa.stone.nativeapp.feature.settings.api.ApiTokenEditor(ApiTokens.tokens.first(), { _, _ -> }) {}
         } } }
         compose.waitForIdle()
         compose.onAllNodesWithText("Listas").onFirst().performClick()
@@ -85,7 +85,7 @@ class ApiModeScreenshotTest {
     @Test fun createTokenScreen() {
         ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
-            com.zirakusa.stone.nativeapp.feature.library.components.ApiTokenEditor(null, { _, _ -> }) {}
+            com.zirakusa.stone.nativeapp.feature.settings.api.ApiTokenEditor(null, { _, _ -> }) {}
         } } }
         compose.waitForIdle()
         compose.onNode(androidx.compose.ui.test.isDialog()).captureRoboImage("build/screenshots/stone-api-token-create.png")
@@ -94,7 +94,7 @@ class ApiModeScreenshotTest {
     @Test fun audioLevels() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
-                com.zirakusa.stone.nativeapp.feature.library.components.AudioLevelSettings(null, null)
+                com.zirakusa.stone.nativeapp.feature.settings.AudioLevelSettings(null, null)
             }
         } } }
         onView(isRoot()).captureRoboImage("build/screenshots/stone-audio-levels.png")

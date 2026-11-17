@@ -2,7 +2,7 @@ package com.zirakusa.stone.nativeapp
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.zirakusa.stone.nativeapp.playback.PerformanceDiagnostics
+import com.zirakusa.stone.nativeapp.playback.diagnostics.PerformanceDiagnostics
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

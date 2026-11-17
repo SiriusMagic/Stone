@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.playback.boostGainMillibels
-import com.zirakusa.stone.nativeapp.playback.AudioMode
+import com.zirakusa.stone.nativeapp.playback.audio.boostGainMillibels
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

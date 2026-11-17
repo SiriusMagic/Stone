@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.data.library.RenameSource
-import com.zirakusa.stone.nativeapp.data.library.RenameTemplate
+import com.zirakusa.stone.nativeapp.data.library.user.RenameSource
+import com.zirakusa.stone.nativeapp.data.library.user.RenameTemplate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

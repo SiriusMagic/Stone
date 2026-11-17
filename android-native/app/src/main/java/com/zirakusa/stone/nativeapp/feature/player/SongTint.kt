@@ -9,9 +9,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.zirakusa.stone.nativeapp.feature.player.video.coverBackgroundColor
 
 /** Colour taken from the current song's artwork, used by the queue and option sheets. */
 @Composable internal fun rememberSongTint(song: Song?, fallback: Color = Color(0xFF2B2830)): Color {

@@ -12,9 +12,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.playback.AudioDiagnostics
+import com.zirakusa.stone.nativeapp.playback.diagnostics.AudioDiagnostics
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import com.zirakusa.stone.nativeapp.ui.ImmersiveSystemBarsController
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveSystemBarsController
 import java.util.Locale
 
 @SuppressLint("RestrictedApi")

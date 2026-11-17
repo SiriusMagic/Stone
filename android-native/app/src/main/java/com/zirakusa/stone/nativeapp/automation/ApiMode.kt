@@ -7,6 +7,13 @@ import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.security.SecureRandom
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAction
+import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
+import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
+import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
+import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
 /** User switches for the MCP server (Ajustes › Modo API). Off by default. */
 object ApiMode {

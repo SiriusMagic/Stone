@@ -1,23 +1,23 @@
 package com.zirakusa.stone.nativeapp
 
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.automation.ActionException
-import com.zirakusa.stone.nativeapp.automation.ActionRecord
-import com.zirakusa.stone.nativeapp.automation.ActionRisk
-import com.zirakusa.stone.nativeapp.automation.ActivityLog
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.BatchItem
-import com.zirakusa.stone.nativeapp.automation.MetadataBatch
-import com.zirakusa.stone.nativeapp.automation.RecordStatus
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
-import com.zirakusa.stone.nativeapp.automation.StoneJobs
-import com.zirakusa.stone.nativeapp.automation.StoneSolutions
-import com.zirakusa.stone.nativeapp.data.library.RateLimitedException
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.data.library.TitleCleaner
-import com.zirakusa.stone.nativeapp.data.library.WebPacer
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.automation.actions.ActionException
+import com.zirakusa.stone.nativeapp.automation.actions.ActionRecord
+import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
+import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.actions.BatchItem
+import com.zirakusa.stone.nativeapp.automation.actions.MetadataBatch
+import com.zirakusa.stone.nativeapp.automation.actions.RecordStatus
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
+import com.zirakusa.stone.nativeapp.automation.actions.StoneJobs
+import com.zirakusa.stone.nativeapp.automation.actions.StoneSolutions
+import com.zirakusa.stone.nativeapp.data.library.web.RateLimitedException
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.data.library.tags.TitleCleaner
+import com.zirakusa.stone.nativeapp.data.library.web.WebPacer
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
@@ -159,10 +159,10 @@ class AgentToolsTest {
 
     @Test fun eachTokenCanGetItsOwnExpiryAndBeRenewed() {
         val now = System.currentTimeMillis()
-        com.zirakusa.stone.nativeapp.automation.ApiTokens.replaceForTests(listOf(
-            com.zirakusa.stone.nativeapp.automation.ApiToken("a", "GPT", "s1", com.zirakusa.stone.nativeapp.automation.AccessMode.FULL, now, expiresAt = now - 1),
-            com.zirakusa.stone.nativeapp.automation.ApiToken("b", "Claude", "s2", com.zirakusa.stone.nativeapp.automation.AccessMode.FULL, now)))
-        val tokens = com.zirakusa.stone.nativeapp.automation.ApiTokens
+        com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.replaceForTests(listOf(
+            com.zirakusa.stone.nativeapp.automation.auth.ApiToken("a", "GPT", "s1", com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL, now, expiresAt = now - 1),
+            com.zirakusa.stone.nativeapp.automation.auth.ApiToken("b", "Claude", "s2", com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL, now)))
+        val tokens = com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
         assertTrue(tokens.tokens[0].expired)
         tokens.setExpiry("a", 365)
         val renewed = tokens.tokens.first { it.id == "a" }
@@ -174,7 +174,7 @@ class AgentToolsTest {
     }
 
     @Test fun requestsPerMinuteForEveryAgentAndForEachToken() {
-        val stats = com.zirakusa.stone.nativeapp.automation.RequestStats
+        val stats = com.zirakusa.stone.nativeapp.automation.activity.RequestStats
         stats.clearForTests()
         val now = 1_800_000_000_000L
         repeat(3) { stats.record("gpt", stats.OK, now) }

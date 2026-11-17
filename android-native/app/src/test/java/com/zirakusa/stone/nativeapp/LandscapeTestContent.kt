@@ -10,7 +10,14 @@ import com.zirakusa.stone.core.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.feature.library.*
 import com.zirakusa.stone.nativeapp.feature.player.*
+import com.zirakusa.stone.nativeapp.feature.player.lyrics.*
+import com.zirakusa.stone.nativeapp.feature.player.sheets.*
+import com.zirakusa.stone.nativeapp.feature.player.tags.*
+import com.zirakusa.stone.nativeapp.feature.player.video.*
 import com.zirakusa.stone.nativeapp.playback.*
+import com.zirakusa.stone.nativeapp.playback.audio.*
+import com.zirakusa.stone.nativeapp.playback.control.*
+import com.zirakusa.stone.nativeapp.playback.diagnostics.*
 import com.zirakusa.stone.nativeapp.ui.theme.*
 
 internal val landscapeSongs = (1..45).map { index ->

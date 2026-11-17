@@ -6,7 +6,7 @@ import android.content.Intent
 import androidx.media3.session.MediaSessionService
 import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import org.junit.After
 import org.junit.Assert.*
@@ -49,7 +49,7 @@ class PlaySelectionTest {
 
     @Test fun guardShowsTheTappedSongUntilThePlayerIsReadyWithIt() {
         var now = 0L
-        val guard = com.zirakusa.stone.nativeapp.playback.RequestedItemGuard(3_000L) { now }
+        val guard = com.zirakusa.stone.nativeapp.playback.control.RequestedItemGuard(3_000L) { now }
         assertEquals("first", guard.shown("first", ready = true)) // nothing requested
         guard.request("third")
         assertEquals("third", guard.shown("third", ready = false)) // controller's own guess

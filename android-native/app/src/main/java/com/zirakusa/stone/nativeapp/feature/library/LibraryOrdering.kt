@@ -17,7 +17,7 @@ import java.text.Collator
             LibrarySort.MostPlayed -> filtered.sortedWith(
                 compareByDescending<Song> { state.playCounts[it.id] ?: 0 }.thenBy { it.title.lowercase() })
             LibrarySort.Lyrics -> filtered.sortedWith { first, second ->
-                fun Song.hasLyrics() = com.zirakusa.stone.nativeapp.data.library.LyricsIndex.has(this)
+                fun Song.hasLyrics() = com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.has(this)
                 val order = second.hasLyrics().compareTo(first.hasLyrics())
                 if (order != 0) order else collator.compare(first.title, second.title)
             }

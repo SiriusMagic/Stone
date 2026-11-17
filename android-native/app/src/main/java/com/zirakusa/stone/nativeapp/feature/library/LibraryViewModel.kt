@@ -6,10 +6,11 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.LibraryRepository
-import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
-import com.zirakusa.stone.nativeapp.data.library.PlaylistCoverStore
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
+import com.zirakusa.stone.nativeapp.data.library.notifications.NewFilesNotifier
+import com.zirakusa.stone.nativeapp.data.library.scan.LibraryRepository
+import com.zirakusa.stone.nativeapp.data.library.user.LibraryUserStore
+import com.zirakusa.stone.nativeapp.data.library.user.PlaylistCoverStore
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -55,16 +56,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private fun indexLyrics() {
         lyricsJob?.cancel()
         lyricsJob = viewModelScope.launch {
-            runCatching { com.zirakusa.stone.nativeapp.data.library.LyricsIndex.scanEmbedded(getApplication(), mutable.value.songs) }
+            runCatching { com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.scanEmbedded(getApplication(), mutable.value.songs) }
         }
     }
 
     init {
-        com.zirakusa.stone.nativeapp.data.library.LyricsIndex.ensureLoaded(getApplication())
-        runCatching { com.zirakusa.stone.nativeapp.data.library.NotificationScheduler.schedule(getApplication()) }
+        com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.ensureLoaded(getApplication())
+        runCatching { com.zirakusa.stone.nativeapp.data.library.notifications.NotificationScheduler.schedule(getApplication()) }
         viewModelScope.launch { loadJob.join(); indexLyrics() }
         viewModelScope.launch {
-            com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.collect {
+            com.zirakusa.stone.nativeapp.data.library.scan.DeviceMediaAccess.rescanRequests.collect {
                 mutable.update { it.copy(hasFolder = repository.hasSource) }
                 if (active) refresh(true)
             }
@@ -170,8 +171,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             repository.refresh(manual)?.let { refreshed ->
                 val songs = refreshed.songs
                 // Only after a first index exists, so a fresh install does not announce the whole library.
-                if (known.isNotEmpty() && settings.read().notifyNewFiles) com.zirakusa.stone.nativeapp.data.library
-                    .NewFilesNotifier.notify(getApplication(), songs.filter { it.id !in known })
+                if (known.isNotEmpty() && settings.read().notifyNewFiles)
+                    NewFilesNotifier.notify(getApplication(), songs.filter { it.id !in known })
                 val (favorites, counts) = withContext(Dispatchers.IO) {
                     userStore.favoriteIds() to userStore.playCounts(songs)
                 }

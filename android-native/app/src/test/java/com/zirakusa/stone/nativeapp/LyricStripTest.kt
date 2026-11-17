@@ -16,7 +16,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.stone.core.LyricCursor
 import com.zirakusa.stone.core.LyricTimeline
 import com.zirakusa.stone.core.LyricsParser
-import com.zirakusa.stone.nativeapp.feature.player.LyricStrip
+import com.zirakusa.stone.nativeapp.feature.player.lyrics.LyricStrip
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test

@@ -21,6 +21,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.settings.api.icon
 
 /** Compact / list / "Grande" switch, icons only; the active one sits in a filled circle. */
 @Composable internal fun LayoutSelector(current: VideoLibraryLayout, onChange: (VideoLibraryLayout) -> Unit,

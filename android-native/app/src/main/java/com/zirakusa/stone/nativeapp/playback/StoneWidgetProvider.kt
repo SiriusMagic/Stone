@@ -11,7 +11,7 @@ import androidx.core.graphics.scale
 import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.MainActivity
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
 import com.zirakusa.stone.nativeapp.data.persistence.PlaybackDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

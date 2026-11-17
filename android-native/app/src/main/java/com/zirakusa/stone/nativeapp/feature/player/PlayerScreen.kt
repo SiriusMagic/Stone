@@ -36,16 +36,29 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.components.SleepTimerIndicator
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import com.zirakusa.stone.nativeapp.feature.player.lyrics.CurrentLyricChip
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerOptionExtra
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsHost
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerTool
+import com.zirakusa.stone.nativeapp.feature.player.sheets.rememberPlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.video.FullscreenVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.PictureInPictureVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.PortraitVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlSettings
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
+import com.zirakusa.stone.nativeapp.feature.player.video.coverBackgroundColor
+import com.zirakusa.stone.nativeapp.feature.player.video.rememberPlaybackControls
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerScreen(state: PlaybackState, song: Song?, playback: PlaybackViewModel,

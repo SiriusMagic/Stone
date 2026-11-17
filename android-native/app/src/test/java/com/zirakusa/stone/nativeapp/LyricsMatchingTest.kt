@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.data.library.LyricsMatcher
-import com.zirakusa.stone.nativeapp.data.library.LyricsTextCleaner
+import com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsMatcher
+import com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsTextCleaner
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

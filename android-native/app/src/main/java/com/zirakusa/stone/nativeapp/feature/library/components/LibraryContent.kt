@@ -24,7 +24,10 @@ import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryContent
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryContent(state: LibraryState, songs: List<Song>, tab: LibraryTab,
@@ -197,7 +200,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     if (managing) SelectionActionBar(videos = false, enabled = selectedIds.isNotEmpty(),
         onAddTo = { pickPlaylist = true },
         onPlayNext = { selectionActions.onPlayNext(selectedSongs); managing = false; selectedIds = emptySet() },
-        onShare = { runCatching { com.zirakusa.stone.nativeapp.data.library.SongActions.shareMany(context, selectedSongs) } },
+        onShare = { runCatching { com.zirakusa.stone.nativeapp.data.library.user.SongActions.shareMany(context, selectedSongs) } },
         onDelete = { deleteConfirmVisible = true })
     }
     if (menuVisible) ModalBottomSheet(onDismissRequest = { menuVisible = false }) {
@@ -216,7 +219,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
     if (pickPlaylist) MultiPlaylistPicker(state.playlists, visible.filter { it.id in selectedIds },
         selectionActions.onAddToPlaylist) { pickPlaylist = false; managing = false; selectedIds = emptySet() }
     tagSong?.let { song ->
-        com.zirakusa.stone.nativeapp.feature.player.TagEditorSheet(song, close = { tagSong = null },
+        com.zirakusa.stone.nativeapp.feature.player.sheets.TagEditorSheet(song, close = { tagSong = null },
             saved = { tagSong = null; managing = false; selectedIds = emptySet(); selectionActions.onTagsSaved() })
     }
     if (deleteConfirmVisible) AlertDialog(onDismissRequest = { deleteConfirmVisible = false },

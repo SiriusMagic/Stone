@@ -7,7 +7,8 @@
 
 - Referencia exclusiva: Stone en `../frontend/`, sus recursos y `../backend/`.
 - Leer `README.md` y `../docs/MIGRACION-KOTLIN.md` antes de trasladar funciones.
-- Organizar por responsabilidad: core, data, playback, feature, ui. Evitar archivos monolíticos.
+- Carpetas según `ARQUITECTURA.md` (carpeta = package). Evitar archivos monolíticos.
+- No dejar código ni ajustes que la app no muestre: si no se usa, se borra.
 - Texto visible en `res/values/strings.xml`; colores compartidos en `ui/theme`.
 - Preservar el identificador de prueba hasta completar equivalencia y migración de datos.
 - Servicio único de reproducción. No iniciar escaneos desde un temporizador periódico.

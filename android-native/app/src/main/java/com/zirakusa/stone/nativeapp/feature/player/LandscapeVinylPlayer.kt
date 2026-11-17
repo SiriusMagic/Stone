@@ -35,9 +35,9 @@ import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsOverrides
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers

@@ -1,8 +1,8 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.automation.McpServer
-import com.zirakusa.stone.nativeapp.automation.RelayClient
-import com.zirakusa.stone.nativeapp.data.library.CoverDownloader
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
+import com.zirakusa.stone.nativeapp.data.library.artwork.CoverDownloader
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

@@ -1,7 +1,7 @@
 package com.zirakusa.stone.nativeapp
 
 import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
-import com.zirakusa.stone.nativeapp.playback.GenreEqualizer
+import com.zirakusa.stone.nativeapp.playback.audio.GenreEqualizer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

@@ -22,11 +22,16 @@ import com.zirakusa.stone.core.HomeLayout
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.components.*
+import com.zirakusa.stone.nativeapp.feature.library.video.*
+import com.zirakusa.stone.nativeapp.feature.settings.*
+import com.zirakusa.stone.nativeapp.feature.settings.api.*
+import com.zirakusa.stone.nativeapp.feature.settings.feedback.*
+import com.zirakusa.stone.nativeapp.feature.settings.look.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.HardwareAcceleration
-import com.zirakusa.stone.nativeapp.feature.player.VideoScale
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.HardwareAcceleration
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -236,7 +241,7 @@ private val legacyDefinitions = listOf(
         shortcutRevision++
     }
     if (moreQuickActions) ModalBottomSheet(onDismissRequest = { moreQuickActions = false }) {
-        com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect()
+        com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect()
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(stringResource(R.string.more_options), style = MaterialTheme.typography.titleLarge)
             quickActions.drop(8).forEach { action ->

@@ -11,10 +11,10 @@ import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackDetail
+import com.zirakusa.stone.nativeapp.feature.settings.feedback.FeedbackDetail
 import com.zirakusa.stone.nativeapp.feature.library.components.LayoutSelector
-import com.zirakusa.stone.nativeapp.feature.library.components.MascotPicker
-import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.settings.look.MascotPicker
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
 import com.zirakusa.stone.nativeapp.feature.onboarding.OnboardingScreen
 import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
@@ -41,10 +41,10 @@ class WelcomeAndFeedbackScreenshotTest {
     @Test fun volumeOverlayAndLegalText() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Background) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 24.dp)) {
-                com.zirakusa.stone.nativeapp.ui.VolumeOverlay(
+                com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay(
                     com.zirakusa.stone.nativeapp.playback.StonePlaybackService.VolumeUiState(20, 1, true, 150))
                 Column(Modifier.padding(24.dp)) {
-                    com.zirakusa.stone.nativeapp.feature.library.components.LegalDocument("privacy")
+                    com.zirakusa.stone.nativeapp.feature.settings.LegalDocument("privacy")
                 }
             }
         } } }

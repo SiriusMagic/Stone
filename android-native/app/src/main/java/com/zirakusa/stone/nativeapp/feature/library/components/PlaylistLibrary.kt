@@ -25,7 +25,9 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable internal fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,
     canPlay: Boolean, currentId: String, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier,
@@ -48,7 +50,7 @@ import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
         "recent" -> state.recentIds.mapNotNull { id -> audio.find { it.id == id } }
         "most" -> audio.filter { (state.playCounts[it.id] ?: 0) > 0 }
             .sortedByDescending { state.playCounts[it.id] ?: 0 }
-        "lyrics" -> audio.filter(com.zirakusa.stone.nativeapp.data.library.LyricsIndex::has)
+        "lyrics" -> audio.filter(com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex::has)
         else -> state.playlists.find { it.id == key }?.songIds.orEmpty().mapNotNull { id -> audio.find { it.id == id } }
     }
     val labels = listOf("favorites" to R.string.favorite_songs, "recent" to R.string.recently_played,

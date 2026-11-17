@@ -6,9 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayer
 import com.zirakusa.stone.nativeapp.feature.player.PlayerScreen
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
-import com.zirakusa.stone.nativeapp.playback.QueueEntry
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.control.QueueEntry
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import org.junit.Rule

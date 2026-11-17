@@ -13,8 +13,10 @@ import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.core.Song
+import com.zirakusa.stone.nativeapp.feature.settings.api.icon
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 enum class LibrarySort(val label: Int) { Title(R.string.sort_title), Artist(R.string.artists),
     Album(R.string.albums), Duration(R.string.sort_duration), Size(R.string.sort_size),

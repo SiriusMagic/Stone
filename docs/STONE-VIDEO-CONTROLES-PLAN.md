@@ -8,7 +8,7 @@ Estado: propuesta, pendiente de aprobación. Nada de esto está implementado.
 | --- | --- |
 | Barra superior (atrás, velocidad, ⋮) | `android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/VideoPlayerChrome.kt` |
 | Fila de iconos configurable | `feature/player/VideoControlRow.kt` + registro en `VideoControlPreferences.kt` |
-| Ajustes › Controles de vídeo (orden y visibilidad) | `feature/library/components/VideoControlSettings.kt` |
+| Ajustes › Controles de vídeo (orden y visibilidad) | `feature/settings/VideoControlSettings.kt` |
 | Menú ⋮ (escala, repetición, subtítulos, pista de audio, lista, info, borrar) | `feature/player/VideoOptionsSheet.kt` |
 | Gestos (brillo, volumen, avance, 2x manteniendo) | `feature/player/PlayerScreen.kt` y `PlayerToolsSheets.kt` |
 | Preferencias de vídeo (escala, aceleración) | `feature/player/VideoPreferences.kt` |

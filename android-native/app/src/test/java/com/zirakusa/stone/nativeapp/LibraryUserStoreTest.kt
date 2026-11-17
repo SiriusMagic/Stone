@@ -3,7 +3,7 @@ package com.zirakusa.stone.nativeapp
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
+import com.zirakusa.stone.nativeapp.data.library.user.LibraryUserStore
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

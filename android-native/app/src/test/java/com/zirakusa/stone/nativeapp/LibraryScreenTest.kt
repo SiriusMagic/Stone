@@ -17,12 +17,12 @@ import com.zirakusa.stone.core.HomeLayout
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
-import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
-import com.zirakusa.stone.nativeapp.feature.library.components.videoDisplayTitle
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.library.video.videoDisplayTitle
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayer
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayerOptionsPanel
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.QueueEntry
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.QueueEntry
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import org.junit.Assert.assertEquals

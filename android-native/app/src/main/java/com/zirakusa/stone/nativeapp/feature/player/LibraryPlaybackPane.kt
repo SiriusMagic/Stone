@@ -5,9 +5,15 @@ import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.runtime.Composable
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerOptionExtra
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsHost
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.video.LandscapeVideoPreviewPanel
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlSettings
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
 
 @Composable fun LibraryPlaybackPane(showPanel: Boolean, state: PlaybackState, song: Song?,
     playback: PlaybackViewModel, sheets: PlayerSheetsState, onOpen: (() -> Unit)?,

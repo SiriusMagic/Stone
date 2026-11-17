@@ -1,6 +1,6 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.playback.AndroidVolumeRange
+import com.zirakusa.stone.nativeapp.playback.audio.AndroidVolumeRange
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 enum class LibraryTab(val label: Int) {
     Videos(R.string.videos), Songs(R.string.songs),

@@ -2,13 +2,13 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.McpServer
-import com.zirakusa.stone.nativeapp.automation.RelayClient
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
