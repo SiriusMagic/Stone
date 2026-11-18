@@ -1,3 +1,13 @@
+# Stone Kotlin 1.7.14
+
+- **Modo seguro de Gateway Hub** (Ajustes › Modo API › Gateway Hub › «Solo con Stone abierta»): con el
+  interruptor activado, Stone atiende MCP solo mientras está en pantalla. Al salir de Stone se cortan el
+  servidor y el enlace público (las peticiones pendientes se cancelan) y vuelven solos al abrirla de nuevo.
+  Desactivado, todo funciona como antes, también en segundo plano.
+- La app **Gateway Hub 0.0.5** cambia este interruptor desde su propio ajuste *Modo de funcionamiento*
+  (Modo seguro o MCP en segundo plano). Solo lo acepta de apps firmadas por el mismo desarrollador, y nunca da
+  enlaces ni tokens por ese canal.
+
 # Stone Kotlin 1.7.13
 
 - **Redirección hub** (Ajustes › Modo API › Gateway Hub): con el interruptor activado, la app Gateway Hub de este

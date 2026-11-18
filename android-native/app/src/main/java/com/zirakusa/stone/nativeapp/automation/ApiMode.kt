@@ -64,6 +64,26 @@ object ApiMode {
         private set
     fun allowHubRedirect(value: Boolean) { hubRedirect = value; store?.setLook("api.hubRedirect", value.toString()) }
 
+    /**
+     * Modo seguro (set from the Gateway Hub app, or here): the MCP server and the relay run only while
+     * Stone is on screen. Off = MCP keeps working in the background (as before). Off by default.
+     */
+    var hubSafeMode by mutableStateOf(false)
+        private set
+    fun useHubSafeMode(value: Boolean) {
+        if (hubSafeMode == value) return
+        hubSafeMode = value; store?.setLook("api.hubSafe", value.toString()); apply()
+    }
+    /** Stone is on screen (MainActivity between onStart and onStop). */
+    private var visible = false
+    fun setVisible(value: Boolean) {
+        if (visible == value) return
+        visible = value
+        if (hubSafeMode) apply() // outside safe mode, visibility changes nothing (no restart)
+    }
+    /** Whether MCP is served now: switched on and, in safe mode, Stone visible. */
+    val serving: Boolean get() = enabled && (!hubSafeMode || visible)
+
     /** Whether [load] already ran in this process (the link provider can be called before any screen). */
     val loaded: Boolean get() = store != null
 
@@ -72,6 +92,7 @@ object ApiMode {
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
         hubRedirect = store.look("api.hubRedirect", "false").toBoolean()
+        hubSafeMode = store.look("api.hubSafe", "false").toBoolean()
         // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
         for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")
@@ -97,8 +118,8 @@ object ApiMode {
         access.permits(action.risk) // tools are allowed per token (ApiToken.disabledTools)
 
     private fun apply() {
-        running = if (enabled) McpServer.start(ApiTokens.tokens, port) else { McpServer.stop(); false }
-        if (enabled && running && relayAvailable) {
+        running = if (serving) McpServer.start(ApiTokens.tokens, port) else { McpServer.stop(); false }
+        if (serving && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }

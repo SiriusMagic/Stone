@@ -523,5 +523,7 @@
     <string name="api_hub_link">Link</string>
     <string name="api_hub_redirect">Hub redirect</string>
     <string name="api_hub_redirect_hint">The Gateway Hub app on this phone links Stone by itself, no copy and paste. Only apps signed by the same developer.</string>
+    <string name="api_hub_safe">Only while Stone is open (safe mode)</string>
+    <string name="api_hub_safe_hint">MCP works only while Stone is on screen; leaving it cuts the public link. Gateway Hub changes it from Settings › Operating mode.</string>
     <string name="hub_link_permission">link Stone with Gateway Hub</string>
 </resources>

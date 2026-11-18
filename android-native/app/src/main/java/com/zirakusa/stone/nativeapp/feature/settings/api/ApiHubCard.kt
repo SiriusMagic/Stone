@@ -55,5 +55,13 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             }
             Switch(ApiMode.hubRedirect, ApiMode::allowHubRedirect, Modifier.padding(start = 8.dp))
         }
+        // Modo seguro: MCP only while Stone is open. Gateway Hub sets it too (Ajustes › Modo de funcionamiento).
+        Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.api_hub_safe), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(stringResource(R.string.api_hub_safe_hint), color = StonePalette.Muted, fontSize = 12.sp)
+            }
+            Switch(ApiMode.hubSafeMode, ApiMode::useHubSafeMode, Modifier.padding(start = 8.dp))
+        }
     }
 }

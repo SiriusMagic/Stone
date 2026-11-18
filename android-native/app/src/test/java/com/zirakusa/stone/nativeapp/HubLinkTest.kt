@@ -16,7 +16,7 @@ import org.robolectric.RuntimeEnvironment
 /** Redirección hub: three locks (signature permission, caller signature, user switch) before any link. */
 @RunWith(RobolectricTestRunner::class)
 class HubLinkTest {
-    @After fun reset() { ApiMode.allowHubRedirect(false); ApiMode.relayUrl = ""; ApiTokens.replaceForTests(emptyList()) }
+    @After fun reset() { ApiMode.useHubSafeMode(false); ApiMode.setVisible(false); ApiMode.allowHubRedirect(false); ApiMode.relayUrl = ""; ApiTokens.replaceForTests(emptyList()) }
 
     @Test fun theProviderIsProtectedByASignaturePermission() {
         val context = RuntimeEnvironment.getApplication()
@@ -48,6 +48,31 @@ class HubLinkTest {
             assertTrue(link, link.startsWith("https://relay.example/d/") && link.contains("token=stn_"))
             assertEquals(link, HubLink.answer(sameDeveloper = true).getString(HubLink.KEY_LINK)) // same token reused
             assertEquals(ApiMode.HUB_TOKEN_NAME, ApiTokens.tokens.single().name)
+        } finally { ApiMode.enable(false) }
+    }
+
+    @Test fun gatewaySetsTheModeOnlyWhenSignedByTheSameDeveloper() {
+        assertEquals("NOT_SAME_DEVELOPER", HubLink.answerMode(sameDeveloper = false, mode = "background").getString(HubLink.KEY_ERROR))
+        assertEquals("INVALID_MODE", HubLink.answerMode(sameDeveloper = true, mode = "evil").getString(HubLink.KEY_ERROR))
+        assertEquals("safe", HubLink.answerMode(sameDeveloper = true, mode = "safe").getString(HubLink.KEY_MODE))
+        assertTrue(ApiMode.hubSafeMode)
+        HubLink.answerMode(sameDeveloper = true, mode = "background")
+        assertEquals(false, ApiMode.hubSafeMode)
+        assertTrue(ApiTokens.tokens.isEmpty()) // the mode never creates or gives a token
+    }
+
+    @Test fun inSafeModeMcpRunsOnlyWhileStoneIsOnScreen() {
+        ApiMode.enable(true)
+        try {
+            ApiMode.setVisible(false)
+            assertTrue(ApiMode.serving)                       // background mode: serves while hidden (as before)
+            ApiMode.useHubSafeMode(true)
+            assertEquals(false, ApiMode.serving)
+            assertEquals(false, ApiMode.running)              // server stopped, pending requests cut
+            ApiMode.setVisible(true)
+            assertTrue(ApiMode.serving && ApiMode.running)
+            ApiMode.setVisible(false)
+            assertEquals(false, ApiMode.running)
         } finally { ApiMode.enable(false) }
     }
 }

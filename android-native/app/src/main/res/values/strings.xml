@@ -587,5 +587,7 @@
     <string name="api_hub_link">Vincular</string>
     <string name="api_hub_redirect">Redirección hub</string>
     <string name="api_hub_redirect_hint">La app Gateway Hub de este teléfono vincula Stone sola, sin copiar ni pegar. Solo apps firmadas por el mismo desarrollador.</string>
+    <string name="api_hub_safe">Solo con Stone abierta (modo seguro)</string>
+    <string name="api_hub_safe_hint">MCP funciona solo mientras Stone está en pantalla; al salir se corta el enlace público. Gateway Hub lo cambia desde Ajustes › Modo de funcionamiento.</string>
     <string name="hub_link_permission">vincular Stone con Gateway Hub</string>
 </resources>
