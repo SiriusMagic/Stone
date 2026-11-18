@@ -1,4 +1,4 @@
-# Sin publicar
+# Stone Kotlin 1.7.11
 
 - Stone y el hub MCP pasan a ser dos aplicaciones separadas: el hub vive en
   [SiriusMagic/Gateway-Hub-MCP](https://github.com/SiriusMagic/Gateway-Hub-MCP). Stone conserva el

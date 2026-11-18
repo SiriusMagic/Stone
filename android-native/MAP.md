@@ -212,7 +212,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
 - `ApiGeneralTab.kt` (62) General:
-- `ApiHubCard.kt` (43) Gateway Hub:
+- `ApiHubCard.kt` (44) Gateway Hub:
 - `ApiModeSettings.kt` (67) Ajustes › Modo API:
 - `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
 - `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
