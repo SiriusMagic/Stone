@@ -73,7 +73,7 @@
         </service>
         <!-- Redirección hub: see automation/HubLink.kt (signature permission + own check + user switch). -->
         <!-- Gateway Hub local bridge (MCP over Messenger), read-only for now: only apps signed like Stone may bind. -->
-        <service android:name=".automation.HubBridgeService" android:exported="true"
+        <service android:name=".automation.provider.ProviderService" android:exported="true"
             android:permission="com.zirakusa.gatewayhub.permission.LINK">
             <intent-filter><action android:name="com.zirakusa.gatewayhub.action.MCP" /></intent-filter>
         </service>

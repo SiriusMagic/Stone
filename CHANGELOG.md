@@ -1,3 +1,12 @@
+# Stone Kotlin 1.7.17
+
+- Sin cambios visibles. Preparación de la arquitectura con Gateway Hub centralizado (fase 1b):
+  - El manejo de MCP sale del servidor HTTP a un despachador propio, sin red (`automation/provider/McpDispatcher.kt`).
+    El servidor HTTP lo usa igual que antes, y el puente con Gateway ya no depende de él.
+  - El puente con Gateway Hub (`automation/provider/`) usa los permisos que Gateway delega en cada petición, recortados a
+    lo que Stone permite: por ahora, solo lectura. Ya no depende del token «Gateway Hub» de Stone; ese token solo cuenta
+    para el enlace público mientras exista.
+
 # Stone Kotlin 1.7.16
 
 - **Puente local con Gateway Hub** (fase 1 de la migración a un solo endpoint MCP): la app Gateway Hub del mismo

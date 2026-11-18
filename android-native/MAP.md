@@ -8,8 +8,6 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation
 - `ApiMode.kt` (145) User switches for the MCP server (Ajustes › Modo API).
-- `HubBridge.kt` (85) Local bridge for the Gateway Hub app on this phone (phase 1 of the hub migration):
-- `HubBridgeService.kt` (62) Bound Service of the Gateway Hub local bridge ([HubBridge]).
 - `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
 - `HubLink.kt` (85) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
 
@@ -44,6 +42,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/automation/cloudflare
 - `Cloudflare.kt` (108) Sends one request to Cloudflare;
 
+## app/automation/provider
+- `GatewayGrant.kt` (33) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
+- `McpDispatcher.kt` (106) Who a request runs for and with which rights, whatever carried it (HTTP token today, Gateway Hub over IPC).
+- `ProviderBridge.kt` (82) Stone as a capability provider for the Gateway Hub app on this phone:
+- `ProviderService.kt` (63) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
+
 ## app/automation/relay
 - `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
 - `RelayClient.kt` (214) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
@@ -51,7 +55,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (351) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (270) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library

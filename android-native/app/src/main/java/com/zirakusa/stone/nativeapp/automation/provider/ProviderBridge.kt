@@ -1,24 +1,24 @@
-package com.zirakusa.stone.nativeapp.automation
+package com.zirakusa.stone.nativeapp.automation.provider
 
+import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
-import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
-import com.zirakusa.stone.nativeapp.automation.server.McpServer
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Local bridge for the Gateway Hub app on this phone (phase 1 of the hub migration): MCP JSON-RPC
- * messages over a protected Bound Service ([HubBridgeService]) instead of HTTP and the relay.
+ * Stone as a capability provider for the Gateway Hub app on this phone: MCP JSON-RPC messages over a
+ * protected Bound Service ([ProviderService]), handled by [McpDispatcher] (no HTTP, no relay, no Stone token).
  *
  * - Identity comes only from Android (the caller's uid → its packages → their signature); nothing the
  *   caller writes in a message says who it is.
- * - READ-ONLY in this phase, on both tools/list and tools/call, from each action's declared [ActionRisk].
+ * - Rights: those Gateway delegates per request ([GatewayGrant]), never above Stone's local cap (read-only in
+ *   this phase), checked on both tools/list and tools/call from each action's declared [ActionRisk].
  * - Same switches as Redirección hub: the user's "Redirección hub" and Modo API (see ../../docs: the Modo API
  *   dependency is kept on purpose until a separate consent switch exists).
  * - Messages are bounded so they always fit in one Binder transaction.
  */
-object HubBridge {
+object ProviderBridge {
     const val ACTION = "com.zirakusa.gatewayhub.action.MCP"
     const val GATEWAY_PACKAGE = "com.zirakusa.gatewayhub"
     const val MSG_RPC = 1
@@ -51,16 +51,14 @@ object HubBridge {
             ?: return error(null, -32600, "Send one JSON-RPC object per message (no batches).")
         val id = message.opt("id")
         val method = message.optString("method")
+        val grant = GatewayGrant.from(message)
         if (method == "tools/call") {
             val name = message.optJSONObject("params")?.optString("name").orEmpty()
             val action = StoneAutomation.find(name)
-            if (action != null && action.risk != ActionRisk.READ) return forbidden(id, name)
+            // Explicit check of the declared risk, before anything runs (the grant's mode checks it again).
+            if (action != null && !grant.mode.permits(action.risk)) return forbidden(id, name)
         }
-        val token = ApiMode.hubToken()
-        if (token.paused || (token.expiresAt != 0L && token.expiresAt <= System.currentTimeMillis()))
-            return error(id, -32001, "The 'Gateway Hub' token is paused or expired in Stone.")
-        // The bridge always works with read-only rights, whatever the reserved token allows on HTTP.
-        val reply = McpServer.handleLocal(message.toString(), token.copy(mode = AccessMode.READ)) ?: return null
+        val reply = McpDispatcher.dispatch(message.toString(), grant).first?.toString() ?: return null
         val marked = if (method == "tools/list") markProbes(reply) else reply
         return if (marked.length > MAX_CHARS) error(id, -32000, "RESPONSE_TOO_LARGE: the answer does not fit the local bridge.") else marked
     }
@@ -76,9 +74,8 @@ object HubBridge {
 
     private fun forbidden(id: Any?, name: String): String = JSONObject().put("jsonrpc", "2.0").put("id", id ?: JSONObject.NULL)
         .put("result", JSONObject().put("isError", true)
-            .put("content", JSONArray().put(JSONObject().put("type", "text").put("text", "[READ_ONLY_BRIDGE] '$name' changes something; the local bridge only reads.")))
+            .put("content", JSONArray().put(JSONObject().put("type", "text").put("text", "[READ_ONLY_BRIDGE] '$name' changes something; Stone lets Gateway Hub only read for now.")))
             .put("structuredContent", JSONObject().put("ok", false).put("error", JSONObject().put("code", "READ_ONLY_BRIDGE")))).toString()
 
-    fun error(id: Any?, code: Int, message: String): String = JSONObject().put("jsonrpc", "2.0").put("id", id ?: JSONObject.NULL)
-        .put("error", JSONObject().put("code", code).put("message", message)).toString()
+    fun error(id: Any?, code: Int, message: String): String = McpDispatcher.error(id, code, message).toString()
 }

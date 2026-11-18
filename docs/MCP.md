@@ -196,12 +196,15 @@ pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca
 - El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
   de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.
 
-## Puente local con Gateway Hub (fase 1, Stone 1.7.16)
+## Puente local con Gateway Hub (fase 1 en 1.7.16, fase 1b en 1.7.17)
 
 Además del enlace público, Stone ofrece su servidor MCP a la app **Gateway Hub del mismo teléfono** por IPC de
 Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoint MCP por usuario (Gateway Hub).
 
-- **Transporte:** Bound Service `automation/HubBridgeService.kt` con `Messenger`, acción
+- **Código (1.7.17):** `automation/provider/`: `ProviderService.kt` (servicio), `ProviderBridge.kt` (identidad,
+  límites, filtros), `GatewayGrant.kt` (permisos delegados) y `McpDispatcher.kt` (MCP JSON-RPC sin sockets, que también
+  usa el servidor HTTP mientras exista). El puente ya no depende de `McpServer` ni del token «Gateway Hub» de Stone.
+- **Transporte:** Bound Service `automation/provider/ProviderService.kt` con `Messenger`, acción
   `com.zirakusa.gatewayhub.action.MCP`. Cada mensaje es un objeto JSON-RPC (sin lotes) en el `Bundle`, clave
   `message`; `arg1` empareja la respuesta.
 - **Identidad (solo de Android, nunca del mensaje):**
@@ -212,9 +215,14 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   - *Dependencia del Modo API (documentada, pospuesta):* técnicamente el puente no necesita el servidor público
     (`McpServer.handleLocal` no usa HTTP). Se mantiene porque hoy «Modo API apagado» significa «ninguna IA accede».
     Quitarla exige antes un permiso propio y visible para Gateway Hub; queda para una fase posterior.
+- **Permisos delegados por Gateway (`GatewayGrant`):** cada petición puede llevar
+  `params._meta["com.zirakusa.gatewayhub/grant"] = {"mode": "read"|"write"|"full", "blockedTools": [...], "agent": "id"}`.
+  Stone lo acepta solo porque el remitente ya se verificó por uid y firma, y lo **recorta a su tope local**: hoy solo
+  lectura. Si falta o está mal formado, se aplica el tope sin nada extra.
 - **Solo lectura en `tools/list` y `tools/call`:** según el `ActionRisk` declarado de cada acción. Una herramienta que
-  no es `READ` se rechaza con `READ_ONLY_BRIDGE` antes de ejecutarse, y además el permiso usado es de solo lectura
-  (token reservado «Gateway Hub» con modo READ; respeta sus herramientas desactivadas, su pausa y su caducidad).
+  no es `READ` se rechaza con `READ_ONLY_BRIDGE` antes de ejecutarse. Las herramientas que Gateway bloquea no se listan
+  y su llamada da `TOOL_DISABLED`. El token «Gateway Hub» de Stone (pausa, caducidad, herramientas desactivadas) ya solo
+  afecta al camino HTTP/relay.
 - **Herramienta de prueba:** solo `stone_help` (lee, sin efectos, funciona sin la pantalla de Stone), marcada en
   `tools/list` con `_meta["com.zirakusa.gatewayhub/probe"] = true`. Gateway no ejecuta ninguna otra.
 - **Tamaño:** máximo 200 000 caracteres por mensaje (~400 KB en UTF-16, por debajo del búfer de 1 MB de Binder).
