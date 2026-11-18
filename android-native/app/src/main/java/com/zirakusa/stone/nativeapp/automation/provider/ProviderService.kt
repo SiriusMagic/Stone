@@ -10,7 +10,6 @@ import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.os.RemoteException
-import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.RejectedExecutionException
@@ -33,7 +32,6 @@ class ProviderService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         if (intent?.action != ProviderBridge.ACTION) return null
         val store = StoneSettingsStore(applicationContext)
-        if (!ApiMode.loaded) ApiMode.load(store, applicationContext)
         if (!ProviderState.loaded) ProviderState.load(store)
         return messenger.binder
     }

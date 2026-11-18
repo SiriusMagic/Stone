@@ -7,7 +7,8 @@ description: Builds and publishes a new Stone Kotlin APK (android-native/) with 
 
 Stone's installable build is the R8-optimized `preview` variant of `android-native/app`. A release
 means: bump the version, prove the build is healthy, produce the APK, record it, and hand it over.
-The user installs it on top of the previous one, so the signature and the relay link must not change.
+The user installs it on top of the previous one, so the signature must not change. Since phase 6 Stone has no
+relay link or MCP server of its own: agents reach it only through the Gateway Hub app (local IPC).
 
 ## 1. Bump the version
 
@@ -41,8 +42,8 @@ From `android-native/`:
 - Signature unchanged — otherwise the phone will not update over the old install:
   `$(ls /opt/android-sdk/build-tools/*/apksigner | tail -1) verify --print-certs <apk>` must print
   the same SHA-256 as the previous `android-native/Stone-*-optimized.apk`.
-- The relay URL is inside (`unzip -p <apk> 'classes*.dex' | strings | grep -c stone-relay` > 0);
-  it comes from `stoneRelayUrl` in `android-native/gradle.properties`.
+- The provider service is declared: `aapt2 dump xmltree --file AndroidManifest.xml <apk> | grep -c ProviderService` > 0
+  (action `com.zirakusa.gatewayhub.action.MCP`, permission `com.zirakusa.gatewayhub.permission.LINK`).
 
 ## 4. Record the release
 

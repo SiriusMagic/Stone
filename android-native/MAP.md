@@ -7,9 +7,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (144) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (145) User switches for the MCP server (Ajustes › Modo API).
 - `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
-- `HubLink.kt` (72) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -17,10 +15,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `StoneAction.kt` (85) How dangerous an action is;
 - `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
-- `StoneAgentActions.kt` (48) Tools that help agents help themselves:
-- `StoneAutomation.kt` (185) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAgentActions.kt` (41) Tools that help agents help themselves:
+- `StoneAutomation.kt` (161) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
-- `StoneGuide.kt` (95) Discovery help for agents:
+- `StoneGuide.kt` (61) Discovery help for agents:
 - `StoneJobs.kt` (127) Background batches for agents.
 - `StoneLibraryEditActions.kt` (161) Bulk tools:
 - `StoneLookActions.kt` (100) Appearance and settings actions:
@@ -30,34 +28,21 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
 
 ## app/automation/activity
-- `ActivityLog.kt` (71) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
+- `ActivityLog.kt` (71) Keeps Ajustes › Gateway Hub › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read t
 
 ## app/automation/auth
-- `AccessMode.kt` (59) What a token lets an agent do.
-- `ApiTokens.kt` (104) Access tokens of Ajustes › Modo API › Seguridad.
+- `AccessMode.kt` (21) What a token lets an agent do.
 - `AuthContext.kt` (22) Who is making the request being executed:
-- `AuthThrottle.kt` (29) Slows down token guessing:
 
 ## app/automation/provider
 - `Cancellation.kt` (20) Reads, without trusting more than needed, which request a message is (or which one it cancels).
 - `GatewayGrant.kt` (48) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
 - `GatewayMethods.kt` (43) The provider contract's own methods (prefixed, so they never pass for standard MCP methods):
-- `McpDispatcher.kt` (106) Who a request runs for and with which rights, whatever carried it (HTTP token today, Gateway Hub over IPC).
+- `McpDispatcher.kt` (99) Who a request runs for and with which rights (Gateway Hub over IPC, with an execution package).
 - `Packages.kt` (130) The five things a package may allow, mapped onto the risk every Stone tool already declares.
-- `ProviderBridge.kt` (107) Stone as a capability provider for the Gateway Hub app on this phone:
-- `ProviderService.kt` (78) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
-- `ProviderState.kt` (77) Stone's link with Gateway Hub:
-
-## app/automation/relay
-- `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
-- `RelayClient.kt` (214) Keeps Stone reachable at a fixed public link through the Stone relay (see ../relay).
-- `RelayGuard.kt` (84) Safety rules for requests that arrive through the internet relay.
-
-## app/automation/server
-- `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (270) Model Context Protocol server exposing [StoneAutomation] actions as tools.
-- `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
+- `ProviderBridge.kt` (112) Stone as a capability provider for the Gateway Hub app on this phone:
+- `ProviderService.kt` (76) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
+- `ProviderState.kt` (79) Stone's link with Gateway Hub:
 
 ## app/data/library
 - `NotificationAlarmReceiver.kt` (21) Fires the scheduled summary / reminder, and restores the alarms after a reboot or update.
@@ -221,15 +206,10 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `WidgetSettings.kt` (62) Ajustes › Widgets:
 
 ## app/feature/settings/api
-- `ApiActivityTab.kt` (92) Actividad tab:
-- `ApiAnalytics.kt` (144) Time windows:
+- `ApiActivityTab.kt` (102) Bar shown while a batch tool runs (rename, update_many, fetch_lyrics…).
 - `ApiGatewayCard.kt` (77) Gateway Hub (provider mode):
-- `ApiGeneralTab.kt` (63) General:
-- `ApiHubCard.kt` (68) Gateway Hub:
-- `ApiModeSettings.kt` (67) Ajustes › Modo API:
-- `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
-- `ApiTokenEditor.kt` (193) Create ([token] null) or configure a token, in this order:
-- `ApiTokenRow.kt` (73) Compact token card:
+- `ApiModeSettings.kt` (18) Ajustes › Gateway Hub:
+- `ApiModeShared.kt` (105) Category key (first part of an action name) → label and icon.
 
 ## app/feature/settings/feedback
 - `CrashReportCard.kt` (42) Ajustes › Diagnóstico:
@@ -271,7 +251,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/ui
 - `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
-- `StoneApp.kt` (452) Mini player button:
+- `StoneApp.kt` (451) Mini player button:
 
 ## app/ui/components
 - `SleepTimerIndicator.kt` (101) Shows the active sleep timer using the sun by day and the moon by night.

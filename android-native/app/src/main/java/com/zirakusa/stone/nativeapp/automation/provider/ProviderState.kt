@@ -23,6 +23,8 @@ object ProviderState {
     var environment by mutableStateOf(""); private set
     var mode by mutableStateOf(""); private set
     var lastActivity by mutableStateOf(0L); private set
+    /** Stone on screen (MainActivity between onStart and onStop): safe mode serves only then. */
+    @Volatile var visible = false
     var envId: String = ""; private set
     var publicKey: PublicKey? = null; private set
     var instanceId: String = ""; private set

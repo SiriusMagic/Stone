@@ -1,50 +1,20 @@
 # Stone — guía de conexión para agentes (MCP)
 
-Stone expone un servidor **Model Context Protocol** en el teléfono (Ajustes › Modo API). Este
-documento es para pegárselo a un agente de IA que no logre conectarse.
+Stone ofrece sus herramientas **Model Context Protocol** a través de Gateway Hub (Ajustes › Gateway Hub). Este
+documento es para pegárselo a un agente de IA que no logre usarlas.
 
-## Enlace
+## Cómo se conecta un agente
 
-`https://<relevo>/d/<dispositivo>/mcp?token=<TOKEN>` (botón "Copiar enlace" en Stone).
-El token también se acepta como `Authorization: Bearer <TOKEN>` o `X-Api-Key: <TOKEN>`.
-Stone debe estar abierto en el teléfono con el Modo API activado.
+Stone **ya no tiene enlace propio, tokens ni servidor HTTP**: es un proveedor de herramientas de **Gateway Hub**.
+El agente usa la única dirección MCP del usuario, `https://<hub>/mcp`, con el enlace que Gateway Hub crea para
+él (Agentes › Nuevo enlace). Las herramientas de Stone aparecen con el prefijo `music_` (`music_player_state`,
+`music_library_search`…), o `music2_`… si es el Stone de otro teléfono.
 
-## Tres formas de usarlo
-
-| Cliente | Cómo |
-| --- | --- |
-| Cliente MCP (Claude, ChatGPT, Claude Code…) | `POST` JSON-RPC 2.0 al enlace. Métodos: `initialize`, `tools/list`, `tools/call`. Cabeceras `Content-Type: application/json` y `Accept: application/json, text/event-stream`. |
-| Cliente MCP antiguo (SSE) | `GET …/sse?token=…` y `POST` al endpoint que anuncia. |
-| Agente que solo puede hacer GET | `GET …/tools?token=…` lista las herramientas; `GET …/call/NOMBRE?token=…&param=valor` ejecuta una. |
-
-Un `GET` normal al enlace devuelve una guía en JSON con la lista de herramientas. Solo un `GET`
-con `Accept: text/event-stream` recibe `405`, que es lo que el protocolo indica cuando el
-servidor no ofrece flujo propio: **no es un fallo**, hay que usar `POST`.
-
-`GET …/health` no necesita token y solo dice si Stone está en marcha y su versión.
-
-## Ejemplos
-
-```bash
-LINK="https://<relevo>/d/<dispositivo>"; TOKEN="<TOKEN>"
-
-# ¿Está vivo?
-curl "$LINK/health"
-
-# MCP: listar herramientas
-curl -X POST "$LINK/mcp" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-
-# MCP: mover una barra del ecualizador
-curl -X POST "$LINK/mcp" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"equalizer_set_band","arguments":{"band":0,"value":6}}}'
-
-# Sin MCP: solo GET
-curl "$LINK/call/player_state?token=$TOKEN"
-curl "$LINK/call/library_search?token=$TOKEN&query=alan%20walker&limit=5"
-curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
-```
+- Gateway Hub decide qué agente puede usar qué (enlaces, apps permitidas, solo lectura) y Stone ejecuta solo lo
+  que cubre un **paquete de ejecución** aprobado en Stone (ver más abajo).
+- `tools/list` muestra solo lo que los paquetes del agente permiten. Un error `NO_PACKAGE`, `ACT_NOT_IN_PACKAGE` o
+  `PACKAGE_PENDING` significa: pedir al usuario un paquete en Gateway Hub y que lo apruebe en Stone.
+- `SAFE_MODE_STONE_CLOSED`: el usuario eligió el modo seguro en Gateway Hub y Stone no está en pantalla.
 
 ## Flujo recomendado
 
@@ -109,31 +79,11 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
 | Fallo de DNS o de red en el agente | El entorno del agente no puede salir a internet | No es un problema de Stone: usar un cliente con acceso a red. |
 
-## Permisos y tokens
+## Permisos
 
-Stone › Ajustes › Modo API › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
-fila): da uno distinto a cada agente; varios pueden trabajar a la vez y revocar uno no afecta a los
-demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada token tiene un modo:
-
-| Modo | Qué puede hacer | Qué pide aprobación |
-| --- | --- | --- |
-| Solo lectura | Consultas (`*_get`, `library_search`, `player_state`…) | Nada |
-| Lectura y escritura | Todo | Solo lo crítico (`playlist_delete`) |
-| Acceso completo | Todo | Nada |
-
-Cada token tiene sus propias herramientas (Configurar token › Herramientas autorizadas): las apagadas
-no aparecen en `tools/list` y se rechazan con `TOOL_DISABLED`. Un token puede pausarse (se rechaza hasta
-reanudarlo, con el mismo enlace) o revocarse (para siempre, previa confirmación).
-Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
-`metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
-
-Seguridad: los tokens se guardan cifrados (Android Keystore). Se acepta el token en el enlace (`?token=`,
-necesario para ChatGPT) o en `Authorization: Bearer TOKEN`. En SSE cada `POST /messages` debe llevar el token de la sesión; revocar o rotar un token cierra sus
-sesiones. Tras 20 tokens erróneos en un minuto, ese origen recibe HTTP 429 durante un minuto. El acceso por la red local
-(Wi-Fi, HTTP sin cifrar) ya no se ofrece: solo este teléfono y el enlace cifrado del relay.
-
-Android exige su propio permiso para editar archivos de la biblioteca del teléfono. Stone lo pide
-una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de pedirlo.
+- Las acciones declaran su riesgo: lectura, reversible, persistente (con copia y `metadata_undo`) o crítica.
+- Lo crítico (borrar una lista) **siempre** pide confirmación en la pantalla de Stone (60 s).
+- Qué acciones puede usar cada agente lo deciden sus paquetes (leer, revisar, escribir, modificar, revertir).
 
 ## Edición masiva
 
@@ -170,33 +120,16 @@ una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de ped
 
 ## Seguridad
 
-- Los tokens nuevos tienen la forma `stn_` + 43 caracteres (256 bits aleatorios); los antiguos siguen
-  valiendo hasta que los rotes. Al crear uno puedes darle caducidad (7, 30 o 90 días).
-- Tras 20 tokens incorrectos en un minuto desde el mismo origen, el servidor responde `429` durante un
-  minuto (cabecera `Retry-After: 60`). Un token correcto de otro cliente no se ve afectado.
-- Las respuestas llevan `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` y
-  `Referrer-Policy: no-referrer`; las peticiones están limitadas a 64 cabeceras y 1 MB de cuerpo.
+- Stone no escucha en ningún puerto ni abre conexiones para MCP: solo responde a Gateway Hub del mismo teléfono por
+  IPC, verificado por Android (permiso `signature`, uid, paquete y firma en cada mensaje).
+- Los paquetes van firmados con la clave del teléfono de Gateway y Stone los verifica al recibirlos y al cargarlos.
 
-Quien tenga el enlace controla la reproducción. No lo pegues en sitios públicos; si se filtra,
-pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca el que ya no uses.
+## Varios agentes a la vez
 
-## Varios agentes a la vez (aislamiento y reintentos)
+Cada petición lleva su propia autorización (agente, modo y herramientas bloqueadas) en su corrutina: dos agentes a
+la vez nunca ven ni usan los permisos del otro. Los trabajos en segundo plano y la actividad son de quien los creó.
 
-- Cada petición se ejecuta con la autorización de **su** token (modo y herramientas), guardada en la propia
-  petición: lo que haga otro agente al mismo tiempo no la afecta.
-- Tokens erróneos: se cuentan por origen. A través del relay el origen es la dirección que Cloudflare da del
-  cliente (`CF-Connecting-IP`); `X-Forwarded-For` y similares se ignoran. Un token válido nunca queda
-  bloqueado por los errores de otro.
-- Si una petición esperó más de 60 s en el teléfono, Stone responde **503 con `Retry-After: 10`** y
-  **no la ejecuta** ("Nothing was changed"); reenvíala.
-- Si la cola del teléfono está llena (64 en espera), el relay responde 503 "busy" sin ejecutar nada.
-- Si un cambio terminó después del 504 del relay y el mismo token lo repite igual (misma herramienta y
-  argumentos) en 10 min, Stone devuelve el primer resultado con `"replayed": true` en vez de hacerlo dos veces.
-  Las lecturas nunca se repiten de memoria.
-- El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
-  de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.
-
-## Puente local con Gateway Hub (fase 1 en 1.7.16, fase 1b en 1.7.17)
+## Detalles del puente con Gateway Hub
 
 Además del enlace público, Stone ofrece su servidor MCP a la app **Gateway Hub del mismo teléfono** por IPC de
 Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoint MCP por usuario (Gateway Hub).
@@ -211,10 +144,7 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   1. para enlazarse hace falta el permiso `com.zirakusa.gatewayhub.permission.LINK` (`signature`);
   2. en cada mensaje, `Message.sendingUid` → paquetes de ese uid → debe estar `com.zirakusa.gatewayhub`;
   3. y firmado con la misma clave que Stone (`checkSignatures`).
-- **Interruptores del usuario:** «Redirección hub» y Modo API activados.
-  - *Dependencia del Modo API (documentada, pospuesta):* técnicamente el puente no necesita el servidor público
-    (`McpServer.handleLocal` no usa HTTP). Se mantiene porque hoy «Modo API apagado» significa «ninguna IA accede».
-    Quitarla exige antes un permiso propio y visible para Gateway Hub; queda para una fase posterior.
+- **Nada que activar en Stone** (desde la fase 2): solo «Desconectar de Gateway Hub» lo corta.
 - **Permisos delegados por Gateway (`GatewayGrant`):** cada petición puede llevar
   `params._meta["com.zirakusa.gatewayhub/grant"] = {"mode": "read"|"write"|"full", "blockedTools": [...], "agent": "id"}`.
   Stone lo acepta solo porque el remitente ya se verificó por uid y firma, y lo **recorta a su tope local**: hoy solo

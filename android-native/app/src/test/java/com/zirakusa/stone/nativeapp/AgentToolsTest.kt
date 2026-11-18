@@ -157,39 +157,5 @@ class AgentToolsTest {
         assertEquals("LOW_CONFIDENCE", (help as JSONObject).getString("key"))
     }
 
-    @Test fun eachTokenCanGetItsOwnExpiryAndBeRenewed() {
-        val now = System.currentTimeMillis()
-        com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.replaceForTests(listOf(
-            com.zirakusa.stone.nativeapp.automation.auth.ApiToken("a", "GPT", "s1", com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL, now, expiresAt = now - 1),
-            com.zirakusa.stone.nativeapp.automation.auth.ApiToken("b", "Claude", "s2", com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL, now)))
-        val tokens = com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
-        assertTrue(tokens.tokens[0].expired)
-        tokens.setExpiry("a", 365)
-        val renewed = tokens.tokens.first { it.id == "a" }
-        assertFalse(renewed.expired)
-        assertEquals(365L, (renewed.expiresAt - now + 60_000) / 86_400_000L)
-        assertEquals(0L, tokens.tokens.first { it.id == "b" }.expiresAt) // the other token is untouched
-        tokens.setExpiry("a", 0)
-        assertEquals(0L, tokens.tokens.first { it.id == "a" }.expiresAt)
-    }
 
-    @Test fun requestsPerMinuteForEveryAgentAndForEachToken() {
-        val stats = com.zirakusa.stone.nativeapp.automation.activity.RequestStats
-        stats.clearForTests()
-        val now = 1_800_000_000_000L
-        repeat(3) { stats.record("gpt", stats.OK, now) }
-        stats.record("claude", stats.FAILED, now - 60_000)
-        stats.record("", stats.REJECTED, now)
-        stats.record("gpt", stats.OK, now - 25 * 60 * 60_000L) // older than 24 h: outside every window
-        val all = stats.series(null, 60, 1, now)
-        assertEquals(60, all.size)
-        assertEquals(3, all.last()[stats.OK]); assertEquals(1, all.last()[stats.REJECTED])
-        assertEquals(1, all[58][stats.FAILED])
-        assertEquals(3, stats.totals("gpt", 24 * 60, now)[stats.OK])
-        assertEquals(0, stats.totals("claude", 24 * 60, now)[stats.OK])
-        assertEquals(4, stats.series(null, 48, 30, now).last().let { it[0] + it[2] })
-        stats.forget("gpt")
-        assertEquals(0, stats.totals("gpt", 60, now)[stats.OK])
-        stats.clearForTests()
-    }
 }

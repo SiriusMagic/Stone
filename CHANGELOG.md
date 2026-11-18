@@ -11,7 +11,15 @@
 - Fase 4: se quita la tarjeta **Cloudflare** de Modo API. Stone ya no guarda ningún token de Cloudflare (el que guardó la
   1.7.15 se borra al abrirla) ni lo comparte con Gateway Hub: el hub se publica y se actualiza desde Gateway, con un token
   que se usa una vez y se olvida.
-- Sin cambios en el enlace público, el relay ni Cloudflare. Sin APK todavía.
+- **Fase 6: Stone es solo proveedor de Gateway Hub.** Se retiran el servidor MCP HTTP, el enlace público (relay), los
+  tokens propios, la Analítica, «Activar MCP», «Redirección hub», «Solo con Stone abierta» y el canal HubLink.
+  - Ajustes › **Gateway Hub** (antes Modo API): estado que comunica Gateway, paquetes (aprobar, rechazar, revocar),
+    «Desconectar de Gateway Hub» y la actividad de los agentes.
+  - El modo seguro lo elige Gateway Hub y Stone lo aplica: en modo seguro solo responde con Stone en pantalla.
+  - La herramienta `stone_metrics` desaparece (las métricas están en Gateway Hub). Las demás herramientas no cambian.
+  - Los agentes que usaban un enlace de Stone (`stone-relay…/d/…/mcp?token=stn_…`) deben pasar a un enlace de Gateway
+    Hub. El Worker `stone-relay` puede borrarse cuando no quede ninguna Stone anterior instalada.
+- Sin APK todavía.
 
 # Stone Kotlin 1.7.17
 

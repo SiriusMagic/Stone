@@ -5,45 +5,38 @@ import com.zirakusa.stone.nativeapp.automation.actions.ActionException
 import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
-import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
-import com.zirakusa.stone.nativeapp.automation.relay.RelayInfo
-import com.zirakusa.stone.nativeapp.automation.server.ServerMetrics
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Who a request runs for and with which rights, whatever carried it (HTTP token today, Gateway Hub over IPC). */
+/** Who a request runs for and with which rights (Gateway Hub over IPC, with an execution package). */
 data class CallerGrant(val id: String, val name: String, val mode: AccessMode, val disabledTools: Set<String>)
-
-fun ApiToken.callerGrant() = CallerGrant(id, name, mode, disabledTools)
 
 /**
  * Stone's MCP JSON-RPC handling, with no sockets and no tokens: initialize, ping, tools/list, tools/call.
- * The HTTP server (while it exists) and the Gateway Hub provider bridge both use it, so removing the
- * HTTP server later does not touch the bridge.
+ * Stone has no network server of its own: Gateway Hub reaches it over IPC ([ProviderService]).
  */
 object McpDispatcher {
     private val protocolVersions = listOf("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 
     /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
-    fun dispatch(text: String, grant: CallerGrant, relay: RelayInfo? = null): Pair<Any?, Boolean> = try {
+    fun dispatch(text: String, grant: CallerGrant): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {
             val batch = JSONArray(text)
             val messages = (0 until batch.length()).map { batch.getJSONObject(it) }
-            JSONArray(messages.mapNotNull { handle(it, grant, relay) }).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
+            JSONArray(messages.mapNotNull { handle(it, grant) }).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
         } else {
             val message = JSONObject(text)
-            handle(message, grant, relay) to (message.optString("method") == "initialize")
+            handle(message, grant) to (message.optString("method") == "initialize")
         }
     } catch (parse: org.json.JSONException) {
         error(null, -32700, "Invalid JSON") to false
     }
 
     /** Returns the JSON-RPC response, or null for notifications. */
-    private fun handle(message: JSONObject, grant: CallerGrant, relay: RelayInfo?): JSONObject? {
+    private fun handle(message: JSONObject, grant: CallerGrant): JSONObject? {
         val id = message.opt("id")
         val method = message.optString("method")
-        ServerMetrics.rpc(method.ifBlank { "none" }, if (method == "tools/call") message.optJSONObject("params")?.optString("name") else null)
         if (id == null || id == JSONObject.NULL) return null
         val params = message.optJSONObject("params") ?: JSONObject()
         return try {
@@ -67,7 +60,7 @@ object McpDispatcher {
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)
                             .put("destructiveHint", action.risk == ActionRisk.CRITICAL))
                 }))
-                "tools/call" -> callTool(params, grant, relay)
+                "tools/call" -> callTool(params, grant)
                 // Optional lists some clients request at start-up; Stone has none of these.
                 "resources/list" -> JSONObject().put("resources", JSONArray())
                 "resources/templates/list" -> JSONObject().put("resourceTemplates", JSONArray())
@@ -82,11 +75,11 @@ object McpDispatcher {
         }
     }
 
-    private fun callTool(params: JSONObject, grant: CallerGrant, relay: RelayInfo?): JSONObject {
+    private fun callTool(params: JSONObject, grant: CallerGrant): JSONObject {
         val name = params.optString("name")
         val arguments = params.optJSONObject("arguments") ?: JSONObject()
         return try {
-            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools, relay) }
+            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools) }
             JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", result.toString())))
                 .put("isError", false).apply { if (result is JSONObject) put("structuredContent", result) }
         } catch (failure: ActionException) {

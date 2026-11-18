@@ -1,50 +1,33 @@
 package com.zirakusa.stone.nativeapp
 
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
-import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
 import com.zirakusa.stone.nativeapp.automation.provider.McpDispatcher
-import com.zirakusa.stone.nativeapp.automation.provider.callerGrant
-import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.provider.CallerGrant
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.net.HttpURLConnection
-import java.net.Proxy
-import java.net.URL
 
-/** The MCP handling moved out of the HTTP server: the same request gives the same answer either way. */
+/** Stone's MCP handling without any network server: protocol errors and notifications. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class McpDispatcherTest {
-    private val port = 18_766
-    private val token = ApiToken("t1", "Prueba", "stn_dispatcher_test_token", AccessMode.READ, 0, disabledTools = setOf("library_search"))
+    private val grant = CallerGrant("t1", "Prueba", AccessMode.READ, setOf("library_search"))
 
-    @After fun stop() = McpServer.stop()
-
-    private fun overHttp(body: String): JSONObject {
-        val c = URL("http://127.0.0.1:$port/mcp").openConnection(Proxy.NO_PROXY) as HttpURLConnection
-        c.requestMethod = "POST"; c.doOutput = true
-        c.setRequestProperty("Authorization", "Bearer ${token.secret}"); c.setRequestProperty("Content-Type", "application/json")
-        c.outputStream.use { it.write(body.toByteArray()) }
-        return JSONObject(c.inputStream.bufferedReader().use { it.readText() })
-    }
-
-    @Test fun httpAndDispatcherAnswerTheSame() {
-        assertTrue(McpServer.start(listOf(token), port))
-        for (body in listOf("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}""",
-            """{"jsonrpc":"2.0","id":2,"method":"tools/list"}""", """{"jsonrpc":"2.0","id":3,"method":"nope"}""")) {
-            val direct = McpDispatcher.dispatch(body, token.callerGrant()).first.toString()
-            assertEquals(body, JSONObject(direct).toString(), overHttp(body).toString())
-        }
-    }
 
     @Test fun notificationsAndBadJson() {
-        assertEquals(null, McpDispatcher.dispatch("""{"jsonrpc":"2.0","method":"notifications/initialized"}""", token.callerGrant()).first)
-        assertEquals(-32700, (McpDispatcher.dispatch("{", token.callerGrant()).first as JSONObject).getJSONObject("error").getInt("code"))
+        assertEquals(null, McpDispatcher.dispatch("""{"jsonrpc":"2.0","method":"notifications/initialized"}""", grant).first)
+        assertEquals(-32700, (McpDispatcher.dispatch("{", grant).first as JSONObject).getJSONObject("error").getInt("code"))
+    }
+
+    @Test fun initializeAndReadOnlyListing() {
+        val init = McpDispatcher.dispatch("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}""", grant).first as JSONObject
+        assertEquals("2025-06-18", init.getJSONObject("result").getString("protocolVersion"))
+        val tools = (McpDispatcher.dispatch("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}""", grant).first as JSONObject).getJSONObject("result").getJSONArray("tools")
+        val names = (0 until tools.length()).map { tools.getJSONObject(it).getString("name") }
+        assertTrue(names.isNotEmpty() && "library_search" !in names && "player_play" !in names)
     }
 }

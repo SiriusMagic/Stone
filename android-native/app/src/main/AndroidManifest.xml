@@ -32,7 +32,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="com.zirakusa.gatewayhub.module" android:value="music_" />
-            <meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink" />
         </activity>
         <!-- Home-screen mascots (Personalizado › Mascota). Exactly one alias is enabled.
              Never rename these: Android remembers enabled/disabled per name, and a removed or
@@ -77,8 +76,6 @@
             android:permission="com.zirakusa.gatewayhub.permission.LINK">
             <intent-filter><action android:name="com.zirakusa.gatewayhub.action.MCP" /></intent-filter>
         </service>
-        <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
-            android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider" android:exported="false"
             android:grantUriPermissions="true">

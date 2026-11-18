@@ -37,7 +37,12 @@ object ProviderBridge {
     }
 
     /** Phase 2: no switch to turn on in Stone; only the user's "Desconectar de Gateway Hub" stops the bridge. */
-    fun switchRefusal(): String? = if (ProviderState.disconnectedByUser) "DISCONNECTED_BY_USER" else null
+    fun switchRefusal(): String? = when {
+        ProviderState.disconnectedByUser -> "DISCONNECTED_BY_USER"
+        // Safe mode (chosen in Gateway Hub): only while Stone is on screen.
+        ProviderState.mode == "safe" && !ProviderState.visible -> "SAFE_MODE_STONE_CLOSED"
+        else -> null
+    }
 
     /** Handles one MCP message from an authenticated Gateway; null for a notification (nothing to answer). */
     fun handle(text: String?): String? {

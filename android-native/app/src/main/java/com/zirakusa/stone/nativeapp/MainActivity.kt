@@ -119,11 +119,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        com.zirakusa.stone.nativeapp.automation.ApiMode.setVisible(true) // modo seguro: MCP only while on screen
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.visible = true // safe mode: MCP only while on screen
     }
 
     override fun onStop() {
-        com.zirakusa.stone.nativeapp.automation.ApiMode.setVisible(false)
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.visible = false
         AudioDiagnostics.log(this, "MainActivity.onStop", state = StonePlaybackService.diagnosticState())
         immersiveSystemBars.onStop()
         super.onStop()

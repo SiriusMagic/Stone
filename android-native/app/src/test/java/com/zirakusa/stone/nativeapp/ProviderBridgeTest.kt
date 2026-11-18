@@ -3,14 +3,12 @@ package com.zirakusa.stone.nativeapp
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Looper
-import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.provider.GatewayGrant
 import com.zirakusa.stone.nativeapp.automation.provider.ProviderBridge
 import com.zirakusa.stone.nativeapp.automation.provider.ProviderService
 import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
-import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.*
@@ -24,7 +22,7 @@ import org.robolectric.Shadows.shadowOf
 /** Stone as a provider for Gateway Hub: identity from Android only, delegated rights capped locally, bounded messages. */
 @RunWith(RobolectricTestRunner::class)
 class ProviderBridgeTest {
-    @After fun reset() { ApiMode.allowHubRedirect(false); ApiMode.enable(false); ApiTokens.replaceForTests(emptyList()) }
+    @After fun reset() { com.zirakusa.stone.nativeapp.automation.provider.ProviderState.allowAgain() }
 
     private fun rpc(method: String, params: JSONObject = JSONObject(), id: Int = 1) =
         JSONObject().put("jsonrpc", "2.0").put("id", id).put("method", method).put("params", params).toString()
@@ -122,9 +120,15 @@ class ProviderBridgeTest {
         assertEquals("gateway", GatewayGrant.from(JSONObject(withGrant("ping", JSONObject().put("agent", "../../x")))).id)
     }
 
-    @Test fun theStoneHubTokenNoLongerDecidesTheBridge() {
-        ApiTokens.setPaused(ApiMode.hubToken().id, true)   // affects only the HTTP/relay path now
-        assertTrue(JSONObject(ProviderBridge.handle(rpc("tools/list"))!!).has("result"))
+    @Test fun safeModeServesOnlyWhileStoneIsOnScreen() {
+        val state = com.zirakusa.stone.nativeapp.automation.provider.ProviderState
+        state.load(com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore(RuntimeEnvironment.getApplication()))
+        state.report("active", "safe", 0); state.visible = false
+        assertEquals("SAFE_MODE_STONE_CLOSED", ProviderBridge.switchRefusal())
+        state.visible = true
+        assertNull(ProviderBridge.switchRefusal())
+        state.report("active", "background", 0); state.visible = false
+        assertNull(ProviderBridge.switchRefusal())                       // background mode: Stone closed is fine
     }
 
     @Test fun theServiceIsProtectedAndAnswersOnlyItsAction() {

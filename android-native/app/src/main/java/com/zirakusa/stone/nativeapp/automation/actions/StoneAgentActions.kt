@@ -1,7 +1,6 @@
 package com.zirakusa.stone.nativeapp.automation.actions
 import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
 import com.zirakusa.stone.nativeapp.automation.auth.currentAuth
-import com.zirakusa.stone.nativeapp.automation.server.ServerMetrics
 
 
 /** Tools that help agents help themselves: recent errors, the solutions dictionary and background jobs. */
@@ -18,12 +17,6 @@ internal object StoneAgentActions {
             ActivityLog.query(StoneAutomation.history.value, args.optBoolean("onlyErrors"),
                 args.optString("tool").ifBlank { null }, args.optString("token").ifBlank { null },
                 args.optInt("limit", 30).coerceIn(1, 200), ownerTokenId = currentAuth().tokenId)
-        },
-        StoneAction("stone.metrics", "How the MCP server and its internet link are working since Stone started: requests " +
-            "per route, HTTP status, JSON-RPC methods, calls per tool, latency and queue-wait buckets, relay reconnections, " +
-            "timeouts (504), work refused because it waited too long, and repeated changes answered from the first result. " +
-            "Totals for all agents; contains no tokens, addresses or arguments.", ActionRisk.READ) {
-            ServerMetrics.snapshot()
         },
         StoneAction("stone.troubleshoot", "Dictionary of solutions: what an error code means and the steps that fix it, " +
             "plus recommended workflows (WORKFLOW_LYRICS, WORKFLOW_GENRES, WORKFLOW_BULK). Call it when a tool returns " +

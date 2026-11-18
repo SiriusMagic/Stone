@@ -10,14 +10,9 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
-import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
-import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.auth.AuthContext
-import com.zirakusa.stone.nativeapp.automation.relay.RelayGuard
-import com.zirakusa.stone.nativeapp.automation.relay.RelayInfo
-import com.zirakusa.stone.nativeapp.automation.server.ServerMetrics
 
 /** A CRITICAL action waiting for the user's answer on screen. */
 class PendingConfirmation(val action: String, val summary: String, val answer: CompletableDeferred<Boolean>)
@@ -25,7 +20,7 @@ class PendingConfirmation(val action: String, val summary: String, val answer: C
 /** Android's own write dialog for MediaStore files, asked once for a whole batch. */
 class WriteAccessRequest(val count: Int, val sender: IntentSender, val answer: CompletableDeferred<Boolean>)
 
-/** Progress of a batch tool, shown in Ajustes › Modo API while it runs. */
+/** Progress of a batch tool, shown in Ajustes › Gateway Hub while it runs. */
 data class BatchProgress(val action: String, val done: Int, val total: Int, val failed: Int = 0)
 
 /**
@@ -49,42 +44,29 @@ object StoneAutomation {
 
     /** Actions a token with [access] may use (its mode and Ajustes › Modo API › Herramientas). */
     fun available(access: AccessMode, blocked: Set<String> = emptySet()): List<StoneAction> =
-        actions.filter { ApiMode.permits(it, access) && it.toolName !in blocked }
+        actions.filter { access.permits(it.risk) && it.toolName !in blocked }
 
 
     fun find(toolName: String) = actions.firstOrNull { it.toolName == toolName || it.name == toolName }
 
     /** Runs [toolName] with [arguments]; throws [ActionException] with a code and message for the agent. */
     suspend fun execute(toolName: String, arguments: JSONObject, access: AccessMode = AccessMode.WRITE, token: String = "",
-        tokenId: String = "", blocked: Set<String> = emptySet(), relay: RelayInfo? = null): Any {
+        tokenId: String = "", blocked: Set<String> = emptySet()): Any {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName", "UNKNOWN_TOOL",
             "Call tools/list or stone_help.")
         return try {
             if (action.toolName in blocked) throw ActionException("The user turned off '${action.toolName}' for this token.",
-                "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo API > Seguridad > (this token).")
+                "TOOL_DISABLED", "The owner can allow it in Gateway Hub (execution packages).")
             if (!access.permits(action.risk)) throw ActionException("This token is read-only.", "READ_ONLY_TOKEN",
-                "The user can change the token's mode in Stone > Ajustes > Modo API > Seguridad.")
+                "The owner can give this agent a package that allows changes, in Gateway Hub.")
             validate(action, arguments)
             val dryRun = arguments.optBoolean("dryRun", false)
-            // An agent repeating a change whose first try finished after the relay's 504 gets that first
-            // result back instead of the change being made twice (see RelayGuard).
-            val lateKey = if (relay != null && !dryRun && action.risk != ActionRisk.READ)
-                RelayGuard.callKey(tokenId, action.toolName, arguments) else null
-            lateKey?.let(RelayGuard::takeLate)?.let { first ->
-                ServerMetrics.event("replayedLateResults")
-                record(action, RecordStatus.OK, "replayed: the first try finished after a timeout; not run again", token, "", tokenId)
-                return replayed(first)
-            }
             if (!dryRun && access.needsApproval(action.risk) && !confirm(action, arguments))
                 throw ActionException("The user did not approve this change on the phone.", "USER_DENIED",
-                    "Ask the user, or use a token with 'Acceso completo'.")
+                    "Ask the user to approve it on the phone.")
             // The request's own authorization travels with its coroutine (see AuthContext).
             val result = withContext(Dispatchers.Main + AuthContext(tokenId, token, access, blocked)) { action.run(arguments) }
             record(action, RecordStatus.OK, arguments.toString(), token, "", tokenId)
-            if (lateKey != null && relay != null &&
-                (RelayGuard.hasTimedOut(relay.id) || System.currentTimeMillis() - relay.receivedAt >= RelayGuard.lateAfterMs)) {
-                RelayGuard.rememberLate(lateKey, result); ServerMetrics.event("lateCompletions")
-            }
             result
         } catch (error: Exception) {
             val failure = ActionException.of(error)
@@ -95,10 +77,6 @@ object StoneAutomation {
         }
     }
 
-    private fun replayed(first: Any): JSONObject = (first as? JSONObject)?.let { JSONObject(it.toString()) }
-        ?.put("replayed", true)?.put("replayNote", "This change had already been made: the first request finished after the " +
-            "link timed out. Stone returns that result instead of doing it again.")
-        ?: JSONObject().put("result", first.toString()).put("replayed", true)
 
     private fun validate(action: StoneAction, arguments: JSONObject) {
         val known = action.params.associateBy { it.name }
@@ -163,8 +141,6 @@ object StoneAutomation {
     fun reportProgress(progress: BatchProgress?) { mutableProgress.value = progress }
 
     private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String, code: String, tokenId: String) {
-        RequestStats.record(tokenId, when (status) { RecordStatus.OK -> RequestStats.OK; RecordStatus.DENIED -> RequestStats.DENIED
-            RecordStatus.FAILED -> RequestStats.FAILED })
         val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(240),
             status, action.risk, token, code, tokenId)
         val history = mutableHistory.updateAndGet { (listOf(entry) + it).take(HISTORY_SIZE) }

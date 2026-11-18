@@ -71,7 +71,7 @@ class ActionException(message: String, val code: String = "ACTION_FAILED", val h
     }
 }
 
-/** Outcome of an agent request, as shown in Ajustes › Modo API › Actividad. */
+/** Outcome of an agent request, as shown in Ajustes › Gateway Hub › Actividad. */
 enum class RecordStatus { OK, FAILED, DENIED }
 
 /** Entry of the in-app activity list. [risk] tells queries from changes. */
