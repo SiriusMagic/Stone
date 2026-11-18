@@ -72,6 +72,11 @@
             <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
         </service>
         <!-- Redirección hub: see automation/HubLink.kt (signature permission + own check + user switch). -->
+        <!-- Gateway Hub local bridge (MCP over Messenger), read-only for now: only apps signed like Stone may bind. -->
+        <service android:name=".automation.HubBridgeService" android:exported="true"
+            android:permission="com.zirakusa.gatewayhub.permission.LINK">
+            <intent-filter><action android:name="com.zirakusa.gatewayhub.action.MCP" /></intent-filter>
+        </service>
         <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
             android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name="androidx.core.content.FileProvider"

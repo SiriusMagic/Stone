@@ -237,6 +237,12 @@ object McpServer {
         if (reply != null) runCatching { McpHttp.event(stream, "message", reply.toString()) }
     }
 
+    /**
+     * The same JSON-RPC handling for a caller that is not on HTTP (the Gateway Hub local bridge, see
+     * [com.zirakusa.stone.nativeapp.automation.HubBridge]). The caller decides the [grant]; HTTP is not involved.
+     */
+    fun handleLocal(text: String, grant: ApiToken): String? = dispatch(text, grant).first?.toString()
+
     /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
     private fun dispatch(text: String, grant: ApiToken): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {

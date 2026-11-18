@@ -1,3 +1,13 @@
+# Stone Kotlin 1.7.16
+
+- **Puente local con Gateway Hub** (fase 1 de la migración a un solo endpoint MCP): la app Gateway Hub del mismo
+  teléfono puede listar las herramientas de Stone y ejecutar su herramienta de prueba (`stone_help`) por IPC de Android,
+  sin pasar por internet. Detalles en `docs/MCP.md` › Puente local.
+  - Solo Gateway Hub firmado por el mismo desarrollador, comprobado por Android en cada mensaje.
+  - **Solo lectura**: las herramientas que cambian algo no aparecen y se rechazan.
+  - Necesita «Redirección hub» y Modo API activados. Apagar «Redirección hub» lo cierra.
+- Nada cambia en el enlace público, el relay ni Cloudflare.
+
 # Stone Kotlin 1.7.15
 
 - **Cloudflare (túnel y hub)** en Ajustes › Modo API: pega o **actualiza tu token de la API de Cloudflare** (por ejemplo,

@@ -195,3 +195,33 @@ pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca
   Las lecturas nunca se repiten de memoria.
 - El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
   de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.
+
+## Puente local con Gateway Hub (fase 1, Stone 1.7.16)
+
+Además del enlace público, Stone ofrece su servidor MCP a la app **Gateway Hub del mismo teléfono** por IPC de
+Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoint MCP por usuario (Gateway Hub).
+
+- **Transporte:** Bound Service `automation/HubBridgeService.kt` con `Messenger`, acción
+  `com.zirakusa.gatewayhub.action.MCP`. Cada mensaje es un objeto JSON-RPC (sin lotes) en el `Bundle`, clave
+  `message`; `arg1` empareja la respuesta.
+- **Identidad (solo de Android, nunca del mensaje):**
+  1. para enlazarse hace falta el permiso `com.zirakusa.gatewayhub.permission.LINK` (`signature`);
+  2. en cada mensaje, `Message.sendingUid` → paquetes de ese uid → debe estar `com.zirakusa.gatewayhub`;
+  3. y firmado con la misma clave que Stone (`checkSignatures`).
+- **Interruptores del usuario:** «Redirección hub» y Modo API activados.
+  - *Dependencia del Modo API (documentada, pospuesta):* técnicamente el puente no necesita el servidor público
+    (`McpServer.handleLocal` no usa HTTP). Se mantiene porque hoy «Modo API apagado» significa «ninguna IA accede».
+    Quitarla exige antes un permiso propio y visible para Gateway Hub; queda para una fase posterior.
+- **Solo lectura en `tools/list` y `tools/call`:** según el `ActionRisk` declarado de cada acción. Una herramienta que
+  no es `READ` se rechaza con `READ_ONLY_BRIDGE` antes de ejecutarse, y además el permiso usado es de solo lectura
+  (token reservado «Gateway Hub» con modo READ; respeta sus herramientas desactivadas, su pausa y su caducidad).
+- **Herramienta de prueba:** solo `stone_help` (lee, sin efectos, funciona sin la pantalla de Stone), marcada en
+  `tools/list` con `_meta["com.zirakusa.gatewayhub/probe"] = true`. Gateway no ejecuta ninguna otra.
+- **Tamaño:** máximo 200 000 caracteres por mensaje (~400 KB en UTF-16, por debajo del búfer de 1 MB de Binder).
+  Una respuesta mayor se devuelve como `RESPONSE_TOO_LARGE`. Hoy `tools/list` de solo lectura ocupa ~9 700 caracteres.
+  Si en el futuro una respuesta lo supera (p. ej. listas grandes de la biblioteca), el transporte alternativo previsto
+  es un `ParcelFileDescriptor` (tubería) o respuestas paginadas; no hace falta en esta fase.
+- **Errores del canal:** cola de 16 peticiones (`BUSY` si se llena), errores JSON-RPC con código en el mensaje
+  (`NOT_GATEWAY`, `NOT_SAME_DEVELOPER`, `REDIRECT_OFF`, `API_OFF`), y si Gateway desaparece la respuesta se descarta.
+- **Reversión:** apagar «Redirección hub» cierra el puente sin reinstalar nada. El enlace público, el relay y Cloudflare
+  no cambian.

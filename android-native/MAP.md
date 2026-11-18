@@ -8,6 +8,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation
 - `ApiMode.kt` (145) User switches for the MCP server (Ajustes › Modo API).
+- `HubBridge.kt` (85) Local bridge for the Gateway Hub app on this phone (phase 1 of the hub migration):
+- `HubBridgeService.kt` (62) Bound Service of the Gateway Hub local bridge ([HubBridge]).
 - `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
 - `HubLink.kt` (85) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
 
@@ -49,7 +51,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (345) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (351) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
