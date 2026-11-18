@@ -2,8 +2,8 @@
 
 - La app **Gateway Hub** encuentra Stone con su escáner (Stone se declara como la app `music_`) y su botón
   «Abrir y vincular» abre directamente Ajustes › Modo API. Ser encontrada no activa nada: decides tú en Stone.
-- Solo se aceptan peticiones de apps firmadas igual que Stone; la app del hub lo comprueba antes de marcarla
-  como «Mismo desarrollador».
+- Seguridad: cualquier app que abra Stone con esa acción solo consigue mostrar Modo API (Stone no lee nada
+  de la petición). La app del hub comprueba la firma de Stone antes de marcarla como «Mismo desarrollador».
 
 # Stone Kotlin 1.7.11
 
