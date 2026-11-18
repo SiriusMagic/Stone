@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Gateway Hub automatic linking: only apps signed with the same key get this permission. -->
+    <permission android:name="com.zirakusa.gatewayhub.permission.LINK" android:protectionLevel="signature"
+        android:label="@string/hub_link_permission" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -21,7 +24,16 @@
         android:fullBackupContent="@xml/full_backup_content">
         <activity android:name=".MainActivity" android:exported="true"
             android:supportsPictureInPicture="true" android:resizeableActivity="true"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
+            <!-- Gateway Hub app: lets its scanner find Stone (module music_) and open Ajustes › Modo API.
+                 Being found turns nothing on; see automation/HubDiscovery.kt. -->
+            <intent-filter>
+                <action android:name="com.zirakusa.gatewayhub.action.APP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="com.zirakusa.gatewayhub.module" android:value="music_" />
+            <meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink" />
+        </activity>
         <!-- Home-screen mascots (Personalizado › Mascota). Exactly one alias is enabled.
              Never rename these: Android remembers enabled/disabled per name, and a removed or
              renamed alias can leave Stone with no launcher entry after an update (1.6.1 bug).
@@ -59,6 +71,9 @@
             android:foregroundServiceType="mediaPlayback">
             <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
         </service>
+        <!-- Redirección hub: see automation/HubLink.kt (signature permission + own check + user switch). -->
+        <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
+            android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider" android:exported="false"
             android:grantUriPermissions="true">

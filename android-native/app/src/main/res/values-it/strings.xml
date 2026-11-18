@@ -617,4 +617,11 @@
     <string name="crash_last_title">Ultima chiusura imprevista</string>
     <string name="crash_last_hint">Copialo o condividilo per correggerlo. È salvato solo su questo telefono.</string>
     <string name="crash_copy">Copia</string>
+    <string name="api_hub_hint">Un solo link perché la tua IA usi Stone e altre app. Copia un link solo per l’hub e apre il pannello per incollarlo. Revoca il token «Gateway Hub» per scollegarlo.</string>
+    <string name="api_hub_link">Collega</string>
+    <string name="api_hub_redirect">Reindirizzamento hub</string>
+    <string name="api_hub_redirect_hint">L’app Gateway Hub di questo telefono collega Stone da sola, senza copiare e incollare. Solo app firmate dallo stesso sviluppatore.</string>
+    <string name="api_hub_safe">Solo con Stone aperto (modalità sicura)</string>
+    <string name="api_hub_safe_hint">MCP funziona solo mentre Stone è sullo schermo; uscendo si interrompe il link pubblico. Gateway Hub lo cambia da Impostazioni › Modalità di funzionamento.</string>
+    <string name="hub_link_permission">collegare Stone a Gateway Hub</string>
 </resources>

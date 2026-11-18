@@ -519,4 +519,11 @@
     <string name="crash_last_title">Last unexpected close</string>
     <string name="crash_last_hint">Copy or share it so it can be fixed. It is only stored on this phone.</string>
     <string name="crash_copy">Copy</string>
+    <string name="api_hub_hint">One link for your AI to use Stone and other apps. Copies a link just for the hub and opens its panel to paste it. Revoke the “Gateway Hub” token to cut it off.</string>
+    <string name="api_hub_link">Link</string>
+    <string name="api_hub_redirect">Hub redirect</string>
+    <string name="api_hub_redirect_hint">The Gateway Hub app on this phone links Stone by itself, no copy and paste. Only apps signed by the same developer.</string>
+    <string name="api_hub_safe">Only while Stone is open (safe mode)</string>
+    <string name="api_hub_safe_hint">MCP works only while Stone is on screen; leaving it cuts the public link. Gateway Hub changes it from Settings › Operating mode.</string>
+    <string name="hub_link_permission">link Stone with Gateway Hub</string>
 </resources>

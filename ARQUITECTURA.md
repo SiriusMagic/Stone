@@ -18,6 +18,7 @@ Stone/
 │   ├── src/index.js                # Reenvía cada petición al teléfono por un WebSocket saliente
 │   └── wrangler.toml               # Sin secretos: el relay no guarda tokens, solo el hash del teléfono
 │
+│                                   # (El hub MCP vive aparte: github.com/SiriusMagic/Gateway-Hub-MCP)
 └── android-native/                 # App Android
     ├── core/                       # 🧠 Lógica pura compartida, sin Android (letras, Song, diseño)
     │
@@ -145,12 +146,37 @@ Claude / ChatGPT
 (**JavaScript**) es solo un cartero cifrado. Aunque alguien atacara el relay, sin el token no
 podría hacer nada en Stone.
 
+## Gateway Hub MCP (repositorio aparte)
+
+Stone y el hub son **dos aplicaciones separadas**. El hub está en
+[SiriusMagic/Gateway-Hub-MCP](https://github.com/SiriusMagic/Gateway-Hub-MCP) y da a una IA **un
+solo enlace** para Stone y otras apps (notas, calculadora, utilidades…).
+
+```text
+Claude / ChatGPT ──https──▶ Gateway Hub ──https──▶ relay ──wss──▶ Stone (teléfono)
+                            (otro repositorio)
+```
+
+| | Stone (este repo) | Gateway Hub |
+|---|---|---|
+| Activar o apagar el acceso | ✅ Interruptor «Activar MCP» en el teléfono | Pausar o revocar agentes |
+| Seguridad final | ✅ Token, modos y confirmación en pantalla para lo crítico | Filtro previo por app y por solo lectura |
+| Enlaces para las IA | Un token reservado, «Gateway Hub» | ✅ Uno por agente (apps, solo lectura, caducidad) |
+| Métricas | Las suyas, locales (Analítica) | ✅ De todas las apps, por agente y herramienta |
+
+**Vincular:** Stone › Ajustes › Modo API › **Gateway Hub › Vincular**. Esto crea (o reutiliza) el
+token «Gateway Hub», copia su enlace y abre el panel del hub para pegarlo. Para cortar el acceso
+del hub, revoca ese token en Stone. La dirección del hub va en `stoneHubUrl` de
+`android-native/gradle.properties`.
+
 ## Secretos
 
 - **Ningún token ni clave está en el código ni en Git.** Los tokens se crean en el teléfono, se
   guardan cifrados con el Android Keystore y se comparan en tiempo constante.
 - **El relay no guarda tokens**, así que no necesita `wrangler secret`: quien comprueba el token es
   el teléfono.
+- **El token «Gateway Hub»** de Stone se pega en el panel `/admin` del hub; nunca pasa por un chat ni
+  por Git.
 - **Archivos ignorados por Git:** `.env`, `local.properties`, `*.keystore` y `*.jks`.
 - **Menor privilegio:** cada agente recibe su propio token, en modo lectura, escritura o total,
   con fecha de caducidad y con las tools que no deba usar desactivadas.

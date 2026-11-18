@@ -617,4 +617,11 @@
     <string name="crash_last_title">Dernière fermeture inattendue</string>
     <string name="crash_last_hint">Copie-le ou partage-le pour qu\'on le corrige. Il reste sur ce téléphone.</string>
     <string name="crash_copy">Copier</string>
+    <string name="api_hub_hint">Un seul lien pour que votre IA utilise Stone et d’autres apps. Copie un lien réservé au hub et ouvre son panneau pour le coller. Révoquez le jeton « Gateway Hub » pour le couper.</string>
+    <string name="api_hub_link">Associer</string>
+    <string name="api_hub_redirect">Redirection hub</string>
+    <string name="api_hub_redirect_hint">L’app Gateway Hub de ce téléphone associe Stone toute seule, sans copier-coller. Uniquement les apps signées par le même développeur.</string>
+    <string name="api_hub_safe">Seulement avec Stone ouvert (mode sûr)</string>
+    <string name="api_hub_safe_hint">MCP ne fonctionne que tant que Stone est à l’écran ; en le quittant, le lien public est coupé. Gateway Hub le change dans Réglages › Mode de fonctionnement.</string>
+    <string name="hub_link_permission">associer Stone à Gateway Hub</string>
 </resources>

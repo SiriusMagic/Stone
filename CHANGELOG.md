@@ -1,3 +1,39 @@
+# Stone Kotlin 1.7.14
+
+- **Modo seguro de Gateway Hub** (Ajustes › Modo API › Gateway Hub › «Solo con Stone abierta»): con el
+  interruptor activado, Stone atiende MCP solo mientras está en pantalla. Al salir de Stone se cortan el
+  servidor y el enlace público (las peticiones pendientes se cancelan) y vuelven solos al abrirla de nuevo.
+  Desactivado, todo funciona como antes, también en segundo plano.
+- La app **Gateway Hub 0.0.5** cambia este interruptor desde su propio ajuste *Modo de funcionamiento*
+  (Modo seguro o MCP en segundo plano). Solo lo acepta de apps firmadas por el mismo desarrollador, y nunca da
+  enlaces ni tokens por ese canal.
+
+# Stone Kotlin 1.7.13
+
+- **Redirección hub** (Ajustes › Modo API › Gateway Hub): con el interruptor activado, la app Gateway Hub de este
+  teléfono vincula Stone sola al escanear, sin copiar ni pegar. Hay tres cerrojos y hacen falta los tres:
+  - un permiso de Android que solo tienen las apps firmadas con la misma clave;
+  - Stone vuelve a comprobar la firma de quien llama;
+  - tu interruptor.
+- Viene apagada. Si la desactivas, Stone deja de responder al hub. Revocar el token «Gateway Hub» corta el acceso.
+
+# Stone Kotlin 1.7.12
+
+- La app **Gateway Hub** encuentra Stone con su escáner (Stone se declara como la app `music_`) y su botón
+  «Abrir y vincular» abre directamente Ajustes › Modo API. Ser encontrada no activa nada: decides tú en Stone.
+- Seguridad: cualquier app que abra Stone con esa acción solo consigue mostrar Modo API (Stone no lee nada
+  de la petición). La app del hub comprueba la firma de Stone antes de marcarla como «Mismo desarrollador».
+
+# Stone Kotlin 1.7.11
+
+- Stone y el hub MCP pasan a ser dos aplicaciones separadas: el hub vive en
+  [SiriusMagic/Gateway-Hub-MCP](https://github.com/SiriusMagic/Gateway-Hub-MCP). Stone conserva el
+  interruptor de la API, su token y las confirmaciones en el teléfono; el hub genera los enlaces de
+  cada IA y lleva las métricas de todas las apps.
+- Nueva tarjeta en Ajustes › Modo API › **Gateway Hub › Vincular**: crea o reutiliza el token
+  «Gateway Hub», copia su enlace y abre el panel del hub para pegarlo, sin pasar por ningún chat.
+  Revocar ese token en Stone corta el hub al instante.
+
 # Stone Kotlin 1.7.10
 
 - Seguridad: Stone ya no envía nada sin cifrar. Se quitó la última excepción (127.0.0.1) y las portadas
