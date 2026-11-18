@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import com.zirakusa.stone.nativeapp.automation.cloudflare.Cloudflare
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 
 /**
@@ -21,6 +22,8 @@ object HubLink {
     /** Gateway Hub tells Stone its mode: arg "safe" (MCP only while Stone is on screen) or "background". */
     const val METHOD_MODE = "mode"
     const val KEY_MODE = "mode"
+    /** The Cloudflare token shared with Gateway Hub: call("cloudflare") reads it; with a token in arg it is kept if newer. */
+    const val METHOD_CLOUDFLARE = "cloudflare"
     const val KEY_LINK = "link"
     const val KEY_ERROR = "error"
     const val KEY_MESSAGE = "message"
@@ -43,20 +46,34 @@ object HubLink {
         else -> { ApiMode.useHubSafeMode(mode == "safe"); Bundle().apply { putString(KEY_MODE, mode) } }
     }
 
+    /** Same locks as the link (signature + "Redirección hub"): it is a secret. */
+    fun answerCloudflare(sameDeveloper: Boolean, token: String?, expiresAt: Long, savedAt: Long): Bundle = when {
+        !sameDeveloper -> error("NOT_SAME_DEVELOPER", "Solo apps firmadas por el mismo desarrollador que Stone.")
+        !ApiMode.hubRedirect -> error("REDIRECT_OFF", "Activa «Redirección hub» en Stone › Ajustes › Modo API › Gateway Hub.")
+        token != null -> Bundle().apply { putBoolean("saved", Cloudflare.receive(token, expiresAt, savedAt)) }
+        else -> Bundle().apply {
+            Cloudflare.token()?.let { putString("token", it); putLong("expiresAt", Cloudflare.expiresAt); putLong("savedAt", Cloudflare.savedAt) }
+        }
+    }
+
     private fun error(code: String, message: String) = Bundle().apply { putString(KEY_ERROR, code); putString(KEY_MESSAGE, message) }
 }
 
-/** content://<applicationId>.hublink, call("link") and call("mode", "safe"|"background"): see [HubLink]. Nothing else is exposed. */
+/** content://<applicationId>.hublink: call("link"), call("mode", …) and call("cloudflare", …), see [HubLink]. Nothing else is exposed. */
 class HubLinkProvider : ContentProvider() {
     override fun onCreate() = true
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
-        if (method != HubLink.METHOD && method != HubLink.METHOD_MODE) return null
+        if (method != HubLink.METHOD && method != HubLink.METHOD_MODE && method != HubLink.METHOD_CLOUDFLARE) return null
         val context = context ?: return null
         val caller = callingPackage
         val same = caller != null && context.packageManager.checkSignatures(context.packageName, caller) == PackageManager.SIGNATURE_MATCH
         if (same && !ApiMode.loaded) ApiMode.load(StoneSettingsStore(context.applicationContext), context.applicationContext)
-        return if (method == HubLink.METHOD_MODE) HubLink.answerMode(same, arg) else HubLink.answer(same)
+        return when (method) {
+            HubLink.METHOD_MODE -> HubLink.answerMode(same, arg)
+            HubLink.METHOD_CLOUDFLARE -> HubLink.answerCloudflare(same, arg, extras?.getLong("expiresAt") ?: 0, extras?.getLong("savedAt") ?: 0)
+            else -> HubLink.answer(same)
+        }
     }
 
     override fun query(uri: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?): Cursor? = null

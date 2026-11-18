@@ -7,9 +7,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (144) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (144) User switches for the MCP server (Ajustes › Modo API).
+- `ApiMode.kt` (145) User switches for the MCP server (Ajustes › Modo API).
 - `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
-- `HubLink.kt` (68) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
+- `HubLink.kt` (85) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -38,6 +38,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiTokens.kt` (104) Access tokens of Ajustes › Modo API › Seguridad.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
+
+## app/automation/cloudflare
+- `Cloudflare.kt` (108) Sends one request to Cloudflare;
 
 ## app/automation/relay
 - `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
@@ -213,11 +216,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (62) General:
+- `ApiCloudflareCard.kt` (99) Cloudflare:
+- `ApiGeneralTab.kt` (63) General:
 - `ApiHubCard.kt` (68) Gateway Hub:
 - `ApiModeSettings.kt` (67) Ajustes › Modo API:
 - `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
-- `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
+- `ApiTokenEditor.kt` (193) Create ([token] null) or configure a token, in this order:
 - `ApiTokenRow.kt` (73) Compact token card:
 
 ## app/feature/settings/feedback

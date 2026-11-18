@@ -1,3 +1,14 @@
+# Stone Kotlin 1.7.15
+
+- **Cloudflare (túnel y hub)** en Ajustes › Modo API: pega o **actualiza tu token de la API de Cloudflare** (por ejemplo,
+  cuando caduque a los 7 días). Muestra cuántos días le quedan y avisa en amarillo a partir de 2 días.
+  - Se guarda cifrado con el Keystore y se comparte con **Gateway Hub 0.0.6**: si lo actualizas en una app, vale para
+    las dos. Solo pasa entre apps del mismo desarrollador y con «Redirección hub» activada.
+  - **Comprobar túnel:** busca el relay (`stone-relay`) en tu cuenta y te dice si es el que usa Stone.
+  - **Crear token en Cloudflare** abre la página de Cloudflare con el permiso necesario ya elegido (Workers Scripts › Editar).
+- **Crear token** pregunta primero **para qué es**: *para un hub* (se llama «Gateway Hub» y su enlace va en Gateway Hub,
+  nunca en un chat) o *para una IA* (Claude, ChatGPT…).
+
 # Stone Kotlin 1.7.14
 
 - **Modo seguro de Gateway Hub** (Ajustes › Modo API › Gateway Hub › «Solo con Stone abierta»): con el

@@ -96,6 +96,7 @@ object ApiMode {
         // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
         for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")
+        com.zirakusa.stone.nativeapp.automation.cloudflare.Cloudflare.load(store)
         ActivityLog.attach(store)
         RequestStats.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }

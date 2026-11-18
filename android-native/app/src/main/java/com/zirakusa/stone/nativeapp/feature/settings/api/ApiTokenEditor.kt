@@ -55,6 +55,8 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
     var blocked by remember(token?.id) { mutableStateOf(token?.disabledTools ?: emptySet()) }
     var open by remember(token?.id) { mutableStateOf<String?>(null) }
     var confirmRevoke by remember { mutableStateOf(false) }
+    // New tokens: first say what it is for (a hub such as Gateway Hub, or an AI such as Claude).
+    var forHub by remember(token?.id) { mutableStateOf<Boolean?>(null) }
     val groups = remember { StoneAutomation.actions.filter { it.toolName != "stone_help" }.groupBy { it.name.substringBefore('.') } }
     val customOk = expiry != -1 || (customDays.toIntOrNull() ?: 0) in 1..3650
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -66,6 +68,11 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
                         IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
                         Text(stringResource(if (token == null) R.string.api_token_create else R.string.api_token_configure),
                             fontSize = 22.sp, fontWeight = FontWeight.Black)
+                    }
+                    if (token == null) TokenPurpose(forHub) { hub ->
+                        forHub = hub
+                        if (hub && name.isBlank()) name = ApiMode.HUB_TOKEN_NAME
+                        if (hub) mode = AccessMode.WRITE
                     }
                     OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true,
                         label = { Text(stringResource(R.string.api_token_name)) })
@@ -108,7 +115,7 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
                     ApiAnalyticsCard(Modifier.padding(top = 6.dp), fixedTokenId = token.id)
                 }
                 item {
-                    Button(enabled = customOk, modifier = Modifier.fillMaxWidth().height(50.dp),
+                    Button(enabled = customOk && (token != null || forHub != null), modifier = Modifier.fillMaxWidth().height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black), onClick = {
                         val days = expiry?.let { if (it == -1) customDays.toInt() else it }
                         if (token == null) {
@@ -172,4 +179,14 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
             }, fontSize = 12.sp) })
         }
     }
+}
+
+/** "¿Para qué es este token?": a hub (its link goes into Gateway Hub, never a chat) or an AI (Claude, ChatGPT…). */
+@Composable private fun TokenPurpose(forHub: Boolean?, choose: (Boolean) -> Unit) {
+    Text(stringResource(R.string.api_token_purpose), Modifier.padding(top = 10.dp), fontWeight = FontWeight.Bold)
+    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(forHub == true, { choose(true) }, { Text(stringResource(R.string.api_token_for_hub)) })
+        FilterChip(forHub == false, { choose(false) }, { Text(stringResource(R.string.api_token_for_ai)) })
+    }
+    forHub?.let { Text(stringResource(if (it) R.string.api_token_for_hub_hint else R.string.api_token_for_ai_hint), color = StonePalette.Muted, fontSize = 12.sp) }
 }

@@ -38,6 +38,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     }
     ApiProgress()
     ApiHubCard(copy)
+    ApiCloudflareCard()
     ApiActionCard(Icons.Default.Key, R.string.api_token_create, R.string.api_create_hint, trailing = {
         Button(onClick = { creating = true }, shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black)) {

@@ -590,4 +590,34 @@
     <string name="api_hub_safe">Solo con Stone abierta (modo seguro)</string>
     <string name="api_hub_safe_hint">MCP funciona solo mientras Stone está en pantalla; al salir se corta el enlace público. Gateway Hub lo cambia desde Ajustes › Modo de funcionamiento.</string>
     <string name="hub_link_permission">vincular Stone con Gateway Hub</string>
+    <string name="api_cf_title">Cloudflare (túnel y hub)</string>
+    <string name="api_cf_hint">Tu token de la API de Cloudflare. Actualízalo antes de que caduque; se comparte con Gateway Hub.</string>
+    <string name="api_cf_none">No hay token de Cloudflare guardado.</string>
+    <string name="api_cf_no_expiry">Token válido, sin fecha de caducidad.</string>
+    <string name="api_cf_expired">El token de Cloudflare caducó: crea uno nuevo y actualízalo.</string>
+    <plurals name="api_cf_expires_in">
+        <item quantity="one">Token válido: caduca en %1$d día (%2$s).</item>
+        <item quantity="other">Token válido: caduca en %1$d días (%2$s).</item>
+        <item quantity="many">Token válido: caduca en %1$d días (%2$s).</item>
+    </plurals>
+    <string name="api_cf_token">Token de la API de Cloudflare</string>
+    <string name="api_cf_update">Actualizar</string>
+    <string name="api_cf_create">Crear token en Cloudflare</string>
+    <string name="api_cf_check_tunnel">Comprobar túnel</string>
+    <string name="api_cf_forget">Olvidar</string>
+    <string name="api_cf_saved">Token de Cloudflare guardado. Gateway Hub lo recibe si tiene «Redirección hub».</string>
+    <string name="api_cf_tunnel_missing">No encuentro el túnel (stone-relay) en tu cuenta de Cloudflare.</string>
+    <string name="api_cf_tunnel_ok">Túnel en tu cuenta y en uso por Stone: %1$s</string>
+    <string name="api_cf_tunnel_other">Tu túnel está en %1$s, pero esta versión de Stone usa otro relay.</string>
+    <string name="api_cf_err_empty">Pega el token de Cloudflare.</string>
+    <string name="api_cf_err_invalid">Cloudflare no acepta ese token.</string>
+    <string name="api_cf_err_inactive">Ese token no está activo (caducado o desactivado).</string>
+    <string name="api_cf_err_forbidden">Al token le falta el permiso Cuenta › Workers Scripts › Editar.</string>
+    <string name="api_cf_err_network">No se pudo conectar con Cloudflare.</string>
+    <string name="api_cf_err_other">Cloudflare respondió con un error.</string>
+    <string name="api_token_purpose">¿Para qué es este token?</string>
+    <string name="api_token_for_hub">Para un hub</string>
+    <string name="api_token_for_ai">Para una IA</string>
+    <string name="api_token_for_hub_hint">Su enlace va en Gateway Hub (Apps › Vincular Stone), nunca en un chat. Con «Redirección hub» no hace falta crearlo a mano.</string>
+    <string name="api_token_for_ai_hint">Pega su enlace en Claude o ChatGPT como conector personalizado. Si usas Gateway Hub, crea mejor el enlace de la IA allí.</string>
 </resources>
