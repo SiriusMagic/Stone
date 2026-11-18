@@ -1,0 +1,14 @@
+{
+  "name": "stone-hub",
+  "private": true,
+  "description": "Stone Hub: one MCP link for several apps (music, notes, calculator, utilities), routed by tool prefix.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8790",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "wrangler": "4.162.0"
+  }
+}

@@ -18,6 +18,19 @@ Stone/
 │   ├── src/index.js                # Reenvía cada petición al teléfono por un WebSocket saliente
 │   └── wrangler.toml               # Sin secretos: el relay no guarda tokens, solo el hash del teléfono
 │
+├── hub/                            # 🧭 Hub MCP: UN enlace para varias apps (Cloudflare Worker, TypeScript)
+│   ├── src/index.ts                # Entrada: solo HTTPS → Durable Object único
+│   ├── src/serve.ts                # Límites, token del hub, tamaño; rutas /mcp y /setup
+│   ├── src/mcp.ts                  # Protocolo MCP (JSON-RPC 2.0)
+│   ├── src/router.ts               # Discriminador: prefijo de la tool → módulo
+│   ├── src/store.ts                # Durable Object: SQLite (notas, configuración) y límites globales
+│   ├── src/modules/                # Una carpeta por app; contrato en types.ts
+│   │   ├── music/                  # music_* → Stone a través del relay
+│   │   ├── notes/ · calculator/ · utils/
+│   │   └── index.ts                # Lista de apps (añadir una = una línea)
+│   ├── MODULES.md                  # Cómo crear un módulo (guía para Codex/Claude)
+│   └── test/
+│
 └── android-native/                 # App Android
     ├── core/                       # 🧠 Lógica pura compartida, sin Android (letras, Song, diseño)
     │
@@ -145,12 +158,39 @@ Claude / ChatGPT
 (**JavaScript**) es solo un cartero cifrado. Aunque alguien atacara el relay, sin el token no
 podría hacer nada en Stone.
 
+## Hub MCP: varias apps con un solo enlace (`hub/`)
+
+La IA se conecta a **un solo enlace**: `https://stone-hub.<cuenta>.workers.dev/mcp`. El hub junta
+las herramientas de todas las apps, y cada una lleva el prefijo de su app (`music_`, `notes_`,
+`calc_`, `utils_`). `router.ts` lee ese prefijo y envía cada llamada a su módulo, sin cadenas de
+`if/else`. Añadir una app consiste en crear `src/modules/<app>/index.ts` y añadir una línea en
+`src/modules/index.ts` (ver [`hub/MODULES.md`](hub/MODULES.md)).
+
+```text
+Claude / ChatGPT ──https──▶ hub (TypeScript, Cloudflare)
+                              │ token del hub · 120/min · 1 MiB · validación de argumentos
+                              ▼
+                          router.ts ── prefijo ──▶ notes_ · calc_ · utils_   (dentro del hub)
+                              └── music_ ──https──▶ relay ──wss──▶ Stone (Kotlin, en el teléfono)
+```
+
+- **El hub no sustituye a Stone:** Stone sigue funcionando sola con su propio enlace. El hub es otra
+  puerta más, con su propio token.
+- **Fallos aislados:** si una app falla o el teléfono está apagado, las demás siguen respondiendo.
+- **Stone se vincula desde el teléfono** en `/setup`. El token de Stone queda guardado en el Durable
+  Object del hub y viaja en la cabecera. Usa un token de Stone **solo para el hub**, así puedes
+  revocarlo sin afectar a nada más.
+- **Sin dependencias en ejecución:** el MCP está implementado directamente, igual que en Stone; no se
+  usa `@modelcontextprotocol/sdk`. `wrangler` solo sirve para publicar.
+
 ## Secretos
 
 - **Ningún token ni clave está en el código ni en Git.** Los tokens se crean en el teléfono, se
   guardan cifrados con el Android Keystore y se comparan en tiempo constante.
 - **El relay no guarda tokens**, así que no necesita `wrangler secret`: quien comprueba el token es
   el teléfono.
+- **El token del hub** es un secreto de Cloudflare (`npx wrangler secret put HUB_TOKEN`), y el token
+  de Stone que usa el hub se guarda desde `/setup`. Ninguno de los dos está en el código ni en Git.
 - **Archivos ignorados por Git:** `.env`, `local.properties`, `*.keystore` y `*.jks`.
 - **Menor privilegio:** cada agente recibe su propio token, en modo lectura, escritura o total,
   con fecha de caducidad y con las tools que no deba usar desactivadas.

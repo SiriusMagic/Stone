@@ -1,0 +1,16 @@
+# Stone Hub. Deploy: npx wrangler deploy · token: npx wrangler secret put HUB_TOKEN
+name = "stone-hub"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Only links of this relay are accepted for the music module (no other host is ever fetched).
+STONE_RELAY_HOST = "stone-relay.sarangoadonis52.workers.dev"
+
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "HubStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HubStore"]
