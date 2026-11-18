@@ -1,8 +1,8 @@
 package com.zirakusa.stone.nativeapp
 
 import android.content.Context
-import com.zirakusa.stone.nativeapp.data.library.SongDispositionStore
-import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
+import com.zirakusa.stone.nativeapp.data.library.user.SongDispositionStore
+import com.zirakusa.stone.nativeapp.data.library.user.LibraryUserStore
 import com.zirakusa.stone.nativeapp.data.persistence.StoneDatabase
 import org.junit.Assert.assertEquals
 import org.junit.Before

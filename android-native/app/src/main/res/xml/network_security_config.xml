@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Stone never sends anything unencrypted: every connection must be HTTPS. The relay client
+     talks to its own MCP server on 127.0.0.1 through a raw socket, which this rule does not affect. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

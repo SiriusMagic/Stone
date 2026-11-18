@@ -2,7 +2,7 @@ package com.zirakusa.stone.nativeapp
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import com.zirakusa.stone.nativeapp.playback.SystemArtworkOverlay
+import com.zirakusa.stone.nativeapp.playback.control.SystemArtworkOverlay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test

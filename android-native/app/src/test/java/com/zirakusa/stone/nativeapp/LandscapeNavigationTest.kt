@@ -10,7 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.zirakusa.stone.core.*
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
-import com.zirakusa.stone.nativeapp.feature.player.rememberPlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.sheets.rememberPlayerSheetsState
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import org.junit.Assert.*
 import org.junit.Rule
@@ -38,7 +38,6 @@ class LandscapeNavigationTest {
                         false, LandscapeLayoutMode.ALWAYS))
             } }
         }
-        compose.onNodeWithContentDescription(label(R.string.search_toggle)).performClick()
         compose.onNodeWithContentDescription(label(R.string.search)).performTextInput("Song")
         compose.onNodeWithTag("library-list").performScrollToIndex(20)
         compose.onNodeWithText("Song 21").assertIsDisplayed()
@@ -61,7 +60,7 @@ class LandscapeNavigationTest {
 
     @Test fun playerSheetsSurviveSavedStateRestoration() {
         val restoration = StateRestorationTester(compose)
-        var sheets: com.zirakusa.stone.nativeapp.feature.player.PlayerSheetsState? = null
+        var sheets: com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsState? = null
         restoration.setContent { sheets = rememberPlayerSheetsState() }
         compose.runOnIdle { sheets!!.queueVisible = true }
         restoration.emulateSavedInstanceStateRestore()

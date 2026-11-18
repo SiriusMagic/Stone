@@ -31,7 +31,7 @@
     <string name="more_options">More options</string><string name="equalizer">Equalizer</string><string name="lyrics">Lyrics</string><string name="lyrics_badge">LYRICS</string>
     <string name="lyrics_add">Add lyrics</string><string name="lyrics_edit">Edit lyrics</string><string name="lyrics_paste">Paste</string><string name="save">Save</string>
     <string name="lyrics_placeholder">Paste lyrics or LRC content…</string><string name="no_lyrics">No lyrics</string>
-    <string name="search_lyrics">Search lyrics</string><string name="lyrics_browser_title">Search lyrics</string><string name="lyrics_browser_copy">Copy</string><string name="lyrics_browser_select_hint">If they are not detected automatically, select the lyrics on the page, then tap Copy.</string><string name="lyrics_copied">Lyrics copied</string><string name="lyrics_select_to_copy">Select the lyric text first.</string><string name="go_to_current_song">Go to current song</string>
+    <string name="search_lyrics">Search lyrics</string><string name="lyrics_browser_title">Search lyrics</string><string name="lyrics_browser_copy">Copy</string><string name="lyrics_select_to_copy">Select the lyric text first.</string><string name="go_to_current_song">Go to current song</string>
     <string name="hold_to_reorder">Press and hold to reorder</string><string name="repeat_one">Repeat one</string>
     <string name="repeat_all">Repeat all</string><string name="tag_editor">Tag editor</string>
     <string name="add_to_playlist">Add to playlist</string><string name="share">Share</string><string name="speed">Speed</string>
@@ -49,6 +49,8 @@
     <string name="cancel">Cancel</string>
     <string name="eq_normal">Normal</string><string name="eq_bass">Bass boost</string><string name="eq_voice">Voice boost</string>
     <string name="eq_treble">Treble boost</string><string name="eq_pop">Pop</string><string name="eq_custom">Custom</string>
+    <string name="eq_by_genre">By genre</string>
+    <string name="eq_by_genre_hint">When the song changes, applies its genre\'s preset (Electronic, Rock, Latin…). No genre: your own setting.</string>
     <string name="eq_hiphop">HipHop</string><string name="eq_rock">Rock</string><string name="favorite_songs">Favorite songs</string>
     <string name="recently_played">Recently played</string><string name="most_played">Most played</string><string name="with_lyrics">With lyrics</string>
     <string name="new_playlist">New playlist</string><string name="playlist_name">Playlist name</string><string name="create">Create</string>
@@ -119,12 +121,7 @@
     <string name="feedback_slow">App is slow</string><string name="feedback_other">Other</string>
     <string name="feedback_details">Details *</string><string name="feedback_details_hint">Describe your feedback, suggestion or problem…</string>
     <string name="feedback_attachments">Screenshots or videos (optional)</string>
-    <string name="music_reminders">Music reminders</string><string name="music_reminders_hint">Receive up to two invitations to listen to music each day.</string>
-    <string name="morning_reminder">Morning</string><string name="morning_reminder_time">Between 8:00 and 9:00</string>
-    <string name="evening_reminder">Evening</string><string name="evening_reminder_time">Between 20:00 and 21:00</string>
-    <string name="reminder_play_choice">What to play when tapped</string>
-    <string name="reminder_not_implemented">Scheduling and playback actions will be added without permanent services.</string>
-    <string name="version_label">Version %1$s</string><string name="rate_stone">Rate Stone</string>
+    <string name="music_reminders">Music reminders</string>    <string name="version_label">Version %1$s</string><string name="rate_stone">Rate Stone</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="terms_service">Terms of service</string><string name="open_source_licenses">Open-source licenses</string>
     <string name="copyright_stone">© 2026 Stone.</string>
@@ -141,9 +138,6 @@
     <string name="gapless">Gapless playback</string><string name="gapless_hint">Joins songs with no silence between them and skips the silence recorded at the start and end of each file.</string>
     <string name="crossfade">Crossfade</string><string name="crossfade_hint">Fades the volume out at the end of each song and back in as the next one starts.</string>
     <string name="notify_new_files">New file notifications</string>
-    <string name="notify_new_files_hint">Notify when new files are found during a scan.</string>
-    <string name="push_notifications">Push notifications</string><string name="push_notifications_hint">Music recommendations are not available yet.</string>
-    <string name="notifications_unavailable">Local notifications for new files are not available yet.</string>
     <string name="settings_home_shortcuts">Home shortcuts</string>
     <string name="home_shortcut_hint">Choose which shortcuts appear in the main toolbar.</string>
     <string name="analyze_audio">Analyze audio</string>
@@ -206,7 +200,6 @@
     <string name="settings_section_about">About</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_library">Library</string>
-    <string name="settings_section_playback">Playback</string>
     <string name="sleep_timer_active">Sleep timer active</string>
     <string name="sort_lyrics">Lyrics</string>
     <string name="start_diagnostics">Start diagnostics</string>
@@ -217,7 +210,6 @@
     <string name="playlist_cover_message">Choose a custom cover or restore the automatic artwork mosaic.</string>
     <string name="choose_cover">Choose cover</string>
     <string name="restore_automatic_cover">Restore automatic</string>
-    <string name="playlist_cover_options">Cover options</string>
     <string name="playing">Playing</string>
     <string name="empty_playlist">Empty playlist</string>
     <string name="video_metadata_description">Description or comment</string>
@@ -251,10 +243,10 @@
     <string name="audio_mode_sleepy">Sleepy</string>
     <string name="audio_mode_sleepy_info" formatted="false">Listen in bed without disturbing anyone: maximum volume is 10% and even the lowest step is soft. Saves battery.</string>
     <plurals name="folder_count"><item quantity="one">%1$d folder</item><item quantity="other">%1$d folders</item></plurals>
-    <string name="shorts">Shorts</string>
-    <string name="movies">Movies</string>
-    <plurals name="shorts_count"><item quantity="one">%1$d short</item><item quantity="other">%1$d shorts</item></plurals>
     <string name="video_rotate">Rotate screen</string>
+    <string name="video_rewind_10">Back 10 s</string>
+    <string name="video_forward_10">Forward 10 s</string>
+    <string name="video_mute">Mute</string>
     <string name="play_mode">Play mode</string>
     <string name="subtitles">Subtitles/CC</string>
     <string name="audio_track">Audio track</string>
@@ -266,7 +258,6 @@
     <string name="video_scale_short_zoom">Fill</string>
     <string name="video_scale_short_fill">Stretch</string>
     <string name="repeat_off">No repeat</string>
-    <string name="settings_output_and_alerts">Output and alerts</string>
     <string name="hold_speed_banner">playback speed</string>
     <string name="selection_add_to">Add to</string>
     <string name="selection_play_next">Play next</string>
@@ -297,7 +288,6 @@
     <string name="color_accent">Same as accent</string>
     <string name="theme_coffee">Coffee</string>
     <string name="theme_golden">Dark gold</string>
-    <string name="custom_title">Custom</string>
     <string name="custom_intro">Change Stone\'s colours, sizes, images and name. Changes apply instantly.</string>
     <string name="custom_accent">Accent colour (lines, highlights, active icons)</string>
     <string name="custom_text_color">Text colour</string>
@@ -314,8 +304,6 @@
     <string name="custom_shortcut_hint">Android doesn\'t let an app change its own drawer icon or name; the shortcut appears on your home screen with the image and name you choose.</string>
     <string name="custom_shortcut_unsupported">Your launcher doesn\'t support pinned shortcuts.</string>
     <string name="custom_reset">Reset customisation</string>
-    <string name="custom_audio_max">Maximum volume: %1$d%%</string>
-    <string name="custom_audio_gain">Gain: %1$d%%</string>
     <string name="audio_mode_custom">Custom</string>
     <string name="audio_mode_custom_info">Your own maximum volume and gain (Settings › Audio levels).</string>
     <string name="audio_levels_title">Audio levels</string>
@@ -329,19 +317,8 @@
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
     <string name="api_title">API mode (AI agents)</string>
-    <string name="api_intro">Let an AI such as Claude or ChatGPT control Stone: play, search, make playlists, change the theme and more. Turn it on, copy your link and paste it into your AI app.</string>
     <string name="api_enable">Turn on MCP</string>
-    <string name="api_enable_hint">Works while Stone is open or playing.</string>
-    <string name="api_lan">Allow local network (Wi-Fi)</string>
-    <string name="api_lan_hint">Off: only from this phone. On: other devices on your Wi-Fi with the token.</string>
-        <string name="api_failed">Could not start: another program is using the port. Try another port.</string>
-    <string name="api_address">Address (tap to copy)</string>
-    <string name="api_token">Access token</string>
-    <string name="api_copy_token">Copy token</string>
-        <string name="api_header_hint">The agent can send the token as the header «Authorization: Bearer TOKEN» or at the end of the link (?token=TOKEN). A new token revokes the previous access.</string>
-    <string name="api_tools">Available tools</string>
-    <string name="api_risk_hint">○ read only · ◐ reversible change · ● modifies files: asks for your confirmation on screen.</string>
-    <string name="api_activity">Recent activity</string>
+    <string name="api_enable_hint">Turns on the MCP server to connect agents (Claude, ChatGPT, Cursor, etc.). Works while Stone is open or playing.</string>
     <string name="api_copied">Copied</string>
     <string name="api_confirm_title">An agent wants to make a change</string>
     <string name="api_confirm_allow">Allow</string>
@@ -373,25 +350,173 @@
     <string name="onboarding_start">Start</string>
     <string name="onboarding_permission_title">To play your music and videos</string>
     <string name="onboarding_permission_hint">Allow Stone to access the music and videos on this phone. The search starts as soon as you allow it, so they are ready when you get in.</string>
-    <string name="api_port">Port</string>
-    <string name="api_port_apply">Apply</string>
-    <string name="api_test">Test connection</string>
-    <string name="api_test_running">Testing…</string>
-    <string name="api_test_ok">Stone answers at %1$s</string>
-    <string name="api_test_other">Another program, not Stone, answers at %1$s. Change Stone\'s port or close that program.</string>
-    <string name="api_test_down">No answer at %1$s (%2$s)</string>
-    <string name="api_clients_hint">Works with MCP clients running on this phone or on a computer on the same Wi-Fi (Claude Code, Claude Desktop, Cursor, VS Code, LM Studio…). Cloud AI apps (ChatGPT, claude.ai, Gemini) cannot reach your local network. Always type http://, not https://.</string>
-    <string name="api_copy_url">Copy link with token</string>
-    <string name="api_copy_sse">Copy SSE link (older apps)</string>
-    <string name="api_copy_json">Copy JSON configuration</string>
-    <string name="api_copy_cli">Copy Claude Code command</string>
-    <string name="api_link_title">Your link</string>
-    <string name="api_copy_link">Copy link</string>
-    <string name="api_change_link">Change link</string>
-    <string name="api_link_howto">Paste it in Claude or ChatGPT under Settings › Connectors › Add custom connector. Changing the link disconnects anyone with the old one.</string>
     <string name="api_relay_online">Connected to the internet</string>
     <string name="api_relay_connecting">Connecting…</string>
     <string name="api_relay_offline">No internet connection</string>
     <string name="api_relay_missing">Only on this phone or your Wi-Fi: this version has no internet link.</string>
-    <string name="api_advanced">Advanced options</string>
+    <string name="api_tab_general">General</string>
+    <string name="api_tab_activity">Activity</string>
+    <string name="api_status_error">Could not start</string>
+    <string name="api_mode_title">Access mode</string>
+    <string name="api_mode_read">Read only</string>
+    <string name="api_mode_read_hint">Looks at your library and what is playing. Changes nothing.</string>
+    <string name="api_mode_write">Read and write</string>
+    <string name="api_mode_write_hint">Controls and edits everything. Only critical actions (like deleting a playlist) ask you.</string>
+    <string name="api_mode_full">Full access</string>
+    <string name="api_mode_full_hint">Does everything without asking. Edits are backed up and can be undone. Only for trusted agents.</string>
+    <string name="api_no_activity">No requests yet.</string>
+    <string name="api_batch_progress">%1$s: %2$d of %3$d</string>
+    <string name="api_cat_player">Playback</string>
+    <string name="api_cat_library">Library</string>
+    <string name="api_cat_playlist">Playlists</string>
+    <string name="api_cat_metadata">Tags and lyrics</string>
+    <string name="api_cat_equalizer">Equalizer</string>
+    <string name="api_cat_audio">Audio levels</string>
+    <string name="api_cat_video">Video</string>
+    <string name="api_cat_appearance">Appearance</string>
+    <string name="api_cat_settings">Settings</string>
+    <string name="api_cat_stone">Help</string>
+    <string name="api_token_create">Create token</string>
+    <string name="api_token_name">Name (e.g. Claude)</string>
+    <string name="api_token_copy_link">Copy link</string>
+    <string name="api_token_revoke">Revoke</string>
+    <string name="api_stats_since">Since Stone was opened.</string>
+    <string name="api_stats_ok">Successful</string>
+    <string name="api_stats_denied">Denied</string>
+    <string name="api_stats_failed">Errors</string>
+    <string name="api_stats_total">Total</string>
+    <string name="api_filter_all">All</string>
+    <string name="api_filter_queries">Queries</string>
+    <string name="api_filter_changes">Changes</string>
+    <string name="api_filter_denied">Denied</string>
+    <string name="api_waiting">Waiting for your approval</string>
+    <string name="lyrics_auto_title">Search automatically</string>
+    <string name="lyrics_auto_searching">Searching lrclib.net…</string>
+    <string name="lyrics_auto_none">This song was not found. Try the web.</string>
+    <string name="lyrics_auto_offline">Could not reach lrclib.net. Try the web.</string>
+    <string name="lyrics_auto_web">Search the web</string>
+    <string name="lyrics_auto_synced">synced</string>
+    <string name="lyrics_auto_plain">plain text</string>
+    <string name="lyrics_auto_match">Match: %1$d%%</string>
+    <string name="lyrics_browser_select_hint">Tap Copy: Stone finds the lyrics and opens them in the editor. If it cannot, select them on the page.</string>
+    <string name="custom_palette">Colour palette</string>
+    <string name="custom_palette_hint">Tap or drag to choose any accent colour.</string>
+    <string name="custom_background_wallpaper">Wallpaper</string>
+    <string name="custom_background_focus">Focus</string>
+    <string name="custom_background_opacity">Opacity: %1$d%%</string>
+    <string name="custom_background_hint">More opacity shows more of the photo but makes text harder to read. Focus keeps the centre clear and darkens the edges.</string>
+    <string name="lyrics_browser_failed">The page did not load. Check the connection or try another source above.</string>
+    <string name="new_files_split">Songs: %1$d · Videos: %2$d</string>
+    <string name="notify_new_files_hint">Notifies you when a scan finds new songs or videos.</string>
+    <plurals name="new_files_title"><item quantity="one">%1$d new file in Stone</item><item quantity="other">%1$d new files in Stone</item></plurals>
+    <string name="play_mode_all">Repeat all</string>
+    <string name="play_mode_one">Repeat one song</string>
+    <string name="play_mode_shuffle">Shuffle all</string>
+    <string name="playlist_no_songs_yet">No songs yet</string>
+    <string name="artwork_shape">Cover shape</string>
+    <string name="artwork_round">Round</string>
+    <string name="artwork_round_spin_hint">Turns while playing</string>
+    <string name="artwork_round_still_hint">Does not turn</string>
+    <string name="artwork_square">Square</string>
+    <string name="artwork_fullscreen">Full screen</string>
+    <string name="artwork_fullscreen_hint">The cover fills the whole player, behind the controls</string>
+    <string name="genres">Genres</string>
+    <string name="genre_unknown">No genre</string>
+    <plurals name="genre_count"><item quantity="one">%1$d genre</item><item quantity="other">%1$d genres</item></plurals>
+    <string name="custom_font_style">Letter style</string>
+    <string name="custom_font_roman">Roman</string>
+    <string name="custom_font_italic">Italic</string>
+    <string name="widgets_title">Widgets</string>
+    <string name="widget_intro">Add a widget to your home screen to control music without opening Stone.</string>
+    <string name="widget_player_name">Music player</string>
+    <string name="widget_add">Add</string>
+    <string name="widget_manual">Your launcher cannot add it from here: long-press the home screen › Widgets › Stone.</string>
+    <string name="widget_idle">Tap to open Stone</string>
+    <string name="widget_description">Control music from the home screen</string>
+    <string name="recommendations_title">Recommended for you</string>
+    <string name="recommendations_empty">Add more music to get recommendations.</string>
+    <string name="lyrics_follow">Follow the song</string>
+    <string name="lyrics_file_saved">Lyrics also saved inside the file: they travel with the song when you share it.</string>
+    <string name="lyrics_file_failed">Lyrics saved in Stone, but not in the file: %1$s</string>
+    <string name="lyrics_file_unsupported">Lyrics saved in Stone. This format can’t hold lyrics inside the file (MP3, FLAC and M4A can).</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_section_video">Video</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="personalization_title">Themes and customization</string>
+    <string name="notify_songs">New songs</string>
+    <string name="notify_videos">New videos</string>
+    <string name="notify_when">When to notify</string>
+    <string name="notify_instant">Right away</string>
+    <string name="notify_scheduled">In a daily summary at a set time</string>
+    <string name="notify_time">Summary time</string>
+    <string name="reminder_time">Reminder time</string>
+    <string name="music_reminders_hint">A daily invitation to listen to music, at the time you choose.</string>
+    <string name="reminder_title">Time for your music</string>
+    <string name="reminder_text">Tap to open Stone and keep listening.</string>
+    <string name="notify_inexact">Android may shift scheduled notices by a few minutes to save battery.</string>
+    <string name="settings_output_and_alerts">Audio output</string>
+    <string name="audio_levels_pick">Pick a mode to tune its sound.</string>
+    <string name="audio_levels_sleepy_hint">Soft sound</string>
+    <string name="audio_levels_balanced_hint">Everyday use</string>
+    <string name="audio_levels_hifi_hint">More intensity</string>
+    <string name="audio_levels_custom_hint">Your way</string>
+    <string name="audio_levels_active">Active</string>
+    <string name="audio_levels_independent">Settings of this mode only</string>
+    <string name="audio_levels_max">Maximum volume</string>
+    <string name="audio_levels_gain">Gain</string>
+    <string name="audio_levels_saved">Changes are saved in this mode.</string>
+    <string name="tags_auto_title">Fill in automatically</string>
+    <string name="tags_auto_searching">Looking the song up…</string>
+    <string name="tags_auto_none">This song was not found.</string>
+    <string name="tags_auto_offline">Could not reach the catalogue. Check the connection.</string>
+    <string name="video_unlock">Unlock</string>
+    <string name="video_lock">Lock screen</string>
+    <string name="video_subtitles">Subtitles</string>
+    <string name="video_size">Size</string>
+    <string name="video_background_play">Background playback</string>
+    <string name="video_floating_window">Floating window</string>
+    <string name="video_night_mode">Night mode</string>
+    <string name="video_brightness">Brightness</string>
+    <string name="video_volume">Volume</string>
+    <string name="video_properties">Properties</string>
+    <string name="video_duration">Duration</string>
+    <string name="video_resolution">Resolution</string>
+    <string name="video_file_size">File size</string>
+    <string name="video_modified">Modified</string>
+    <string name="api_token_expired">Expired</string>
+    <string name="api_token_expires">Expires %1$s</string>
+    <string name="api_token_validity">Valid for</string>
+    <string name="api_token_forever">Never expires</string>
+    <string name="api_token_days">%1$d d</string>
+    <string name="api_token_link_after_save">The link works once saved; saving also copies it.</string>
+    <string name="api_token_link_label">Token (link for the agent)</string>
+    <string name="api_token_configure_short">Configure</string>
+    <string name="api_token_paused">Paused</string>
+    <string name="api_token_resume">Resume</string>
+    <string name="api_token_pause">Pause</string>
+    <string name="api_create_hint">Creates an access token for an agent. You choose its mode, permissions, duration and tools.</string>
+    <string name="api_analytics">Analytics</string>
+    <string name="api_range_hour">Last hour</string>
+    <string name="api_range_day">Last 24 h</string>
+    <string name="api_an_requests">Requests</string>
+    <string name="api_an_per_minute">Per minute</string>
+    <string name="api_an_peak">Peak: %1$d/min</string>
+    <string name="api_an_errors">Errors</string>
+    <string name="api_an_rejected">Wrong or missing token: %1$d</string>
+    <string name="api_an_all">All</string>
+    <string name="api_an_empty">No requests in this period.</string>
+    <string name="api_an_bar">%1$s · Requests: %2$d · Failed: %3$d</string>
+    <string name="api_token_configure">Configure token</string>
+    <string name="api_token_tools_title">Allowed tools</string>
+    <string name="api_token_tools_hint">Only for this token. Stone checks it on every request and the agent no longer sees the tools you turn off.</string>
+    <string name="api_token_revoke_title">Revoke %1$s?</string>
+    <string name="api_token_revoke_text">The agent loses access at once and its link stops working. This cannot be undone.</string>
+    <string name="api_token_active">Active</string>
+    <string name="api_an_chart_desc">Requests chart. Total: %1$d. Peak per minute: %2$d.</string>
+    <string name="api_token_year">1 year</string>
+    <string name="api_token_custom">Custom</string>
+    <string name="api_token_custom_days">Number of days</string>
+    <string name="crash_last_title">Last unexpected close</string>
+    <string name="crash_last_hint">Copy or share it so it can be fixed. It is only stored on this phone.</string>
+    <string name="crash_copy">Copy</string>
 </resources>

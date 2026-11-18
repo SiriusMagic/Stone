@@ -28,7 +28,6 @@ object StonePalette {
     val Hint = Color(0xFF6B6B72)
     val EmptyIcon = Color(0xFF2A2A35)
     val Purple = Color(0xFF3A2674)
-    val PurpleText = Color(0xFFF5EEFF)
     val Cover = Color(0xFF1C1A24)
     val PlayingCover = Color(0xFF244AA8)
     val SongSubtitle = Color(0xFFAEA7B8)
@@ -87,6 +86,19 @@ enum class StoneThemeSpec(val key: String, val background: Color, val surface: C
             surfaceContainerHigh = spec.surface, outline = spec.border, outlineVariant = spec.border,
             onBackground = StonePalette.Text, onSurface = StonePalette.Text,
             onSurfaceVariant = Color(0xFFA0A0A5), error = Color(0xFFFF4C4C),
-        ), content = content)
+        ), typography = stoneTypography(StoneLook.fontStyle == "italic"), content = content)
     }
+}
+
+/** Material type scale; "Cursiva" slants every style (Text inherits it unless it sets its own). */
+private fun stoneTypography(italic: Boolean): androidx.compose.material3.Typography {
+    val base = androidx.compose.material3.Typography()
+    if (!italic) return base
+    fun androidx.compose.ui.text.TextStyle.slanted() = copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+    return base.copy(displayLarge = base.displayLarge.slanted(), displayMedium = base.displayMedium.slanted(),
+        displaySmall = base.displaySmall.slanted(), headlineLarge = base.headlineLarge.slanted(),
+        headlineMedium = base.headlineMedium.slanted(), headlineSmall = base.headlineSmall.slanted(),
+        titleLarge = base.titleLarge.slanted(), titleMedium = base.titleMedium.slanted(), titleSmall = base.titleSmall.slanted(),
+        bodyLarge = base.bodyLarge.slanted(), bodyMedium = base.bodyMedium.slanted(), bodySmall = base.bodySmall.slanted(),
+        labelLarge = base.labelLarge.slanted(), labelMedium = base.labelMedium.slanted(), labelSmall = base.labelSmall.slanted())
 }

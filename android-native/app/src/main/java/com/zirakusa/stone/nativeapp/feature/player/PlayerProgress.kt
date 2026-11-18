@@ -14,8 +14,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 

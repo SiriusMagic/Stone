@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 @Composable fun StoneArtwork(uri: String?, modified: Long, modifier: Modifier = Modifier) {

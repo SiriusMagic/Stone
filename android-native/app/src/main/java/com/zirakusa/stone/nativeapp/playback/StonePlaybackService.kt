@@ -24,6 +24,14 @@ import com.zirakusa.stone.nativeapp.MainActivity
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.zirakusa.stone.nativeapp.playback.audio.PlaybackVolumeBoost
+import com.zirakusa.stone.nativeapp.playback.audio.streamMusicRange
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.HardwareAcceleration
+import com.zirakusa.stone.nativeapp.playback.control.StoneEcoEngine
+import com.zirakusa.stone.nativeapp.playback.control.TrackTransitions
+import com.zirakusa.stone.nativeapp.playback.diagnostics.AudioDiagnosticSnapshot
+import com.zirakusa.stone.nativeapp.playback.diagnostics.AudioDiagnostics
 
 /** Sole owner of playback; the UI only connects with a MediaController. */
 class StonePlaybackService : MediaSessionService() {
@@ -40,6 +48,9 @@ class StonePlaybackService : MediaSessionService() {
         /** Software gain of the current mode (Dormilón attenuates; others are 1). */
         @Volatile private var modeGain: Float = 1f
         val currentModeGain: Float get() = modeGain
+        /** Mode in use, so the volume overlay shows the moon only for Dormilón. */
+        @Volatile var currentMode: AudioMode = AudioMode.BALANCED
+            private set
         @Volatile private var lastAppliedNativeLevel: Int = -1
         @Volatile private var revision: Long = 0
         @Volatile private var diagnosticBoostDisabled = false
@@ -48,9 +59,6 @@ class StonePlaybackService : MediaSessionService() {
         private val mutableAudioDiagnosticUi = MutableStateFlow(AudioDiagnosticUiState())
         val volumeUi = mutableVolumeUi.asStateFlow()
         val audioDiagnosticUi = mutableAudioDiagnosticUi.asStateFlow()
-
-        val currentVolumePercent: Int get() = volumePercent
-        val currentLastAppliedNativeLevel: Int get() = lastAppliedNativeLevel
 
         private fun effectSessionId(): Int =
             reportedAudioSessionId.takeIf { it > 0 } ?: playbackAudioSessionId
@@ -159,6 +167,27 @@ class StonePlaybackService : MediaSessionService() {
             }
         }
 
+        /**
+         * Physical volume key while Stone is in the foreground: one Android level per press up
+         * to 100 %, then 10 % of Stone amplification per press. Shows Stone's own overlay, so
+         * the Activity consumes the key and Android's panel never appears. Returns false when
+         * the service is not alive, letting Android handle the key as usual.
+         */
+        fun handleVolumeKey(up: Boolean): Boolean {
+            val service = instance ?: return false
+            val audioManager = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val range = audioManager.streamMusicRange()
+            val level = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val current = volumePercent
+            val target = when {
+                up && level >= range.maxLevel -> current.coerceAtLeast(100) + 10
+                !up && current > 100 -> (current - 10).coerceAtLeast(100)
+                else -> range.levelToPercent(level + if (up) 1 else -1)
+            }
+            setVolumePercent(target)
+            return true
+        }
+
         /** Reconciles Stone with Android after the user changed media volume outside Stone. */
         fun syncWithAndroidVolume(reason: String = "external") {
             val service = instance ?: return
@@ -232,7 +261,8 @@ class StonePlaybackService : MediaSessionService() {
             instance?.ecoEngine?.let { engine -> activePlayer?.let { engine.setGaplessRequired(gapless, it) } }
         }
 
-        fun hasActivePlayback(): Boolean = activePlayer?.mediaItemCount?.let { it > 0 } == true
+        /** The service's player, for the home-screen widget (null when the service is not running). */
+        fun currentPlayer(): Player? = activePlayer
 
         fun hideVolumeOverlay(forRevision: Long) {
             if (mutableVolumeUi.value.revision == forRevision)
@@ -285,6 +315,7 @@ class StonePlaybackService : MediaSessionService() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        com.zirakusa.stone.nativeapp.data.persistence.CrashLog.install(this)
         instance = this
         reportedAudioSessionId = 0
         AudioDiagnostics.reset()
@@ -357,6 +388,7 @@ class StonePlaybackService : MediaSessionService() {
         player.setHandleAudioBecomingNoisy(true)
         player.setWakeMode(C.WAKE_MODE_LOCAL)
         activePlayer = player
+        player.addListener(StoneWidgetProvider.listener(applicationContext))
         AudioDiagnostics.log(this, "service.player-created", before,
             diagnosticState(player), includeSystemEffects = true)
         // Android is the source of truth at service start. Never restore a saved Stone volume.
@@ -408,6 +440,7 @@ class StonePlaybackService : MediaSessionService() {
         session?.run { player.release(); release() }
         session = null
         activePlayer = null
+        StoneWidgetProvider.refresh(applicationContext)
         volumeBoost?.release()
         volumeBoost = null
         ecoEngine = null
@@ -422,6 +455,7 @@ class StonePlaybackService : MediaSessionService() {
     fun applyAudioMode(mode: AudioMode) {
         val before = AudioDiagnostics.capture(this, diagnosticState(), includeSystemEffects = false)
         modeGain = mode.gain
+        currentMode = mode
         applyPlayerVolume()
         setMaxVolumePercent(mode.maxVolumePercent)
         session?.player?.let { ecoEngine?.apply(mode, it) }

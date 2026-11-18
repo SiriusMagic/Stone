@@ -2,45 +2,26 @@
 
 package com.zirakusa.stone.nativeapp.feature.player
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.util.Rational
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.produceState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.get
@@ -48,42 +29,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
-import androidx.media3.common.Player
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.core.LyricsDocument
-import com.zirakusa.stone.core.LyricsParser
-import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
-import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
-import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import com.zirakusa.stone.nativeapp.data.library.SongActions
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.components.SleepTimerIndicator
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
-import kotlin.math.roundToInt
+import com.zirakusa.stone.nativeapp.feature.player.lyrics.CurrentLyricChip
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerOptionExtra
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsHost
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerTool
+import com.zirakusa.stone.nativeapp.feature.player.sheets.rememberPlayerSheetsState
+import com.zirakusa.stone.nativeapp.feature.player.video.FullscreenVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.PictureInPictureVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.PortraitVideoPlayer
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlSettings
+import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
+import com.zirakusa.stone.nativeapp.feature.player.video.coverBackgroundColor
+import com.zirakusa.stone.nativeapp.feature.player.video.rememberPlaybackControls
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PlayerScreen(state: PlaybackState, song: Song?, playback: PlaybackViewModel,
     back: () -> Unit, onDelete: (Song) -> Unit,
     onMetadataChanged: () -> Unit, playlists: List<StonePlaylist>,
     onCreatePlaylist: (String) -> Unit, onAddToPlaylist: (String, Song) -> Unit,
-    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, isPictureInPicture: Boolean = false,
+    modifier: Modifier = Modifier, onArtist: () -> Unit = {}, onRecommendations: () -> Unit = {},
+    isPictureInPicture: Boolean = false,
     onAudioOnly: (Song) -> Unit = {},
     sheets: PlayerSheetsState = rememberPlayerSheetsState(),
     videoScale: VideoScale = VideoScale.AUTO,
@@ -91,6 +74,10 @@ import kotlin.math.roundToInt
     videoControls: VideoControlSettings = VideoControlSettings.defaults()) {
     BackHandler(onBack = back)
     val context = LocalContext.current
+    // Girar / pantalla completa lock the orientation; closing the player gives rotation back to the sensor.
+    DisposableEffect(Unit) {
+        onDispose { context.findActivity()?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
+    }
     val dynamicBackground by produceState(
         Color(0xFF0D0C11), song?.id, song?.artworkSource, song?.modifiedMs, song?.isVideo
     ) {
@@ -113,7 +100,8 @@ import kotlin.math.roundToInt
     val progress = rememberPlayerProgress(state, playback)
     val audioControls = rememberPlaybackControls(song?.id.orEmpty())
     val audioSwipeModifier = if (song?.isVideo != true) Modifier.pointerInput(song?.id) {
-        detectTrackSwipe(playback::previous, playback::next)
+        detectTrackSwipe(playback::previous, playback::next, onUpFromBottom = { sheets.lyricsVisible = true },
+            onUpFromMiddle = onRecommendations)
     } else Modifier
     BoxWithConstraints(modifier.fillMaxSize().background(animatedBackground).then(audioSwipeModifier)) {
     // Decide by the window, not this box: while the player animates closed the box becomes
@@ -126,7 +114,7 @@ import kotlin.math.roundToInt
             onVideoScaleChange = onVideoScaleChange,
             videoControls = videoControls,
             onOptions = { sheets.optionsSong = null; sheets.optionsSidePanel = false; sheets.optionsVisible = true }, onQueue = { sheets.queueVisible = true },
-            onSpeed = { sheets.tool = PlayerTool.Speed },
+            onSpeed = { sheets.tool = PlayerTool.Speed }, onTool = { sheets.tool = it },
         )
     } else if (landscape) {
         LandscapeVinylPlayer(state, song, progress, playback, back,
@@ -140,7 +128,10 @@ import kotlin.math.roundToInt
         }, videoScale = videoScale,
         onVideoScaleChange = onVideoScaleChange, videoControls = videoControls,
         onSpeed = { sheets.tool = PlayerTool.Speed })
-    else Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
+    else {
+    val artworkShape = StoneLook.artworkShape
+    if (song != null && artworkShape == "fullscreen") FullscreenArtwork(song, animatedBackground)
+    Column(Modifier.fillMaxSize().padding(horizontal = 28.dp).padding(bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().height(70.dp)
             .windowInsetsPadding(WindowInsets.displayCutout)) {
@@ -165,8 +156,10 @@ import kotlin.math.roundToInt
             }, update = { it.player = playback.player(); it.resizeMode = videoScale.resolve(0, 0, false).resizeMode }, modifier = Modifier.fillMaxSize()
                 .clip(RoundedCornerShape(20.dp)))
         }
-        else if (song != null) StoneArtwork(song.artworkSource, song.modifiedMs,
-            Modifier.weight(1f).aspectRatio(1f).fillMaxWidth().clip(RoundedCornerShape(28.dp))
+        else if (song != null && artworkShape == "fullscreen") Box(Modifier.weight(1f).fillMaxWidth()
+            .pointerInput(song.id) { detectTapGestures { audioControls.show() } })
+        else if (song != null) PlayerArtwork(song, artworkShape, state.playing,
+            Modifier.weight(1f).aspectRatio(1f).fillMaxWidth()
                 .pointerInput(song.id) { detectTapGestures { audioControls.show() } })
         else Box(Modifier.weight(1f).aspectRatio(1f).fillMaxWidth()
             .pointerInput(Unit) { detectTapGestures { audioControls.show() } })
@@ -210,11 +203,14 @@ import kotlin.math.roundToInt
                             if (state.equalizerEnabled) Text("ON", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         }
                     }
-                    CurrentLyricChip(song, progress.first, { sheets.lyricsVisible = true }, Modifier.weight(1f))
+                    // Reloads after the lyrics sheet closes, in case lyrics were edited there.
+                    CurrentLyricChip(song, playback, { sheets.lyricsVisible = true }, Modifier.weight(1f),
+                        refreshKey = sheets.lyricsVisible)
                     IconButton(onClick = { sheets.queueVisible = true }) { Icon(Icons.Default.Menu, stringResource(R.string.queue)) }
                 }
             }
         }
+    }
     }
     }
     val playerOptionExtras = if (song?.isVideo == true) listOf(
@@ -229,413 +225,14 @@ import kotlin.math.roundToInt
         extraActions = playerOptionExtras, videoScale = videoScale, onVideoScaleChange = onVideoScaleChange)
 }
 
-@Composable private fun PictureInPictureVideoPlayer(playback: PlaybackViewModel, scale: VideoScale) {
-    val resolvedScale = rememberResolvedVideoScale(playback.player(), scale, false, "pip")
-    AndroidView(factory = { context ->
-        PlayerView(context).apply {
-            useController = false
-            resizeMode = resolvedScale.resizeMode
-            player = playback.player()
-        }
-    }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
-        modifier = Modifier.fillMaxSize())
-}
 
-internal fun enterVideoPictureInPicture(context: Context, player: Player?) {
-    val activity = context.findActivity() ?: return
-    val videoSize = player?.videoSize
-    val fallback = if (activity.resources.configuration.orientation ==
-        android.content.res.Configuration.ORIENTATION_LANDSCAPE) Rational(16, 9) else Rational(9, 16)
-    val width = videoSize?.width ?: 0
-    val height = videoSize?.height ?: 0
-    val pixelRatio = videoSize?.pixelWidthHeightRatio?.takeIf { it > 0f } ?: 1f
-    val aspect = if (width > 0 && height > 0) {
-        val adjustedWidth = (width * pixelRatio).roundToInt().coerceAtLeast(1)
-        val ratio = adjustedWidth.toFloat() / height
-        when {
-            ratio > 2.39f -> Rational(239, 100)
-            ratio < 1f / 2.39f -> Rational(100, 239)
-            else -> Rational(adjustedWidth, height)
-        }
-    } else fallback
-    runCatching {
-        activity.enterPictureInPictureMode(
-            android.app.PictureInPictureParams.Builder().setAspectRatio(aspect).build()
-        )
-    }
-}
-
-private fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
-
-@Composable private fun FullscreenVideoPlayer(song: Song, state: PlaybackState,
-    progress: Pair<Long, Long>, playback: PlaybackViewModel, close: () -> Unit,
-    onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
-    onVideoScaleChange: (VideoScale) -> Unit, videoControls: VideoControlSettings,
-    onOptions: (() -> Unit)? = null,
-    onQueue: (() -> Unit)? = null, onSpeed: () -> Unit = {}) {
-    val controls = rememberPlaybackControls(song.id)
-    val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, true, song.id)
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { context ->
-            PlayerView(context).apply {
-                useController = false
-                resizeMode = resolvedScale.resizeMode
-                player = playback.player()
-            }
-        }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
-            modifier = Modifier.fillMaxSize())
-        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-            onDoubleTap = { leftSide ->
-                seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
-            }, onPrevious = playback::previous, onNext = playback::next,
-        )
-        if (controls.visible) {
-            VideoTopBar(song, state, close, onSpeed = onSpeed, onOptions = onOptions,
-                modifier = Modifier.align(Alignment.TopCenter))
-            VideoBottomControls(song, state, progress, playback, landscape = true, controls = videoControls,
-                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
-                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0xCC000000)))))
-        }
-    }
-}
-
-@Composable private fun PortraitVideoPlayer(song: Song, state: PlaybackState,
-    progress: Pair<Long, Long>, playback: PlaybackViewModel, back: () -> Unit,
-    onOptions: () -> Unit, onQueue: () -> Unit,
-    onAudioOnly: (Song) -> Unit, videoScale: VideoScale,
-    onVideoScaleChange: (VideoScale) -> Unit,
-    videoControls: VideoControlSettings, onSpeed: () -> Unit = {}) {
-    val controls = rememberPlaybackControls(song.id)
-    val resolvedScale = rememberResolvedVideoScale(playback.player(), videoScale, false, song.id)
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { context ->
-            PlayerView(context).apply {
-                useController = false
-                resizeMode = resolvedScale.resizeMode
-                player = playback.player()
-            }
-        }, update = { it.player = playback.player(); it.resizeMode = resolvedScale.resizeMode },
-            modifier = Modifier.fillMaxSize())
-        VideoGestureOverlay(state, playback, Modifier.matchParentSize(), controls.toggle,
-            onDoubleTap = { leftSide ->
-                seekVideoBy(playback, progress, if (leftSide) -10_000L else 10_000L)
-            }, onPrevious = playback::previous, onNext = playback::next,
-        )
-        if (controls.visible) {
-            VideoTopBar(song, state, back, onSpeed = onSpeed, onOptions = onOptions,
-                modifier = Modifier.align(Alignment.TopCenter))
-            VideoBottomControls(song, state, progress, playback, landscape = false, controls = videoControls,
-                onAudioOnly = { onAudioOnly(song) }, onQueue = onQueue,
-                onScaleToggle = { onVideoScaleChange(videoScale.next()) },
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                        listOf(Color.Transparent, Color(0xCC000000)))))
-        }
-    }
-}
-
-private data class VideoControlsState(val visible: Boolean, val toggle: () -> Unit,
-    val show: () -> Unit)
-
-/** Controls stay visible; only a tap on the video toggles them (no automatic hiding). */
-@Composable private fun rememberPlaybackControls(songId: String): VideoControlsState {
-    var visible by remember(songId) { mutableStateOf(true) }
-    return VideoControlsState(visible, { visible = !visible }, { visible = true })
-}
-
-internal fun seekVideoBy(playback: PlaybackViewModel, progress: Pair<Long, Long>, deltaMs: Long) {
-    if (progress.second > 0) playback.seek((progress.first + deltaMs).coerceIn(0L, progress.second))
-}
-
-@Composable internal fun VideoTimeline(song: Song, progress: Pair<Long, Long>, playback: PlaybackViewModel) {
-    var framesVisible by remember(song.id, progress.second) { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth()) {
-        if (framesVisible) {
-            VideoFrameStrip(song, progress, playback, Modifier.fillMaxWidth().padding(bottom = 4.dp))
-        }
-        PlayerProgress(progress, playback, onVerticalDrag = { dragAmount ->
-            when {
-                dragAmount < -8f -> framesVisible = true
-                dragAmount > 8f -> framesVisible = false
-            }
-        })
-    }
-}
-
-internal fun coverBackgroundColor(bitmap: android.graphics.Bitmap): Color {
-    var red = 0L; var green = 0L; var blue = 0L; var count = 0L
-    val stepX = (bitmap.width / 24).coerceAtLeast(1)
-    val stepY = (bitmap.height / 24).coerceAtLeast(1)
-    for (y in 0 until bitmap.height step stepY) for (x in 0 until bitmap.width step stepX) {
-        val pixel = bitmap[x, y]
-        red += android.graphics.Color.red(pixel); green += android.graphics.Color.green(pixel)
-        blue += android.graphics.Color.blue(pixel); count++
-    }
-    val darken = .52f
-    return Color((red / count / 255f * darken).toFloat().coerceIn(.035f, .25f),
-        (green / count / 255f * darken).toFloat().coerceIn(.035f, .25f),
-        (blue / count / 255f * darken).toFloat().coerceIn(.035f, .25f))
-}
-
+/** Horizontal swipe changes tracks; a deliberate swipe up opens the lyrics ([onUp]). */
 /**
- * A bounded, YouTube-like preview strip. Frames are loaded lazily and only while the video
- * controls are visible; dragging the strip seeks the same player instead of creating a second
- * player or decoder.
+ * Horizontal swipe changes tracks. A swipe up depends on where it starts: from the bottom area
+ * (the Letras bar) it opens the lyrics, from the middle it opens the recommendations.
  */
-@Composable private fun VideoFrameStrip(song: Song, progress: Pair<Long, Long>,
-    playback: PlaybackViewModel, modifier: Modifier) {
-    val durationMs = progress.second
-    if (durationMs <= 0L) return
-    val context = LocalContext.current
-    val framePositions = remember(song.id, song.modifiedMs, durationMs) {
-        List(8) { index -> durationMs * index / 7L }
-    }
-    var frames by remember(song.id, song.modifiedMs, durationMs) {
-        mutableStateOf(List(framePositions.size) { ArtworkLoader.VideoFrame(null, 0, 0) })
-    }
-    LaunchedEffect(song.id, song.modifiedMs, durationMs) {
-        // Decode the bounded thumbnails sequentially, but publish one state update after
-        // the strip is complete. This avoids eight Compose recompositions while a preview
-        // is loading and keeps the existing two-decoder memory limit in ArtworkLoader.
-        val loaded = framePositions.map { positionMs ->
-            ArtworkLoader.loadVideoFrameAt(
-                context.applicationContext, song.uri, song.modifiedMs, positionMs, maxDimension = 180
-            )
-        }
-        frames = loaded
-    }
-    val currentFraction = (progress.first.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-    Box(
-        modifier.height(54.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, StonePalette.Yellow.copy(alpha = .65f), RoundedCornerShape(8.dp))
-            .pointerInput(song.id, durationMs) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    var moved = false
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull() ?: break
-                        if (!change.pressed) break
-                        val horizontal = change.position.x - down.position.x
-                        if (!moved && abs(horizontal) > viewConfiguration.touchSlop) moved = true
-                        if (moved) {
-                            val fraction = (change.position.x / size.width.toFloat().coerceAtLeast(1f))
-                                .coerceIn(0f, 1f)
-                            // The thumbnail strip is deliberately a light-weight seek affordance;
-                            // the actual seek is still performed by the shared PlaybackViewModel.
-                            // The gesture is consumed only after it becomes a drag.
-                            change.consume()
-                            playback.seek((durationMs * fraction).toLong().coerceIn(0L, durationMs))
-                        }
-                    }
-                }
-            }
-    ) {
-        Row(Modifier.fillMaxSize()) {
-            frames.forEachIndexed { index, frame ->
-                Box(Modifier.weight(1f).fillMaxHeight()) {
-                    frame.bitmap?.let { bitmap ->
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } ?: Box(Modifier.fillMaxSize().background(Color(0x4417171B)))
-                    val start = index.toFloat() / framePositions.size
-                    val end = (index + 1).toFloat() / framePositions.size
-                    if (currentFraction in start..end ||
-                        (index == framePositions.lastIndex && currentFraction == 1f)) {
-                        Box(Modifier.fillMaxHeight().width(2.dp)
-                            .background(StonePalette.Yellow).align(Alignment.CenterStart))
-                    }
-                    Box(Modifier.fillMaxHeight().width(.5.dp)
-                        .background(Color(0x553A353D)).align(Alignment.CenterEnd))
-                }
-            }
-        }
-    }
-}
-
-private enum class VideoAdjustmentSide { Brightness, Volume }
-private data class VideoAdjustment(val side: VideoAdjustmentSide, val value: Float,
-    val maxPercent: Int)
-
-/** Handles vertical brightness/volume adjustments and horizontal track changes. */
-@Composable private fun VideoGestureOverlay(state: PlaybackState, playback: PlaybackViewModel,
-    modifier: Modifier, onTap: () -> Unit, onDoubleTap: (leftSide: Boolean) -> Unit = {},
-    onPrevious: () -> Unit, onNext: () -> Unit) {
-    val context = LocalContext.current
-    var brightness by remember { mutableFloatStateOf(currentWindowBrightness(context)) }
-    val maxVolumePercent = state.audioMode.maxVolumePercent
-    var volume by remember { mutableFloatStateOf(
-        state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
-    ) }
-    var adjustment by remember { mutableStateOf<VideoAdjustment?>(null) }
-    // While a swipe is active the gesture owns its fractional value. Syncing from the
-    // service mid-swipe snapped every small step back to the previous Android level
-    // (STREAM_MUSIC has ~15 steps), so slow swipes never changed the volume.
-    LaunchedEffect(state.volumePercent, maxVolumePercent, adjustment == null) {
-        if (adjustment == null) volume = state.volumePercent.toFloat().coerceIn(0f, maxVolumePercent.toFloat())
-    }
-
-    LaunchedEffect(adjustment) {
-        if (adjustment != null) {
-            delay(850)
-            adjustment = null
-        }
-    }
-    var fastHold by remember { mutableStateOf(false) }
-    var speedBeforeHold by remember { mutableFloatStateOf(1f) }
-    val currentHold = rememberUpdatedState { start: Boolean ->
-        if (start) { speedBeforeHold = state.speed; playback.setSpeed(2f) } else playback.setSpeed(speedBeforeHold)
-        fastHold = start
-    }
-    val currentTap = rememberUpdatedState(onTap)
-    val currentDoubleTap = rememberUpdatedState(onDoubleTap)
-    val currentAdjustment = rememberUpdatedState(newValue = { leftSide: Boolean, delta: Float ->
-        if (leftSide) {
-            brightness = (brightness + delta).coerceIn(.02f, 1f)
-            setWindowBrightness(context, brightness)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Brightness, brightness, 100)
-        } else {
-            volume = (volume + delta * maxVolumePercent).coerceIn(0f, maxVolumePercent.toFloat())
-            StonePlaybackService.setVolumePercent(volume.roundToInt(), showOverlay = false)
-            adjustment = VideoAdjustment(VideoAdjustmentSide.Volume,
-                volume / maxVolumePercent.toFloat(), maxVolumePercent)
-        }
-    })
-    Box(modifier.pointerInput(Unit) {
-        detectVideoGestures(
-            onTap = { currentTap.value() },
-            onDoubleTap = { currentDoubleTap.value(it) },
-            onVerticalChange = { leftSide, delta -> currentAdjustment.value(leftSide, delta) },
-            onHorizontalSwipe = { deltaX ->
-                if (deltaX < 0f) onNext() else onPrevious()
-            },
-            onHold = { start -> currentHold.value(start) }
-        )
-    }) {
-        adjustment?.let { VideoAdjustmentIndicator(it, Modifier.fillMaxSize()) }
-        if (fastHold) Row(Modifier.align(Alignment.TopCenter).padding(top = 90.dp)
-            .background(Color(0xB3000000), RoundedCornerShape(10.dp)).padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.FastForward, null, tint = Color.White, modifier = Modifier.size(20.dp))
-            Text(" 2.0X ", color = Color(0xFF4CD2A8), fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.hold_speed_banner), color = Color.White)
-        }
-    }
-}
-
-@Composable private fun VideoAdjustmentIndicator(adjustment: VideoAdjustment, modifier: Modifier) {
-    val left = adjustment.side == VideoAdjustmentSide.Brightness
-    Box(
-        modifier = modifier.padding(horizontal = 18.dp),
-        contentAlignment = if (left) Alignment.CenterStart else Alignment.CenterEnd
-    ) {
-        Column(
-            modifier = Modifier.width(52.dp).height(176.dp)
-                .background(Color(0xCC17151B), RoundedCornerShape(26.dp))
-                .border(1.dp, StonePalette.Yellow.copy(alpha = .55f), RoundedCornerShape(26.dp))
-                .padding(vertical = 14.dp, horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                if (left) Icons.Default.WbSunny else Icons.Default.VolumeUp,
-                contentDescription = if (left) "Brillo" else "Volumen",
-                tint = StonePalette.Yellow,
-                modifier = Modifier.size(20.dp)
-            )
-            Box(Modifier.weight(1f).width(7.dp).clip(RoundedCornerShape(4.dp))
-                .background(Color(0x663A353D))) {
-                Box(Modifier.fillMaxWidth().fillMaxHeight(adjustment.value.coerceIn(0f, 1f))
-                    .align(Alignment.BottomCenter).background(StonePalette.Yellow))
-            }
-            val percentage = adjustment.value * adjustment.maxPercent
-            Text("${percentage.roundToInt()}%", color = Color.White,
-                fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-private suspend fun PointerInputScope.detectVideoGestures(onTap: () -> Unit,
-    onDoubleTap: (leftSide: Boolean) -> Unit,
-    onVerticalChange: (leftSide: Boolean, delta: Float) -> Unit,
-    onHorizontalSwipe: (Float) -> Unit, onHold: (Boolean) -> Unit = {}) {
-    awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = false)
-        var totalX = 0f
-        var totalY = 0f
-        var moved = false
-        var horizontalTriggered = false
-        var holding = false
-        while (true) {
-            // Holding still past the long-press timeout plays at 2x until the finger lifts.
-            val waitMs = viewConfiguration.longPressTimeoutMillis -
-                (android.os.SystemClock.uptimeMillis() - down.uptimeMillis)
-            val event = if (!moved && !holding) withTimeoutOrNull(waitMs.coerceAtLeast(1)) { awaitPointerEvent() }
-                else awaitPointerEvent()
-            if (event == null) { holding = true; onHold(true); continue }
-            val change = event.changes.firstOrNull() ?: break
-            if (!change.pressed) break
-            val delta = change.positionChange()
-            totalX += delta.x
-            totalY += delta.y
-            if (holding) { change.consume(); continue }
-            if (!moved && maxOf(abs(totalX), abs(totalY)) > viewConfiguration.touchSlop) moved = true
-            if (moved) {
-                if (abs(totalY) >= abs(totalX)) {
-                    val normalized = (-delta.y / size.height.toFloat().coerceAtLeast(1f))
-                        .coerceIn(-.12f, .12f)
-                    onVerticalChange(down.position.x < size.width / 2f, normalized)
-                } else if (!horizontalTriggered &&
-                    abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {
-                    horizontalTriggered = true
-                    onHorizontalSwipe(totalX)
-                }
-                change.consume()
-            }
-        }
-        if (holding) { onHold(false); return@awaitEachGesture }
-        if (!moved) {
-            // Waiting briefly for a second pointer-down lets a double tap remain a seek gesture
-            // without making a single tap impossible.
-            val secondDown = withTimeoutOrNull(android.view.ViewConfiguration.getDoubleTapTimeout().toLong()) {
-                awaitFirstDown(requireUnconsumed = false)
-            }
-            if (secondDown == null) {
-                onTap()
-            } else {
-                var secondMoved = false
-                val secondPosition = secondDown.position
-                while (true) {
-                    val event = awaitPointerEvent()
-                    val change = event.changes.firstOrNull() ?: break
-                    if (!change.pressed) break
-                    if ((change.position - secondPosition).getDistance() > viewConfiguration.touchSlop) {
-                        secondMoved = true
-                    }
-                    change.consume()
-                }
-                if (!secondMoved) {
-                    onDoubleTap(down.position.x < size.width / 2f)
-                }
-            }
-        }
-    }
-}
-
-/** Changes tracks only after a deliberate horizontal swipe; vertical gestures are ignored. */
-private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit) {
+private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, onNext: () -> Unit,
+    onUpFromBottom: () -> Unit = {}, onUpFromMiddle: () -> Unit = {}) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         var totalX = 0f
@@ -649,68 +246,19 @@ private suspend fun PointerInputScope.detectTrackSwipe(onPrevious: () -> Unit, o
             totalY += delta.y
             val distance = maxOf(abs(totalX), abs(totalY))
             if (distance > viewConfiguration.touchSlop) {
-                if (abs(totalY) > abs(totalX)) break
+                if (abs(totalY) > abs(totalX)) {
+                    if (totalY > 0f) break
+                    if (-totalY >= maxOf(viewConfiguration.touchSlop * 3f, density * 72f)) {
+                        change.consume()
+                        if (down.position.y > size.height * .78f) onUpFromBottom() else onUpFromMiddle()
+                        break
+                    }
+                    continue
+                }
                 if (abs(totalX) >= maxOf(viewConfiguration.touchSlop * 2.5f, density * 64f)) {
                     change.consume()
                     if (totalX < 0f) onNext() else onPrevious()
                     break
-                }
-            }
-        }
-    }
-}
-
-private fun currentWindowBrightness(context: Context): Float {
-    val value = context.findActivity()?.window?.attributes?.screenBrightness ?: -1f
-    return if (value in .02f..1f) value else .5f
-}
-
-private fun setWindowBrightness(context: Context, value: Float) {
-    context.findActivity()?.let { activity ->
-        val attributes = activity.window.attributes
-        attributes.screenBrightness = value.coerceIn(.02f, 1f)
-        activity.window.attributes = attributes
-    }
-}
-
-@Composable private fun rememberCurrentLyric(song: Song?, positionMs: Long): Pair<Int, String> {
-    val context = LocalContext.current.applicationContext
-    val overrides = remember(context) { LyricsOverrides(context) }
-    val custom by produceState<String?>(initialValue = null, song?.id) {
-        val id = song?.id ?: return@produceState
-        value = withContext(Dispatchers.IO) { overrides.get(id) }
-    }
-    val document = remember(song?.id, song?.lyrics, song?.syncedLyrics, custom) {
-        custom?.let(LyricsParser::parse)
-            ?: song?.lyricsDocument()
-            ?: LyricsDocument(emptyList(), emptyList())
-    }
-    val active = LyricsParser.activeIndex(document.synced, positionMs)
-    val index = if (document.synced.isEmpty()) 0 else active
-    val line = if (document.synced.isNotEmpty()) document.synced.getOrNull(index)?.text.orEmpty()
-        else document.plain.firstOrNull().orEmpty()
-    return index to line
-}
-
-@Composable private fun CurrentLyricChip(song: Song?, positionMs: Long, onClick: () -> Unit,
-    modifier: Modifier = Modifier) {
-    val (lineIndex, line) = rememberCurrentLyric(song, positionMs)
-    Surface(onClick = onClick, modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(28.dp), color = Color(0xFF242633)) {
-        Row(Modifier.fillMaxSize().padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ChatBubbleOutline, stringResource(R.string.lyrics),
-                tint = StonePalette.Secondary, modifier = Modifier.size(18.dp))
-            Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.Center) {
-                AnimatedContent(targetState = lineIndex to line, transitionSpec = {
-                    (slideInVertically { it / 2 } + fadeIn()).togetherWith(
-                        slideOutVertically { -it / 2 } + fadeOut())
-                }, label = "current-lyric") { index ->
-                    Text(index.second.ifBlank { stringResource(R.string.lyrics) },
-                        color = if (line.isBlank()) StonePalette.Secondary else Color(0xFFD8E5E3),
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 2,
-                        overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
-                        lineHeight = 16.sp)
                 }
             }
         }

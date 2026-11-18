@@ -17,12 +17,12 @@ import com.zirakusa.stone.core.HomeLayout
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.feature.library.LibraryScreen
 import com.zirakusa.stone.nativeapp.feature.library.LibraryState
-import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
-import com.zirakusa.stone.nativeapp.feature.library.components.videoDisplayTitle
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.library.video.videoDisplayTitle
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayer
 import com.zirakusa.stone.nativeapp.feature.player.MiniPlayerOptionsPanel
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.QueueEntry
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.QueueEntry
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import org.junit.Assert.assertEquals
@@ -48,7 +48,7 @@ class LibraryScreenTest {
             StoneTheme { Surface(color = StonePalette.Background) { LibraryScreen(LibraryState(), true, { folderRequests++ }, { _, _ -> }, Modifier.fillMaxSize()) } }
         }
         compose.onNodeWithText(text(R.string.songs)).assertIsSelected()
-        compose.onNodeWithContentDescription(text(R.string.search)).assertDoesNotExist()
+        compose.onNodeWithContentDescription(text(R.string.search)).assertExists()
         compose.onNodeWithText(text(R.string.no_songs)).assertIsDisplayed()
         onView(isRoot()).captureRoboImage("build/screenshots/stone-home-empty.png")
         compose.onNodeWithContentDescription(text(R.string.choose_folder)).performClick()
@@ -143,12 +143,13 @@ class LibraryScreenTest {
                 { _, tracks -> queue = tracks }, Modifier.fillMaxSize()) } }
         }
         compose.onRoot().captureRoboImage("build/screenshots/stone-home-songs.png")
-        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
+        // The search bar is fixed under the header; there is no magnifier to open it.
+        compose.onNodeWithContentDescription(text(R.string.search_toggle)).assertDoesNotExist()
         compose.onNodeWithContentDescription(text(R.string.search)).performTextInput("Mr.Kitty")
         compose.onNodeWithText("Courtesy Call").assertDoesNotExist()
         compose.onNodeWithText("After Dark").performClick()
         assertEquals(listOf(songs.first()), queue)
-        compose.onNodeWithContentDescription(text(R.string.search_toggle)).performClick()
+        compose.onNodeWithContentDescription(text(R.string.clear_search)).performClick()
         compose.onNodeWithText("Courtesy Call").assertIsDisplayed()
     }
 
@@ -181,16 +182,15 @@ class LibraryScreenTest {
         assertEquals(1, opens)
     }
 
-    @Test fun miniPlayerOptionsButtonIsOptInForHorizontalLayout() {
+    @Test fun miniPlayerShowsThePlayModeButton() {
         val song = Song("content://fixture/options", "After Dark", "Mr.Kitty", "Time", "Music", 1000, 1, 1)
         val player = PlaybackState(ready = true, title = song.title, artist = song.artist,
-            queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id)
-        val showOptions = mutableStateOf(true)
-        compose.setContent { StoneTheme {
-            MiniPlayer(player, {}, {}, song = song, showOptions = showOptions.value)
-        } }
-        compose.onNodeWithContentDescription(text(R.string.more_options)).assertIsDisplayed()
-        compose.runOnIdle { showOptions.value = false }
+            queue = listOf(QueueEntry(song.id, song.title, song.artist)), index = 0, currentId = song.id,
+            repeat = androidx.media3.common.Player.REPEAT_MODE_ONE)
+        var taps = 0
+        compose.setContent { StoneTheme { MiniPlayer(player, {}, {}, song = song, onPlayMode = { taps++ }) } }
+        compose.onNodeWithContentDescription(text(R.string.play_mode_one)).assertIsDisplayed().performClick()
+        assertEquals(1, taps)
         compose.onNodeWithContentDescription(text(R.string.more_options)).assertDoesNotExist()
     }
 

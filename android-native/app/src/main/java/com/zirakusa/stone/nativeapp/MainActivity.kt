@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
@@ -11,9 +12,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.playback.AudioDiagnostics
+import com.zirakusa.stone.nativeapp.playback.diagnostics.AudioDiagnostics
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
-import com.zirakusa.stone.nativeapp.ui.ImmersiveSystemBarsController
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveSystemBarsController
 import java.util.Locale
 
 @SuppressLint("RestrictedApi")
@@ -21,6 +22,16 @@ class MainActivity : ComponentActivity() {
     internal val immersiveSystemBars by lazy { ImmersiveSystemBarsController(this) }
     private var pictureInPicture by mutableStateOf(false)
     private var windowOrientation by mutableIntStateOf(Configuration.ORIENTATION_UNDEFINED)
+
+    /** Volume keys drive Stone's own overlay; consuming them keeps Android's panel hidden. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val up = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP
+        if (up || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (event.action != KeyEvent.ACTION_DOWN) return true
+            if (StonePlaybackService.handleVolumeKey(up)) return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     override fun attachBaseContext(newBase: Context) {
         val language = runCatching { StoneSettingsStore(newBase).read().language }.getOrDefault("es")
@@ -35,6 +46,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.zirakusa.stone.nativeapp.data.persistence.CrashLog.install(this)
         super.onCreate(savedInstanceState)
         // ImmersiveSystemBarsController is the single owner of edge-to-edge and
         // system-bar visibility for the Activity and its Compose windows.

@@ -35,9 +35,9 @@ import com.zirakusa.stone.core.LyricsParser
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.core.lyricsDocument
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.data.library.LyricsOverrides
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsOverrides
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlinx.coroutines.Dispatchers
@@ -175,8 +175,8 @@ private fun angleOf(point: Offset, cx: Float, cy: Float): Float =
     val document = remember(song?.id, song?.lyrics, song?.syncedLyrics, custom) {
         custom?.let(LyricsParser::parse) ?: song?.lyricsDocument() ?: LyricsDocument(emptyList(), emptyList())
     }
-    val lines = if (document.synced.isNotEmpty()) document.synced.map { it.text } else document.plain
-    val active = if (document.synced.isNotEmpty()) LyricsParser.activeIndex(document.synced, positionMs) else -1
+    val lines = if (document.isTimed) document.synced.map { it.text.ifBlank { "♪" } } else document.plain
+    val active = if (document.isTimed) LyricsParser.activeIndex(document.synced, positionMs) else -1
     Column(modifier, verticalArrangement = Arrangement.Center) {
         if (lines.isEmpty()) {
             Text(stringResource(R.string.no_lyrics), color = StonePalette.Muted, fontSize = 18.sp)

@@ -4,7 +4,7 @@ import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.zirakusa.stone.nativeapp.ui.ImmersiveSystemBarsController
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveSystemBarsController
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame

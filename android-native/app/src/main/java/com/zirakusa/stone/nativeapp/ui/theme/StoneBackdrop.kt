@@ -35,7 +35,12 @@ fun Modifier.stoneBackdrop(image: ImageBitmap? = null): Modifier = drawWithCache
             drawImage(image, srcOffset = androidx.compose.ui.unit.IntOffset((image.width - srcW) / 2, (image.height - srcH) / 2),
                 srcSize = androidx.compose.ui.unit.IntSize(srcW, srcH),
                 dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()))
-            drawRect(base.copy(alpha = .62f))
+            val veil = 1f - StoneLook.backgroundOpacity
+            if (StoneLook.backgroundMode == "focus") {
+                // Focus: the centre shows the image at the chosen opacity, the edges fade to the theme colour.
+                drawRect(Brush.radialGradient(listOf(base.copy(alpha = veil), base.copy(alpha = (veil + .55f).coerceAtMost(.97f))),
+                    center = Offset(size.width / 2, size.height * .42f), radius = maxOf(size.width, size.height) * .55f))
+            } else drawRect(base.copy(alpha = veil))
             return@onDrawBehind
         }
         if (textured) {

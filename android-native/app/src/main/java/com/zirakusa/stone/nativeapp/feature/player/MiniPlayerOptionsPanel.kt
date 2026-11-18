@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerOptionExtra
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerOptionsContent
+import com.zirakusa.stone.nativeapp.feature.player.sheets.PlayerTool
 
 /** Right-side options panel used only by the horizontal mini player. */
 @Composable internal fun MiniPlayerOptionsPanel(state: PlaybackState, song: Song?, onClose: () -> Unit,

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 

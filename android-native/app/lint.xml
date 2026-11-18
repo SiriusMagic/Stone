@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- False positives of the newer lint: every one of these closes its Cursor/stream with `.use { }`. -->
+    <issue id="Recycle">
+        <ignore path="src/main/java/com/zirakusa/stone/nativeapp/data/library/scan/DeviceMediaScanner.kt" />
+        <ignore path="src/main/java/com/zirakusa/stone/nativeapp/data/library/scan/FolderScanner.kt" />
+        <ignore path="src/main/java/com/zirakusa/stone/nativeapp/data/library/tags/Mp4MetadataWriter.kt" />
+        <ignore path="src/main/java/com/zirakusa/stone/nativeapp/data/library/user/SongActions.kt" />
+        <ignore path="src/main/java/com/zirakusa/stone/nativeapp/data/persistence/StoneDatabase.kt" />
+    </issue>
+    <!-- Newer Compose BOM, Lifecycle and OkHttp need compileSdk 37 and Android Gradle plugin 9.1:
+         a separate migration. Versions here are the newest that build with compileSdk 36 / AGP 8.13. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <!-- 1.7.3 (targetSdk 36 + Media3 1.11) closed on play; 1.7.4 is back on the proven targetSdk 35 + Media3 1.6.1
+         until the crash log from a phone shows the cause. -->
+    <issue id="OldTargetApi" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+</lint>

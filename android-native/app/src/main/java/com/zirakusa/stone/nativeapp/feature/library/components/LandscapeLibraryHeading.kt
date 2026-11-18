@@ -15,6 +15,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
+import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable fun LandscapeLibraryHeading(tab: LibraryTab, songCount: Int, scanning: Boolean,
     onFolder: () -> Unit, onOpenFolders: () -> Unit) {

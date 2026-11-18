@@ -29,7 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess
+import com.zirakusa.stone.nativeapp.data.library.scan.DeviceMediaAccess
 import com.zirakusa.stone.nativeapp.data.persistence.StoneLanguages
 import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette

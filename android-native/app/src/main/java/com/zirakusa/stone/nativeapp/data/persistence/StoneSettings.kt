@@ -77,6 +77,9 @@ class StoneSettingsStore(context: Context) {
     fun setLandscapeLayoutMode(value: LandscapeLayoutMode) = db.setSetting("landscapeLayoutMode", value.key)
     fun setLanguage(value: String) = db.setSetting("language", value.takeIf { it in StoneLanguages.codes } ?: "es")
     fun setBoolean(key: String, value: Boolean) = db.setSetting(key, value.toString())
+    /** Free-form setting (notification times, delivery mode…). */
+    fun text(key: String, fallback: String) = db.setting(key, fallback)
+    fun setText(key: String, value: String) = db.setSetting(key, value)
     /** Personalizado values (colours, sizes, images, name, custom audio level). */
     fun look(key: String, fallback: String) = db.setting("look.$key", fallback)
     fun setLook(key: String, value: String) = db.setSetting("look.$key", value)

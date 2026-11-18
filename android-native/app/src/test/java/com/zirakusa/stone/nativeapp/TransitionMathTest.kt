@@ -1,6 +1,6 @@
 package com.zirakusa.stone.nativeapp
 
-import com.zirakusa.stone.nativeapp.playback.TransitionMath
+import com.zirakusa.stone.nativeapp.playback.control.TransitionMath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

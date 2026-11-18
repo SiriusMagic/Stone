@@ -29,8 +29,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
-import com.zirakusa.stone.nativeapp.ui.ImmersiveWindowEffect
+import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Trash: restore a song or remove its file from the device after confirmation. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,6 +39,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
     deletePermanently: (List<Song>, (List<Song>) -> Unit) -> Unit, dismiss: () -> Unit,
     markPurged: (List<Song>) -> Unit = {}) {
     val context = LocalContext.current
+    val stoneResources = androidx.compose.ui.platform.LocalResources.current
     // Android 11+ only lets the user (not the app) delete media found through MediaStore.
     var systemPending by remember { mutableStateOf<List<Song>>(emptyList()) }
     val systemDelete = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -85,7 +87,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                         systemDelete.launch(IntentSenderRequest.Builder(request.intentSender).build())
                     }
                     val other = failed.size - if (Build.VERSION.SDK_INT >= 30) media.size else 0
-                    if (other > 0) Toast.makeText(context, context.resources.getQuantityString(
+                    if (other > 0) Toast.makeText(context, stoneResources.getQuantityString(
                         R.plurals.delete_forever_failed, other, other), Toast.LENGTH_LONG).show()
                 }
             }) { Text(stringResource(R.string.delete_forever), color = MaterialTheme.colorScheme.error) } },

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
+import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable fun AlbumCard(name: String, tracks: List<Song>, open: () -> Unit) {
     val albumColors = listOf(Color(0xFF5B5749), Color(0xFF176D75), Color(0xFF8A6B0A),

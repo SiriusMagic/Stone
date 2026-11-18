@@ -6,10 +6,11 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.data.library.LibraryRepository
-import com.zirakusa.stone.nativeapp.data.library.LibraryUserStore
-import com.zirakusa.stone.nativeapp.data.library.PlaylistCoverStore
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
+import com.zirakusa.stone.nativeapp.data.library.notifications.NewFilesNotifier
+import com.zirakusa.stone.nativeapp.data.library.scan.LibraryRepository
+import com.zirakusa.stone.nativeapp.data.library.user.LibraryUserStore
+import com.zirakusa.stone.nativeapp.data.library.user.PlaylistCoverStore
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -49,9 +50,22 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
     }
 
+    private var lyricsJob: Job? = null
+
+    /** Refreshes which songs have lyrics (background, cached per file). */
+    private fun indexLyrics() {
+        lyricsJob?.cancel()
+        lyricsJob = viewModelScope.launch {
+            runCatching { com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.scanEmbedded(getApplication(), mutable.value.songs) }
+        }
+    }
+
     init {
+        com.zirakusa.stone.nativeapp.data.library.lyrics.LyricsIndex.ensureLoaded(getApplication())
+        runCatching { com.zirakusa.stone.nativeapp.data.library.notifications.NotificationScheduler.schedule(getApplication()) }
+        viewModelScope.launch { loadJob.join(); indexLyrics() }
         viewModelScope.launch {
-            com.zirakusa.stone.nativeapp.data.library.DeviceMediaAccess.rescanRequests.collect {
+            com.zirakusa.stone.nativeapp.data.library.scan.DeviceMediaAccess.rescanRequests.collect {
                 mutable.update { it.copy(hasFolder = repository.hasSource) }
                 if (active) refresh(true)
             }
@@ -116,19 +130,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun recordPlay(song: Song) { userStore.recordPlay(song.id); mutable.update { it.copy(
         recentIds = userStore.recentIds(), playCounts = it.playCounts + (song.id to userStore.playCount(song.id))) } }
     fun syncFavorites() { mutable.update { it.copy(favoriteIds = userStore.favoriteIds()) } }
-    fun reloadUserData() { viewModelScope.launch {
-        val cached = repository.cached(); val songs = cached.songs
-        val user = readUserSnapshot(songs)
-        mutable.update { it.copy(songs = songs, playlists = user.playlists,
-            favoriteIds = user.favorites, recentIds = user.recent,
-            playCounts = user.counts,
-            deletedSongs = cached.deletedSongs, playlistCovers = user.playlistCovers) }
-    } }
     fun createPlaylist(name: String) { if (name.isNotBlank()) { userStore.createPlaylist(name)
         mutable.update { it.copy(playlists = userStore.playlists()) } } }
     fun addToPlaylist(playlistId: String, song: Song) { userStore.add(playlistId, song.id)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
     fun removeFromPlaylist(playlistId: String, song: Song) { userStore.remove(playlistId, song.id)
+        mutable.update { it.copy(playlists = userStore.playlists()) } }
+    fun renamePlaylist(playlistId: String, name: String) { if (name.isNotBlank()) { userStore.rename(playlistId, name)
+        mutable.update { it.copy(playlists = userStore.playlists()) } } }
+    fun deletePlaylist(playlistId: String) { userStore.delete(playlistId)
         mutable.update { it.copy(playlists = userStore.playlists()) } }
 
     fun setPlaylistCoverFromUri(playlistId: String, source: Uri) {
@@ -157,13 +167,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun scan(manual: Boolean) {
         mutable.update { it.copy(scanning = true, failed = false) }
         try {
+            val known = mutable.value.songs.mapTo(HashSet()) { it.id }
             repository.refresh(manual)?.let { refreshed ->
                 val songs = refreshed.songs
+                // Only after a first index exists, so a fresh install does not announce the whole library.
+                if (known.isNotEmpty() && settings.read().notifyNewFiles)
+                    NewFilesNotifier.notify(getApplication(), songs.filter { it.id !in known })
                 val (favorites, counts) = withContext(Dispatchers.IO) {
                     userStore.favoriteIds() to userStore.playCounts(songs)
                 }
                 mutable.update { it.copy(songs = songs, deletedSongs = refreshed.deletedSongs,
                     favoriteIds = favorites, playCounts = counts) }
+                indexLyrics()
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { mutable.update { it.copy(failed = true) } }

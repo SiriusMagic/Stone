@@ -2,13 +2,13 @@ package com.zirakusa.stone.nativeapp
 
 import android.os.Looper
 import com.zirakusa.stone.core.Song
-import com.zirakusa.stone.nativeapp.automation.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.McpServer
-import com.zirakusa.stone.nativeapp.automation.RelayClient
-import com.zirakusa.stone.nativeapp.automation.StoneAutomation
-import com.zirakusa.stone.nativeapp.data.library.StonePlaylist
-import com.zirakusa.stone.nativeapp.playback.AudioMode
-import com.zirakusa.stone.nativeapp.playback.PlaybackState
+import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
+import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
+import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
+import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
+import com.zirakusa.stone.nativeapp.playback.control.AudioMode
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackState
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,7 +52,7 @@ class McpLiveServerTest {
             override fun extendSleepTimer(minutes: Int) = Unit
             override fun setLauncherIcon(key: String) = Unit
         }
-        check(McpServer.start("live-token", localNetwork = false))
+        check(McpServer.start("live-token"))
         // With STONE_RELAY_URL set, Stone also dials the relay like the app does.
         val relay = System.getenv("STONE_RELAY_URL")?.let { url ->
             RelayClient(url, "livetestdevice01", "s".repeat(40), { McpServer.DEFAULT_PORT }) { println("RELAY_$it") }.also { it.start() }

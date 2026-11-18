@@ -37,16 +37,23 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.core.LandscapeLayoutMode
 import com.zirakusa.stone.core.homeLayout
 import com.zirakusa.stone.nativeapp.feature.library.*
-import com.zirakusa.stone.nativeapp.feature.library.components.VideoLibraryLayout
-import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackKind
-import com.zirakusa.stone.nativeapp.feature.library.components.FeedbackReportSheet
+import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
+import com.zirakusa.stone.nativeapp.feature.settings.feedback.FeedbackKind
+import com.zirakusa.stone.nativeapp.feature.settings.feedback.FeedbackReportSheet
 import com.zirakusa.stone.nativeapp.feature.player.*
-import com.zirakusa.stone.nativeapp.playback.PlaybackViewModel
+import com.zirakusa.stone.nativeapp.feature.player.lyrics.*
+import com.zirakusa.stone.nativeapp.feature.player.sheets.*
+import com.zirakusa.stone.nativeapp.feature.player.tags.*
+import com.zirakusa.stone.nativeapp.feature.player.video.*
+import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
-import com.zirakusa.stone.nativeapp.data.library.ArtworkLoader
+import com.zirakusa.stone.nativeapp.data.library.artwork.ArtworkLoader
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import kotlinx.coroutines.delay
+import com.zirakusa.stone.nativeapp.ui.system.LocalImmersiveSystemBarsController
+import com.zirakusa.stone.nativeapp.ui.system.ShakeDetector
+import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
 
 @Composable fun StoneApp(library: LibraryViewModel = viewModel(), playback: PlaybackViewModel = viewModel(),
     isPictureInPicture: Boolean = false,
@@ -57,8 +64,8 @@ import kotlinx.coroutines.delay
     LaunchedEffect(context) { ArtworkLoader.configure(context.applicationContext) }
     val initialSettings = remember(settingsStore) {
         com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
-        com.zirakusa.stone.nativeapp.playback.AudioLevels.load(settingsStore)
-        com.zirakusa.stone.nativeapp.automation.ApiMode.load(settingsStore)
+        com.zirakusa.stone.nativeapp.playback.control.AudioLevels.load(settingsStore)
+        com.zirakusa.stone.nativeapp.automation.ApiMode.load(settingsStore, context.applicationContext)
         com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon.load(context)
         settingsStore.read()
     }
@@ -86,9 +93,12 @@ import kotlinx.coroutines.delay
     val player by playback.state.collectAsStateWithLifecycle()
     AutomationBridge(playback, library, state, player, theme, language,
         onTheme = { theme = it; settingsStore.setTheme(it) },
-        onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() })
+        onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() },
+        videoScale = videoScale.key,
+        onVideoScale = { videoScale = VideoScale.fromKey(it); settingsStore.setVideoScale(videoScale.key) })
     val volumeUi by StonePlaybackService.volumeUi.collectAsStateWithLifecycle()
     var playerOpen by rememberSaveable { mutableStateOf(false) }
+    var recommendationsOpen by rememberSaveable { mutableStateOf(false) }
     var audioOnlyId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastVideoPreviewId by rememberSaveable { mutableStateOf(settingsStore.lastVideoPreviewId()) }
     var artistDestination by rememberSaveable { mutableStateOf<String?>(null) }
@@ -107,7 +117,7 @@ import kotlinx.coroutines.delay
         }
         playback.play(song, songs)
     }
-    SideEffect { com.zirakusa.stone.nativeapp.feature.player.AudioOnlySelection.id = audioOnlyId }
+    SideEffect { com.zirakusa.stone.nativeapp.feature.player.sheets.AudioOnlySelection.id = audioOnlyId }
     val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
@@ -143,7 +153,7 @@ import kotlinx.coroutines.delay
         val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val detector = if (shakeToReport && sensor != null) ShakeDetector(onShake = {
             // Capture first, then open the sheet, so the screenshot shows the problem.
-            if (!shakeReportVisible) com.zirakusa.stone.nativeapp.feature.library.components.ReportScreenshot
+            if (!shakeReportVisible) com.zirakusa.stone.nativeapp.feature.settings.feedback.ReportScreenshot
                 .capture(context) { uri -> reportScreenshot = uri?.toString(); shakeReportVisible = true }
         }) else null
         fun register() {
@@ -220,7 +230,7 @@ import kotlinx.coroutines.delay
                 onArtist = {
                     artistDestination = player.artist
                     playerOpen = false
-                }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
+                }, onRecommendations = { recommendationsOpen = true }, isPictureInPicture = isPictureInPicture, onAudioOnly = { song ->
                     audioOnlyId = song.id
                     playback.play(song.copy(isVideo = false), state.songs)
                     playerOpen = true
@@ -318,6 +328,17 @@ import kotlinx.coroutines.delay
                 })
             }
         }
+        if (recommendationsOpen) {
+            val tint = com.zirakusa.stone.nativeapp.feature.player.rememberSongTint(currentSong)
+            val picks = remember(currentSong?.id, state.songs.size, player.queue.size) {
+                com.zirakusa.stone.nativeapp.feature.player.sheets.recommendations(state.songs, currentSong,
+                    player.queue.mapTo(HashSet()) { it.id }, state.playCounts, state.favoriteIds)
+            }
+            com.zirakusa.stone.nativeapp.feature.player.sheets.RecommendationsSheet(picks, tint,
+                onPlay = { song -> playback.play(song, picks); recommendationsOpen = false },
+                onPlayNext = { song -> playback.playNext(listOf(song)) },
+                onClose = { recommendationsOpen = false })
+        }
         if (layout.showMiniPlayer) {
             val miniContainerModifier = Modifier.fillMaxSize().then(
                 if (immersiveRequest) Modifier else Modifier.navigationBarsPadding()
@@ -330,12 +351,10 @@ import kotlinx.coroutines.delay
                     song = currentSong,
                     previous = playback::previous,
                     next = playback::next,
-                    showOptions = true,
-                    onOptions = {
-                        playerSheets.optionsSong = null
-                        playerSheets.optionsSidePanel = landscape && !layout.fullPlayer
-                        playerSheets.optionsVisible = true
-                    },
+                    onPlayMode = { cyclePlayMode(context, player, playback) },
+                    onSwipeUp = { recommendationsOpen = true },
+                    progress = { playback.progress().let { (position, duration) ->
+                        if (duration > 0) position.toFloat() / duration else 0f } },
                     modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged {
                         miniPlayerHeightPx = it.height
                     }
@@ -390,12 +409,17 @@ import kotlinx.coroutines.delay
             immersive = immersiveRequest
         )
     }
-        if (volumeUi.visible) {
+        androidx.compose.animation.AnimatedVisibility(volumeUi.visible,
+            Modifier.align(Alignment.TopCenter).padding(top = 38.dp),
+            enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)) +
+                androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(150)) { -it / 2 },
+            exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150)) +
+                androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(150)) { -it }) {
             LaunchedEffect(volumeUi.revision) {
                 delay(1800)
                 StonePlaybackService.hideVolumeOverlay(volumeUi.revision)
             }
-            VolumeOverlay(volumeUi, Modifier.align(Alignment.TopCenter).padding(top = 38.dp))
+            VolumeOverlay(volumeUi, onDismiss = { StonePlaybackService.hideVolumeOverlay(volumeUi.revision) })
         }
         if (!onboardingDone) com.zirakusa.stone.nativeapp.feature.onboarding.OnboardingScreen(language,
             onLanguage = { language = it; settingsStore.setLanguage(it); (context as? Activity)?.recreate() }) {
@@ -405,4 +429,17 @@ import kotlinx.coroutines.delay
             onboardingDone = true
         }
     } } } }
+}
+
+/** Mini player button: repeat all → repeat one → shuffle all, with a short notice of the new mode. */
+private fun cyclePlayMode(context: android.content.Context, state: com.zirakusa.stone.nativeapp.playback.control.PlaybackState,
+    playback: com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel) {
+    val label = when {
+        state.shuffle -> { playback.setShuffle(false); playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ALL); R.string.play_mode_all }
+        state.repeat == androidx.media3.common.Player.REPEAT_MODE_ONE -> {
+            playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ALL); playback.setShuffle(true); R.string.play_mode_shuffle
+        }
+        else -> { playback.setShuffle(false); playback.setRepeat(androidx.media3.common.Player.REPEAT_MODE_ONE); R.string.play_mode_one }
+    }
+    android.widget.Toast.makeText(context, label, android.widget.Toast.LENGTH_SHORT).show()
 }
