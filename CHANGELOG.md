@@ -1,3 +1,14 @@
+# Sin publicar (fase 2: Stone como proveedor de Gateway Hub)
+
+- **Paquetes de ejecución** en Ajustes › Modo API › Gateway Hub · paquetes: Gateway Hub ofrece permisos firmados
+  (leer, revisar, escribir, modificar, revertir) para un agente y un tiempo. Los de solo lectura se activan solos; los
+  demás esperan a que pulses **Aprobar**. Puedes **Rechazar** o **Revocar** cualquiera.
+- Borrar sigue pidiendo confirmación en la pantalla de Stone, aunque el paquete lo permita.
+- El puente con Gateway Hub ya no necesita «Activar MCP» ni «Redirección hub». Para cortarlo: **Desconectar de Gateway
+  Hub** (se puede volver a permitir).
+- Gateway puede cancelar una petición en curso, por ejemplo una confirmación que nadie ha respondido.
+- Sin cambios en el enlace público, el relay ni Cloudflare. Sin APK todavía.
+
 # Stone Kotlin 1.7.17
 
 - Sin cambios visibles. Preparación de la arquitectura con Gateway Hub centralizado (fase 1b):

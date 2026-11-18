@@ -66,6 +66,7 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
         com.zirakusa.stone.nativeapp.ui.theme.StoneLook.load(settingsStore)
         com.zirakusa.stone.nativeapp.playback.control.AudioLevels.load(settingsStore)
         com.zirakusa.stone.nativeapp.automation.ApiMode.load(settingsStore, context.applicationContext)
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.load(settingsStore)
         com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon.load(context)
         settingsStore.read()
     }

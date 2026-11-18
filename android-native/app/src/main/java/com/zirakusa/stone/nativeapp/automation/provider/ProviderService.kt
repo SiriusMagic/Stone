@@ -25,11 +25,16 @@ import java.util.concurrent.TimeUnit
  */
 class ProviderService : Service() {
     private val workers = ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS, ArrayBlockingQueue(16))
+    private val running = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.Future<*>>()
+    /** Cancelled calls: their late answer is not sent (MCP: no response to a cancelled request). */
+    private val dropped: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
     private val messenger by lazy { Messenger(Handler(Looper.getMainLooper()) { receive(it); true }) }
 
     override fun onBind(intent: Intent?): IBinder? {
         if (intent?.action != ProviderBridge.ACTION) return null
-        if (!ApiMode.loaded) ApiMode.load(StoneSettingsStore(applicationContext), applicationContext)
+        val store = StoneSettingsStore(applicationContext)
+        if (!ApiMode.loaded) ApiMode.load(store, applicationContext)
+        if (!ProviderState.loaded) ProviderState.load(store)
         return messenger.binder
     }
 
@@ -42,13 +47,23 @@ class ProviderService : Service() {
             packageManager.checkSignatures(packageName, it) == PackageManager.SIGNATURE_MATCH
         } ?: ProviderBridge.switchRefusal()
         val text = runCatching { msg.data?.getString(ProviderBridge.KEY_MESSAGE) }.getOrNull()
-        try {
-            workers.execute {
+        // notifications/cancelled: interrupting the worker cancels the call's coroutine (runBlocking), e.g. a
+        // confirmation still waiting on screen. What already happened is not undone; no answer is sent.
+        val cancelled = if (refusal == null) Cancellation.target(text) else null
+        if (cancelled != null) { if (running.containsKey(cancelled)) { dropped += cancelled; running.remove(cancelled)?.cancel(true) }; return }
+        val key = if (refusal == null) Cancellation.key(text) else null
+        val task = java.util.concurrent.FutureTask<Unit> {
+            try {
                 val reply = if (refusal != null) ProviderBridge.error(null, -32001, refusal) else
                     runCatching { ProviderBridge.handle(text) }.getOrElse { ProviderBridge.error(null, -32603, "Stone failed: ${it.javaClass.simpleName}") }
-                if (reply != null) send(replyTo, requestId, reply)
-            }
+                if (reply != null && (key == null || !dropped.remove(key))) send(replyTo, requestId, reply)
+            } finally { key?.let { running.remove(it) } }
+        }
+        key?.let { running[it] = task }   // registered before it can run, so a fast call never leaves a stale entry
+        try {
+            workers.execute(task)
         } catch (_: RejectedExecutionException) {
+            key?.let { running.remove(it) }
             send(replyTo, requestId, ProviderBridge.error(null, -32000, "BUSY: Stone is answering other requests."))
         }
     }

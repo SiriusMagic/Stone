@@ -233,3 +233,28 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   (`NOT_GATEWAY`, `NOT_SAME_DEVELOPER`, `REDIRECT_OFF`, `API_OFF`), y si Gateway desaparece la respuesta se descarta.
 - **Reversión:** apagar «Redirección hub» cierra el puente sin reinstalar nada. El enlace público, el relay y Cloudflare
   no cambian.
+
+### Fase 2 (sin publicar): paquetes de ejecución
+
+- **Sin nada que activar en Stone:** el puente ya no depende del Modo API ni de «Redirección hub». Solo lo corta
+  «Desconectar de Gateway Hub» (Ajustes › Modo API › Gateway Hub · paquetes), que borra el entorno y todos los paquetes.
+- **Vinculación** (`gatewayhub/link`): Gateway envía su id de entorno y la clave pública ECDSA P-256 (la privada nunca
+  sale del Keystore de Gateway). Stone responde con su id de instalación (`inst_…`). Un entorno nuevo sustituye al
+  anterior y a sus paquetes.
+- **Paquete:** `{"pkg": base64url(bytes JSON), "sig": base64url(ECDSA P-256/SHA-256)}`; el JSON lleva `v`, `id`
+  (`pkg_…`), `env`, `aud` (`<paquete>#<instancia>`), `agent` (`*` o id), `label`, `acts`, `tools` (nombres o prefijos
+  con `*`), `nbf` y `exp` (máximo 366 días). Stone lo verifica una vez al recibirlo y otra al cargar (un archivo
+  modificado no da permisos). Máximo 64 paquetes de 8 KB.
+- **Acciones sobre el riesgo declarado:** leer = `READ`; revisar = herramientas con `dryRun` (se fuerza `dryRun=true`);
+  escribir = `REVERSIBLE`; modificar = `PERSISTENT` y `CRITICAL` (lo crítico sigue pidiendo confirmación en pantalla:
+  el modo usado es `WRITE`, nunca `FULL`); revertir = `metadata_undo`.
+- **Aprobación:** un paquete que solo lee queda activo al momento; cualquier otro queda pendiente hasta «Aprobar» en Stone.
+- **Llamadas:** `_meta["com.zirakusa.gatewayhub/grant"] = {"agent": "...", "package": "pkg_..."}`. `tools/list` devuelve
+  solo lo que cubren los paquetes activos del agente; `tools/call` se rechaza con `PACKAGE_PENDING`, `OTHER_AGENT`,
+  `TOOL_NOT_IN_PACKAGE`, `ACT_NOT_IN_PACKAGE`, `EXPIRED` o `NO_PACKAGE`. Sin paquete, el puente sigue en solo lectura
+  (compatible con Gateway 0.0.7).
+- **Otros métodos:** `gatewayhub/packages/offer|revoke|list` y `gatewayhub/state` (estado del entorno y modo que Stone muestra).
+- **Cancelación:** `notifications/cancelled {requestId}` interrumpe la llamada (por ejemplo, una confirmación aún en
+  pantalla) y no se envía respuesta. Lo ya hecho no se deshace.
+- **Pendiente:** `notifications/tools/list_changed` (las herramientas de Stone no cambian en ejecución) y herramientas sin
+  la interfaz abierta (fase 2b).

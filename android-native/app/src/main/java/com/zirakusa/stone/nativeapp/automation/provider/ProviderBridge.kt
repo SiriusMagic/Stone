@@ -1,6 +1,5 @@
 package com.zirakusa.stone.nativeapp.automation.provider
 
-import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import org.json.JSONArray
@@ -14,8 +13,8 @@ import org.json.JSONObject
  *   caller writes in a message says who it is.
  * - Rights: those Gateway delegates per request ([GatewayGrant]), never above Stone's local cap (read-only in
  *   this phase), checked on both tools/list and tools/call from each action's declared [ActionRisk].
- * - Same switches as Redirección hub: the user's "Redirección hub" and Modo API (see ../../docs: the Modo API
- *   dependency is kept on purpose until a separate consent switch exists).
+ * - Nothing to switch on in Stone: the user can only cut it ("Desconectar de Gateway Hub", [ProviderState]).
+ * - Changes need an execution package ([Packages]) the user approved in Stone; without one, read-only.
  * - Messages are bounded so they always fit in one Binder transaction.
  */
 object ProviderBridge {
@@ -37,12 +36,8 @@ object ProviderBridge {
         else -> null
     }
 
-    /** The user's switches; null when the bridge may answer. */
-    fun switchRefusal(): String? = when {
-        !ApiMode.hubRedirect -> "REDIRECT_OFF"
-        !ApiMode.enabled -> "API_OFF"
-        else -> null
-    }
+    /** Phase 2: no switch to turn on in Stone; only the user's "Desconectar de Gateway Hub" stops the bridge. */
+    fun switchRefusal(): String? = if (ProviderState.disconnectedByUser) "DISCONNECTED_BY_USER" else null
 
     /** Handles one MCP message from an authenticated Gateway; null for a notification (nothing to answer). */
     fun handle(text: String?): String? {
@@ -51,17 +46,44 @@ object ProviderBridge {
             ?: return error(null, -32600, "Send one JSON-RPC object per message (no batches).")
         val id = message.opt("id")
         val method = message.optString("method")
-        val grant = GatewayGrant.from(message)
+        if (method.startsWith("gatewayhub/")) return GatewayMethods.handle(id, method, message.optJSONObject("params") ?: JSONObject())
+        val packageId = GatewayGrant.packageId(message)
+        val agent = GatewayGrant.agent(message) ?: "*"
+        var grant = GatewayGrant.from(message)
         if (method == "tools/call") {
-            val name = message.optJSONObject("params")?.optString("name").orEmpty()
+            val params = message.optJSONObject("params") ?: JSONObject()
+            val name = params.optString("name")
             val action = StoneAutomation.find(name)
-            // Explicit check of the declared risk, before anything runs (the grant's mode checks it again).
-            if (action != null && !grant.mode.permits(action.risk)) return forbidden(id, name)
-        }
+            if (action != null && packageId != null) {
+                // An execution package decides; "revisar" only previews. CRITICAL still asks on screen (mode WRITE).
+                val args = params.optJSONObject("arguments") ?: JSONObject().also { params.put("arguments", it) }
+                val act = try { Packages.authorize(packageId, agent, action, args) } catch (e: PackageException) { return refused(id, e.code) }
+                if (act == Act.REVISAR) args.put("dryRun", true)
+                grant = grant.copy(mode = GatewayGrant.PACKAGE_CAP)
+            } else if (action != null && !grant.mode.permits(action.risk)) return forbidden(id, name)
+        } else if (method == "tools/list" && packageId != null) grant = grant.copy(mode = GatewayGrant.PACKAGE_CAP)
         val reply = McpDispatcher.dispatch(message.toString(), grant).first?.toString() ?: return null
-        val marked = if (method == "tools/list") markProbes(reply) else reply
+        val listed = if (method == "tools/list" && packageId != null) onlyPackaged(reply, agent) else reply
+        val marked = if (method == "tools/list") markProbes(listed) else listed
         return if (marked.length > MAX_CHARS) error(id, -32000, "RESPONSE_TOO_LARGE: the answer does not fit the local bridge.") else marked
     }
+
+    /** tools/list under packages: only the tools some approved package of [agent] covers. */
+    private fun onlyPackaged(reply: String, agent: String): String {
+        val json = JSONObject(reply)
+        val tools = json.optJSONObject("result")?.optJSONArray("tools") ?: return reply
+        val kept = JSONArray()
+        for (i in 0 until tools.length()) tools.getJSONObject(i).let { t ->
+            StoneAutomation.find(t.optString("name"))?.let { if (Packages.lists(agent, it)) kept.put(t) }
+        }
+        json.getJSONObject("result").put("tools", kept)
+        return json.toString()
+    }
+
+    private fun refused(id: Any?, code: String): String = JSONObject().put("jsonrpc", "2.0").put("id", id ?: JSONObject.NULL)
+        .put("result", JSONObject().put("isError", true)
+            .put("content", JSONArray().put(JSONObject().put("type", "text").put("text", "[$code] No approved Stone package allows this.")))
+            .put("structuredContent", JSONObject().put("ok", false).put("error", JSONObject().put("code", code)))).toString()
 
     private fun markProbes(reply: String): String {
         val json = JSONObject(reply)
@@ -74,7 +96,7 @@ object ProviderBridge {
 
     private fun forbidden(id: Any?, name: String): String = JSONObject().put("jsonrpc", "2.0").put("id", id ?: JSONObject.NULL)
         .put("result", JSONObject().put("isError", true)
-            .put("content", JSONArray().put(JSONObject().put("type", "text").put("text", "[READ_ONLY_BRIDGE] '$name' changes something; Stone lets Gateway Hub only read for now.")))
+            .put("content", JSONArray().put(JSONObject().put("type", "text").put("text", "[READ_ONLY_BRIDGE] '$name' changes something; Gateway Hub needs an approved Stone package for that.")))
             .put("structuredContent", JSONObject().put("ok", false).put("error", JSONObject().put("code", "READ_ONLY_BRIDGE")))).toString()
 
     fun error(id: Any?, code: Int, message: String): String = McpDispatcher.error(id, code, message).toString()

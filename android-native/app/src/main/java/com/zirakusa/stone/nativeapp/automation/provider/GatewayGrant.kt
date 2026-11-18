@@ -13,8 +13,10 @@ import org.json.JSONObject
  */
 object GatewayGrant {
     const val META = "com.zirakusa.gatewayhub/grant"
-    /** The most Stone lets Gateway do. Phase 1/1b: read only (raised in phase 2 with confirmation on screen). */
+    /** The most Stone lets Gateway do WITHOUT an execution package: read only. */
     val LOCAL_CAP = AccessMode.READ
+    /** With an approved package: WRITE, never FULL, so CRITICAL actions always ask on screen. */
+    val PACKAGE_CAP = AccessMode.WRITE
     private const val MAX_BLOCKED = 300
     private val NAME = Regex("^[a-z][a-z0-9_]{1,63}$")
     private val AGENT = Regex("^[A-Za-z0-9_-]{1,40}$")
@@ -29,4 +31,10 @@ object GatewayGrant {
         val agent = meta?.optString("agent")?.takeIf(AGENT::matches)
         return CallerGrant(if (agent == null) "gateway" else "gateway:$agent", "Gateway Hub", mode, blocked)
     }
+
+    /** The agent and the execution package Gateway names for this request (both checked by [Packages]). */
+    fun agent(message: JSONObject?): String? = meta(message)?.optString("agent")?.takeIf(AGENT::matches)
+    fun packageId(message: JSONObject?): String? = meta(message)?.optString("package")?.takeIf { it.startsWith("pkg_") && it.length <= 70 }
+
+    private fun meta(message: JSONObject?) = message?.optJSONObject("params")?.optJSONObject("_meta")?.optJSONObject(META)
 }

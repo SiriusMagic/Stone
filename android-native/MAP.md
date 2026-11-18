@@ -43,10 +43,14 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `Cloudflare.kt` (108) Sends one request to Cloudflare;
 
 ## app/automation/provider
-- `GatewayGrant.kt` (33) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
+- `Cancellation.kt` (20) Reads, without trusting more than needed, which request a message is (or which one it cancels).
+- `GatewayGrant.kt` (41) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
+- `GatewayMethods.kt` (43) The provider contract's own methods (prefixed, so they never pass for standard MCP methods):
 - `McpDispatcher.kt` (106) Who a request runs for and with which rights, whatever carried it (HTTP token today, Gateway Hub over IPC).
-- `ProviderBridge.kt` (82) Stone as a capability provider for the Gateway Hub app on this phone:
-- `ProviderService.kt` (63) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
+- `Packages.kt` (130) The five things a package may allow, mapped onto the risk every Stone tool already declares.
+- `ProviderBridge.kt` (104) Stone as a capability provider for the Gateway Hub app on this phone:
+- `ProviderService.kt` (78) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
+- `ProviderState.kt` (77) Stone's link with Gateway Hub:
 
 ## app/automation/relay
 - `ReconnectPolicy.kt` (26) When the phone should dial the relay again.
@@ -223,7 +227,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
 - `ApiCloudflareCard.kt` (99) Cloudflare:
-- `ApiGeneralTab.kt` (63) General:
+- `ApiGatewayCard.kt` (77) Gateway Hub (provider mode):
+- `ApiGeneralTab.kt` (64) General:
 - `ApiHubCard.kt` (68) Gateway Hub:
 - `ApiModeSettings.kt` (67) Ajustes › Modo API:
 - `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
@@ -270,7 +275,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/ui
 - `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
-- `StoneApp.kt` (451) Mini player button:
+- `StoneApp.kt` (452) Mini player button:
 
 ## app/ui/components
 - `SleepTimerIndicator.kt` (101) Shows the active sleep timer using the sun by day and the moon by night.

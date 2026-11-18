@@ -44,11 +44,13 @@ class ProviderBridgeTest {
         assertNull(ProviderBridge.callerRefusal(listOf("com.other.shareduid", "com.zirakusa.gatewayhub")) { it == "com.zirakusa.gatewayhub" })
     }
 
-    @Test fun theUsersSwitchesStillDecide() {
-        assertEquals("REDIRECT_OFF", ProviderBridge.switchRefusal())
-        ApiMode.allowHubRedirect(true)
-        assertEquals("API_OFF", ProviderBridge.switchRefusal())   // documented dependency, kept in phase 1
-        ApiMode.enable(true)
+    @Test fun nothingToSwitchOnOnlyTheUsersDisconnect() {
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.load(
+            com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore(RuntimeEnvironment.getApplication()))
+        assertNull(ProviderBridge.switchRefusal())            // Modo API and Redirección hub are off here: phase 2 needs neither
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.disconnect()
+        assertEquals("DISCONNECTED_BY_USER", ProviderBridge.switchRefusal())
+        com.zirakusa.stone.nativeapp.automation.provider.ProviderState.allowAgain()
         assertNull(ProviderBridge.switchRefusal())
     }
 
