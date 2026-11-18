@@ -9,7 +9,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/automation
 - `ApiMode.kt` (145) User switches for the MCP server (Ajustes › Modo API).
 - `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
-- `HubLink.kt` (85) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
+- `HubLink.kt` (72) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -39,16 +39,13 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 
-## app/automation/cloudflare
-- `Cloudflare.kt` (108) Sends one request to Cloudflare;
-
 ## app/automation/provider
 - `Cancellation.kt` (20) Reads, without trusting more than needed, which request a message is (or which one it cancels).
-- `GatewayGrant.kt` (41) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
+- `GatewayGrant.kt` (48) The rights Gateway Hub delegates for one request, sent in `params._meta["com.zirakusa.gatewayhub/grant"]`:
 - `GatewayMethods.kt` (43) The provider contract's own methods (prefixed, so they never pass for standard MCP methods):
 - `McpDispatcher.kt` (106) Who a request runs for and with which rights, whatever carried it (HTTP token today, Gateway Hub over IPC).
 - `Packages.kt` (130) The five things a package may allow, mapped onto the risk every Stone tool already declares.
-- `ProviderBridge.kt` (104) Stone as a capability provider for the Gateway Hub app on this phone:
+- `ProviderBridge.kt` (107) Stone as a capability provider for the Gateway Hub app on this phone:
 - `ProviderService.kt` (78) Bound Service through which Stone provides its tools to Gateway Hub ([ProviderBridge]).
 - `ProviderState.kt` (77) Stone's link with Gateway Hub:
 
@@ -226,9 +223,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiCloudflareCard.kt` (99) Cloudflare:
 - `ApiGatewayCard.kt` (77) Gateway Hub (provider mode):
-- `ApiGeneralTab.kt` (64) General:
+- `ApiGeneralTab.kt` (63) General:
 - `ApiHubCard.kt` (68) Gateway Hub:
 - `ApiModeSettings.kt` (67) Ajustes › Modo API:
 - `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:

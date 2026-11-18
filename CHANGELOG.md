@@ -8,6 +8,9 @@
   Hub** (se puede volver a permitir).
 - Gateway puede cancelar una petición en curso, por ejemplo una confirmación que nadie ha respondido.
 - Fase 3: Stone acepta varios paquetes candidatos por llamada (el hub elige cuáles podrían cubrirla).
+- Fase 4: se quita la tarjeta **Cloudflare** de Modo API. Stone ya no guarda ningún token de Cloudflare (el que guardó la
+  1.7.15 se borra al abrirla) ni lo comparte con Gateway Hub: el hub se publica y se actualiza desde Gateway, con un token
+  que se usa una vez y se olvida.
 - Sin cambios en el enlace público, el relay ni Cloudflare. Sin APK todavía.
 
 # Stone Kotlin 1.7.17
