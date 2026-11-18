@@ -619,4 +619,7 @@
     <string name="crash_copy">Kopieren</string>
     <string name="api_hub_hint">Ein Link, über den deine KI Stone und andere Apps nutzt. Kopiert einen Link nur für den Hub und öffnet sein Panel zum Einfügen. Widerrufe den Token „Gateway Hub“, um ihn zu trennen.</string>
     <string name="api_hub_link">Verbinden</string>
+    <string name="api_hub_redirect">Hub-Weiterleitung</string>
+    <string name="api_hub_redirect_hint">Die Gateway-Hub-App auf diesem Telefon verbindet Stone selbst, ohne Kopieren und Einfügen. Nur Apps desselben Entwicklers.</string>
+    <string name="hub_link_permission">Stone mit Gateway Hub verbinden</string>
 </resources>

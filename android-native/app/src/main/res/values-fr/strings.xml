@@ -619,4 +619,7 @@
     <string name="crash_copy">Copier</string>
     <string name="api_hub_hint">Un seul lien pour que votre IA utilise Stone et d’autres apps. Copie un lien réservé au hub et ouvre son panneau pour le coller. Révoquez le jeton « Gateway Hub » pour le couper.</string>
     <string name="api_hub_link">Associer</string>
+    <string name="api_hub_redirect">Redirection hub</string>
+    <string name="api_hub_redirect_hint">L’app Gateway Hub de ce téléphone associe Stone toute seule, sans copier-coller. Uniquement les apps signées par le même développeur.</string>
+    <string name="hub_link_permission">associer Stone à Gateway Hub</string>
 </resources>

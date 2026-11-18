@@ -521,4 +521,7 @@
     <string name="crash_copy">Copy</string>
     <string name="api_hub_hint">One link for your AI to use Stone and other apps. Copies a link just for the hub and opens its panel to paste it. Revoke the “Gateway Hub” token to cut it off.</string>
     <string name="api_hub_link">Link</string>
+    <string name="api_hub_redirect">Hub redirect</string>
+    <string name="api_hub_redirect_hint">The Gateway Hub app on this phone links Stone by itself, no copy and paste. Only apps signed by the same developer.</string>
+    <string name="hub_link_permission">link Stone with Gateway Hub</string>
 </resources>

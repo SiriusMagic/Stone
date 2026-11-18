@@ -1,3 +1,12 @@
+# Stone Kotlin 1.7.13
+
+- **Redirección hub** (Ajustes › Modo API › Gateway Hub): con el interruptor activado, la app Gateway Hub de este
+  teléfono vincula Stone sola al escanear, sin copiar ni pegar. Hay tres cerrojos y hacen falta los tres:
+  - un permiso de Android que solo tienen las apps firmadas con la misma clave;
+  - Stone vuelve a comprobar la firma de quien llama;
+  - tu interruptor.
+- Viene apagada. Si la desactivas, Stone deja de responder al hub. Revocar el token «Gateway Hub» corta el acceso.
+
 # Stone Kotlin 1.7.12
 
 - La app **Gateway Hub** encuentra Stone con su escáner (Stone se declara como la app `music_`) y su botón

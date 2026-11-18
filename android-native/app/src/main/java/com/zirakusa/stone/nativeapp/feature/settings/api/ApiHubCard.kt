@@ -5,7 +5,14 @@ import android.content.Intent
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Switch
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,5 +46,14 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black)) {
             Text(stringResource(R.string.api_hub_link), fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
-    })
+    }) {
+        // Redirección hub: the Gateway Hub app on this phone links Stone by itself (same developer only).
+        Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.api_hub_redirect), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(stringResource(R.string.api_hub_redirect_hint), color = StonePalette.Muted, fontSize = 12.sp)
+            }
+            Switch(ApiMode.hubRedirect, ApiMode::allowHubRedirect, Modifier.padding(start = 8.dp))
+        }
+    }
 }

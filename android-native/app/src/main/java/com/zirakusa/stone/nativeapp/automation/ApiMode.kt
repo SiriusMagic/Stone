@@ -56,10 +56,22 @@ object ApiMode {
 
     const val HUB_TOKEN_NAME = "Gateway Hub"
 
+    /**
+     * "Redirección hub": lets the Gateway Hub app on this phone (signed by the same developer) get
+     * the hub's link by itself through [HubLink], with no copy and paste. Off by default.
+     */
+    var hubRedirect by mutableStateOf(false)
+        private set
+    fun allowHubRedirect(value: Boolean) { hubRedirect = value; store?.setLook("api.hubRedirect", value.toString()) }
+
+    /** Whether [load] already ran in this process (the link provider can be called before any screen). */
+    val loaded: Boolean get() = store != null
+
     fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
+        hubRedirect = store.look("api.hubRedirect", "false").toBoolean()
         // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
         for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")

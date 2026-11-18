@@ -585,4 +585,7 @@
     <string name="api_hub_title" translatable="false">Gateway Hub</string>
     <string name="api_hub_hint">Un solo enlace para que tu IA use Stone y otras apps. Copia un enlace solo para el hub y abre el panel para pegarlo. Revoca el token «Gateway Hub» para cortarlo.</string>
     <string name="api_hub_link">Vincular</string>
+    <string name="api_hub_redirect">Redirección hub</string>
+    <string name="api_hub_redirect_hint">La app Gateway Hub de este teléfono vincula Stone sola, sin copiar ni pegar. Solo apps firmadas por el mismo desarrollador.</string>
+    <string name="hub_link_permission">vincular Stone con Gateway Hub</string>
 </resources>
