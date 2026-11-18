@@ -519,4 +519,6 @@
     <string name="crash_last_title">Last unexpected close</string>
     <string name="crash_last_hint">Copy or share it so it can be fixed. It is only stored on this phone.</string>
     <string name="crash_copy">Copy</string>
+    <string name="api_hub_hint">One link for your AI to use Stone and other apps. Copies a link just for the hub and opens its panel to paste it. Revoke the “Gateway Hub” token to cut it off.</string>
+    <string name="api_hub_link">Link</string>
 </resources>

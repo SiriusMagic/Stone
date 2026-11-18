@@ -10,7 +10,6 @@ incluidas las que llegan arrastradas por otras.
 | Compilación (Gradle, Kotlin) | 2 plugins | **1 pendiente** (solo afecta al ordenador que compila, ver abajo) | Apache-2.0 |
 | Solo pruebas (no van en el APK) | 63 | **0** | Apache-2.0, MIT, BSD, EPL-1.0, CDDL+GPLv2-CE, Bouncy Castle, Unicode |
 | Relay (`npm`, solo herramienta de publicación) | 38 | **0** (`npm audit`) | MIT, Apache-2.0, ISC, 0BSD, CC0, LGPL-3.0 |
-| Hub (`hub/`, igual que el relay: solo `wrangler` fijado en 4.162.0) | 38 | **0** (`npm audit`) | Las mismas que el relay |
 
 Política: **la versión segura más antigua que ya lleve tiempo publicada**, no la última.
 Lo que ya es seguro se deja para la migración siguiente (compileSdk 37 + AGP 9, ver `android-native/app/lint.xml`).
@@ -56,7 +55,7 @@ stone-relay
 ```
 
 El Worker publicado (`relay/src/index.js`) **no tiene ninguna dependencia**: solo usa las APIs de Cloudflare.
-Lo mismo ocurre con el hub (`hub/src`): MCP, validación y calculadora están escritos a mano, sin paquetes en ejecución.
+El Gateway Hub tiene su propio repositorio y su propia revisión de dependencias (CI con `npm audit`).
 
 ## Cambios de esta revisión
 

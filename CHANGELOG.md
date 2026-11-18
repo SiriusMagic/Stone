@@ -1,3 +1,13 @@
+# Sin publicar
+
+- Stone y el hub MCP pasan a ser dos aplicaciones separadas: el hub vive en
+  [SiriusMagic/Gateway-Hub-MCP](https://github.com/SiriusMagic/Gateway-Hub-MCP). Stone conserva el
+  interruptor de la API, su token y las confirmaciones en el teléfono; el hub genera los enlaces de
+  cada IA y lleva las métricas de todas las apps.
+- Nueva tarjeta en Ajustes › Modo API › **Gateway Hub › Vincular**: crea o reutiliza el token
+  «Gateway Hub», copia su enlace y abre el panel del hub para pegarlo, sin pasar por ningún chat.
+  Revocar ese token en Stone corta el hub al instante.
+
 # Stone Kotlin 1.7.10
 
 - Seguridad: Stone ya no envía nada sin cifrar. Se quitó la última excepción (127.0.0.1) y las portadas

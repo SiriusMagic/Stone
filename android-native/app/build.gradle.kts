@@ -17,6 +17,9 @@ android {
         // Set it with -PstoneRelayUrl=https://… or stoneRelayUrl in gradle.properties.
         val relayUrl = (project.findProperty("stoneRelayUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "RELAY_URL", "\"$relayUrl\"")
+        // Gateway Hub MCP; -PstoneHubUrl=https://… or stoneHubUrl in gradle.properties (empty = no hub card).
+        val hubUrl = (project.findProperty("stoneHubUrl") as String?).orEmpty().trimEnd('/')
+        buildConfigField("String", "HUB_URL", "\"$hubUrl\"")
     }
     buildFeatures {
         compose = true

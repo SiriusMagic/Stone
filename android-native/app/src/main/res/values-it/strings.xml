@@ -617,4 +617,6 @@
     <string name="crash_last_title">Ultima chiusura imprevista</string>
     <string name="crash_last_hint">Copialo o condividilo per correggerlo. È salvato solo su questo telefono.</string>
     <string name="crash_copy">Copia</string>
+    <string name="api_hub_hint">Un solo link perché la tua IA usi Stone e altre app. Copia un link solo per l’hub e apre il pannello per incollarlo. Revoca il token «Gateway Hub» per scollegarlo.</string>
+    <string name="api_hub_link">Collega</string>
 </resources>

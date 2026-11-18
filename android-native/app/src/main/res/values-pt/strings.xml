@@ -617,4 +617,6 @@
     <string name="crash_last_title">Último fechamento inesperado</string>
     <string name="crash_last_hint">Copie ou compartilhe para corrigirmos. Fica salvo só neste telefone.</string>
     <string name="crash_copy">Copiar</string>
+    <string name="api_hub_hint">Um só link para sua IA usar o Stone e outros apps. Copia um link só para o hub e abre o painel para colá-lo. Revogue o token “Gateway Hub” para cortá-lo.</string>
+    <string name="api_hub_link">Vincular</string>
 </resources>

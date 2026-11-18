@@ -617,4 +617,6 @@
     <string name="crash_last_title">Letzter unerwarteter Absturz</string>
     <string name="crash_last_hint">Kopiere oder teile ihn zur Behebung. Er ist nur auf diesem Telefon gespeichert.</string>
     <string name="crash_copy">Kopieren</string>
+    <string name="api_hub_hint">Ein Link, über den deine KI Stone und andere Apps nutzt. Kopiert einen Link nur für den Hub und öffnet sein Panel zum Einfügen. Widerrufe den Token „Gateway Hub“, um ihn zu trennen.</string>
+    <string name="api_hub_link">Verbinden</string>
 </resources>

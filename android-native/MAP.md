@@ -7,7 +7,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (95) User switches for the MCP server (Ajustes › Modo API).
+- `ApiMode.kt` (111) User switches for the MCP server (Ajustes › Modo API).
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -211,7 +211,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (61) General:
+- `ApiGeneralTab.kt` (62) General:
+- `ApiHubCard.kt` (43) Gateway Hub:
 - `ApiModeSettings.kt` (67) Ajustes › Modo API:
 - `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
 - `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:

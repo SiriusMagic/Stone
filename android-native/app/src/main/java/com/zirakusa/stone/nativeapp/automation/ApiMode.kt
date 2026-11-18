@@ -11,6 +11,7 @@ import com.zirakusa.stone.nativeapp.automation.actions.StoneAction
 import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
 import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
 import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
@@ -39,6 +40,21 @@ object ApiMode {
 
     /** Whether this build has an internet relay (else only this phone). */
     val relayAvailable: Boolean get() = relayUrl.isNotBlank()
+
+    /** Gateway Hub MCP address (one link for several apps); it reaches Stone through the relay. */
+    internal var hubUrl: String = BuildConfig.HUB_URL
+    val hubAvailable: Boolean get() = hubUrl.isNotBlank() && relayAvailable
+    /** Hub page where the owner pastes Stone's link. */
+    val hubAdminUrl: String get() = "${hubUrl.trimEnd('/')}/admin"
+
+    /**
+     * The token reserved for the hub: reused if it exists, else created ("Lectura y escritura", so
+     * critical actions still ask on the phone). Revoking it in Stone cuts the hub off at once.
+     */
+    fun hubToken(): ApiToken = ApiTokens.tokens.firstOrNull { it.name == HUB_TOKEN_NAME }
+        ?: ApiTokens.create(HUB_TOKEN_NAME, AccessMode.WRITE)
+
+    const val HUB_TOKEN_NAME = "Gateway Hub"
 
     fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store

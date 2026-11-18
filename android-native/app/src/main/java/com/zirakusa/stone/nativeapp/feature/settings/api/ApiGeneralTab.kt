@@ -20,7 +20,7 @@ import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-/** General: 1) turn MCP on, 2) create a token, then one compact card per token. */
+/** General: 1) turn MCP on, 2) link the Gateway Hub or create a token, then one compact card per token. */
 @Composable internal fun ApiGeneralTab(copy: (String, String) -> Unit) {
     var creating by remember { mutableStateOf(false) }
     ApiActionCard(Icons.Default.ViewInAr, R.string.api_enable, R.string.api_enable_hint,
@@ -37,6 +37,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         }
     }
     ApiProgress()
+    ApiHubCard(copy)
     ApiActionCard(Icons.Default.Key, R.string.api_token_create, R.string.api_create_hint, trailing = {
         Button(onClick = { creating = true }, shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black)) {
