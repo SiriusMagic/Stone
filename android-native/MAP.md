@@ -4,10 +4,11 @@ Generado por `tools/update_map.py`. Lee este mapa, abre solo el archivo que nece
 si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/
-- `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
+- `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
 - `ApiMode.kt` (111) User switches for the MCP server (Ajustes › Modo API).
+- `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -258,7 +259,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/ui
 - `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
-- `StoneApp.kt` (446) Mini player button:
+- `StoneApp.kt` (451) Mini player button:
 
 ## app/ui/components
 - `SleepTimerIndicator.kt` (101) Shows the active sleep timer using the sun by day and the moon by night.

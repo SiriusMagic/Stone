@@ -73,6 +73,11 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
     var language by rememberSaveable { mutableStateOf(initialSettings.language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
+    // Opened from the Gateway Hub app ("Abrir y vincular"): show Ajustes › Modo API, nothing else.
+    val hubRequest = com.zirakusa.stone.nativeapp.automation.HubDiscovery.openApiSettings
+    LaunchedEffect(hubRequest) {
+        if (hubRequest) { settingsVisible = true; settingsPage = "api-mode"; com.zirakusa.stone.nativeapp.automation.HubDiscovery.consumed() }
+    }
     var landscapeMode by rememberSaveable { mutableStateOf(com.zirakusa.stone.core.LandscapeLayoutMode.ALWAYS) }
     var videoScale by rememberSaveable { mutableStateOf(VideoScale.fromKey(initialSettings.videoScale)) }
     var videoLibraryLayout by rememberSaveable {

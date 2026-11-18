@@ -1,3 +1,10 @@
+# Stone Kotlin 1.7.12
+
+- La app **Gateway Hub** encuentra Stone con su escáner (Stone se declara como la app `music_`) y su botón
+  «Abrir y vincular» abre directamente Ajustes › Modo API. Ser encontrada no activa nada: decides tú en Stone.
+- Solo se aceptan peticiones de apps firmadas igual que Stone; la app del hub lo comprueba antes de marcarla
+  como «Mismo desarrollador».
+
 # Stone Kotlin 1.7.11
 
 - Stone y el hub MCP pasan a ser dos aplicaciones separadas: el hub vive en
