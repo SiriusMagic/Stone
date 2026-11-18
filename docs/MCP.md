@@ -253,6 +253,8 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   solo lo que cubren los paquetes activos del agente; `tools/call` se rechaza con `PACKAGE_PENDING`, `OTHER_AGENT`,
   `TOOL_NOT_IN_PACKAGE`, `ACT_NOT_IN_PACKAGE`, `EXPIRED` o `NO_PACKAGE`. Sin paquete, el puente sigue en solo lectura
   (compatible con Gateway 0.0.7).
+- **Varios candidatos (fase 3):** el hub puede enviar `packages: [...]` (hasta 8, primero los del agente). Stone prueba cada
+  uno y usa el primero que cubre la llamada; si ninguno, responde con el motivo del primero.
 - **Otros métodos:** `gatewayhub/packages/offer|revoke|list` y `gatewayhub/state` (estado del entorno y modo que Stone muestra).
 - **Cancelación:** `notifications/cancelled {requestId}` interrumpe la llamada (por ejemplo, una confirmación aún en
   pantalla) y no se envía respuesta. Lo ya hecho no se deshace.

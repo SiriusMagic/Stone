@@ -34,7 +34,14 @@ object GatewayGrant {
 
     /** The agent and the execution package Gateway names for this request (both checked by [Packages]). */
     fun agent(message: JSONObject?): String? = meta(message)?.optString("agent")?.takeIf(AGENT::matches)
-    fun packageId(message: JSONObject?): String? = meta(message)?.optString("package")?.takeIf { it.startsWith("pkg_") && it.length <= 70 }
+    fun packageId(message: JSONObject?): String? = packageIds(message).firstOrNull()
+
+    /** Candidate packages (the hub sends up to 8, the agent's own first): `packages`, or the single `package`. */
+    fun packageIds(message: JSONObject?): List<String> {
+        val m = meta(message) ?: return emptyList()
+        val list = m.optJSONArray("packages")?.let { a -> (0 until minOf(a.length(), 8)).map { a.optString(it) } } ?: listOf(m.optString("package"))
+        return list.filter { it.startsWith("pkg_") && it.length <= 70 }.distinct()
+    }
 
     private fun meta(message: JSONObject?) = message?.optJSONObject("params")?.optJSONObject("_meta")?.optJSONObject(META)
 }

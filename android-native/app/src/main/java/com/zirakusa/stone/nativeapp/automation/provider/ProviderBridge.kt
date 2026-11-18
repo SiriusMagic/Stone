@@ -57,7 +57,10 @@ object ProviderBridge {
             if (action != null && packageId != null) {
                 // An execution package decides; "revisar" only previews. CRITICAL still asks on screen (mode WRITE).
                 val args = params.optJSONObject("arguments") ?: JSONObject().also { params.put("arguments", it) }
-                val act = try { Packages.authorize(packageId, agent, action, args) } catch (e: PackageException) { return refused(id, e.code) }
+                // The first candidate that covers the call wins; if none does, the first one's reason is shown.
+                val tried = GatewayGrant.packageIds(message).map { runCatching { Packages.authorize(it, agent, action, args) } }
+                val act = tried.firstNotNullOfOrNull { it.getOrNull() }
+                    ?: return refused(id, (tried.first().exceptionOrNull() as? PackageException)?.code ?: "NO_PACKAGE")
                 if (act == Act.REVISAR) args.put("dryRun", true)
                 grant = grant.copy(mode = GatewayGrant.PACKAGE_CAP)
             } else if (action != null && !grant.mode.permits(action.risk)) return forbidden(id, name)

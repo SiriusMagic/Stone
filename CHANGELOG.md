@@ -7,6 +7,7 @@
 - El puente con Gateway Hub ya no necesita «Activar MCP» ni «Redirección hub». Para cortarlo: **Desconectar de Gateway
   Hub** (se puede volver a permitir).
 - Gateway puede cancelar una petición en curso, por ejemplo una confirmación que nadie ha respondido.
+- Fase 3: Stone acepta varios paquetes candidatos por llamada (el hub elige cuáles podrían cubrirla).
 - Sin cambios en el enlace público, el relay ni Cloudflare. Sin APK todavía.
 
 # Stone Kotlin 1.7.17

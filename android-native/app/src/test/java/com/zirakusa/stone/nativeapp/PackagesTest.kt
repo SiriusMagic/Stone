@@ -131,6 +131,16 @@ class PackagesTest {
         assertEquals("ACT_NOT_IN_PACKAGE", JSONObject(change!!).getJSONObject("result").getJSONObject("structuredContent").getJSONObject("error").getString("code"))
     }
 
+    @Test fun theHubMaySendSeveralCandidates() {
+        Packages.install(pkg("pkg_readonly1", listOf("leer")), BuildConfig.APPLICATION_ID)
+        val write = Packages.install(pkg("pkg_writes001", listOf("escribir")), BuildConfig.APPLICATION_ID).also { Packages.approve(it.id) }
+        val meta = JSONObject().put(GatewayGrant.META, JSONObject().put("agent", "a1").put("packages", JSONArray(listOf("pkg_readonly1", write.id))))
+        val reply = offMain { ProviderBridge.handle(rpc("tools/call", JSONObject().put("name", reversible.toolName).put("arguments", JSONObject()).put("_meta", meta))) }
+        val code = JSONObject(reply!!).getJSONObject("result").optJSONObject("structuredContent")?.optJSONObject("error")?.optString("code")
+        assertTrue("the second package covers it, so no package error: $code", code == null || code !in setOf("ACT_NOT_IN_PACKAGE", "NO_PACKAGE"))
+        assertEquals(listOf("pkg_readonly1", write.id), GatewayGrant.packageIds(JSONObject(rpc("x", JSONObject().put("_meta", meta)))))
+    }
+
     @Test fun linkOfferAndRevokeOverTheContract() {
         val link = JSONObject(ProviderBridge.handle(rpc("gatewayhub/link", JSONObject().put("env", env).put("publicKey", Base64.getEncoder().encodeToString(keys.public.encoded))))!!)
         assertEquals(ProviderState.instanceId, link.getJSONObject("result").getString("instance"))
