@@ -32,12 +32,10 @@ app/…/nativeapp/
 │       ├── NotificationAlarmReceiver.kt                    ⚠ componente de Android
 │       ├── scan/ · user/ · tags/ · lyrics/ · artwork/ · web/ · notifications/
 └── automation/          Modo API (MCP)
-    ├── ApiMode.kt       Fachada que usa la interfaz
-    ├── auth/            Tokens, permisos, límite de intentos
-    ├── server/          Servidor HTTP/MCP en 127.0.0.1
-    ├── relay/           Enlace público cifrado (ver ../relay)
+    ├── provider/        Puente con Gateway Hub (Bound Service + Messenger, paquetes firmados)
+    ├── auth/            Modos de acceso
     ├── actions/         Herramientas que ven los agentes
-    └── activity/        Registro y estadísticas
+    └── activity/        Registro de llamadas
 ```
 
 ## Reglas

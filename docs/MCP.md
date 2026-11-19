@@ -131,8 +131,8 @@ la vez nunca ven ni usan los permisos del otro. Los trabajos en segundo plano y 
 
 ## Detalles del puente con Gateway Hub
 
-Además del enlace público, Stone ofrece su servidor MCP a la app **Gateway Hub del mismo teléfono** por IPC de
-Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoint MCP por usuario (Gateway Hub).
+Stone ofrece su MCP **solo** a la app **Gateway Hub del mismo teléfono**, por IPC de Android, sin HTTP. Desde 1.7.19
+no existe el relay `stone-relay` (fase 7): el único enlace público es el de Gateway Hub.
 
 - **Código (1.7.17):** `automation/provider/`: `ProviderService.kt` (servicio), `ProviderBridge.kt` (identidad,
   límites, filtros), `GatewayGrant.kt` (permisos delegados) y `McpDispatcher.kt` (MCP JSON-RPC sin sockets, que también
@@ -151,8 +151,7 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   lectura. Si falta o está mal formado, se aplica el tope sin nada extra.
 - **Solo lectura en `tools/list` y `tools/call`:** según el `ActionRisk` declarado de cada acción. Una herramienta que
   no es `READ` se rechaza con `READ_ONLY_BRIDGE` antes de ejecutarse. Las herramientas que Gateway bloquea no se listan
-  y su llamada da `TOOL_DISABLED`. El token «Gateway Hub» de Stone (pausa, caducidad, herramientas desactivadas) ya solo
-  afecta al camino HTTP/relay.
+  y su llamada da `TOOL_DISABLED`. (Los tokens propios de Stone y el camino HTTP/relay se retiraron en las fases 6 y 7.)
 - **Herramienta de prueba:** solo `stone_help` (lee, sin efectos, funciona sin la pantalla de Stone), marcada en
   `tools/list` con `_meta["com.zirakusa.gatewayhub/probe"] = true`. Gateway no ejecuta ninguna otra.
 - **Tamaño:** máximo 200 000 caracteres por mensaje (~400 KB en UTF-16, por debajo del búfer de 1 MB de Binder).
@@ -161,8 +160,7 @@ Android, sin HTTP ni relay. Es la primera fase de la migración a un solo endpoi
   es un `ParcelFileDescriptor` (tubería) o respuestas paginadas; no hace falta en esta fase.
 - **Errores del canal:** cola de 16 peticiones (`BUSY` si se llena), errores JSON-RPC con código en el mensaje
   (`NOT_GATEWAY`, `NOT_SAME_DEVELOPER`, `REDIRECT_OFF`, `API_OFF`), y si Gateway desaparece la respuesta se descarta.
-- **Reversión:** apagar «Redirección hub» cierra el puente sin reinstalar nada. El enlace público, el relay y Cloudflare
-  no cambian.
+- **Cortar:** Ajustes › Gateway Hub › Desconectar cierra el puente sin reinstalar nada.
 
 ### Fase 2 (sin publicar): paquetes de ejecución
 

@@ -1,3 +1,8 @@
+# Sin publicar (fase 7)
+
+- **Adiós al relay:** se borra la carpeta `relay/` (Worker `stone-relay`). Stone llega a las IA solo a través de
+  Gateway Hub. El Worker `stone-relay` que quede en tu Cloudflare ya no se usa y se puede borrar.
+
 # Stone Kotlin 1.7.18
 
 - **Las copias de seguridad automáticas de otras apps ya no aparecen como canciones** («AutoBackup_…» con «All data
