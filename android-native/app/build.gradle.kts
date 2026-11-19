@@ -11,8 +11,8 @@ android {
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
         targetSdk = 35
-        versionCode = 51
-        versionName = "1.7.17"
+        versionCode = 52
+        versionName = "1.7.18"
         // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
     }
     buildFeatures {

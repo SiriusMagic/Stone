@@ -1,4 +1,10 @@
-# Sin publicar (fase 2: Stone como proveedor de Gateway Hub)
+# Stone Kotlin 1.7.18
+
+- **Las copias de seguridad automáticas de otras apps ya no aparecen como canciones** («AutoBackup_…» con «All data
+  backup», «AutoPlaylist_…» con «Playlist backup»). Stone no las crea: las deja otra app y Android las indexa como audio.
+  Stone las oculta siempre; los archivos no se tocan.
+
+## Gateway Hub: fases 2 a 6 (Stone como proveedor)
 
 - **Paquetes de ejecución** en Ajustes › Modo API › Gateway Hub · paquetes: Gateway Hub ofrece permisos firmados
   (leer, revisar, escribir, modificar, revertir) para un agente y un tiempo. Los de solo lectura se activan solos; los

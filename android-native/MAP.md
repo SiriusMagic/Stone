@@ -68,7 +68,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `FolderScanner.kt` (77) Uses Stone's selected SAF folder;
 - `ImportedLibraryStore.kt` (39) Legacy app-private media index kept so imports from older releases remain playable.
 - `LibraryCache.kt` (62) Disposable index only;
-- `LibraryRepository.kt` (108) Whole-device scanning is on and Android granted the media permission.
+- `LibraryRepository.kt` (111) Whole-device scanning is on and Android granted the media permission.
+- `NotMusic.kt` (16) Files other apps leave in Android's media index that are not music, such as their automatic backups ("AutoBackup_20261115_205503821", album "All data
 - `SongJson.kt` (57) Stable representation shared by the library cache and legacy app-private media index.
 
 ## app/data/library/tags

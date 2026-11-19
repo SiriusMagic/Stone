@@ -33,10 +33,13 @@ class LibraryRepository(context: Context) {
     fun deviceScanActive(): Boolean = settings.read().deviceScan && DeviceMediaAccess.audioGranted(appContext)
     val hasSource: Boolean get() = folders.isNotEmpty() || deviceScanActive()
 
-    /** Folder songs win over MediaStore copies of the same file (they keep SAF write access). */
+    /**
+     * Folder songs win over MediaStore copies of the same file (they keep SAF write access). Other apps'
+     * backups that Android indexes as audio are left out ([NotMusic]).
+     */
     private fun merge(folderSongs: List<Song>, deviceSongs: List<Song>): List<Song> {
         val known = folderSongs.mapTo(HashSet()) { it.size to it.durationMs / 1000 }
-        return folderSongs + deviceSongs.filterNot { (it.size to it.durationMs / 1000) in known }
+        return (folderSongs + deviceSongs.filterNot { (it.size to it.durationMs / 1000) in known }).filterNot(NotMusic::matches)
     }
     val folders: List<String> get() = preferences.getStringSet("folders", null)
         ?.toList().orEmpty().ifEmpty { listOfNotNull(preferences.getString("folder", null)) }
