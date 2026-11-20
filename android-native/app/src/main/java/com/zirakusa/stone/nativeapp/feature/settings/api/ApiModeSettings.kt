@@ -41,6 +41,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
         context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText(label, value))
         Toast.makeText(context, R.string.api_copied, Toast.LENGTH_SHORT).show()
     }
+    // While redirecting to the hub, the hub has the analytics: only General is shown.
+    if (ApiMode.hubRedirect) { ApiGeneralTab(::copy); Spacer(Modifier.height(16.dp)); return }
     ApiTabRow(tab) { tab = it }
     when (tab) {
         ApiTab.GENERAL -> ApiGeneralTab(::copy)

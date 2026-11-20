@@ -64,10 +64,10 @@ private enum class StatsRange(val label: Int, val buckets: Int, val bucketMinute
                 FilterChip(range == item, { range = item }, { Text(stringResource(item.label), fontSize = 12.sp) })
             }
         }
-        if (fixedTokenId == null && ApiTokens.tokens.size > 1) Row(Modifier.fillMaxWidth().padding(top = 2.dp),
+        if (fixedTokenId == null && ApiTokens.listed.size > 1) Row(Modifier.fillMaxWidth().padding(top = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(picked == null, { picked = null }, { Text(stringResource(R.string.api_an_all), fontSize = 12.sp) })
-            ApiTokens.tokens.take(4).forEach { token ->
+            ApiTokens.listed.take(4).forEach { token ->
                 FilterChip(picked == token.id, { picked = token.id }, { Text(token.name, fontSize = 12.sp, maxLines = 1) })
             }
         }

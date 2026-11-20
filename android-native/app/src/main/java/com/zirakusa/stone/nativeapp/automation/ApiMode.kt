@@ -37,6 +37,29 @@ object ApiMode {
     /** Relay address; built in through BuildConfig, replaceable in tests. */
     internal var relayUrl: String = BuildConfig.RELAY_URL
 
+    /**
+     * «Redireccionar a Hub»: Gateway Hub manages everything (who may use Stone, permissions, expiry, analytics).
+     * While it is on Stone serves only the hub's own token, starts by itself (no «Activar MCP» needed) and the
+     * user's tokens wait, untouched, until it is turned off. Off by default.
+     */
+    var hubRedirect by mutableStateOf(false)
+        private set
+
+    fun redirectToHub(value: Boolean) {
+        hubRedirect = value; store?.setLook("api.hubRedirect", value.toString())
+        if (value) ApiTokens.redirectToken()
+        ApiTokens.publish(); apply()
+    }
+
+    /** Whether the server should run: switched on by the user, or managed by the hub. */
+    val active: Boolean get() = enabled || hubRedirect
+
+    /** Link the hub uses to reach Stone while redirecting (only for the Gateway Hub app or the hub's Apps page). */
+    fun hubLink(): String = shareText(ApiTokens.redirectToken().secret)
+
+    /** Whether [load] already ran in this process (the hub link provider can be called before any screen). */
+    val loaded: Boolean get() = store != null
+
     /** Whether this build has an internet relay (else only this phone). */
     val relayAvailable: Boolean get() = relayUrl.isNotBlank()
 
@@ -44,6 +67,7 @@ object ApiMode {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
+        hubRedirect = store.look("api.hubRedirect", "false").toBoolean()
         // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
         for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")
@@ -69,8 +93,8 @@ object ApiMode {
         access.permits(action.risk) // tools are allowed per token (ApiToken.disabledTools)
 
     private fun apply() {
-        running = if (enabled) McpServer.start(ApiTokens.tokens, port) else { McpServer.stop(); false }
-        if (enabled && running && relayAvailable) {
+        running = if (active) McpServer.start(ApiTokens.served(hubRedirect), port) else { McpServer.stop(); false }
+        if (active && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }

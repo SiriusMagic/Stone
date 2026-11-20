@@ -617,4 +617,18 @@
     <string name="crash_last_title">Dernière fermeture inattendue</string>
     <string name="crash_last_hint">Copie-le ou partage-le pour qu\'on le corrige. Il reste sur ce téléphone.</string>
     <string name="crash_copy">Copier</string>
+    <string name="api_enable_by_hub">Géré par Gateway Hub tant que « Rediriger vers le Hub » est activé.</string>
+    <string name="api_hub_redirect">Rediriger vers le Hub</string>
+    <string name="api_hub_redirect_hint">La gestion des autorisations, de l\'expiration, de l\'assistance et des statistiques passe à Gateway Hub. Inutile d\'activer MCP.</string>
+    <string name="api_hub_open">Aller au Hub</string>
+    <string name="api_hub_paste">Lien copié. Collez-le dans Gateway Hub › Apps.</string>
+    <string name="hub_link_permission">Associer à Gateway Hub</string>
+    <string name="api_kind_title">Que allez-vous connecter ?</string>
+    <string name="api_kind_llm">LLM</string>
+    <string name="api_kind_llm_hint">Le lien se colle directement dans Claude, ChatGPT…</string>
+    <string name="api_kind_hub">Hub</string>
+    <string name="api_kind_hub_hint">Le lien se colle dans Gateway Hub, qui sert seulement de pont.</string>
+    <string name="api_usage_title">Usage du jeton</string>
+    <string name="api_usage_hint">Décrivez à quoi il servira (affiché dans le hub).</string>
+    <string name="api_token_link_label_hub">Jeton (lien pour le hub)</string>
 </resources>

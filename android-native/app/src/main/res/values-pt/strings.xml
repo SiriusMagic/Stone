@@ -617,4 +617,18 @@
     <string name="crash_last_title">Último fechamento inesperado</string>
     <string name="crash_last_hint">Copie ou compartilhe para corrigirmos. Fica salvo só neste telefone.</string>
     <string name="crash_copy">Copiar</string>
+    <string name="api_enable_by_hub">Gerido pelo Gateway Hub enquanto «Redirecionar para o Hub» estiver ativo.</string>
+    <string name="api_hub_redirect">Redirecionar para o Hub</string>
+    <string name="api_hub_redirect_hint">A gestão de permissões, validade, suporte e análise passa para o Gateway Hub. Não é preciso ativar o MCP.</string>
+    <string name="api_hub_open">Ir para o Hub</string>
+    <string name="api_hub_paste">Link copiado. Cole-o em Gateway Hub › Apps.</string>
+    <string name="hub_link_permission">Ligar ao Gateway Hub</string>
+    <string name="api_kind_title">O que vais ligar?</string>
+    <string name="api_kind_llm">LLM</string>
+    <string name="api_kind_llm_hint">O link é colado diretamente no Claude, ChatGPT…</string>
+    <string name="api_kind_hub">Hub</string>
+    <string name="api_kind_hub_hint">O link é colado no Gateway Hub, que só faz de ponte.</string>
+    <string name="api_usage_title">Uso do token</string>
+    <string name="api_usage_hint">Descreve para que o vais usar (aparece no hub).</string>
+    <string name="api_token_link_label_hub">Token (link para o hub)</string>
 </resources>

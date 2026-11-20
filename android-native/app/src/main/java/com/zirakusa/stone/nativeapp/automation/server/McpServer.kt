@@ -55,6 +55,9 @@ object McpServer {
     private val streams = ConcurrentHashMap<String, OutputStream>()
     private val streamGrants = ConcurrentHashMap<String, ApiToken>()
 
+    /** Key of the token details in the initialize result (`_meta`), read by Gateway Hub. */
+    const val TOKEN_META = "com.zirakusa.stone/token"
+
     val running: Boolean get() = socket?.isClosed == false
 
     /** Single-token start (tests, older callers): that token gets "Lectura y escritura". */
@@ -272,6 +275,10 @@ object McpServer {
                             AccessMode.WRITE -> "Only critical actions (like deleting a playlist) ask the user on the phone (up to 60 s)."
                             AccessMode.FULL -> "Full access: nothing asks the user for approval."
                         })
+                    // For Gateway Hub: which token this is and what it is for, so the hub can show it.
+                    .put("_meta", JSONObject().put(TOKEN_META, JSONObject().put("name", grant.name)
+                        .put("kind", grant.kind.key).put("usage", grant.usage).put("mode", grant.mode.key)
+                        .put("expiresAt", grant.expiresAt)))
                 "ping" -> JSONObject()
                 "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode, grant.disabledTools).map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)

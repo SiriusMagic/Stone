@@ -1,6 +1,7 @@
 package com.zirakusa.stone.nativeapp.feature.settings.api
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +24,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +35,7 @@ import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
 import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
+import com.zirakusa.stone.nativeapp.automation.auth.TokenKind
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import java.text.DateFormat
@@ -49,6 +52,8 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
     val secret = remember(token?.id) { token?.secret ?: ApiTokens.secret() }
     var name by remember(token?.id) { mutableStateOf(token?.name.orEmpty()) }
     var mode by remember(token?.id) { mutableStateOf(token?.mode ?: AccessMode.WRITE) }
+    var kind by remember(token?.id) { mutableStateOf(token?.kind ?: TokenKind.LLM) }
+    var usage by remember(token?.id) { mutableStateOf(token?.usage.orEmpty()) }
     // New tokens start without an end date; existing ones keep theirs until another option is chosen.
     var expiry by remember(token?.id) { mutableStateOf(if (token == null) 0 else null) }
     var customDays by remember(token?.id) { mutableStateOf("") }
@@ -67,11 +72,23 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
                         Text(stringResource(if (token == null) R.string.api_token_create else R.string.api_token_configure),
                             fontSize = 22.sp, fontWeight = FontWeight.Black)
                     }
+                    Text(stringResource(R.string.api_kind_title), Modifier.padding(top = 8.dp), fontWeight = FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        KindCard(TokenKind.LLM, kind == TokenKind.LLM, Modifier.weight(1f)) { kind = TokenKind.LLM }
+                        KindCard(TokenKind.HUB, kind == TokenKind.HUB, Modifier.weight(1f)) { kind = TokenKind.HUB }
+                    }
                     OutlinedTextField(name, { name = it.take(40) }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true,
                         label = { Text(stringResource(R.string.api_token_name)) })
                 }
                 item {
-                    Text(stringResource(R.string.api_token_link_label), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.api_usage_title), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.api_usage_hint), color = StonePalette.Muted, fontSize = 12.sp)
+                    OutlinedTextField(usage, { usage = it.take(ApiToken.USAGE_MAX) }, Modifier.fillMaxWidth().padding(top = 6.dp),
+                        minLines = 2, maxLines = 4, supportingText = { Text("${usage.length} / ${ApiToken.USAGE_MAX}") })
+                }
+                item {
+                    Text(stringResource(if (kind == TokenKind.HUB) R.string.api_token_link_label_hub else R.string.api_token_link_label),
+                        fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(14.dp)).background(StonePalette.Chip)
                         .padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(ApiMode.linkFor(secret), Modifier.weight(1f), fontFamily = FontFamily.Monospace, fontSize = 11.sp,
@@ -112,10 +129,11 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
                         colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black), onClick = {
                         val days = expiry?.let { if (it == -1) customDays.toInt() else it }
                         if (token == null) {
-                            val created = ApiTokens.create(name, mode, days ?: 0, secret, blocked)
+                            val created = ApiTokens.create(name, mode, days ?: 0, secret, blocked, kind, usage)
                             copy("Stone MCP · ${created.name}", ApiMode.shareText(created.secret))
                         } else {
                             ApiTokens.rename(token.id, name); ApiTokens.setMode(token.id, mode)
+                            ApiTokens.setKind(token.id, kind); ApiTokens.setUsage(token.id, usage)
                             ApiTokens.setDisabledTools(token.id, blocked)
                             days?.let { ApiTokens.setExpiry(token.id, it) }
                         }
@@ -129,6 +147,18 @@ private val expiryChoices = listOf(0, 7, 30, 90, 365, -1)
         }
     }
     if (confirmRevoke && token != null) ApiRevokeDialog(token, { confirmRevoke = false }, onRevoked = onClose)
+}
+
+/** «¿Qué vas a conectar?»: an AI directly (LLM) or Gateway Hub, which only bridges this token. */
+@Composable private fun KindCard(kind: TokenKind, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Column(modifier.clip(shape).background(if (selected) StonePalette.Yellow.copy(alpha = .12f) else Color.Transparent)
+        .border(if (selected) 2.dp else 1.dp, if (selected) StonePalette.Yellow else Color.White.copy(alpha = .12f), shape)
+        .clickable(onClick = onClick).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(kind.icon(), null, Modifier.size(28.dp), tint = if (selected) StonePalette.Yellow else StonePalette.Text)
+        Text(stringResource(kind.label()), fontWeight = FontWeight.Bold, color = if (selected) StonePalette.Yellow else StonePalette.Text)
+        Text(stringResource(kind.hint()), color = StonePalette.Secondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+    }
 }
 
 @Composable private fun ExpiryNow(token: ApiToken) {

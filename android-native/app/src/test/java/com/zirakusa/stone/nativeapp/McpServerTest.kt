@@ -231,6 +231,18 @@ class McpServerTest {
         assertFalse(bands.getBoolean("isError"))
     }
 
+    @Test fun initializeTellsTheHubWhichTokenThisIs() {
+        McpServer.stop()
+        assertTrue(McpServer.start(listOf(ApiToken("h", "Casa", token, AccessMode.READ, 0,
+            kind = com.zirakusa.stone.nativeapp.automation.auth.TokenKind.HUB, usage = "Hub de casa"))))
+        val meta = rpc("initialize").getJSONObject("result").getJSONObject("_meta").getJSONObject(McpServer.TOKEN_META)
+        assertEquals("Casa", meta.getString("name"))
+        assertEquals("hub", meta.getString("kind"))
+        assertEquals("Hub de casa", meta.getString("usage"))
+        assertEquals("read", meta.getString("mode"))
+        assertFalse("never the secret", meta.toString().contains(token))
+    }
+
     @Test fun initializeAndListTools() {
         val init = rpc("initialize", JSONObject().put("protocolVersion", "2025-06-18")).getJSONObject("result")
         assertEquals("2025-06-18", init.getString("protocolVersion"))

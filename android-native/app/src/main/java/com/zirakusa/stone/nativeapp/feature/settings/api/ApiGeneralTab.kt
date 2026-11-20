@@ -20,12 +20,16 @@ import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-/** General: 1) turn MCP on, 2) create a token, then one compact card per token. */
+/**
+ * General: 1) turn MCP on, 2) «Redireccionar a Hub», 3) create a token, then one compact card per token.
+ * While redirecting, the hub manages everything: «Activar MCP» is not needed and tokens are not shown here.
+ */
 @Composable internal fun ApiGeneralTab(copy: (String, String) -> Unit) {
     var creating by remember { mutableStateOf(false) }
-    ApiActionCard(Icons.Default.ViewInAr, R.string.api_enable, R.string.api_enable_hint,
-        trailing = { Switch(ApiMode.enabled, ApiMode::enable) }) {
-        if (ApiMode.enabled) {
+    val redirect = ApiMode.hubRedirect
+    ApiActionCard(Icons.Default.ViewInAr, R.string.api_enable, if (redirect) R.string.api_enable_by_hub else R.string.api_enable_hint,
+        trailing = { Switch(ApiMode.active, ApiMode::enable, enabled = !redirect) }) {
+        if (ApiMode.active) {
             val (color, label) = when {
                 !ApiMode.running -> MaterialTheme.colorScheme.error to R.string.api_status_error
                 !ApiMode.relayAvailable -> StonePalette.Yellow to R.string.api_relay_missing
@@ -36,7 +40,9 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             ApiPill(stringResource(label), color, Modifier.padding(top = 10.dp))
         }
     }
+    ApiHubCard(copy)
     ApiProgress()
+    if (redirect) return
     ApiActionCard(Icons.Default.Key, R.string.api_token_create, R.string.api_create_hint, trailing = {
         Button(onClick = { creating = true }, shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(containerColor = StonePalette.Yellow, contentColor = Color.Black)) {
@@ -44,7 +50,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             Text(stringResource(R.string.api_token_create), Modifier.padding(start = 4.dp), fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
     })
-    ApiTokens.tokens.forEach { token -> ApiTokenCard(token, copy) }
+    ApiTokens.listed.forEach { token -> ApiTokenCard(token, copy) }
     if (creating) ApiTokenEditor(null, copy) { creating = false }
 }
 

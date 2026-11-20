@@ -7,7 +7,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (95) User switches for the MCP server (Ajustes › Modo MCP).
+- `ApiMode.kt` (119) User switches for the MCP server (Ajustes › Modo MCP).
+- `HubLink.kt` (54) «Redireccionar a Hub»:
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -32,8 +33,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `RequestStats.kt` (91) Requests per minute for Ajustes › Modo MCP › Analítica:
 
 ## app/automation/auth
-- `AccessMode.kt` (59) What a token lets an agent do.
-- `ApiTokens.kt` (104) Access tokens of Ajustes › Modo MCP › Seguridad.
+- `AccessMode.kt` (75) What a token lets an agent do.
+- `ApiTokens.kt` (120) Access tokens of Ajustes › Modo MCP › Seguridad.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 
@@ -44,7 +45,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (345) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (352) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
@@ -212,11 +213,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (61) General:
-- `ApiModeSettings.kt` (67) Ajustes › Modo MCP:
-- `ApiModeShared.kt` (128) Tabs of Ajustes › Modo MCP:
-- `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
-- `ApiTokenRow.kt` (73) Compact token card:
+- `ApiGeneralTab.kt` (67) General:
+- `ApiHubCard.kt` (55) Package of the Gateway Hub app (same developer);
+- `ApiModeSettings.kt` (69) Ajustes › Modo MCP:
+- `ApiModeShared.kt` (132) Tabs of Ajustes › Modo MCP:
+- `ApiTokenEditor.kt` (206) Create ([token] null) or configure a token, in this order:
+- `ApiTokenRow.kt` (74) Compact token card:
 
 ## app/feature/settings/feedback
 - `CrashReportCard.kt` (42) Ajustes › Diagnóstico:
