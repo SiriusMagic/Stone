@@ -11,7 +11,7 @@ tokens ni tu biblioteca: solo lo que se busca (título y artista).
 | **iTunes Search API** (`itunes.apple.com`) | Sugerir etiquetas y portadas | Título y artista | "Completar etiquetas" | No | `data/library/tags/TagSuggestions.kt` |
 | Servidor de la portada elegida | Descargar la imagen | La dirección de la imagen | Al aplicar una portada | No | `data/library/artwork/CoverDownloader.kt` |
 | **Google, Letras.com, Genius, Musixmatch** | Navegador de letras dentro de la app | La búsqueda que tú escribes; cada web pone sus cookies | Solo si abres "Buscar en la web" | No | `feature/player/lyrics/LyricsSearchBrowser.kt` |
-| **Gateway Hub** (app aparte; su Worker `stone-hub` está en **tu** Cloudflare) | Un enlace MCP para varias apps | Lo que pida la IA, por el puente local con Gateway | Solo si vinculas Stone desde Gateway | No (Gateway guarda las credenciales) | `automation/provider/` |
+| **Cloudflare Workers** (`stone-relay.<cuenta>.workers.dev`) | Enlace público del Modo API | Las peticiones del agente, cifradas por HTTPS | Solo con el Modo API activado | Secreto propio del teléfono (no tu token) | `relay/`, `automation/relay/` |
 | **GitHub** (`github.com/SiriusMagic/Stone`) | Enlace al código y a las descargas | Nada (solo se abre el enlace) | Si lo tocas en Ajustes | No | `feature/settings/LegalScreens.kt` |
 
 Stone respeta los límites de cada servicio: espera entre peticiones y, si alguno responde
@@ -49,6 +49,12 @@ Stone respeta los límites de cada servicio: espera entre peticiones y, si algun
 - La iTunes Search API es gratuita y sin clave. Apple la ofrece para enlazar a su catálogo, y sus
   condiciones de uso pueden cambiar: revísalas antes de una publicación comercial.
 - Uso razonable: poner la portada correcta en **tu** copia de la canción.
+
+## Cloudflare (relay)
+
+- Stone usa el plan gratuito de Workers y Durable Objects.
+- El relay **no guarda** peticiones, letras ni tokens: solo el hash del secreto de cada teléfono.
+- Con el límite de 120 peticiones por minuto, un desconocido no puede agotar el plan gratuito.
 
 ## Licencias del código que usa Stone
 

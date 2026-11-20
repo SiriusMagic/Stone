@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
-import com.zirakusa.stone.nativeapp.automation.provider.ProviderState
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
 /**
  * Background batches for agents. A long batch through the relay used to time out; now the tool
@@ -61,8 +61,8 @@ internal object StoneJobs {
             while (isActive) {
                 val index = synchronized(entry.results) { entry.results.size }
                 if (index >= entry.items.size) break
-                // A job never outlives its link: if the user disconnects Gateway Hub it stops before the next song.
-                if (entry.owner.isNotEmpty() && !ProviderState.linked) { entry.status = "cancelled"; break }
+                // A job never outlives its token: revoked, paused or expired stops it before the next song.
+                if (entry.owner.isNotEmpty() && !McpServer.isActive(entry.owner)) { entry.status = "cancelled"; break }
                 val item = entry.items[index]
                 StoneAutomation.reportProgress(BatchProgress(entry.tool, index, entry.items.size))
                 val result = try {

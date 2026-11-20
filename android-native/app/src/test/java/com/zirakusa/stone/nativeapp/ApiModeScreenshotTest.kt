@@ -7,10 +7,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.ApiMode
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
+import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
+import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.feature.settings.api.ApiModeSettings
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
@@ -22,37 +30,65 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Screenshots of Ajustes › Gateway Hub and nearby settings. */
+/** Screenshots of every tab of Ajustes › Modo API. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "es-w411dp-h2400dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ApiModeScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
-    @After fun reset() { com.zirakusa.stone.nativeapp.automation.provider.Packages.clear() }
+    @After fun reset() { ApiMode.relayUrl = ""; ApiTokens.replaceForTests(emptyList()); RequestStats.clearForTests() }
 
-    /** Ajustes › Gateway Hub: the link Gateway reports, packages (one waiting for approval) and the activity. */
-    @Test fun gatewayHubPage() {
-        val state = com.zirakusa.stone.nativeapp.automation.provider.ProviderState
-        state.load(com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore(org.robolectric.RuntimeEnvironment.getApplication()))
-        state.allowAgain()
-        val keys = java.security.KeyPairGenerator.getInstance("EC").apply { initialize(java.security.spec.ECGenParameterSpec("secp256r1")) }.generateKeyPair()
-        state.link("env_screenshot0001", java.util.Base64.getEncoder().encodeToString(keys.public.encoded))
-        state.report("active", "safe", System.currentTimeMillis())
-        val now = System.currentTimeMillis() / 1000
-        fun offer(id: String, label: String, agent: String, acts: List<String>) {
-            val bytes = org.json.JSONObject().put("v", 1).put("id", id).put("env", "env_screenshot0001").put("aud", state.audience(BuildConfig.APPLICATION_ID))
-                .put("agent", agent).put("label", label).put("acts", org.json.JSONArray(acts)).put("tools", org.json.JSONArray()).put("nbf", now - 60).put("exp", now + 30 * 86_400).toString().toByteArray()
-            val sig = java.security.Signature.getInstance("SHA256withECDSA").run { initSign(keys.private); update(bytes); sign() }
-            com.zirakusa.stone.nativeapp.automation.provider.Packages.install(org.json.JSONObject().put("pkg", java.util.Base64.getUrlEncoder().encodeToString(bytes))
-                .put("sig", java.util.Base64.getUrlEncoder().encodeToString(sig)), BuildConfig.APPLICATION_ID)
+    /** About 40 minutes of traffic from two agents, a few failures and one wrong token. */
+    private fun traffic() {
+        RequestStats.clearForTests()
+        val now = System.currentTimeMillis()
+        for (minute in 0 until 40) repeat((minute * 7) % 9 + if (minute in 30..33) 12 else 0) { call ->
+            val token = if (call % 3 == 0) "b" else "a"
+            val kind = if (call == 4) RequestStats.FAILED else if (call == 6) RequestStats.DENIED else RequestStats.OK
+            RequestStats.record(token, kind, now - minute * 60_000L)
         }
-        offer("pkg_screenread01", "Lectura", "*", listOf("leer"))
-        offer("pkg_screentags01", "Claude · ordenar etiquetas", "a1b2c3d4e5f6", listOf("revisar", "modificar", "revertir"))
+        RequestStats.record("", RequestStats.REJECTED, now)
+    }
+
+    @Test fun everyTab() {
+        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
+        ApiTokens.replaceForTests(listOf(
+            ApiToken("a", "Claude Principal", "2a9f00000000000000000000000000000000000000d3e7", AccessMode.WRITE, 1_767_000_000_000, 1_767_100_000_000),
+            ApiToken("b", "ChatGPT", "7b1c000000000000000000000000000000000000091a0", AccessMode.READ, 1_767_000_000_000, paused = true)))
+        traffic()
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) { ApiModeSettings() }
         } } }
-        onView(isRoot()).captureRoboImage("build/screenshots/stone-gateway-hub.png")
+        onView(isRoot()).captureRoboImage("build/screenshots/stone-api-general.png")
+        listOf("Analítica" to "analytics").forEach { (tab, file) ->
+            compose.onAllNodesWithText(tab).onFirst().performClick()
+            compose.waitForIdle()
+            onView(isRoot()).captureRoboImage("build/screenshots/stone-api-$file.png")
+        }
+    }
+
+    @Test fun tokenEditorWithItsOwnAnalytics() {
+        traffic()
+        ApiTokens.replaceForTests(listOf(ApiToken("a", "ChatGPT", "7b1c000000000000000000000000000000000000091a0",
+            AccessMode.FULL, 1_767_000_000_000, disabledTools = setOf("playlist_delete", "metadata_undo"))))
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
+            com.zirakusa.stone.nativeapp.feature.settings.api.ApiTokenEditor(ApiTokens.tokens.first(), { _, _ -> }) {}
+        } } }
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Listas").onFirst().performClick()
+        compose.waitForIdle()
+        // The editor is its own full-screen window: capture that window, not the activity behind it.
+        compose.onNode(androidx.compose.ui.test.isDialog()).captureRoboImage("build/screenshots/stone-api-token-editor.png")
+    }
+
+    @Test fun createTokenScreen() {
+        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
+        compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
+            com.zirakusa.stone.nativeapp.feature.settings.api.ApiTokenEditor(null, { _, _ -> }) {}
+        } } }
+        compose.waitForIdle()
+        compose.onNode(androidx.compose.ui.test.isDialog()).captureRoboImage("build/screenshots/stone-api-token-create.png")
     }
 
     @Test fun audioLevels() {

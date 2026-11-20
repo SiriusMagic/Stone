@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,22 +31,13 @@ private enum class ActivityFilter(val label: Int) {
     DENIED(R.string.api_filter_denied)
 }
 
-/** Bar shown while a batch tool runs (rename, update_many, fetch_lyrics…). */
-@Composable internal fun ApiProgress() {
-    val progress by StoneAutomation.progress.collectAsState()
-    progress?.let { batch ->
-        Text(stringResource(R.string.api_batch_progress, batch.action, batch.done, batch.total), Modifier.padding(top = 14.dp),
-            color = StonePalette.Yellow, fontSize = 13.sp)
-        LinearProgressIndicator({ if (batch.total == 0) 0f else batch.done / batch.total.toFloat() },
-            Modifier.fillMaxWidth().padding(top = 6.dp), color = StonePalette.Yellow)
-    }
-}
-
-/** Activity: counters since Stone opened, filters and the request log. */
+/** Actividad tab: counters since Stone opened, filters and the request log. */
 @Composable internal fun ApiActivityTab() {
     val history by StoneAutomation.history.collectAsState()
     var filter by rememberSaveable { mutableStateOf(ActivityFilter.ALL) }
     ApiProgress()
+    // Requests per minute for every agent together, or one token at a time.
+    ApiSection(R.string.api_analytics, Icons.Default.MonitorHeart) { ApiAnalyticsCard() }
     ApiSection(R.string.api_tab_activity, Icons.Default.MonitorHeart, R.string.api_stats_since) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stat(history.count { it.status == RecordStatus.OK }, R.string.api_stats_ok, ApiGreen)

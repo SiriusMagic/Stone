@@ -1,20 +1,50 @@
 # Stone — guía de conexión para agentes (MCP)
 
-Stone ofrece sus herramientas **Model Context Protocol** a través de Gateway Hub (Ajustes › Gateway Hub). Este
-documento es para pegárselo a un agente de IA que no logre usarlas.
+Stone expone un servidor **Model Context Protocol** en el teléfono (Ajustes › Modo API). Este
+documento es para pegárselo a un agente de IA que no logre conectarse.
 
-## Cómo se conecta un agente
+## Enlace
 
-Stone **ya no tiene enlace propio, tokens ni servidor HTTP**: es un proveedor de herramientas de **Gateway Hub**.
-El agente usa la única dirección MCP del usuario, `https://<hub>/mcp`, con el enlace que Gateway Hub crea para
-él (Agentes › Nuevo enlace). Las herramientas de Stone aparecen con el prefijo `music_` (`music_player_state`,
-`music_library_search`…), o `music2_`… si es el Stone de otro teléfono.
+`https://<relevo>/d/<dispositivo>/mcp?token=<TOKEN>` (botón "Copiar enlace" en Stone).
+El token también se acepta como `Authorization: Bearer <TOKEN>` o `X-Api-Key: <TOKEN>`.
+Stone debe estar abierto en el teléfono con el Modo API activado.
 
-- Gateway Hub decide qué agente puede usar qué (enlaces, apps permitidas, solo lectura) y Stone ejecuta solo lo
-  que cubre un **paquete de ejecución** aprobado en Stone (ver más abajo).
-- `tools/list` muestra solo lo que los paquetes del agente permiten. Un error `NO_PACKAGE`, `ACT_NOT_IN_PACKAGE` o
-  `PACKAGE_PENDING` significa: pedir al usuario un paquete en Gateway Hub y que lo apruebe en Stone.
-- `SAFE_MODE_STONE_CLOSED`: el usuario eligió el modo seguro en Gateway Hub y Stone no está en pantalla.
+## Tres formas de usarlo
+
+| Cliente | Cómo |
+| --- | --- |
+| Cliente MCP (Claude, ChatGPT, Claude Code…) | `POST` JSON-RPC 2.0 al enlace. Métodos: `initialize`, `tools/list`, `tools/call`. Cabeceras `Content-Type: application/json` y `Accept: application/json, text/event-stream`. |
+| Cliente MCP antiguo (SSE) | `GET …/sse?token=…` y `POST` al endpoint que anuncia. |
+| Agente que solo puede hacer GET | `GET …/tools?token=…` lista las herramientas; `GET …/call/NOMBRE?token=…&param=valor` ejecuta una. |
+
+Un `GET` normal al enlace devuelve una guía en JSON con la lista de herramientas. Solo un `GET`
+con `Accept: text/event-stream` recibe `405`, que es lo que el protocolo indica cuando el
+servidor no ofrece flujo propio: **no es un fallo**, hay que usar `POST`.
+
+`GET …/health` no necesita token y solo dice si Stone está en marcha y su versión.
+
+## Ejemplos
+
+```bash
+LINK="https://<relevo>/d/<dispositivo>"; TOKEN="<TOKEN>"
+
+# ¿Está vivo?
+curl "$LINK/health"
+
+# MCP: listar herramientas
+curl -X POST "$LINK/mcp" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+
+# MCP: mover una barra del ecualizador
+curl -X POST "$LINK/mcp" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"equalizer_set_band","arguments":{"band":0,"value":6}}}'
+
+# Sin MCP: solo GET
+curl "$LINK/call/player_state?token=$TOKEN"
+curl "$LINK/call/library_search?token=$TOKEN&query=alan%20walker&limit=5"
+curl "$LINK/call/video_set_brightness?token=$TOKEN&percent=60"
+```
 
 ## Flujo recomendado
 
@@ -79,11 +109,31 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
 | Fallo de DNS o de red en el agente | El entorno del agente no puede salir a internet | No es un problema de Stone: usar un cliente con acceso a red. |
 
-## Permisos
+## Permisos y tokens
 
-- Las acciones declaran su riesgo: lectura, reversible, persistente (con copia y `metadata_undo`) o crítica.
-- Lo crítico (borrar una lista) **siempre** pide confirmación en la pantalla de Stone (60 s).
-- Qué acciones puede usar cada agente lo deciden sus paquetes (leer, revisar, escribir, modificar, revertir).
+Stone › Ajustes › Modo API › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
+fila): da uno distinto a cada agente; varios pueden trabajar a la vez y revocar uno no afecta a los
+demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada token tiene un modo:
+
+| Modo | Qué puede hacer | Qué pide aprobación |
+| --- | --- | --- |
+| Solo lectura | Consultas (`*_get`, `library_search`, `player_state`…) | Nada |
+| Lectura y escritura | Todo | Solo lo crítico (`playlist_delete`) |
+| Acceso completo | Todo | Nada |
+
+Cada token tiene sus propias herramientas (Configurar token › Herramientas autorizadas): las apagadas
+no aparecen en `tools/list` y se rechazan con `TOOL_DISABLED`. Un token puede pausarse (se rechaza hasta
+reanudarlo, con el mismo enlace) o revocarse (para siempre, previa confirmación).
+Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
+`metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
+
+Seguridad: los tokens se guardan cifrados (Android Keystore). Se acepta el token en el enlace (`?token=`,
+necesario para ChatGPT) o en `Authorization: Bearer TOKEN`. En SSE cada `POST /messages` debe llevar el token de la sesión; revocar o rotar un token cierra sus
+sesiones. Tras 20 tokens erróneos en un minuto, ese origen recibe HTTP 429 durante un minuto. El acceso por la red local
+(Wi-Fi, HTTP sin cifrar) ya no se ofrece: solo este teléfono y el enlace cifrado del relay.
+
+Android exige su propio permiso para editar archivos de la biblioteca del teléfono. Stone lo pide
+una sola vez por lote; con "Acceso a todos los archivos" (Seguridad) deja de pedirlo.
 
 ## Edición masiva
 
@@ -120,71 +170,28 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
 ## Seguridad
 
-- Stone no escucha en ningún puerto ni abre conexiones para MCP: solo responde a Gateway Hub del mismo teléfono por
-  IPC, verificado por Android (permiso `signature`, uid, paquete y firma en cada mensaje).
-- Los paquetes van firmados con la clave del teléfono de Gateway y Stone los verifica al recibirlos y al cargarlos.
+- Los tokens nuevos tienen la forma `stn_` + 43 caracteres (256 bits aleatorios); los antiguos siguen
+  valiendo hasta que los rotes. Al crear uno puedes darle caducidad (7, 30 o 90 días).
+- Tras 20 tokens incorrectos en un minuto desde el mismo origen, el servidor responde `429` durante un
+  minuto (cabecera `Retry-After: 60`). Un token correcto de otro cliente no se ve afectado.
+- Las respuestas llevan `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` y
+  `Referrer-Policy: no-referrer`; las peticiones están limitadas a 64 cabeceras y 1 MB de cuerpo.
 
-## Varios agentes a la vez
+Quien tenga el enlace controla la reproducción. No lo pegues en sitios públicos; si se filtra,
+pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca el que ya no uses.
 
-Cada petición lleva su propia autorización (agente, modo y herramientas bloqueadas) en su corrutina: dos agentes a
-la vez nunca ven ni usan los permisos del otro. Los trabajos en segundo plano y la actividad son de quien los creó.
+## Varios agentes a la vez (aislamiento y reintentos)
 
-## Detalles del puente con Gateway Hub
-
-Stone ofrece su MCP **solo** a la app **Gateway Hub del mismo teléfono**, por IPC de Android, sin HTTP. Desde 1.7.19
-no existe el relay `stone-relay` (fase 7): el único enlace público es el de Gateway Hub.
-
-- **Código (1.7.17):** `automation/provider/`: `ProviderService.kt` (servicio), `ProviderBridge.kt` (identidad,
-  límites, filtros), `GatewayGrant.kt` (permisos delegados) y `McpDispatcher.kt` (MCP JSON-RPC sin sockets, que también
-  usa el servidor HTTP mientras exista). El puente ya no depende de `McpServer` ni del token «Gateway Hub» de Stone.
-- **Transporte:** Bound Service `automation/provider/ProviderService.kt` con `Messenger`, acción
-  `com.zirakusa.gatewayhub.action.MCP`. Cada mensaje es un objeto JSON-RPC (sin lotes) en el `Bundle`, clave
-  `message`; `arg1` empareja la respuesta.
-- **Identidad (solo de Android, nunca del mensaje):**
-  1. para enlazarse hace falta el permiso `com.zirakusa.gatewayhub.permission.LINK` (`signature`);
-  2. en cada mensaje, `Message.sendingUid` → paquetes de ese uid → debe estar `com.zirakusa.gatewayhub`;
-  3. y firmado con la misma clave que Stone (`checkSignatures`).
-- **Nada que activar en Stone** (desde la fase 2): solo «Desconectar de Gateway Hub» lo corta.
-- **Permisos delegados por Gateway (`GatewayGrant`):** cada petición puede llevar
-  `params._meta["com.zirakusa.gatewayhub/grant"] = {"mode": "read"|"write"|"full", "blockedTools": [...], "agent": "id"}`.
-  Stone lo acepta solo porque el remitente ya se verificó por uid y firma, y lo **recorta a su tope local**: hoy solo
-  lectura. Si falta o está mal formado, se aplica el tope sin nada extra.
-- **Solo lectura en `tools/list` y `tools/call`:** según el `ActionRisk` declarado de cada acción. Una herramienta que
-  no es `READ` se rechaza con `READ_ONLY_BRIDGE` antes de ejecutarse. Las herramientas que Gateway bloquea no se listan
-  y su llamada da `TOOL_DISABLED`. (Los tokens propios de Stone y el camino HTTP/relay se retiraron en las fases 6 y 7.)
-- **Herramienta de prueba:** solo `stone_help` (lee, sin efectos, funciona sin la pantalla de Stone), marcada en
-  `tools/list` con `_meta["com.zirakusa.gatewayhub/probe"] = true`. Gateway no ejecuta ninguna otra.
-- **Tamaño:** máximo 200 000 caracteres por mensaje (~400 KB en UTF-16, por debajo del búfer de 1 MB de Binder).
-  Una respuesta mayor se devuelve como `RESPONSE_TOO_LARGE`. Hoy `tools/list` de solo lectura ocupa ~9 700 caracteres.
-  Si en el futuro una respuesta lo supera (p. ej. listas grandes de la biblioteca), el transporte alternativo previsto
-  es un `ParcelFileDescriptor` (tubería) o respuestas paginadas; no hace falta en esta fase.
-- **Errores del canal:** cola de 16 peticiones (`BUSY` si se llena), errores JSON-RPC con código en el mensaje
-  (`NOT_GATEWAY`, `NOT_SAME_DEVELOPER`, `REDIRECT_OFF`, `API_OFF`), y si Gateway desaparece la respuesta se descarta.
-- **Cortar:** Ajustes › Gateway Hub › Desconectar cierra el puente sin reinstalar nada.
-
-### Fase 2 (sin publicar): paquetes de ejecución
-
-- **Sin nada que activar en Stone:** el puente ya no depende del Modo API ni de «Redirección hub». Solo lo corta
-  «Desconectar de Gateway Hub» (Ajustes › Modo API › Gateway Hub · paquetes), que borra el entorno y todos los paquetes.
-- **Vinculación** (`gatewayhub/link`): Gateway envía su id de entorno y la clave pública ECDSA P-256 (la privada nunca
-  sale del Keystore de Gateway). Stone responde con su id de instalación (`inst_…`). Un entorno nuevo sustituye al
-  anterior y a sus paquetes.
-- **Paquete:** `{"pkg": base64url(bytes JSON), "sig": base64url(ECDSA P-256/SHA-256)}`; el JSON lleva `v`, `id`
-  (`pkg_…`), `env`, `aud` (`<paquete>#<instancia>`), `agent` (`*` o id), `label`, `acts`, `tools` (nombres o prefijos
-  con `*`), `nbf` y `exp` (máximo 366 días). Stone lo verifica una vez al recibirlo y otra al cargar (un archivo
-  modificado no da permisos). Máximo 64 paquetes de 8 KB.
-- **Acciones sobre el riesgo declarado:** leer = `READ`; revisar = herramientas con `dryRun` (se fuerza `dryRun=true`);
-  escribir = `REVERSIBLE`; modificar = `PERSISTENT` y `CRITICAL` (lo crítico sigue pidiendo confirmación en pantalla:
-  el modo usado es `WRITE`, nunca `FULL`); revertir = `metadata_undo`.
-- **Aprobación:** un paquete que solo lee queda activo al momento; cualquier otro queda pendiente hasta «Aprobar» en Stone.
-- **Llamadas:** `_meta["com.zirakusa.gatewayhub/grant"] = {"agent": "...", "package": "pkg_..."}`. `tools/list` devuelve
-  solo lo que cubren los paquetes activos del agente; `tools/call` se rechaza con `PACKAGE_PENDING`, `OTHER_AGENT`,
-  `TOOL_NOT_IN_PACKAGE`, `ACT_NOT_IN_PACKAGE`, `EXPIRED` o `NO_PACKAGE`. Sin paquete, el puente sigue en solo lectura
-  (compatible con Gateway 0.0.7).
-- **Varios candidatos (fase 3):** el hub puede enviar `packages: [...]` (hasta 8, primero los del agente). Stone prueba cada
-  uno y usa el primero que cubre la llamada; si ninguno, responde con el motivo del primero.
-- **Otros métodos:** `gatewayhub/packages/offer|revoke|list` y `gatewayhub/state` (estado del entorno y modo que Stone muestra).
-- **Cancelación:** `notifications/cancelled {requestId}` interrumpe la llamada (por ejemplo, una confirmación aún en
-  pantalla) y no se envía respuesta. Lo ya hecho no se deshace.
-- **Pendiente:** `notifications/tools/list_changed` (las herramientas de Stone no cambian en ejecución) y herramientas sin
-  la interfaz abierta (fase 2b).
+- Cada petición se ejecuta con la autorización de **su** token (modo y herramientas), guardada en la propia
+  petición: lo que haga otro agente al mismo tiempo no la afecta.
+- Tokens erróneos: se cuentan por origen. A través del relay el origen es la dirección que Cloudflare da del
+  cliente (`CF-Connecting-IP`); `X-Forwarded-For` y similares se ignoran. Un token válido nunca queda
+  bloqueado por los errores de otro.
+- Si una petición esperó más de 60 s en el teléfono, Stone responde **503 con `Retry-After: 10`** y
+  **no la ejecuta** ("Nothing was changed"); reenvíala.
+- Si la cola del teléfono está llena (64 en espera), el relay responde 503 "busy" sin ejecutar nada.
+- Si un cambio terminó después del 504 del relay y el mismo token lo repite igual (misma herramienta y
+  argumentos) en 10 min, Stone devuelve el primer resultado con `"replayed": true` en vez de hacerlo dos veces.
+  Las lecturas nunca se repiten de memoria.
+- El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
+  de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.

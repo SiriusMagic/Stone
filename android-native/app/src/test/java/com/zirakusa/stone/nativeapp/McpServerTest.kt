@@ -4,9 +4,10 @@ import android.os.Looper
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.actions.ActionRisk
+import com.zirakusa.stone.nativeapp.automation.ApiMode
+import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
 import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
-import com.zirakusa.stone.nativeapp.automation.provider.CallerGrant
-import com.zirakusa.stone.nativeapp.automation.provider.McpDispatcher
+import com.zirakusa.stone.nativeapp.automation.server.McpServer
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
 import com.zirakusa.stone.nativeapp.playback.control.AudioMode
@@ -24,12 +25,14 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.net.HttpURLConnection
+import java.net.Proxy
+import java.net.URL
 import java.util.concurrent.CompletableFuture
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
-/** Stone's tools through its MCP dispatcher, as Gateway Hub reaches them (no HTTP server any more). */
-class McpToolsTest {
+class McpServerTest {
     private val token = "test-token"
     private val songs = listOf(
         Song("content://fixture/1.mp3", "After Dark", "Mr.Kitty", "Time", "Music", 258_000, 1, 1),
@@ -44,7 +47,7 @@ class McpToolsTest {
         StoneAutomation.host = object : AutomationHost {
             override val playback = PlaybackState(ready = true, title = "After Dark", artist = "Mr.Kitty", playing = false,
                 currentId = songs[0].id)
-            override val songs get() = this@McpToolsTest.songs
+            override val songs get() = this@McpServerTest.songs
             override val playlists = emptyList<StonePlaylist>()
             override val theme = "dark"
             override val language = "es"
@@ -68,19 +71,28 @@ class McpToolsTest {
             override fun setLauncherIcon(key: String) { launcherIcon = key }
             override fun setFavorite(songId: String, favorite: Boolean) { liked = if (favorite) liked + songId else liked - songId }
         }
+        assertTrue(McpServer.start(token))
     }
 
-    @After fun stop() { StoneAutomation.host = null }
+    @After fun stop() { McpServer.stop(); StoneAutomation.host = null }
 
-    /** Who each "token" is: the rights Gateway delegates for a request (Stone has no tokens of its own any more). */
-    private val grants = mutableMapOf(token to CallerGrant("main", "Principal", AccessMode.WRITE, emptySet()))
-
-    /** One MCP message through Stone's dispatcher; tools run on the main looper, which is pumped meanwhile. */
-    private fun post(body: String, auth: String? = "Bearer $token"): Pair<Int, String> {
-        val grant = auth?.removePrefix("Bearer ")?.let { grants[it] } ?: return 401 to ""
-        val call = CompletableFuture.supplyAsync { McpDispatcher.dispatch(body, grant).first }
+    private fun post(body: String, auth: String? = "Bearer $token", origin: String? = null): Pair<Int, String> {
+        // Actions run on the main looper, which Robolectric only advances when asked.
+        val call = CompletableFuture.supplyAsync {
+            val connection = URL("http://127.0.0.1:${McpServer.DEFAULT_PORT}${McpServer.PATH}")
+                .openConnection(Proxy.NO_PROXY) as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            auth?.let { connection.setRequestProperty("Authorization", it) }
+            origin?.let { connection.setRequestProperty("Origin", it) }
+            connection.outputStream.use { it.write(body.toByteArray()) }
+            val code = connection.responseCode
+            val stream = if (code < 400) connection.inputStream else connection.errorStream
+            code to (stream?.bufferedReader()?.readText() ?: "")
+        }
         while (!call.isDone) { shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(5) }
-        return call.get()?.let { 200 to it.toString() } ?: (202 to "")
+        return call.get()
     }
 
     private fun rpc(method: String, params: JSONObject = JSONObject()): JSONObject {
@@ -89,14 +101,120 @@ class McpToolsTest {
         return JSONObject(text)
     }
 
+    /** Raw HTTP exchange; returns the whole response (HttpURLConnection hides Origin and OPTIONS details). */
+    private fun raw(request: String): String = java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { socket ->
+        socket.getOutputStream().write(request.toByteArray())
+        socket.getInputStream().bufferedReader().readText()
+    }
+
+    @Test fun requiresTheTokenButAcceptsItInEveryForm() {
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        assertEquals(401, post(ping, auth = null).first)
+        assertEquals(401, post(ping, auth = "Bearer wrong").first)
+        assertEquals(200, post(ping).first)
+        val viaQuery = raw("POST ${McpServer.PATH}?token=$token HTTP/1.1\r\nHost: x\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(viaQuery.startsWith("HTTP/1.1 200"))
+        val viaApiKey = raw("POST ${McpServer.PATH} HTTP/1.1\r\nX-Api-Key: $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(viaApiKey.startsWith("HTTP/1.1 200"))
+        // Browser clients: CORS preflight answers, and a request with Origin works when it carries the token.
+        val preflight = raw("OPTIONS ${McpServer.PATH} HTTP/1.1\r\nOrigin: http://localhost:6274\r\n\r\n")
+        assertTrue(preflight.startsWith("HTTP/1.1 204") && preflight.contains("Access-Control-Allow-Origin: *"))
+        val withOrigin = raw("POST ${McpServer.PATH} HTTP/1.1\r\nAuthorization: Bearer $token\r\n" +
+            "Origin: http://localhost:6274\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(withOrigin.startsWith("HTTP/1.1 200") && withOrigin.contains("X-Stone-Server: Stone"))
+    }
+
+    @Test fun legacySseTransportDeliversReplies() {
+        java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { stream ->
+            stream.soTimeout = 5_000
+            stream.getOutputStream().write("GET /sse?token=$token HTTP/1.1\r\nAccept: text/event-stream\r\n\r\n".toByteArray())
+            val reader = stream.getInputStream().bufferedReader()
+            assertTrue(reader.readLine().startsWith("HTTP/1.1 200"))
+            val endpoint = generateSequence { reader.readLine() }.first { it.startsWith("data: /messages") }.removePrefix("data: ")
+            val init = """{"jsonrpc":"2.0","id":7,"method":"initialize","params":{"protocolVersion":"2024-11-05"}}"""
+            // A leaked session id alone is not enough; the announced endpoint carries the token for clients
+            // that only put it in the SSE URL.
+            val bare = raw("POST ${endpoint.substringBefore("&token")} HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
+            assertTrue(bare.startsWith("HTTP/1.1 401"))
+            val posted = raw("POST $endpoint HTTP/1.1\r\nContent-Length: ${init.length}\r\n\r\n$init")
+            assertTrue(posted.startsWith("HTTP/1.1 202"))
+            val message = generateSequence { reader.readLine() }.first { it.startsWith("data: {") }
+            assertEquals("stone", JSONObject(message.removePrefix("data: ")).getJSONObject("result")
+                .getJSONObject("serverInfo").getString("name"))
+        }
+    }
+
+    @Test fun sseSessionsBelongToTheirTokenAndDieWithIt() {
+        val first = ApiToken("a", "GPT", token, AccessMode.WRITE, 0)
+        val second = ApiToken("b", "Claude", "other-token", AccessMode.WRITE, 0)
+        assertTrue(McpServer.start(listOf(first, second)))
+        java.net.Socket("127.0.0.1", McpServer.DEFAULT_PORT).use { stream ->
+            stream.soTimeout = 5_000
+            stream.getOutputStream().write("GET /sse HTTP/1.1\r\nAuthorization: Bearer $token\r\nAccept: text/event-stream\r\n\r\n".toByteArray())
+            val reader = stream.getInputStream().bufferedReader()
+            val endpoint = generateSequence { reader.readLine() }.first { it.startsWith("data: /messages") }.removePrefix("data: ")
+            val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+            val foreign = raw("POST $endpoint HTTP/1.1\r\nAuthorization: Bearer other-token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+            assertTrue(foreign.startsWith("HTTP/1.1 403"))
+            // Revoking the token closes its session: the same request with the old token now fails.
+            McpServer.updateTokens(listOf(second))
+            val revoked = raw("POST $endpoint HTTP/1.1\r\nAuthorization: Bearer $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+            assertTrue(revoked.startsWith("HTTP/1.1 401"))
+        }
+    }
+
     @Test fun eachTokenOnlySeesAndUsesItsAllowedTools() {
-        grants[token] = CallerGrant("a", "GPT", AccessMode.FULL, setOf("player_state"))
+        val limited = ApiToken("a", "GPT", token, AccessMode.FULL, 0, disabledTools = setOf("player_state"))
+        assertTrue(McpServer.start(listOf(limited)))
         val list = post("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}""").second
         assertFalse(JSONObject(list).getJSONObject("result").getJSONArray("tools").toString().contains("\"player_state\""))
         val call = post("""{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"player_state","arguments":{}}}""").second
         assertTrue(call.contains("TOOL_DISABLED"))
     }
 
+        /** Plain GET the way a browser or a non-MCP agent does it. */
+    private fun get(path: String, accept: String? = null): Pair<Int, String> {
+        val call = CompletableFuture.supplyAsync {
+            val connection = URL("http://127.0.0.1:${McpServer.DEFAULT_PORT}$path").openConnection(Proxy.NO_PROXY) as HttpURLConnection
+            accept?.let { connection.setRequestProperty("Accept", it) }
+            val code = connection.responseCode
+            code to ((if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.readText() ?: "")
+        }
+        while (!call.isDone) { shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(5) }
+        return call.get()
+    }
+
+    @Test fun plainGetExplainsHowToConnectInsteadOfFailing() {
+        val (code, text) = get("${McpServer.PATH}?token=$token")
+        assertEquals(200, code)
+        val guide = JSONObject(text)
+        assertEquals("Stone", guide.getString("server"))
+        assertTrue(guide.getJSONObject("howToConnect").has("withoutMcp"))
+        assertTrue(guide.getJSONArray("tools").length() > 40)
+        // MCP clients probing for a server stream still get the 405 the protocol expects.
+        assertEquals(405, get("${McpServer.PATH}?token=$token", accept = "text/event-stream").first)
+    }
+
+    @Test fun healthNeedsNoTokenAndRevealsNothing() {
+        val (code, text) = get("/health")
+        assertEquals(200, code)
+        assertEquals("ok", JSONObject(text).getString("status"))
+        assertFalse(text.contains(token))
+        assertEquals(401, get("/tools").first)
+        assertTrue(get("${McpServer.PATH}?token=wrong").second.contains("wrong or revoked"))
+    }
+
+    @Test fun plainBridgeListsAndCallsTools() {
+        val tools = JSONObject(get("/tools?token=$token").second)
+        assertEquals(tools.getInt("total"), tools.getJSONArray("tools").length())
+        val (code, text) = get("${McpServer.PATH}/call/library_search?token=$token&query=adele&limit=5")
+        assertEquals(200, code)
+        assertEquals("Skyfall", JSONObject(text).getJSONObject("result").getJSONArray("results").getJSONObject(0).getString("title"))
+        val (badCode, bad) = get("/call/player_set_speed?token=$token&speed=9")
+        assertEquals(400, badCode)
+        assertFalse(JSONObject(bad).getBoolean("ok"))
+        assertEquals(404, get("/call/nope?token=$token").first)
+    }
 
     @Test fun helpFindsToolsByIntentionAndUnknownToolsAreProtocolErrors() {
         val help = rpc("tools/call", JSONObject().put("name", "stone_help")
@@ -147,8 +265,8 @@ class McpToolsTest {
     }
 
     @Test fun eachTokenHasItsOwnModeAndErrorsCarryCodes() {
-        grants += mapOf(token to CallerGrant("w", "Claude", AccessMode.WRITE, emptySet()),
-            "read-token" to CallerGrant("r", "Lector", AccessMode.READ, emptySet()), "full-token" to CallerGrant("f", "Total", AccessMode.FULL, emptySet()))
+        McpServer.updateTokens(listOf(ApiToken("w", "Claude", token, AccessMode.WRITE, 0),
+            ApiToken("r", "Lector", "read-token", AccessMode.READ, 0), ApiToken("f", "Total", "full-token", AccessMode.FULL, 0)))
         fun rpcAs(secret: String, method: String, params: JSONObject = JSONObject()): JSONObject {
             val body = JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", method).put("params", params).toString()
             val (code, text) = post(body, auth = "Bearer $secret")
@@ -178,6 +296,20 @@ class McpToolsTest {
         assertEquals(401, post("""{"jsonrpc":"2.0","id":1,"method":"ping"}""", auth = "Bearer revoked").first)
     }
 
+    @Test fun expiredTokensAndGuessingAreRefused() {
+        McpServer.updateTokens(listOf(ApiToken("w", "Claude", token, AccessMode.WRITE, 0),
+            ApiToken("old", "Viejo", "old-token", AccessMode.FULL, 0, expiresAt = 1)))
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        assertEquals(401, post(ping, auth = "Bearer old-token").first)
+        com.zirakusa.stone.nativeapp.automation.auth.AuthThrottle.reset()
+        repeat(20) { post(ping, auth = "Bearer guess-$it") }
+        assertEquals(429, post(ping, auth = "Bearer guess-x").first)
+        com.zirakusa.stone.nativeapp.automation.auth.AuthThrottle.reset()
+        assertEquals(200, post(ping).first)
+        val secret = com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.secret()
+        assertTrue(secret.startsWith("stn_") && secret.length >= 46)
+    }
+
     @Test fun accessModesOnlyAskForCriticalActions() {
         assertFalse(AccessMode.WRITE.needsApproval(ActionRisk.PERSISTENT))
         assertTrue(AccessMode.WRITE.needsApproval(ActionRisk.CRITICAL))
@@ -192,16 +324,26 @@ class McpToolsTest {
         val like = call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", true))
         assertFalse(like.getBoolean("isError"))
         assertEquals(setOf(songs[1].id), liked)
-        val main = grants.getValue(token)
+        val main = ApiToken("main", "Principal", token, AccessMode.WRITE, 0)
         try {
-            grants[token] = main.copy(disabledTools = setOf("library_set_favorite"))
+            McpServer.updateTokens(listOf(main.copy(disabledTools = setOf("library_set_favorite"))))
             val names = rpc("tools/list").getJSONObject("result").getJSONArray("tools")
                 .let { tools -> (0 until tools.length()).map { tools.getJSONObject(it).getString("name") } }
             assertFalse("library_set_favorite" in names)
             assertTrue(names.containsAll(listOf("audio_set_level", "settings_set_transitions", "playlist_rename")))
             assertTrue(call("library_set_favorite", JSONObject().put("songIds", songs[1].id).put("favorite", false)).getBoolean("isError"))
             assertEquals(setOf(songs[1].id), liked)
-        } finally { grants[token] = main }
+        } finally { McpServer.updateTokens(listOf(main)) }
+    }
+
+    @Test fun pausedTokensAreRejectedUntilResumed() {
+        val ping = """{"jsonrpc":"2.0","id":1,"method":"ping"}"""
+        val main = ApiToken("main", "Principal", token, AccessMode.WRITE, 0)
+        McpServer.updateTokens(listOf(main.copy(paused = true)))
+        val paused = raw("POST ${McpServer.PATH} HTTP/1.1\r\nAuthorization: Bearer $token\r\nContent-Length: ${ping.length}\r\n\r\n$ping")
+        assertTrue(paused.startsWith("HTTP/1.1 401") && paused.contains("paused"))
+        McpServer.updateTokens(listOf(main))
+        assertEquals(200, post(ping).first)
     }
 
     @Test fun customisationAndSleepTimerTools() {

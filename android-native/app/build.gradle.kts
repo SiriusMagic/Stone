@@ -14,6 +14,9 @@ android {
         versionCode = 53
         versionName = "1.7.19"
         // Public relay that gives each phone a fixed HTTPS link (see ../relay). Empty = local only.
+        // Set it with -PstoneRelayUrl=https://… or stoneRelayUrl in gradle.properties.
+        val relayUrl = (project.findProperty("stoneRelayUrl") as String?).orEmpty().trimEnd('/')
+        buildConfigField("String", "RELAY_URL", "\"$relayUrl\"")
     }
     buildFeatures {
         compose = true
@@ -67,6 +70,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // WebSocket to the Stone relay (fixed public link for the MCP server).
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
     constraints {
         // Media3 brings Guava 33.3.1, affected by GHSA-xxph-c9ww-hj94 (CVE-2026-102554); 33.7.2 is the fixed release.
         implementation("com.google.guava:guava:33.7.2-android") { because("GHSA-xxph-c9ww-hj94") }

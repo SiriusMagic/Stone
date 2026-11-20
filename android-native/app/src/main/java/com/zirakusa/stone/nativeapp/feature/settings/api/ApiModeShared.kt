@@ -32,6 +32,11 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 internal val ApiGreen = Color(0xFF4CD27A)
 internal val ApiRed = Color(0xFFFF5C5C)
 
+/** Tabs of Ajustes › Modo API: everything about tokens in General, the numbers in Analítica. */
+internal enum class ApiTab(val label: Int, val icon: ImageVector) {
+    GENERAL(R.string.api_tab_general, Icons.Default.Home), ANALYTICS(R.string.api_analytics, Icons.Default.MonitorHeart)
+}
+
 /** Category key (first part of an action name) → label and icon. */
 internal val apiCategories: Map<String, Pair<Int, ImageVector>> = linkedMapOf(
     "player" to (R.string.api_cat_player to Icons.Default.PlayCircle),
@@ -96,6 +101,24 @@ internal fun RecordStatus.color() = when (this) { RecordStatus.OK -> ApiGreen; R
 }
 
 /** Selectable card for an [AccessMode] (radio style, accent border when chosen). */
+@Composable internal fun ApiModeCard(mode: AccessMode, selected: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Row(Modifier.fillMaxWidth().padding(top = 8.dp).clip(shape)
+        .background(if (selected) StonePalette.Yellow.copy(alpha = .12f) else Color.Transparent)
+        .border(if (selected) 2.dp else 1.dp, if (selected) StonePalette.Yellow else Color.White.copy(alpha = .12f), shape)
+        .clickable(onClick = onClick).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(mode.icon(), null, Modifier.size(30.dp), tint = if (selected) StonePalette.Yellow else StonePalette.Text)
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(stringResource(mode.label()), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(mode.hint()), color = StonePalette.Secondary, fontSize = 13.sp)
+        }
+        Box(Modifier.size(22.dp).clip(CircleShape).border(2.dp, if (selected) StonePalette.Yellow else StonePalette.Muted, CircleShape),
+            contentAlignment = Alignment.Center) {
+            if (selected) Box(Modifier.size(11.dp).clip(CircleShape).background(StonePalette.Yellow))
+        }
+    }
+}
+
 /** Small coloured label (status of a request, mode of a token). */
 @Composable internal fun ApiPill(text: String, color: Color, modifier: Modifier = Modifier) {
     Text(text, modifier.clip(RoundedCornerShape(10.dp)).border(1.dp, color.copy(alpha = .7f), RoundedCornerShape(10.dp))

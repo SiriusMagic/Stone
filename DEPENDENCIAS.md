@@ -9,6 +9,7 @@ incluidas las que llegan arrastradas por otras.
 | App (va dentro del APK) | 168 | **0** | Todas Apache-2.0 |
 | Compilación (Gradle, Kotlin) | 2 plugins | **1 pendiente** (solo afecta al ordenador que compila, ver abajo) | Apache-2.0 |
 | Solo pruebas (no van en el APK) | 63 | **0** | Apache-2.0, MIT, BSD, EPL-1.0, CDDL+GPLv2-CE, Bouncy Castle, Unicode |
+| Relay (`npm`, solo herramienta de publicación) | 38 | **0** (`npm audit`) | MIT, Apache-2.0, ISC, 0BSD, CC0, LGPL-3.0 |
 
 Política: **la versión segura más antigua que ya lleve tiempo publicada**, no la última.
 Lo que ya es seguro se deja para la migración siguiente (compileSdk 37 + AGP 9, ver `android-native/app/lint.xml`).
@@ -33,6 +34,8 @@ Stone (app)
 │   │       └── failureaccess · jspecify · error_prone_annotations · j2objc
 │   ├── media3-session → androidx.media 1.7.0
 │   └── media3-ui → recyclerview 1.3.0
+└── OkHttp 5.3.2 ................................ WebSocket del relay (Square, Apache-2.0)
+    └── Okio 3.16.4
 ```
 
 ## Compilación
@@ -43,7 +46,15 @@ Gradle 8.14.3
 └── Kotlin Gradle Plugin 2.3.21 (+ plugin de Compose 2.3.21) ⚠ ver "Pendiente"
 ```
 
-Stone ya no tiene relay ni Worker propio (se retiró en 1.7.19). El Gateway Hub tiene su propio repositorio y su propia revisión de dependencias (CI con `npm audit`).
+## Relay (`relay/`)
+
+```text
+stone-relay
+└── wrangler 4.162.0 (solo para publicar y probar en local; NO se sube a Cloudflare)
+    └── miniflare, esbuild, workerd, sharp/libvips (LGPL, solo en el ordenador) …
+```
+
+El Worker publicado (`relay/src/index.js`) **no tiene ninguna dependencia**: solo usa las APIs de Cloudflare.
 
 ## Cambios de esta revisión
 
@@ -63,4 +74,5 @@ Stone ya no tiene relay ni Worker propio (se retiró en 1.7.19). El Gateway Hub 
 ```sh
 cd android-native && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath
 # cada grupo:artefacto:versión → POST https://api.osv.dev/v1/querybatch
+cd ../relay && npm audit
 ```

@@ -57,4 +57,38 @@ internal object StoneGuide {
             ActionParam("category", "string", "Restrict to one category.", options = categories.keys.toList()))) { args ->
         search(args.optString("query"), args.optString("category").ifBlank { null }, currentAuth())
     }
+
+    /** JSON shown to a plain GET (browser, curl, an agent probing the link). */
+    fun overview(access: AccessMode, blocked: Set<String> = emptySet()): JSONObject = JSONObject()
+        .put("server", "Stone").put("version", BuildConfig.VERSION_NAME).put("protocol", "Model Context Protocol (MCP)")
+        .put("status", "ok: the token is valid and Stone is reachable")
+        .put("howToConnect", JSONObject()
+            .put("mcp", "POST JSON-RPC 2.0 to this same URL (Streamable HTTP). Methods: initialize, tools/list, tools/call. " +
+                "Headers: Content-Type: application/json, Accept: application/json, text/event-stream.")
+            .put("legacySse", "GET /sse (same token) and POST to the endpoint it announces.")
+            .put("withoutMcp", "If you can only make GET requests, change the end of the path and keep the same ?token=: " +
+                ".../tools lists every tool with its parameters, and .../call/TOOL_NAME?param=value runs one. " +
+                "Examples: /call/player_state , /call/player_set_volume?percent=40 , /call/library_search?query=love&limit=5")
+            .put("health", ".../health needs no token and only says whether Stone is running."))
+        .put("firstSteps", JSONArray(listOf("stone_help", "stone_troubleshoot", "player_state", "library_search")))
+        .put("access", access.key).put("tools", JSONArray(StoneAutomation.available(access, blocked).map { JSONObject().put("name", it.toolName).put("description", it.description) }))
+
+    fun toolList(access: AccessMode, blocked: Set<String> = emptySet()): JSONObject = StoneAutomation.available(access, blocked).let { tools ->
+        JSONObject().put("total", tools.size).put("access", access.key).put("tools", JSONArray(tools.map { it.brief() }))
+    }
+
+    /** Turns `?percent=40&enabled=true` into typed arguments following the tool's schema. */
+    fun arguments(action: StoneAction, query: Map<String, String>): JSONObject {
+        val args = JSONObject()
+        query.filterKeys { it != "token" }.forEach { (key, raw) ->
+            val type = action.params.firstOrNull { it.name == key }?.type
+            args.put(key, when (type) {
+                "integer" -> raw.toLongOrNull()?.let { if (it in Int.MIN_VALUE..Int.MAX_VALUE) it.toInt() else it } ?: raw
+                "number" -> raw.toDoubleOrNull() ?: raw
+                "boolean" -> raw.toBooleanStrictOrNull() ?: raw
+                else -> raw
+            })
+        }
+        return args
+    }
 }
