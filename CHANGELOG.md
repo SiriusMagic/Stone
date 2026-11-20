@@ -1,3 +1,12 @@
+# Stone Kotlin 1.7.20
+
+- **Vuelve el Modo API de antes:** Stone se conecta otra vez directamente a la IA a través del Worker
+  `stone-relay` de Cloudflare, con su enlace fijo, sin pasar por Gateway Hub.
+- **Vuelven General y Analítica:** Activar MCP, **Crear token**, pausar y configurar cada token, y las gráficas de
+  solicitudes por minuto.
+- Se quita todo lo de Gateway Hub dentro de Stone (vinculación, paquetes y su tarjeta).
+- El reproductor no cambia: se mantiene que las copias de seguridad de otras apps no salgan en la biblioteca.
+
 # Stone Kotlin 1.7.19
 
 - **Ya no hay nada que aprobar:** los permisos que manda Gateway Hub (solo puede mandarlos la app Gateway firmada por
