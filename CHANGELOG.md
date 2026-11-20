@@ -1,3 +1,9 @@
+# Stone Kotlin 1.7.21
+
+- **«Modo API» pasa a llamarse «Modo MCP»** en los seis idiomas, en los textos de ayuda y en los mensajes que
+  reciben las IA, porque lo que Stone ofrece es un servidor MCP. Todo funciona igual: mismo enlace y mismos tokens.
+- Compatible otra vez con Gateway Hub MCP 0.0.2: en Modo MCP toca **Copiar** y pega el enlace en la pestaña Apps del hub.
+
 # Stone Kotlin 1.7.20
 
 - **Vuelve el Modo API de antes:** Stone se conecta otra vez directamente a la IA a través del Worker

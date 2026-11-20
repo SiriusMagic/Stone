@@ -414,7 +414,7 @@
     <string name="theme_wine">Wein</string>
     <string name="theme_violet">Violett</string>
     <string name="theme_slate">Schiefer</string>
-    <string name="api_title">API-Modus (KI-Agenten)</string>
+    <string name="api_title">MCP-Modus (KI-Agenten)</string>
     <string name="api_enable">MCP einschalten</string>
     <string name="api_enable_hint">Schaltet den MCP-Server ein, um Agenten zu verbinden (Claude, ChatGPT, Cursor usw.). Funktioniert, solange Stone geöffnet ist oder abspielt.</string>
     <string name="api_copied">Kopiert</string>

@@ -32,7 +32,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 internal val ApiGreen = Color(0xFF4CD27A)
 internal val ApiRed = Color(0xFFFF5C5C)
 
-/** Tabs of Ajustes › Modo API: everything about tokens in General, the numbers in Analítica. */
+/** Tabs of Ajustes › Modo MCP: everything about tokens in General, the numbers in Analítica. */
 internal enum class ApiTab(val label: Int, val icon: ImageVector) {
     GENERAL(R.string.api_tab_general, Icons.Default.Home), ANALYTICS(R.string.api_analytics, Icons.Default.MonitorHeart)
 }

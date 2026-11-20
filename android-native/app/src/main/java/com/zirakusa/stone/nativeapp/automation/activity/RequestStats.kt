@@ -7,7 +7,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Requests per minute for Ajustes › Modo API › Analítica: all agents together and each token on
+ * Requests per minute for Ajustes › Modo MCP › Analítica: all agents together and each token on
  * its own, split into successful, denied and failed, for the last 24 hours. Calls rejected for a
  * missing or wrong token are counted apart (they belong to no token). Saved at most once a minute.
  */

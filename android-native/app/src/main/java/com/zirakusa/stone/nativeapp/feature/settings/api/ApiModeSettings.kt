@@ -33,7 +33,7 @@ import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
-/** Ajustes › Modo API: General (MCP on/off, create tokens, the tokens) and Analítica, on its own. */
+/** Ajustes › Modo MCP: General (MCP on/off, create tokens, the tokens) and Analítica, on its own. */
 @Composable internal fun ApiModeSettings() {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf(ApiTab.GENERAL) }

@@ -10,7 +10,7 @@ import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
 /**
- * Access tokens of Ajustes › Modo API › Seguridad. Each one has a name and an [AccessMode] and
+ * Access tokens of Ajustes › Modo MCP › Seguridad. Each one has a name and an [AccessMode] and
  * can be rotated or revoked alone. The first token is the "main" one used by the big Copy button.
  */
 object ApiTokens {

@@ -316,7 +316,7 @@
     <string name="theme_wine">Wine</string>
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
-    <string name="api_title">API mode (AI agents)</string>
+    <string name="api_title">MCP mode (AI agents)</string>
     <string name="api_enable">Turn on MCP</string>
     <string name="api_enable_hint">Turns on the MCP server to connect agents (Claude, ChatGPT, Cursor, etc.). Works while Stone is open or playing.</string>
     <string name="api_copied">Copied</string>

@@ -7,7 +7,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (95) User switches for the MCP server (Ajustes › Modo API).
+- `ApiMode.kt` (95) User switches for the MCP server (Ajustes › Modo MCP).
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -28,12 +28,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
 
 ## app/automation/activity
-- `ActivityLog.kt` (71) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
+- `ActivityLog.kt` (71) Keeps Ajustes › Modo MCP › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
+- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo MCP › Analítica:
 
 ## app/automation/auth
 - `AccessMode.kt` (59) What a token lets an agent do.
-- `ApiTokens.kt` (104) Access tokens of Ajustes › Modo API › Seguridad.
+- `ApiTokens.kt` (104) Access tokens of Ajustes › Modo MCP › Seguridad.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 
@@ -110,7 +110,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LibraryOrdering.kt` (35)
 - `LibraryScreen.kt` (255)
 - `LibraryViewModel.kt` (188) Refreshes which songs have lyrics (background, cached per file).
-- `LibraryViewState.kt` (13) Library order shared by the sort sheet and automation (API mode), so both stay in sync.
+- `LibraryViewState.kt` (13) Library order shared by the sort sheet and automation (MCP mode), so both stay in sync.
 - `QuickActions.kt` (42) Single source of truth for home shortcuts.
 
 ## app/feature/library/components
@@ -213,8 +213,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
 - `ApiGeneralTab.kt` (61) General:
-- `ApiModeSettings.kt` (67) Ajustes › Modo API:
-- `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
+- `ApiModeSettings.kt` (67) Ajustes › Modo MCP:
+- `ApiModeShared.kt` (128) Tabs of Ajustes › Modo MCP:
 - `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
 - `ApiTokenRow.kt` (73) Compact token card:
 

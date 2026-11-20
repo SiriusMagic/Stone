@@ -1,13 +1,13 @@
 # Stone — guía de conexión para agentes (MCP)
 
-Stone expone un servidor **Model Context Protocol** en el teléfono (Ajustes › Modo API). Este
+Stone expone un servidor **Model Context Protocol** en el teléfono (Ajustes › Modo MCP). Este
 documento es para pegárselo a un agente de IA que no logre conectarse.
 
 ## Enlace
 
 `https://<relevo>/d/<dispositivo>/mcp?token=<TOKEN>` (botón "Copiar enlace" en Stone).
 El token también se acepta como `Authorization: Bearer <TOKEN>` o `X-Api-Key: <TOKEN>`.
-Stone debe estar abierto en el teléfono con el Modo API activado.
+Stone debe estar abierto en el teléfono con el Modo MCP activado.
 
 ## Tres formas de usarlo
 
@@ -103,7 +103,7 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | --- | --- | --- |
 | HTTP 401 "missing token" | No llegó el token | Añadir `?token=` o `Authorization: Bearer`. |
 | HTTP 401 "wrong or revoked token" | El enlace cambió | Copiar el enlace de nuevo en Stone. |
-| HTTP 503 del relevo | Stone no está abierto o el Modo API está apagado | Abrir Stone. |
+| HTTP 503 del relevo | Stone no está abierto o el Modo MCP está apagado | Abrir Stone. |
 | HTTP 504 del relevo | El teléfono no respondió a tiempo | Reintentar; revisar la conexión del teléfono. |
 | JSON-RPC `-32602` | Herramienta desconocida | `tools/list` o `stone_help`. |
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
@@ -111,7 +111,7 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
 ## Permisos y tokens
 
-Stone › Ajustes › Modo API › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
+Stone › Ajustes › Modo MCP › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
 fila): da uno distinto a cada agente; varios pueden trabajar a la vez y revocar uno no afecta a los
 demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada token tiene un modo:
 

@@ -155,8 +155,8 @@ object McpServer {
         if (grant == null) return McpHttp.respond(out, 401,
             error(null, -32001, if (givenToken(request) == null)
                 "Stone: missing token. Send it as 'Authorization: Bearer TOKEN' or add ?token=TOKEN to the URL."
-            else if (isPaused(request)) "Stone: this token is paused. The user can resume it in Stone > Ajustes > Modo API."
-            else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo API."),
+            else if (isPaused(request)) "Stone: this token is paused. The user can resume it in Stone > Ajustes > Modo MCP."
+            else "Stone: wrong or revoked token. Copy the link again from Stone > Ajustes > Modo MCP."),
             listOf("WWW-Authenticate: Bearer"))
         ApiTokens.touch(grant.id)
         when {

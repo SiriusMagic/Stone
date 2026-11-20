@@ -414,7 +414,7 @@
     <string name="theme_wine">Vinho</string>
     <string name="theme_violet">Violeta</string>
     <string name="theme_slate">Ardósia</string>
-    <string name="api_title">Modo API (agentes de IA)</string>
+    <string name="api_title">Modo MCP (agentes de IA)</string>
     <string name="api_enable">Ativar MCP</string>
     <string name="api_enable_hint">Liga o servidor MCP para conectar agentes (Claude, ChatGPT, Cursor etc.). Funciona enquanto o Stone estiver aberto ou tocando.</string>
     <string name="api_copied">Copiado</string>

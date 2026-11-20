@@ -91,5 +91,5 @@ Interfaz (feature/, ui/) ──────────────────�
   con fecha de caducidad y con las tools que no deba usar desactivadas.
 - **Mejor en la cabecera:** `Authorization: Bearer …`. El token dentro del enlace (`?token=`) solo
   existe porque algunos conectores aceptan nada más que una URL.
-- **Si un token se filtra:** Ajustes › Modo API › el token › **Rotar** (mismo agente, enlace nuevo)
+- **Si un token se filtra:** Ajustes › Modo MCP › el token › **Rotar** (mismo agente, enlace nuevo)
   o **Revocar** (deja de funcionar al instante).

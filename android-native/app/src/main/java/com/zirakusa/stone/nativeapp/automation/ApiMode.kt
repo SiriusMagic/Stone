@@ -15,7 +15,7 @@ import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
-/** User switches for the MCP server (Ajustes › Modo API). Off by default. */
+/** User switches for the MCP server (Ajustes › Modo MCP). Off by default. */
 object ApiMode {
     var enabled by mutableStateOf(false)
         private set
