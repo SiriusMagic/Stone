@@ -4,7 +4,7 @@ Generado por `tools/update_map.py`. Lee este mapa, abre solo el archivo que nece
 si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/
-- `MainActivity.kt` (132) Volume keys drive Stone's own overlay;
+- `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
 - `ApiMode.kt` (119) User switches for the MCP server (Ajustes › Modo MCP).
@@ -236,6 +236,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ThemeExtras.kt` (51) Top of "Temas y personalización":
 
 ## app/playback
+- `ExternalOpen.kt` (37) «Abrir con Stone» from another app (Luma, a file manager):
 - `StonePlaybackService.kt` (497) Sole owner of playback;
 - `StoneWidgetProvider.kt` (109) Home-screen player (4×2):
 
@@ -260,7 +261,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/ui
 - `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
-- `StoneApp.kt` (446) Mini player button:
+- `StoneApp.kt` (455) Mini player button:
 
 ## app/ui/components
 - `SleepTimerIndicator.kt` (101) Shows the active sleep timer using the sun by day and the moon by night.

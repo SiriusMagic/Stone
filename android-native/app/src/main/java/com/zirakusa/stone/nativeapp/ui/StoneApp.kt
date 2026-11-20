@@ -117,8 +117,17 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
         }
         playback.play(song, songs)
     }
+    // «Abrir con Stone» from another app: play it at once in the full player, even if it is not in the library.
+    var externalSong by remember { mutableStateOf<com.zirakusa.stone.core.Song?>(null) }
+    val opened = com.zirakusa.stone.nativeapp.playback.ExternalOpen.pending
+    LaunchedEffect(opened) {
+        opened?.let { song ->
+            externalSong = song; playSong(song, listOf(song)); playerOpen = true
+            com.zirakusa.stone.nativeapp.playback.ExternalOpen.consume()
+        }
+    }
     SideEffect { com.zirakusa.stone.nativeapp.feature.player.sheets.AudioOnlySelection.id = audioOnlyId }
-    val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
+    val currentSong = (state.songs.find { it.id == player.currentId } ?: externalSong?.takeIf { it.id == player.currentId })?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
     val videoPreviewSong = currentSong?.takeIf { it.isVideo }

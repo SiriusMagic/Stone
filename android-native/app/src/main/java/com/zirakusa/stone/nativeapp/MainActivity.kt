@@ -60,12 +60,18 @@ class MainActivity : ComponentActivity() {
         windowOrientation = resources.configuration.orientation
         AudioDiagnostics.log(this, "MainActivity.onCreate", state = StonePlaybackService.diagnosticState(),
             includeSystemEffects = true)
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.handle(this, intent)
         setContent {
             com.zirakusa.stone.nativeapp.ui.StoneApp(
                 isPictureInPicture = pictureInPicture,
                 windowOrientation = windowOrientation
             )
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.handle(this, intent)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

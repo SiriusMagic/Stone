@@ -1,3 +1,8 @@
+# Stone Kotlin 1.7.23
+
+- **Abrir con Stone:** desde Luma, un administrador de archivos u otra app, «Abrir con…» ofrece Stone para videos y
+  música. Se reproduce al momento en el reproductor completo, aunque el archivo no esté en tu biblioteca.
+
 # Stone Kotlin 1.7.22
 
 - **Crear token pregunta «¿Qué vas a conectar?»:** **LLM** (el enlace se pega directo en Claude, ChatGPT…) o
