@@ -15,8 +15,8 @@ object GatewayGrant {
     const val META = "com.zirakusa.gatewayhub/grant"
     /** The most Stone lets Gateway do WITHOUT an execution package: read only. */
     val LOCAL_CAP = AccessMode.READ
-    /** With an approved package: WRITE, never FULL, so CRITICAL actions always ask on screen. */
-    val PACKAGE_CAP = AccessMode.WRITE
+    /** With a package: FULL, nothing asks on screen (the AI app asks before using a tool, if it wants). */
+    val PACKAGE_CAP = AccessMode.FULL
     private const val MAX_BLOCKED = 300
     private val NAME = Regex("^[a-z][a-z0-9_]{1,63}$")
     private val AGENT = Regex("^[A-Za-z0-9_-]{1,40}$")

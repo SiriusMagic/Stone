@@ -1,4 +1,12 @@
-# Sin publicar (fase 7)
+# Stone Kotlin 1.7.19
+
+- **Ya no hay nada que aprobar:** los permisos que manda Gateway Hub (solo puede mandarlos la app Gateway firmada por
+  el mismo desarrollador) se activan solos. Antes había que pulsar **Aprobar** en Stone.
+- **Nada pide confirmación en la pantalla**, ni siquiera borrar: si quieres que te pregunten, lo pregunta tu IA
+  (Claude y ChatGPT preguntan antes de usar una herramienta). Para cortarlo todo: **Desconectar de Gateway Hub**.
+- Necesario para el hub compartido de Gateway Hub 0.0.9 (copiar un enlace, pegarlo en la IA y escribir un código).
+
+## Fase 7
 
 - **Adiós al relay:** se borra la carpeta `relay/` (Worker `stone-relay`). Stone llega a las IA solo a través de
   Gateway Hub. El Worker `stone-relay` que quede en tu Cloudflare ya no se usa y se puede borrar.

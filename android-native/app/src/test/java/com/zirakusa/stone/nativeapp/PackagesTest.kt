@@ -56,12 +56,10 @@ class PackagesTest {
     private val reversible = StoneAutomation.actions.first { it.risk == ActionRisk.REVERSIBLE }
     private val persistent = StoneAutomation.actions.first { it.risk == ActionRisk.PERSISTENT }
 
-    @Test fun readingIsActiveAtOnceTheRestWaitsForTheUser() {
+    @Test fun packagesFromTheLinkedGatewayAreActiveAtOnce() {
         assertTrue(Packages.install(pkg("pkg_read00001", listOf("leer")), BuildConfig.APPLICATION_ID).approved)
         val write = Packages.install(pkg("pkg_write0001", listOf("escribir", "modificar")), BuildConfig.APPLICATION_ID)
-        assertFalse(write.approved)
-        assertEquals("PACKAGE_PENDING", code { Packages.authorize(write.id, "a1", reversible, JSONObject()) })
-        Packages.approve(write.id)
+        assertTrue(write.approved)                                  // nothing to approve in Stone
         assertEquals(Act.ESCRIBIR, Packages.authorize(write.id, "a1", reversible, JSONObject()))
         assertEquals(Act.MODIFICAR, Packages.authorize(write.id, "a1", persistent, JSONObject()))
         assertEquals("ACT_NOT_IN_PACKAGE", code { Packages.authorize("pkg_read00001", "a1", reversible, JSONObject()) })
@@ -146,7 +144,7 @@ class PackagesTest {
         assertEquals(ProviderState.instanceId, link.getJSONObject("result").getString("instance"))
         val offered = JSONObject(ProviderBridge.handle(rpc("gatewayhub/packages/offer", JSONObject().put("packages", JSONArray().put(pkg("pkg_offer001", listOf("modificar"))).put(JSONObject().put("pkg", "x")))))!!)
         val results = offered.getJSONObject("result").getJSONArray("packages")
-        assertEquals("pending", results.getJSONObject(0).getString("status"))
+        assertEquals("active", results.getJSONObject(0).getString("status"))      // active at once
         assertEquals("MALFORMED", results.getJSONObject(1).getString("error"))
         ProviderBridge.handle(rpc("gatewayhub/packages/revoke", JSONObject().put("id", "pkg_offer001")))
         assertTrue(Packages.all.none { it.id == "pkg_offer001" })

@@ -23,8 +23,8 @@ data class ExecPackage(val id: String, val agent: String, val label: String, val
 
 /**
  * Execution packages. [install] verifies signature, environment, device and dates once; [authorize] is an
- * in-memory lookup per call. Reading-only packages are approved by themselves; any other waits for one tap
- * in Stone. CRITICAL actions still ask on screen on every call (see StoneAutomation).
+ * in-memory lookup per call. A package signed by the linked Gateway (same developer, verified by Android) is
+ * active at once: nothing to approve in Stone. The person stops it with "Desconectar de Gateway Hub".
  */
 object Packages {
     const val MAX_BYTES = 8_192
@@ -48,14 +48,14 @@ object Packages {
         }
     }
 
-    /** Verifies an offered envelope; returns it pending (or approved when it only reads). */
+    /** Verifies an offered envelope; returns it active (only the linked Gateway's key can sign one). */
     fun install(envelope: JSONObject, packageName: String, now: Long = nowS()): ExecPackage {
         if (!ProviderState.linked) throw PackageException("NOT_LINKED")
         val p = verify(envelope, ProviderState.publicKey ?: throw PackageException("NOT_LINKED"), now, packageName)
         all.removeAll { it.id == p.id }
         if (all.size >= MAX_KEPT) all.removeAll { it.exp + SKEW_S < now }
         if (all.size >= MAX_KEPT) throw PackageException("TOO_MANY")
-        val stored = p.copy(approved = p.acts == setOf(Act.LEER))
+        val stored = p.copy(approved = true)
         all += stored; save(); return stored
     }
 

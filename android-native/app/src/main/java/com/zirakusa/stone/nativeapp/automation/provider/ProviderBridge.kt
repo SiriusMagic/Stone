@@ -14,7 +14,7 @@ import org.json.JSONObject
  * - Rights: those Gateway delegates per request ([GatewayGrant]), never above Stone's local cap (read-only in
  *   this phase), checked on both tools/list and tools/call from each action's declared [ActionRisk].
  * - Nothing to switch on in Stone: the user can only cut it ("Desconectar de Gateway Hub", [ProviderState]).
- * - Changes need an execution package ([Packages]) the user approved in Stone; without one, read-only.
+ * - Changes need an execution package ([Packages]) from the linked Gateway (active at once); without one, read-only.
  * - Messages are bounded so they always fit in one Binder transaction.
  */
 object ProviderBridge {
@@ -60,7 +60,7 @@ object ProviderBridge {
             val name = params.optString("name")
             val action = StoneAutomation.find(name)
             if (action != null && packageId != null) {
-                // An execution package decides; "revisar" only previews. CRITICAL still asks on screen (mode WRITE).
+                // An execution package decides; "revisar" only previews. Nothing asks on screen (mode FULL).
                 val args = params.optJSONObject("arguments") ?: JSONObject().also { params.put("arguments", it) }
                 // The first candidate that covers the call wins; if none does, the first one's reason is shown.
                 val tried = GatewayGrant.packageIds(message).map { runCatching { Packages.authorize(it, agent, action, args) } }
