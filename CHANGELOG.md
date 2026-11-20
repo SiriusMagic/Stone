@@ -1,3 +1,13 @@
+# Stone Kotlin 1.7.22
+
+- **Crear token pregunta «¿Qué vas a conectar?»:** **LLM** (el enlace se pega directo en Claude, ChatGPT…) o
+  **Hub** (se pega en Gateway Hub, que solo hace de puente; los permisos los sigue poniendo Stone).
+- **Uso del token:** describe para qué es (hasta 300 caracteres); el hub lo muestra.
+- **Redireccionar a Hub:** al activarlo, Gateway Hub administra todo (permisos, caducidad, soporte y analítica). No
+  hace falta «Activar MCP»; tus tokens y la Analítica se ocultan y vuelven tal cual al apagarlo. **Ir al Hub** copia
+  el enlace y abre la app Gateway Hub, que además puede vincular Stone sola (solo si está firmada como Stone).
+- Necesita Gateway Hub 0.0.11 para vincularse sola.
+
 # Stone Kotlin 1.7.21
 
 - **«Modo API» pasa a llamarse «Modo MCP»** en los seis idiomas, en los textos de ayuda y en los mensajes que
