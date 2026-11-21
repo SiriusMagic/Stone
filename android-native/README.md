@@ -1,11 +1,6 @@
 # Stone para Android — migración a Kotlin
 
-Proyecto independiente en Kotlin + Jetpack Compose + Media3. Referencia funcional y visual:
-Stone 1.3.2, conservada en `../frontend/`. El trabajo previo de 1.3.3 continúa allí.
-La aplicación nativa se escribe directamente desde Stone. No reutiliza la implementación de Lica/Sren.
-El ZIP nativo contiene esta carpeta y la documentación, sin dependencias ni archivos de
-compilación. El código original continúa conservado por separado en `frontend/` y `backend/`
-dentro del espacio de trabajo y no se modifica ni se mezcla con la app Kotlin.
+Kotlin + Jetpack Compose + Media3. No necesita Node, Expo ni un servidor.
 
 ## Abrir y compilar
 

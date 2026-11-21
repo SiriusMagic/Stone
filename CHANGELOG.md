@@ -1,3 +1,10 @@
+# Sin publicar
+
+- **Repositorio limpio:** fuera los restos de la versión web (Expo/React Native): guías para levantar la web, notas
+  de la copia 1.3.2, `test_result.md`, `design_guidelines.json`, mapas con rutas de Windows, planes viejos de
+  1.4–1.6 y un APK de compilación guardado por error. La app no cambia. Todo queda en la historia: respaldo
+  completo en el commit `a115471` y el último estado con esas notas en `4f880a7`.
+
 # Stone Kotlin 1.7.23
 
 - **Abrir con Stone:** desde Luma, un administrador de archivos u otra app, «Abrir con…» ofrece Stone para videos y
