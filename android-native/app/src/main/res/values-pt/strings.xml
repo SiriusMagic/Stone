@@ -631,4 +631,5 @@
     <string name="api_usage_title">Uso do token</string>
     <string name="api_usage_hint">Descreve para que o vais usar (aparece no hub).</string>
     <string name="api_token_link_label_hub">Token (link para o hub)</string>
+    <string name="act_permission">Ordens entre apps da família</string>
 </resources>

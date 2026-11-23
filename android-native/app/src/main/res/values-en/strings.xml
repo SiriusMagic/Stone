@@ -533,4 +533,5 @@
     <string name="api_usage_title">Token use</string>
     <string name="api_usage_hint">Describe what you will use it for (shown in the hub).</string>
     <string name="api_token_link_label_hub">Token (link for the hub)</string>
+    <string name="act_permission">Orders between family apps</string>
 </resources>

@@ -126,6 +126,21 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
             com.zirakusa.stone.nativeapp.playback.ExternalOpen.consume()
         }
     }
+    // An assistant's order (FAMILIA.md §10): play once the library is there, also when Stone was closed.
+    val asked = com.zirakusa.stone.nativeapp.playback.ExternalOpen.request
+    LaunchedEffect(asked, state.songs.size) {
+        val request = asked ?: return@LaunchedEffect
+        if (state.songs.isEmpty()) return@LaunchedEffect
+        val list = when (request) {
+            is com.zirakusa.stone.nativeapp.playback.ExternalOpen.Request.Search ->
+                com.zirakusa.stone.core.VoicePlay.search(state.songs, request.query, System.currentTimeMillis())
+                    .ifEmpty { com.zirakusa.stone.core.VoicePlay.shuffled(state.songs, System.currentTimeMillis()) }
+            com.zirakusa.stone.nativeapp.playback.ExternalOpen.Request.Daily ->
+                com.zirakusa.stone.core.VoicePlay.daily(state.songs, state.playCounts, state.favoriteIds, java.time.LocalDate.now())
+        }
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.consumeRequest()
+        list.firstOrNull()?.let { playSong(it, list) }
+    }
     SideEffect { com.zirakusa.stone.nativeapp.feature.player.sheets.AudioOnlySelection.id = audioOnlyId }
     val currentSong = (state.songs.find { it.id == player.currentId } ?: externalSong?.takeIf { it.id == player.currentId })?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song

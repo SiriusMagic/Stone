@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- «Redireccionar a Hub»: only apps signed with the same key (Gateway Hub) get this permission. -->
+    <!-- The family's orders between apps (FAMILIA.md §10): only apps signed with the same key. -->
+    <permission android:name="com.zirakusa.family.permission.ACT" android:protectionLevel="signature"
+        android:label="@string/act_permission" />
     <permission android:name="com.zirakusa.gatewayhub.permission.LINK" android:protectionLevel="signature"
         android:label="@string/hub_link_permission" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -28,6 +31,11 @@
             <!-- Gateway Hub's scanner finds Stone (module music_) and its link channel. Being found turns nothing on. -->
             <intent-filter>
                 <action android:name="com.zirakusa.gatewayhub.action.APP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- «Reproduce música (de X)»: Android's standard order, from any assistant (FAMILIA.md §10). -->
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <!-- «Abrir con»: other apps (Luma, a file manager) can hand Stone a video or a song to play. -->
@@ -70,6 +78,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- The family's orders (FAMILIA.md §10): «recomendaciones del día». Only apps signed by the same developer. -->
+        <activity-alias android:name=".FamilyActions" android:targetActivity=".MainActivity" android:exported="true"
+            android:permission="com.zirakusa.family.permission.ACT">
+            <intent-filter>
+                <action android:name="com.zirakusa.family.action.PLAY_RECOMMENDED" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
         <service android:name=".playback.StonePlaybackService" android:exported="true"

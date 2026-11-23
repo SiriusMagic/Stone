@@ -631,4 +631,5 @@
     <string name="api_usage_title">Usage du jeton</string>
     <string name="api_usage_hint">Décrivez à quoi il servira (affiché dans le hub).</string>
     <string name="api_token_link_label_hub">Jeton (lien pour le hub)</string>
+    <string name="act_permission">Ordres entre les apps de la famille</string>
 </resources>

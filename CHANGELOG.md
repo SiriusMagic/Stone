@@ -1,5 +1,10 @@
 # Sin publicar
 
+- **Órdenes del Asistente** (FAMILIA.md §10): «reproduce música» con la orden estándar de Android (cualquier asistente;
+  sin búsqueda = toda tu música en aleatorio, «de Soda Stereo» = lo que coincida, sin tildes, el artista primero) y
+  **«mis recomendaciones del día»**, orden propia de la familia solo para apps con la misma firma: una mezcla de 30
+  canciones con favoritas y las más escuchadas más una pizca de azar, igual todo el día y distinta al siguiente
+  (`core/VoicePlay`). Funciona también con Stone cerrado: suena en cuanto carga la biblioteca. Nunca videos.
 - **Repositorio limpio:** fuera los restos de la versión web (Expo/React Native): guías para levantar la web, notas
   de la copia 1.3.2, `test_result.md`, `design_guidelines.json`, mapas con rutas de Windows, planes viejos de
   1.4–1.6 y un APK de compilación guardado por error. La app no cambia. Todo queda en la historia: respaldo
