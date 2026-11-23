@@ -1,4 +1,4 @@
-# Sin publicar
+# Stone Kotlin 1.7.24
 
 - **Órdenes del Asistente** (FAMILIA.md §10): «reproduce música» con la orden estándar de Android (cualquier asistente;
   sin búsqueda = toda tu música en aleatorio, «de Soda Stereo» = lo que coincida, sin tildes, el artista primero) y
