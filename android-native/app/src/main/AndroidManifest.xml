@@ -98,7 +98,7 @@
         <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
             android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name=".automation.LocalMcpProvider" android:authorities="${applicationId}.localmcp"
-            android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
+            android:exported="true" android:permission="${localMcpPermission}" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider" android:exported="false"
             android:grantUriPermissions="true">

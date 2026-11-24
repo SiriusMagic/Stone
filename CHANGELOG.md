@@ -1,6 +1,6 @@
-# Sin publicar
+# Stone Prueba 1.7.27
 
-- Stone 1.7.27 permite que Lucía consulte la biblioteca y el reproductor con el permiso MCP local y el relay apagado.
+- Stone Prueba se instala junto a Stone y permite que Lucía Prueba consulte su biblioteca y el reproductor por MCP local, con el relay apagado.
 
 # Stone Kotlin 1.7.26
 
