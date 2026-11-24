@@ -121,7 +121,7 @@ export class DeviceRelay {
     const declared = Number(request.headers.get("content-length") || 0);
     if (declared > MAX_BODY_BYTES) return jsonError(413, "Stone relay: request body larger than 1 MiB");
     const socket = this.ctx.getWebSockets()[0];
-    if (!socket) return jsonError(503, "Stone is not open on the phone. Open Stone and turn on API mode.");
+    if (!socket) return jsonError(503, "Stone is not open on the phone. Open Stone and turn on MCP mode.");
     const id = String(this.nextId++);
     const headers = {};
     for (const name of FORWARDED_HEADERS) {

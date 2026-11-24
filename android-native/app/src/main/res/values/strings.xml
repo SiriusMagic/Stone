@@ -379,7 +379,7 @@
     <string name="theme_wine">Vino</string>
     <string name="theme_violet">Violeta</string>
     <string name="theme_slate">Pizarra</string>
-    <string name="api_title">Modo API (agentes de IA)</string>
+    <string name="api_title">Modo MCP (agentes de IA)</string>
     <string name="api_enable">Activar MCP</string>
     <string name="api_enable_hint">Habilita el servidor MCP para conectar agentes (Claude, ChatGPT, Cursor, etc.). Funciona mientras Stone esté abierto o reproduciendo.</string>
     <string name="api_copied">Copiado</string>
@@ -582,12 +582,19 @@
     <string name="crash_last_title">Último cierre inesperado</string>
     <string name="crash_last_hint">Cópialo o compártelo para que podamos arreglarlo. Solo está guardado en este teléfono.</string>
     <string name="crash_copy">Copiar</string>
-    <string name="api_hub_title" translatable="false">Gateway Hub</string>
-    <string name="api_hub_hint">Un solo enlace para que tu IA use Stone y otras apps. Copia un enlace solo para el hub y abre el panel para pegarlo. Revoca el token «Gateway Hub» para cortarlo.</string>
-    <string name="api_hub_link">Vincular</string>
-    <string name="api_hub_redirect">Redirección hub</string>
-    <string name="api_hub_redirect_hint">La app Gateway Hub de este teléfono vincula Stone sola, sin copiar ni pegar. Solo apps firmadas por el mismo desarrollador.</string>
-    <string name="api_hub_safe">Solo con Stone abierta (modo seguro)</string>
-    <string name="api_hub_safe_hint">MCP funciona solo mientras Stone está en pantalla; al salir se corta el enlace público. Gateway Hub lo cambia desde Ajustes › Modo de funcionamiento.</string>
-    <string name="hub_link_permission">vincular Stone con Gateway Hub</string>
+    <string name="api_enable_by_hub">Lo gestiona Gateway Hub mientras «Redireccionar a Hub» esté activado.</string>
+    <string name="api_hub_redirect">Redireccionar a Hub</string>
+    <string name="api_hub_redirect_hint">La administración de permisos, caducidad, soporte y analítica pasa a Gateway Hub. No hace falta activar MCP.</string>
+    <string name="api_hub_open">Ir al Hub</string>
+    <string name="api_hub_paste">Enlace copiado. Pégalo en Gateway Hub › Apps.</string>
+    <string name="hub_link_permission">Vincular con Gateway Hub</string>
+    <string name="api_kind_title">¿Qué vas a conectar?</string>
+    <string name="api_kind_llm">LLM</string>
+    <string name="api_kind_llm_hint">El enlace se pega directo en Claude, ChatGPT…</string>
+    <string name="api_kind_hub">Hub</string>
+    <string name="api_kind_hub_hint">El enlace se pega en Gateway Hub, que solo hace de puente.</string>
+    <string name="api_usage_title">Uso del token</string>
+    <string name="api_usage_hint">Describe para qué lo vas a usar (se muestra en el hub).</string>
+    <string name="api_token_link_label_hub">Token (enlace para el hub)</string>
+    <string name="act_permission">Órdenes entre apps de la familia</string>
 </resources>

@@ -13,7 +13,7 @@ Stone es un reproductor de música y video que funciona en tu dispositivo. Esta 
 - Tus listas, favoritos, historial de reproducción reciente y número de reproducciones.
 - Tus ajustes: tema, idioma, ecualizador, temporizador, accesos de inicio, colores, foto de fondo y similares.
 - Las letras que guardes o importes.
-- Del Modo API: los tokens de acceso (nombre, modo y fecha de último uso), el registro de actividad de la sesión y copias de seguridad de las etiquetas, letras y portadas que un asistente cambie, para poder deshacerlas.
+- Del Modo MCP: los tokens de acceso (nombre, modo y fecha de último uso), el registro de actividad de la sesión y copias de seguridad de las etiquetas, letras y portadas que un asistente cambie, para poder deshacerlas.
 Estos datos se guardan en el almacenamiento privado de la aplicación y se borran al desinstalarla o al borrar sus datos desde los ajustes de Android.
 
 ## Permisos de Android
@@ -26,7 +26,7 @@ Estos datos se guardan en el almacenamiento privado de la aplicación y se borra
 Stone edita o elimina archivos únicamente cuando tú lo pides o cuando un asistente al que diste un token con permiso de escritura lo solicita.
 
 ## Funciones que usan internet
-- Modo API (apagado por defecto). Si lo activas, Stone abre un servidor en tu teléfono para que los asistentes de IA a los que des un token puedan consultar o controlar Stone según el modo de ese token. Con el enlace público, las solicitudes pasan por el relevo de Stone, alojado en Cloudflare. El relevo reenvía las solicitudes y respuestas mientras están en tránsito y no guarda su contenido; conserva un identificador aleatorio del dispositivo y un resumen cifrado (hash) de su clave. Cloudflare, como proveedor de infraestructura, puede procesar datos técnicos como la dirección IP. Cada asistente recibe lo que solicite (por ejemplo títulos, artistas, etiquetas, letras y estado de reproducción) y lo trata según su propia política de privacidad. Puedes cambiar el modo, revocar un token o apagar el Modo API en cualquier momento.
+- Modo MCP (apagado por defecto). Si lo activas, Stone abre un servidor en tu teléfono para que los asistentes de IA a los que des un token puedan consultar o controlar Stone según el modo de ese token. Con el enlace público, las solicitudes pasan por el relevo de Stone, alojado en Cloudflare. El relevo reenvía las solicitudes y respuestas mientras están en tránsito y no guarda su contenido; conserva un identificador aleatorio del dispositivo y un resumen cifrado (hash) de su clave. Cloudflare, como proveedor de infraestructura, puede procesar datos técnicos como la dirección IP. Cada asistente recibe lo que solicite (por ejemplo títulos, artistas, etiquetas, letras y estado de reproducción) y lo trata según su propia política de privacidad. Puedes cambiar el modo, revocar un token o apagar el Modo MCP en cualquier momento.
 - Portadas desde una URL: si un asistente pide usar una imagen de internet como portada, Stone la descarga desde esa dirección.
 - Buscar letras automáticamente: Stone envía a lrclib.net el título, el artista, el álbum y la duración de la canción para encontrar su letra. LRCLIB es un servicio de terceros con su propia política.
 - Navegador de letras: abre dentro de Stone un buscador o sitio de letras (Google, Letras.com, Genius o Musixmatch) con el título y el artista. Esos sitios pueden guardar cookies en el navegador interno y aplican sus propias políticas.
@@ -42,7 +42,7 @@ Stone no está dirigida a menores de 13 años y no recopilamos a sabiendas datos
 Como no guardamos tus datos en nuestros servidores, tú los controlas desde el dispositivo: puedes editarlos o borrarlos en la aplicación o eliminando los datos de la app. Para cualquier solicitud o duda, usa el canal de contacto.
 
 ## Seguridad
-Cada token del Modo API tiene su propio modo: Solo lectura, Lectura y escritura (las acciones críticas, como borrar una lista, piden tu confirmación) o Acceso completo (nada pide confirmación). Usa Acceso completo solo con asistentes de confianza. Quien tenga un enlace puede actuar con el modo de su token: no lo publiques y revócalo si se filtra. Ningún sistema es totalmente seguro.
+Cada token del Modo MCP tiene su propio modo: Solo lectura, Lectura y escritura (las acciones críticas, como borrar una lista, piden tu confirmación) o Acceso completo (nada pide confirmación). Usa Acceso completo solo con asistentes de confianza. Quien tenga un enlace puede actuar con el modo de su token: no lo publiques y revócalo si se filtra. Ningún sistema es totalmente seguro.
 
 ## Cambios
 Si esta política cambia, publicaremos la nueva versión en la aplicación con su fecha de vigencia.

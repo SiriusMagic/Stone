@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         windowOrientation = resources.configuration.orientation
         AudioDiagnostics.log(this, "MainActivity.onCreate", state = StonePlaybackService.diagnosticState(),
             includeSystemEffects = true)
-        com.zirakusa.stone.nativeapp.automation.HubDiscovery.handle(intent)
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.handle(this, intent)
         setContent {
             com.zirakusa.stone.nativeapp.ui.StoneApp(
                 isPictureInPicture = pictureInPicture,
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        com.zirakusa.stone.nativeapp.automation.HubDiscovery.handle(intent)
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.handle(this, intent)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -117,13 +117,7 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
-    override fun onStart() {
-        super.onStart()
-        com.zirakusa.stone.nativeapp.automation.ApiMode.setVisible(true) // modo seguro: MCP only while on screen
-    }
-
     override fun onStop() {
-        com.zirakusa.stone.nativeapp.automation.ApiMode.setVisible(false)
         AudioDiagnostics.log(this, "MainActivity.onStop", state = StonePlaybackService.diagnosticState())
         immersiveSystemBars.onStop()
         super.onStop()

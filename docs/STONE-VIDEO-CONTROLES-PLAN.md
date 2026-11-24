@@ -57,7 +57,7 @@ Para añadir un control nuevo basta con: 1) un valor en `VideoControlId`, 2) su 
 14. **Reproducción en segundo plano con imagen flotante mejorada**: PiP ya existe; añadir
     controles de salto y cerrar desde la ventana flotante (`RemoteAction` en `PictureInPictureParams`).
 
-## Exposición al Modo API
+## Exposición al Modo MCP
 
 Cada control nuevo debería tener su acción en `automation/StoneActions.kt` (o un archivo
 `StoneVideoActions.kt` si crece): `video.screenshot`, `video.set_ab_loop`, `video.bookmark_add`,

@@ -8,7 +8,7 @@ core/                    Lógica pura y probada sin Android (letras, diseño de 
 app/…/nativeapp/
 ├── MainActivity.kt      Única Activity
 ├── ui/                  Armazón de la app
-│   ├── StoneApp.kt · AutomationBridge.kt   Navegación y puente con el Modo API
+│   ├── StoneApp.kt · AutomationBridge.kt   Navegación y puente con el Modo MCP
 │   ├── theme/           Colores, tema y look personalizado
 │   ├── components/      Piezas visuales compartidas (portada, avatar, iconos)
 │   └── system/          Barras del sistema, sacudida, superposición de volumen
@@ -31,7 +31,7 @@ app/…/nativeapp/
 │   └── library/
 │       ├── NotificationAlarmReceiver.kt                    ⚠ componente de Android
 │       ├── scan/ · user/ · tags/ · lyrics/ · artwork/ · web/ · notifications/
-└── automation/          Modo API (MCP)
+└── automation/          Modo MCP (MCP)
     ├── ApiMode.kt       Fachada que usa la interfaz
     ├── auth/            Tokens, permisos, límite de intentos
     ├── server/          Servidor HTTP/MCP en 127.0.0.1

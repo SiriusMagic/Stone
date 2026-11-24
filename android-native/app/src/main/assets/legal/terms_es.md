@@ -17,8 +17,8 @@ El editor de etiquetas, el cambio de carátulas, las letras y la eliminación de
 ## 5. Volumen y audición
 Stone permite amplificar el sonido por encima del 100 %. Escuchar a volumen alto durante mucho tiempo puede dañar tu audición y tus altavoces o auriculares. Tú decides el nivel y asumes ese riesgo.
 
-## 6. Modo API
-El Modo API permite que los asistentes de IA a los que des un token consulten o controlen Stone. Tú eliges el modo de cada token (Solo lectura, Lectura y escritura o Acceso completo) y qué herramientas pueden usar, y eres responsable de las acciones que hagan con los permisos que les diste y de con quién compartes tus enlaces. Los asistentes de terceros se rigen por sus propios términos. El relevo que da el enlace público se ofrece sin garantía de disponibilidad y puede cambiar o dejar de funcionar.
+## 6. Modo MCP
+El Modo MCP permite que los asistentes de IA a los que des un token consulten o controlen Stone. Tú eliges el modo de cada token (Solo lectura, Lectura y escritura o Acceso completo) y qué herramientas pueden usar, y eres responsable de las acciones que hagan con los permisos que les diste y de con quién compartes tus enlaces. Los asistentes de terceros se rigen por sus propios términos. El relevo que da el enlace público se ofrece sin garantía de disponibilidad y puede cambiar o dejar de funcionar.
 
 ## 7. Servicios de terceros
 Stone puede usar o abrir servicios y sitios de terceros (lrclib.net, buscadores y sitios de letras, GitHub, asistentes de IA). No los controlamos ni respondemos por ellos. Las letras y otros contenidos que obtengas de esos servicios pertenecen a sus titulares: úsalos solo para tu disfrute personal y según las condiciones de cada sitio.

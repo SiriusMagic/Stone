@@ -10,7 +10,7 @@ import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
 /**
- * Access tokens of Ajustes › Modo API › Seguridad. Each one has a name and an [AccessMode] and
+ * Access tokens of Ajustes › Modo MCP › Seguridad. Each one has a name and an [AccessMode] and
  * can be rotated or revoked alone. The first token is the "main" one used by the big Copy button.
  */
 object ApiTokens {
@@ -19,7 +19,9 @@ object ApiTokens {
     private var store: StoneSettingsStore? = null
     private var lastSaved = 0L
 
-    val primary: ApiToken? get() = tokens.firstOrNull()
+    val primary: ApiToken? get() = listed.firstOrNull()
+    /** The tokens the user sees and manages (the «Redireccionar a Hub» token is never listed). */
+    val listed: List<ApiToken> get() = tokens.filter { it.kind != TokenKind.REDIRECT }
 
     /** Loads the tokens; the single token of 1.6.8 and earlier becomes "Principal" with its old permissions. */
     fun load(store: StoneSettingsStore, defaultName: String) {
@@ -39,11 +41,12 @@ object ApiTokens {
 
     /** [validDays] 0 = never expires. */
     fun create(name: String, mode: AccessMode, validDays: Int = 0, secret: String = secret(),
-        disabledTools: Set<String> = emptySet()): ApiToken {
+        disabledTools: Set<String> = emptySet(), kind: TokenKind = TokenKind.LLM, usage: String = ""): ApiToken {
         val now = System.currentTimeMillis()
         return ApiToken(id(), name.trim().ifEmpty { "Agente ${tokens.size + 1}" }, secret, mode, now,
             disabledTools = disabledTools - "stone_help",
-            expiresAt = if (validDays > 0) now + validDays * 86_400_000L else 0)
+            expiresAt = if (validDays > 0) now + validDays * 86_400_000L else 0,
+            kind = kind, usage = usage.trim().take(ApiToken.USAGE_MAX))
             .also { tokens = tokens + it; save(); publish() }
     }
 
@@ -60,6 +63,15 @@ object ApiTokens {
 
     fun rename(id: String, name: String) = change(id) { it.copy(name = name.trim().ifEmpty { it.name }) }
     fun setMode(id: String, mode: AccessMode) = change(id) { it.copy(mode = mode) }
+    fun setKind(id: String, kind: TokenKind) = change(id) { it.copy(kind = kind) }
+    fun setUsage(id: String, usage: String) = change(id) { it.copy(usage = usage.trim().take(ApiToken.USAGE_MAX)) }
+
+    /**
+     * The token behind «Redireccionar a Hub»: reused if it exists, else created with full access and no end date
+     * (the hub decides who may do what). It is never listed; turning the redirection off stops serving it.
+     */
+    fun redirectToken(): ApiToken = tokens.firstOrNull { it.kind == TokenKind.REDIRECT }
+        ?: create("Gateway Hub", AccessMode.FULL, kind = TokenKind.REDIRECT, usage = "Redireccionar a Hub")
     /** New secret for the same token: whoever had the old link loses access. */
     fun rotate(id: String) = change(id) { it.copy(secret = secret(), lastUsedAt = 0) }
 
@@ -90,7 +102,11 @@ object ApiTokens {
         store?.setLook("api.token", "")
     }
 
-    private fun publish() = McpServer.updateTokens(tokens)
+    /** Which tokens the server accepts: only the hub's while redirecting, otherwise the user's own. */
+    fun served(redirect: Boolean): List<ApiToken> =
+        tokens.filter { (it.kind == TokenKind.REDIRECT) == redirect }
+
+    internal fun publish() = McpServer.updateTokens(served(com.zirakusa.stone.nativeapp.automation.ApiMode.hubRedirect))
 
     private fun id() = random(6)
     /**

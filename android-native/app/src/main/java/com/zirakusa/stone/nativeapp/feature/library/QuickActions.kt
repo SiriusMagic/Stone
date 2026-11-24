@@ -35,7 +35,7 @@ object QuickActionRegistry {
             "Volumen máximo al 10 % para dormir", Icons.Default.Bedtime, true),
         QuickActionDefinition("diagnostics", "Diagnóstico de rendimiento", "CPU, RAM y audio", Icons.Default.Memory, true),
         QuickActionDefinition("sleep_timer", "Temporizador", "Pausa la música al dormir", Icons.Default.Timer, true),
-        QuickActionDefinition("api_mode", "Modo API", "Conecta un asistente de IA", Icons.Default.Hub, true),
+        QuickActionDefinition("api_mode", "Modo MCP", "Conecta un asistente de IA", Icons.Default.Hub, true),
     )
     val operational = definitions.filter { it.available && it.id in available }
 }

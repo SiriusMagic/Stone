@@ -414,7 +414,7 @@
     <string name="theme_wine">Wein</string>
     <string name="theme_violet">Violett</string>
     <string name="theme_slate">Schiefer</string>
-    <string name="api_title">API-Modus (KI-Agenten)</string>
+    <string name="api_title">MCP-Modus (KI-Agenten)</string>
     <string name="api_enable">MCP einschalten</string>
     <string name="api_enable_hint">Schaltet den MCP-Server ein, um Agenten zu verbinden (Claude, ChatGPT, Cursor usw.). Funktioniert, solange Stone geöffnet ist oder abspielt.</string>
     <string name="api_copied">Kopiert</string>
@@ -617,11 +617,19 @@
     <string name="crash_last_title">Letzter unerwarteter Absturz</string>
     <string name="crash_last_hint">Kopiere oder teile ihn zur Behebung. Er ist nur auf diesem Telefon gespeichert.</string>
     <string name="crash_copy">Kopieren</string>
-    <string name="api_hub_hint">Ein Link, über den deine KI Stone und andere Apps nutzt. Kopiert einen Link nur für den Hub und öffnet sein Panel zum Einfügen. Widerrufe den Token „Gateway Hub“, um ihn zu trennen.</string>
-    <string name="api_hub_link">Verbinden</string>
-    <string name="api_hub_redirect">Hub-Weiterleitung</string>
-    <string name="api_hub_redirect_hint">Die Gateway-Hub-App auf diesem Telefon verbindet Stone selbst, ohne Kopieren und Einfügen. Nur Apps desselben Entwicklers.</string>
-    <string name="api_hub_safe">Nur wenn Stone geöffnet ist (sicherer Modus)</string>
-    <string name="api_hub_safe_hint">MCP funktioniert nur, solange Stone auf dem Bildschirm ist; beim Verlassen wird der öffentliche Link getrennt. Gateway Hub ändert es unter Einstellungen › Betriebsmodus.</string>
-    <string name="hub_link_permission">Stone mit Gateway Hub verbinden</string>
+    <string name="api_enable_by_hub">Wird von Gateway Hub verwaltet, solange „An Hub weiterleiten“ an ist.</string>
+    <string name="api_hub_redirect">An Hub weiterleiten</string>
+    <string name="api_hub_redirect_hint">Berechtigungen, Ablauf, Support und Statistik übernimmt Gateway Hub. MCP muss nicht aktiviert werden.</string>
+    <string name="api_hub_open">Zum Hub</string>
+    <string name="api_hub_paste">Link kopiert. Füge ihn in Gateway Hub › Apps ein.</string>
+    <string name="hub_link_permission">Mit Gateway Hub verbinden</string>
+    <string name="api_kind_title">Was verbindest du?</string>
+    <string name="api_kind_llm">LLM</string>
+    <string name="api_kind_llm_hint">Der Link kommt direkt in Claude, ChatGPT…</string>
+    <string name="api_kind_hub">Hub</string>
+    <string name="api_kind_hub_hint">Der Link kommt in Gateway Hub, das nur als Brücke dient.</string>
+    <string name="api_usage_title">Verwendung des Tokens</string>
+    <string name="api_usage_hint">Beschreibe, wofür du ihn nutzt (wird im Hub angezeigt).</string>
+    <string name="api_token_link_label_hub">Token (Link für den Hub)</string>
+    <string name="act_permission">Befehle zwischen Apps der Familie</string>
 </resources>

@@ -1,3 +1,122 @@
+# Stone Kotlin 1.7.25
+
+- **Conectar todas** (Gateway Hub 0.0.21): con un toque en el Hub se activa en Stone «Redireccionar a Hub» y queda
+  vinculada, sin entrar en Stone. Solo lo puede pedir una app firmada por el mismo desarrollador.
+
+# Stone Kotlin 1.7.24
+
+- **Órdenes del Asistente** (FAMILIA.md §10): «reproduce música» con la orden estándar de Android (cualquier asistente;
+  sin búsqueda = toda tu música en aleatorio, «de Soda Stereo» = lo que coincida, sin tildes, el artista primero) y
+  **«mis recomendaciones del día»**, orden propia de la familia solo para apps con la misma firma: una mezcla de 30
+  canciones con favoritas y las más escuchadas más una pizca de azar, igual todo el día y distinta al siguiente
+  (`core/VoicePlay`). Funciona también con Stone cerrado: suena en cuanto carga la biblioteca. Nunca videos.
+- **Repositorio limpio:** fuera los restos de la versión web (Expo/React Native): guías para levantar la web, notas
+  de la copia 1.3.2, `test_result.md`, `design_guidelines.json`, mapas con rutas de Windows, planes viejos de
+  1.4–1.6 y un APK de compilación guardado por error. La app no cambia. Todo queda en la historia: respaldo
+  completo en el commit `a115471` y el último estado con esas notas en `4f880a7`.
+
+# Stone Kotlin 1.7.23
+
+- **Abrir con Stone:** desde Luma, un administrador de archivos u otra app, «Abrir con…» ofrece Stone para videos y
+  música. Se reproduce al momento en el reproductor completo, aunque el archivo no esté en tu biblioteca.
+
+# Stone Kotlin 1.7.22
+
+- **Crear token pregunta «¿Qué vas a conectar?»:** **LLM** (el enlace se pega directo en Claude, ChatGPT…) o
+  **Hub** (se pega en Gateway Hub, que solo hace de puente; los permisos los sigue poniendo Stone).
+- **Uso del token:** describe para qué es (hasta 300 caracteres); el hub lo muestra.
+- **Redireccionar a Hub:** al activarlo, Gateway Hub administra todo (permisos, caducidad, soporte y analítica). No
+  hace falta «Activar MCP»; tus tokens y la Analítica se ocultan y vuelven tal cual al apagarlo. **Ir al Hub** copia
+  el enlace y abre la app Gateway Hub, que además puede vincular Stone sola (solo si está firmada como Stone).
+- Necesita Gateway Hub 0.0.11 para vincularse sola.
+
+# Stone Kotlin 1.7.21
+
+- **«Modo API» pasa a llamarse «Modo MCP»** en los seis idiomas, en los textos de ayuda y en los mensajes que
+  reciben las IA, porque lo que Stone ofrece es un servidor MCP. Todo funciona igual: mismo enlace y mismos tokens.
+- Compatible otra vez con Gateway Hub MCP 0.0.2: en Modo MCP toca **Copiar** y pega el enlace en la pestaña Apps del hub.
+
+# Stone Kotlin 1.7.20
+
+- **Vuelve el Modo API de antes:** Stone se conecta otra vez directamente a la IA a través del Worker
+  `stone-relay` de Cloudflare, con su enlace fijo, sin pasar por Gateway Hub.
+- **Vuelven General y Analítica:** Activar MCP, **Crear token**, pausar y configurar cada token, y las gráficas de
+  solicitudes por minuto.
+- Se quita todo lo de Gateway Hub dentro de Stone (vinculación, paquetes y su tarjeta).
+- El reproductor no cambia: se mantiene que las copias de seguridad de otras apps no salgan en la biblioteca.
+
+# Stone Kotlin 1.7.19
+
+- **Ya no hay nada que aprobar:** los permisos que manda Gateway Hub (solo puede mandarlos la app Gateway firmada por
+  el mismo desarrollador) se activan solos. Antes había que pulsar **Aprobar** en Stone.
+- **Nada pide confirmación en la pantalla**, ni siquiera borrar: si quieres que te pregunten, lo pregunta tu IA
+  (Claude y ChatGPT preguntan antes de usar una herramienta). Para cortarlo todo: **Desconectar de Gateway Hub**.
+- Necesario para el hub compartido de Gateway Hub 0.0.9 (copiar un enlace, pegarlo en la IA y escribir un código).
+
+## Fase 7
+
+- **Adiós al relay:** se borra la carpeta `relay/` (Worker `stone-relay`). Stone llega a las IA solo a través de
+  Gateway Hub. El Worker `stone-relay` que quede en tu Cloudflare ya no se usa y se puede borrar.
+
+# Stone Kotlin 1.7.18
+
+- **Las copias de seguridad automáticas de otras apps ya no aparecen como canciones** («AutoBackup_…» con «All data
+  backup», «AutoPlaylist_…» con «Playlist backup»). Stone no las crea: las deja otra app y Android las indexa como audio.
+  Stone las oculta siempre; los archivos no se tocan.
+
+## Gateway Hub: fases 2 a 6 (Stone como proveedor)
+
+- **Paquetes de ejecución** en Ajustes › Modo API › Gateway Hub · paquetes: Gateway Hub ofrece permisos firmados
+  (leer, revisar, escribir, modificar, revertir) para un agente y un tiempo. Los de solo lectura se activan solos; los
+  demás esperan a que pulses **Aprobar**. Puedes **Rechazar** o **Revocar** cualquiera.
+- Borrar sigue pidiendo confirmación en la pantalla de Stone, aunque el paquete lo permita.
+- El puente con Gateway Hub ya no necesita «Activar MCP» ni «Redirección hub». Para cortarlo: **Desconectar de Gateway
+  Hub** (se puede volver a permitir).
+- Gateway puede cancelar una petición en curso, por ejemplo una confirmación que nadie ha respondido.
+- Fase 3: Stone acepta varios paquetes candidatos por llamada (el hub elige cuáles podrían cubrirla).
+- Fase 4: se quita la tarjeta **Cloudflare** de Modo API. Stone ya no guarda ningún token de Cloudflare (el que guardó la
+  1.7.15 se borra al abrirla) ni lo comparte con Gateway Hub: el hub se publica y se actualiza desde Gateway, con un token
+  que se usa una vez y se olvida.
+- **Fase 6: Stone es solo proveedor de Gateway Hub.** Se retiran el servidor MCP HTTP, el enlace público (relay), los
+  tokens propios, la Analítica, «Activar MCP», «Redirección hub», «Solo con Stone abierta» y el canal HubLink.
+  - Ajustes › **Gateway Hub** (antes Modo API): estado que comunica Gateway, paquetes (aprobar, rechazar, revocar),
+    «Desconectar de Gateway Hub» y la actividad de los agentes.
+  - El modo seguro lo elige Gateway Hub y Stone lo aplica: en modo seguro solo responde con Stone en pantalla.
+  - La herramienta `stone_metrics` desaparece (las métricas están en Gateway Hub). Las demás herramientas no cambian.
+  - Los agentes que usaban un enlace de Stone (`stone-relay…/d/…/mcp?token=stn_…`) deben pasar a un enlace de Gateway
+    Hub. El Worker `stone-relay` puede borrarse cuando no quede ninguna Stone anterior instalada.
+- Sin APK todavía.
+
+# Stone Kotlin 1.7.17
+
+- Sin cambios visibles. Preparación de la arquitectura con Gateway Hub centralizado (fase 1b):
+  - El manejo de MCP sale del servidor HTTP a un despachador propio, sin red (`automation/provider/McpDispatcher.kt`).
+    El servidor HTTP lo usa igual que antes, y el puente con Gateway ya no depende de él.
+  - El puente con Gateway Hub (`automation/provider/`) usa los permisos que Gateway delega en cada petición, recortados a
+    lo que Stone permite: por ahora, solo lectura. Ya no depende del token «Gateway Hub» de Stone; ese token solo cuenta
+    para el enlace público mientras exista.
+
+# Stone Kotlin 1.7.16
+
+- **Puente local con Gateway Hub** (fase 1 de la migración a un solo endpoint MCP): la app Gateway Hub del mismo
+  teléfono puede listar las herramientas de Stone y ejecutar su herramienta de prueba (`stone_help`) por IPC de Android,
+  sin pasar por internet. Detalles en `docs/MCP.md` › Puente local.
+  - Solo Gateway Hub firmado por el mismo desarrollador, comprobado por Android en cada mensaje.
+  - **Solo lectura**: las herramientas que cambian algo no aparecen y se rechazan.
+  - Necesita «Redirección hub» y Modo API activados. Apagar «Redirección hub» lo cierra.
+- Nada cambia en el enlace público, el relay ni Cloudflare.
+
+# Stone Kotlin 1.7.15
+
+- **Cloudflare (túnel y hub)** en Ajustes › Modo API: pega o **actualiza tu token de la API de Cloudflare** (por ejemplo,
+  cuando caduque a los 7 días). Muestra cuántos días le quedan y avisa en amarillo a partir de 2 días.
+  - Se guarda cifrado con el Keystore y se comparte con **Gateway Hub 0.0.6**: si lo actualizas en una app, vale para
+    las dos. Solo pasa entre apps del mismo desarrollador y con «Redirección hub» activada.
+  - **Comprobar túnel:** busca el relay (`stone-relay`) en tu cuenta y te dice si es el que usa Stone.
+  - **Crear token en Cloudflare** abre la página de Cloudflare con el permiso necesario ya elegido (Workers Scripts › Editar).
+- **Crear token** pregunta primero **para qué es**: *para un hub* (se llama «Gateway Hub» y su enlace va en Gateway Hub,
+  nunca en un chat) o *para una IA* (Claude, ChatGPT…).
+
 # Stone Kotlin 1.7.14
 
 - **Modo seguro de Gateway Hub** (Ajustes › Modo API › Gateway Hub › «Solo con Stone abierta»): con el

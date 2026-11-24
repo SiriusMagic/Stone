@@ -12,7 +12,6 @@ tokens ni tu biblioteca: solo lo que se busca (título y artista).
 | Servidor de la portada elegida | Descargar la imagen | La dirección de la imagen | Al aplicar una portada | No | `data/library/artwork/CoverDownloader.kt` |
 | **Google, Letras.com, Genius, Musixmatch** | Navegador de letras dentro de la app | La búsqueda que tú escribes; cada web pone sus cookies | Solo si abres "Buscar en la web" | No | `feature/player/lyrics/LyricsSearchBrowser.kt` |
 | **Cloudflare Workers** (`stone-relay.<cuenta>.workers.dev`) | Enlace público del Modo API | Las peticiones del agente, cifradas por HTTPS | Solo con el Modo API activado | Secreto propio del teléfono (no tu token) | `relay/`, `automation/relay/` |
-| **Gateway Hub MCP** (`stone-hub.<cuenta>.workers.dev`, repo aparte) | Un enlace para varias apps | Lo que pida la IA, a través del token «Gateway Hub» de Stone | Solo si vinculas el hub | Token «Gateway Hub» (lo creas y lo revocas en Stone) | `automation/ApiMode.kt`, `feature/settings/api/ApiHubCard.kt` |
 | **GitHub** (`github.com/SiriusMagic/Stone`) | Enlace al código y a las descargas | Nada (solo se abre el enlace) | Si lo tocas en Ajustes | No | `feature/settings/LegalScreens.kt` |
 
 Stone respeta los límites de cada servicio: espera entre peticiones y, si alguno responde

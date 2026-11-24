@@ -17,8 +17,8 @@ The tag editor, cover changes, lyrics and file deletion act on your original fil
 ## 5. Volume and hearing
 Stone can amplify sound above 100%. Listening at high volume for long periods can damage your hearing and your speakers or headphones. You choose the level and assume that risk.
 
-## 6. API mode
-API mode lets the AI assistants you give a token read or control Stone. You choose each token's mode (Read only, Read and write or Full access) and which tools they may use, and you are responsible for what they do with the permissions you granted and for whom you share your links with. Third-party assistants are governed by their own terms. The relay behind the public link is provided without any availability guarantee and may change or stop working.
+## 6. MCP mode
+MCP mode lets the AI assistants you give a token read or control Stone. You choose each token's mode (Read only, Read and write or Full access) and which tools they may use, and you are responsible for what they do with the permissions you granted and for whom you share your links with. Third-party assistants are governed by their own terms. The relay behind the public link is provided without any availability guarantee and may change or stop working.
 
 ## 7. Third-party services
 Stone may use or open third-party services and sites (lrclib.net, search engines and lyrics sites, GitHub, AI assistants). We do not control them and are not responsible for them. Lyrics and other content you get from those services belong to their owners: use them only for your personal enjoyment and under each site's conditions.

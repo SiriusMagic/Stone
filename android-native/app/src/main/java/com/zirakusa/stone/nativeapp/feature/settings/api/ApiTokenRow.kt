@@ -39,6 +39,7 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
                 token.expired -> R.string.api_token_expired to ApiRed
                 else -> R.string.api_token_active to ApiGreen
             }
+            ApiPill(stringResource(token.kind.label()), StonePalette.Secondary, Modifier.padding(end = 6.dp))
             ApiPill(stringResource(state), color, Modifier.padding(end = 8.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -316,7 +316,7 @@
     <string name="theme_wine">Wine</string>
     <string name="theme_violet">Violet</string>
     <string name="theme_slate">Slate</string>
-    <string name="api_title">API mode (AI agents)</string>
+    <string name="api_title">MCP mode (AI agents)</string>
     <string name="api_enable">Turn on MCP</string>
     <string name="api_enable_hint">Turns on the MCP server to connect agents (Claude, ChatGPT, Cursor, etc.). Works while Stone is open or playing.</string>
     <string name="api_copied">Copied</string>
@@ -519,11 +519,19 @@
     <string name="crash_last_title">Last unexpected close</string>
     <string name="crash_last_hint">Copy or share it so it can be fixed. It is only stored on this phone.</string>
     <string name="crash_copy">Copy</string>
-    <string name="api_hub_hint">One link for your AI to use Stone and other apps. Copies a link just for the hub and opens its panel to paste it. Revoke the “Gateway Hub” token to cut it off.</string>
-    <string name="api_hub_link">Link</string>
-    <string name="api_hub_redirect">Hub redirect</string>
-    <string name="api_hub_redirect_hint">The Gateway Hub app on this phone links Stone by itself, no copy and paste. Only apps signed by the same developer.</string>
-    <string name="api_hub_safe">Only while Stone is open (safe mode)</string>
-    <string name="api_hub_safe_hint">MCP works only while Stone is on screen; leaving it cuts the public link. Gateway Hub changes it from Settings › Operating mode.</string>
-    <string name="hub_link_permission">link Stone with Gateway Hub</string>
+    <string name="api_enable_by_hub">Managed by Gateway Hub while «Redirect to Hub» is on.</string>
+    <string name="api_hub_redirect">Redirect to Hub</string>
+    <string name="api_hub_redirect_hint">Permissions, expiry, support and analytics are handed to Gateway Hub. No need to turn MCP on.</string>
+    <string name="api_hub_open">Go to Hub</string>
+    <string name="api_hub_paste">Link copied. Paste it in Gateway Hub › Apps.</string>
+    <string name="hub_link_permission">Link with Gateway Hub</string>
+    <string name="api_kind_title">What will you connect?</string>
+    <string name="api_kind_llm">LLM</string>
+    <string name="api_kind_llm_hint">The link goes straight into Claude, ChatGPT…</string>
+    <string name="api_kind_hub">Hub</string>
+    <string name="api_kind_hub_hint">The link goes into Gateway Hub, which only bridges it.</string>
+    <string name="api_usage_title">Token use</string>
+    <string name="api_usage_hint">Describe what you will use it for (shown in the hub).</string>
+    <string name="api_token_link_label_hub">Token (link for the hub)</string>
+    <string name="act_permission">Orders between family apps</string>
 </resources>

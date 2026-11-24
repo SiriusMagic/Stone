@@ -4,12 +4,11 @@ Generado por `tools/update_map.py`. Lee este mapa, abre solo el archivo que nece
 si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/
-- `MainActivity.kt` (144) Volume keys drive Stone's own overlay;
+- `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (144) User switches for the MCP server (Ajustes › Modo API).
-- `HubDiscovery.kt` (25) How the Gateway Hub app finds Stone:
-- `HubLink.kt` (68) Automatic, secure linking with the Gateway Hub app on the same phone ("Redirección hub").
+- `ApiMode.kt` (119) User switches for the MCP server (Ajustes › Modo MCP).
+- `HubLink.kt` (54) «Redireccionar a Hub»:
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -30,12 +29,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
 
 ## app/automation/activity
-- `ActivityLog.kt` (71) Keeps Ajustes › Modo API › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo API › Analítica:
+- `ActivityLog.kt` (71) Keeps Ajustes › Modo MCP › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
+- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo MCP › Analítica:
 
 ## app/automation/auth
-- `AccessMode.kt` (59) What a token lets an agent do.
-- `ApiTokens.kt` (104) Access tokens of Ajustes › Modo API › Seguridad.
+- `AccessMode.kt` (75) What a token lets an agent do.
+- `ApiTokens.kt` (120) Access tokens of Ajustes › Modo MCP › Seguridad.
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 
@@ -46,7 +45,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (345) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (352) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
@@ -73,7 +72,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `FolderScanner.kt` (77) Uses Stone's selected SAF folder;
 - `ImportedLibraryStore.kt` (39) Legacy app-private media index kept so imports from older releases remain playable.
 - `LibraryCache.kt` (62) Disposable index only;
-- `LibraryRepository.kt` (108) Whole-device scanning is on and Android granted the media permission.
+- `LibraryRepository.kt` (111) Whole-device scanning is on and Android granted the media permission.
+- `NotMusic.kt` (16) Files other apps leave in Android's media index that are not music, such as their automatic backups ("AutoBackup_20261115_205503821", album "All data
 - `SongJson.kt` (57) Stable representation shared by the library cache and legacy app-private media index.
 
 ## app/data/library/tags
@@ -111,7 +111,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `LibraryOrdering.kt` (35)
 - `LibraryScreen.kt` (255)
 - `LibraryViewModel.kt` (188) Refreshes which songs have lyrics (background, cached per file).
-- `LibraryViewState.kt` (13) Library order shared by the sort sheet and automation (API mode), so both stay in sync.
+- `LibraryViewState.kt` (13) Library order shared by the sort sheet and automation (MCP mode), so both stay in sync.
 - `QuickActions.kt` (42) Single source of truth for home shortcuts.
 
 ## app/feature/library/components
@@ -213,12 +213,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (62) General:
-- `ApiHubCard.kt` (68) Gateway Hub:
-- `ApiModeSettings.kt` (67) Ajustes › Modo API:
-- `ApiModeShared.kt` (128) Tabs of Ajustes › Modo API:
-- `ApiTokenEditor.kt` (176) Create ([token] null) or configure a token, in this order:
-- `ApiTokenRow.kt` (73) Compact token card:
+- `ApiGeneralTab.kt` (67) General:
+- `ApiHubCard.kt` (55) Package of the Gateway Hub app (same developer);
+- `ApiModeSettings.kt` (69) Ajustes › Modo MCP:
+- `ApiModeShared.kt` (132) Tabs of Ajustes › Modo MCP:
+- `ApiTokenEditor.kt` (206) Create ([token] null) or configure a token, in this order:
+- `ApiTokenRow.kt` (74) Compact token card:
 
 ## app/feature/settings/feedback
 - `CrashReportCard.kt` (42) Ajustes › Diagnóstico:
@@ -236,6 +236,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `ThemeExtras.kt` (51) Top of "Temas y personalización":
 
 ## app/playback
+- `ExternalOpen.kt` (59) «Abrir con Stone» from another app (Luma, a file manager):
 - `StonePlaybackService.kt` (497) Sole owner of playback;
 - `StoneWidgetProvider.kt` (109) Home-screen player (4×2):
 
@@ -260,7 +261,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/ui
 - `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
-- `StoneApp.kt` (451) Mini player button:
+- `StoneApp.kt` (470) Mini player button:
 
 ## app/ui/components
 - `SleepTimerIndicator.kt` (101) Shows the active sleep timer using the sun by day and the moon by night.
@@ -285,3 +286,4 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `Lyrics.kt` (106) One word of an enhanced LRC line (`<mm:ss.xx>word`);
 - `RefreshPolicy.kt` (21) Event-triggered only.
 - `Song.kt` (28) Optional artwork extracted from a Stone package.
+- `VoicePlay.kt` (49) What to play when an assistant asks:

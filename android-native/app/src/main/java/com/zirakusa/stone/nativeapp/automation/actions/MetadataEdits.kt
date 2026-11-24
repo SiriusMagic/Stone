@@ -171,6 +171,6 @@ internal class MetadataEdits(private val context: Context) {
 
     companion object {
         val FIELDS = listOf("title", "artist", "album", "genre", "description", "date", "keywords")
-        const val ANDROID_HINT = "Turn on Stone > Ajustes > Modo API > Seguridad > 'Acceso a todos los archivos' so Android stops asking."
+        const val ANDROID_HINT = "Turn on Stone > Ajustes > Modo MCP > Seguridad > 'Acceso a todos los archivos' so Android stops asking."
     }
 }

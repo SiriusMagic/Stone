@@ -18,7 +18,6 @@ Stone/
 │   ├── src/index.js                # Reenvía cada petición al teléfono por un WebSocket saliente
 │   └── wrangler.toml               # Sin secretos: el relay no guarda tokens, solo el hash del teléfono
 │
-│                                   # (El hub MCP vive aparte: github.com/SiriusMagic/Gateway-Hub-MCP)
 └── android-native/                 # App Android
     ├── core/                       # 🧠 Lógica pura compartida, sin Android (letras, Song, diseño)
     │
@@ -81,106 +80,16 @@ Interfaz (feature/, ui/) ──────────────────�
   carpeta propia; si su lógica la necesita también el MCP, esa lógica va en `data/` o `playback/`.
 - **Las dependencias van en una sola dirección:** `feature` → `playback` / `data` / `automation` → `core`.
 
-## El servidor: cómo está construido
-
-Son **dos piezas**, cada una en un lenguaje:
-
-```text
-Claude / ChatGPT
-      │ https://stone-relay…workers.dev/d/<teléfono>/mcp
-      ▼
-┌───────────────────────────────┐
-│ 1. RELAY  · JavaScript        │  Cloudflare Workers + Durable Objects
-│    relay/src/index.js         │  (en internet, plan gratuito)
-└──────────────┬────────────────┘
-               │ WebSocket cifrado (wss://) que abre el TELÉFONO hacia fuera
-               ▼
-┌───────────────────────────────┐
-│ 2. SERVIDOR MCP · Kotlin      │  Dentro de Stone, en el teléfono
-│    127.0.0.1:8765             │  (android-native/…/automation/)
-└──────────────┬────────────────┘
-               ▼
-   El mismo código que usan los botones de la app
-   (reproductor, biblioteca, letras, etiquetas…)
-```
-
-### 1. Servidor MCP: Kotlin, dentro de la app (`automation/`)
-
-- **Sin framework**: no usa Ktor ni NanoHTTPD. Es un servidor HTTP/1.1 mínimo escrito a mano sobre
-  `java.net.ServerSocket` (`server/McpHttp.kt`, `server/McpServer.kt`). Con poco código propio
-  hay pocas dependencias y poca superficie de ataque.
-- **Solo escucha dentro del teléfono** (`127.0.0.1`). Desde fuera solo se llega a través del relay.
-- **Límites**: 8 hilos, 64 cabeceras y 1 MiB de cuerpo como máximo, y 15 s de espera por petición.
-- **Protocolo**: MCP sobre JSON-RPC 2.0, con tres formas de conectarse para que funcione con
-  cualquier cliente:
-  - *Streamable HTTP*: `POST /mcp` (el estándar actual).
-  - *SSE*: `GET /sse` (clientes antiguos).
-  - *GET simple*: `/tools` y `/call/<herramienta>` (agentes que no hablan MCP).
-- **Herramientas**: 85 tools en `actions/`: biblioteca, reproductor, letras, etiquetas, playlists,
-  ecualizador, vídeo y ajustes. Hacen lo mismo que los botones de la app, con el mismo código.
-- **Seguridad** (`auth/`):
-  - Tokens `stn_` de 256 bits, cifrados con el Android Keystore.
-  - Tres modos de acceso: lectura, escritura o total.
-  - Caducidad y herramientas desactivables por token.
-  - Bloqueo de 1 minuto tras 20 tokens erróneos.
-  - Las acciones críticas piden confirmación en la pantalla del teléfono.
-
-### 2. Relay: JavaScript en Cloudflare (`relay/`)
-
-- **Cloudflare Worker** con un **Durable Object por teléfono**, que guarda la conexión WebSocket
-  de ese teléfono.
-- **El teléfono llama hacia fuera**, así que funciona con cualquier Wi-Fi o con datos móviles,
-  sin tocar el router.
-- **No interpreta ni guarda** los datos ni los tokens: solo reenvía. Guarda únicamente el hash del
-  secreto de cada teléfono, para que nadie se quede con su enlace.
-- **Protecciones**:
-  - Solo HTTPS.
-  - Cabeceras de seguridad.
-  - 120 peticiones por minuto por cliente.
-  - Cuerpo de 1 MiB como máximo.
-  - Registro de intentos de quedarse con el enlace de otro teléfono.
-- **Sin dependencias**: usa solo las APIs de Cloudflare. `wrangler` sirve solo para publicarlo
-  (`cd relay && npx wrangler deploy`).
-
-**En resumen:** la inteligencia y la seguridad están en el **teléfono (Kotlin)**; el relay
-(**JavaScript**) es solo un cartero cifrado. Aunque alguien atacara el relay, sin el token no
-podría hacer nada en Stone.
-
-## Gateway Hub MCP (repositorio aparte)
-
-Stone y el hub son **dos aplicaciones separadas**. El hub está en
-[SiriusMagic/Gateway-Hub-MCP](https://github.com/SiriusMagic/Gateway-Hub-MCP) y da a una IA **un
-solo enlace** para Stone y otras apps (notas, calculadora, utilidades…).
-
-```text
-Claude / ChatGPT ──https──▶ Gateway Hub ──https──▶ relay ──wss──▶ Stone (teléfono)
-                            (otro repositorio)
-```
-
-| | Stone (este repo) | Gateway Hub |
-|---|---|---|
-| Activar o apagar el acceso | ✅ Interruptor «Activar MCP» en el teléfono | Pausar o revocar agentes |
-| Seguridad final | ✅ Token, modos y confirmación en pantalla para lo crítico | Filtro previo por app y por solo lectura |
-| Enlaces para las IA | Un token reservado, «Gateway Hub» | ✅ Uno por agente (apps, solo lectura, caducidad) |
-| Métricas | Las suyas, locales (Analítica) | ✅ De todas las apps, por agente y herramienta |
-
-**Vincular:** Stone › Ajustes › Modo API › **Gateway Hub › Vincular**. Esto crea (o reutiliza) el
-token «Gateway Hub», copia su enlace y abre el panel del hub para pegarlo. Para cortar el acceso
-del hub, revoca ese token en Stone. La dirección del hub va en `stoneHubUrl` de
-`android-native/gradle.properties`.
-
 ## Secretos
 
 - **Ningún token ni clave está en el código ni en Git.** Los tokens se crean en el teléfono, se
   guardan cifrados con el Android Keystore y se comparan en tiempo constante.
 - **El relay no guarda tokens**, así que no necesita `wrangler secret`: quien comprueba el token es
   el teléfono.
-- **El token «Gateway Hub»** de Stone se pega en el panel `/admin` del hub; nunca pasa por un chat ni
-  por Git.
 - **Archivos ignorados por Git:** `.env`, `local.properties`, `*.keystore` y `*.jks`.
 - **Menor privilegio:** cada agente recibe su propio token, en modo lectura, escritura o total,
   con fecha de caducidad y con las tools que no deba usar desactivadas.
 - **Mejor en la cabecera:** `Authorization: Bearer …`. El token dentro del enlace (`?token=`) solo
   existe porque algunos conectores aceptan nada más que una URL.
-- **Si un token se filtra:** Ajustes › Modo API › el token › **Rotar** (mismo agente, enlace nuevo)
+- **Si un token se filtra:** Ajustes › Modo MCP › el token › **Rotar** (mismo agente, enlace nuevo)
   o **Revocar** (deja de funcionar al instante).

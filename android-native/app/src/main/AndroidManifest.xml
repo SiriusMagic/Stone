@@ -8,7 +8,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Gateway Hub automatic linking: only apps signed with the same key get this permission. -->
+    <!-- «Redireccionar a Hub»: only apps signed with the same key (Gateway Hub) get this permission. -->
+    <!-- The family's orders between apps (FAMILIA.md §10): only apps signed with the same key. -->
+    <permission android:name="com.zirakusa.family.permission.ACT" android:protectionLevel="signature"
+        android:label="@string/act_permission" />
     <permission android:name="com.zirakusa.gatewayhub.permission.LINK" android:protectionLevel="signature"
         android:label="@string/hub_link_permission" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -25,11 +28,22 @@
         <activity android:name=".MainActivity" android:exported="true"
             android:supportsPictureInPicture="true" android:resizeableActivity="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
-            <!-- Gateway Hub app: lets its scanner find Stone (module music_) and open Ajustes › Modo API.
-                 Being found turns nothing on; see automation/HubDiscovery.kt. -->
+            <!-- Gateway Hub's scanner finds Stone (module music_) and its link channel. Being found turns nothing on. -->
             <intent-filter>
                 <action android:name="com.zirakusa.gatewayhub.action.APP" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- «Reproduce música (de X)»: Android's standard order, from any assistant (FAMILIA.md §10). -->
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- «Abrir con»: other apps (Luma, a file manager) can hand Stone a video or a song to play. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="video/*" />
+                <data android:scheme="content" android:mimeType="audio/*" />
             </intent-filter>
             <meta-data android:name="com.zirakusa.gatewayhub.module" android:value="music_" />
             <meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink" />
@@ -66,12 +80,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+        <!-- The family's orders (FAMILIA.md §10): «recomendaciones del día». Only apps signed by the same developer. -->
+        <activity-alias android:name=".FamilyActions" android:targetActivity=".MainActivity" android:exported="true"
+            android:permission="com.zirakusa.family.permission.ACT">
+            <intent-filter>
+                <action android:name="com.zirakusa.family.action.PLAY_RECOMMENDED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
         <service android:name=".playback.StonePlaybackService" android:exported="true"
             android:permission="android.permission.BIND_MEDIA_SESSION"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter><action android:name="androidx.media3.session.MediaSessionService" /></intent-filter>
         </service>
-        <!-- Redirección hub: see automation/HubLink.kt (signature permission + own check + user switch). -->
+        <!-- «Redireccionar a Hub»: see automation/HubLink.kt (signature permission + own check + user switch). -->
         <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
             android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name="androidx.core.content.FileProvider"

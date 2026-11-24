@@ -55,7 +55,6 @@ stone-relay
 ```
 
 El Worker publicado (`relay/src/index.js`) **no tiene ninguna dependencia**: solo usa las APIs de Cloudflare.
-El Gateway Hub tiene su propio repositorio y su propia revisión de dependencias (CI con `npm audit`).
 
 ## Cambios de esta revisión
 

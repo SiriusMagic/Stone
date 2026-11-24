@@ -30,7 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Screenshots of every tab of Ajustes › Modo API. */
+/** Screenshots of every tab of Ajustes › Modo MCP. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "es-w411dp-h2400dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

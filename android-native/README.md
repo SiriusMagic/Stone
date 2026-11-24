@@ -1,11 +1,6 @@
 # Stone para Android — migración a Kotlin
 
-Proyecto independiente en Kotlin + Jetpack Compose + Media3. Referencia funcional y visual:
-Stone 1.3.2, conservada en `../frontend/`. El trabajo previo de 1.3.3 continúa allí.
-La aplicación nativa se escribe directamente desde Stone. No reutiliza la implementación de Lica/Sren.
-El ZIP nativo contiene esta carpeta y la documentación, sin dependencias ni archivos de
-compilación. El código original continúa conservado por separado en `frontend/` y `backend/`
-dentro del espacio de trabajo y no se modifica ni se mezcla con la app Kotlin.
+Kotlin + Jetpack Compose + Media3. No necesita Node, Expo ni un servidor.
 
 ## Abrir y compilar
 
@@ -21,12 +16,12 @@ Para el APK descargable optimizado: `./gradlew :app:assemblePreview`.
 Sale en `app/build/outputs/apk/preview/app-preview.apk`, con firma de desarrollo,
 sin depuración y con reducción de código y recursos. No es una publicación estable.
 La prueba usa `com.zirakusa.stone.kotlin.preview` y el nombre **Stone Kotlin · Prueba**.
-La última versión generada es `1.7.14` (versionCode 48). El APK final de este cambio incluye
+La última versión generada es `1.7.25` (versionCode 59). El APK final de este cambio incluye
 la distribución horizontal configurable y fuerza la actualización al girar la ventana; consulta
 [`DISENO-HORIZONTAL.md`](DISENO-HORIZONTAL.md). `lintDebug` debe terminar con 0 avisos.
 El contexto de continuidad y las decisiones de la entrega están en
 [`../docs/STONE-CONTEXTO-ACTUAL.md`](../docs/STONE-CONTEXTO-ACTUAL.md).
-En Git también se conserva `Stone-1.7.14-optimized.apk`: es la misma app con R8 y recursos
+En Git también se conserva `Stone-1.7.25-optimized.apk`: es la misma app con R8 y recursos
 reducidos (aprox. 4,6 MB). `app-debug.apk` es el paquete de diagnóstico sin reducción
 (aprox. 21,6 MB), preferible para comprobar una instalación cuando se sospecha de un APK
 demasiado pequeño.

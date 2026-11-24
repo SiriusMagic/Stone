@@ -26,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
+import com.zirakusa.stone.nativeapp.automation.auth.TokenKind
 import com.zirakusa.stone.nativeapp.automation.actions.RecordStatus
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 
 internal val ApiGreen = Color(0xFF4CD27A)
 internal val ApiRed = Color(0xFFFF5C5C)
 
-/** Tabs of Ajustes › Modo API: everything about tokens in General, the numbers in Analítica. */
+/** Tabs of Ajustes › Modo MCP: everything about tokens in General, the numbers in Analítica. */
 internal enum class ApiTab(val label: Int, val icon: ImageVector) {
     GENERAL(R.string.api_tab_general, Icons.Default.Home), ANALYTICS(R.string.api_analytics, Icons.Default.MonitorHeart)
 }
@@ -60,6 +61,9 @@ internal fun AccessMode.hint() = when (this) {
 internal fun AccessMode.icon() = when (this) {
     AccessMode.READ -> Icons.AutoMirrored.Filled.MenuBook; AccessMode.WRITE -> Icons.Default.EditNote; AccessMode.FULL -> Icons.Default.Bolt
 }
+internal fun TokenKind.label() = if (this == TokenKind.HUB) R.string.api_kind_hub else R.string.api_kind_llm
+internal fun TokenKind.hint() = if (this == TokenKind.HUB) R.string.api_kind_hub_hint else R.string.api_kind_llm_hint
+internal fun TokenKind.icon() = if (this == TokenKind.HUB) Icons.Default.Layers else Icons.Default.SmartToy
 internal fun RecordStatus.color() = when (this) { RecordStatus.OK -> ApiGreen; RecordStatus.DENIED -> StonePalette.Yellow; RecordStatus.FAILED -> ApiRed }
 
 /** Rounded card with an icon, a title, an optional subtitle and an optional trailing action. */

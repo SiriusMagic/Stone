@@ -1,6 +1,6 @@
 # Stone relay
 
-Da a cada teléfono un **enlace fijo de internet** para el Modo API (MCP) de Stone, sin
+Da a cada teléfono un **enlace fijo de internet** para el Modo MCP (MCP) de Stone, sin
 computadora y sin tocar el router. Los usuarios solo tocan **Activar MCP** y **Copiar enlace**,
 y lo pegan en Claude o ChatGPT (Ajustes › Conectores › Añadir conector personalizado).
 
@@ -37,7 +37,7 @@ cd ../android-native
 ```
 
 O escríbela una vez en `android-native/gradle.properties` como `stoneRelayUrl=…`.
-Sin dirección, el Modo API funciona solo en el propio teléfono o en la misma Wi-Fi.
+Sin dirección, el Modo MCP funciona solo en el propio teléfono o en la misma Wi-Fi.
 
 El plan gratuito de Workers y Durable Objects alcanza para uso normal. Revisa los límites
 actuales de Cloudflare si tienes muchos usuarios.

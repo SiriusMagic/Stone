@@ -73,11 +73,6 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
     var language by rememberSaveable { mutableStateOf(initialSettings.language) }
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
-    // Opened from the Gateway Hub app ("Abrir y vincular"): show Ajustes › Modo API, nothing else.
-    val hubRequest = com.zirakusa.stone.nativeapp.automation.HubDiscovery.openApiSettings
-    LaunchedEffect(hubRequest) {
-        if (hubRequest) { settingsVisible = true; settingsPage = "api-mode"; com.zirakusa.stone.nativeapp.automation.HubDiscovery.consumed() }
-    }
     var landscapeMode by rememberSaveable { mutableStateOf(com.zirakusa.stone.core.LandscapeLayoutMode.ALWAYS) }
     var videoScale by rememberSaveable { mutableStateOf(VideoScale.fromKey(initialSettings.videoScale)) }
     var videoLibraryLayout by rememberSaveable {
@@ -122,8 +117,32 @@ import com.zirakusa.stone.nativeapp.ui.system.VolumeOverlay
         }
         playback.play(song, songs)
     }
+    // «Abrir con Stone» from another app: play it at once in the full player, even if it is not in the library.
+    var externalSong by remember { mutableStateOf<com.zirakusa.stone.core.Song?>(null) }
+    val opened = com.zirakusa.stone.nativeapp.playback.ExternalOpen.pending
+    LaunchedEffect(opened) {
+        opened?.let { song ->
+            externalSong = song; playSong(song, listOf(song)); playerOpen = true
+            com.zirakusa.stone.nativeapp.playback.ExternalOpen.consume()
+        }
+    }
+    // An assistant's order (FAMILIA.md §10): play once the library is there, also when Stone was closed.
+    val asked = com.zirakusa.stone.nativeapp.playback.ExternalOpen.request
+    LaunchedEffect(asked, state.songs.size) {
+        val request = asked ?: return@LaunchedEffect
+        if (state.songs.isEmpty()) return@LaunchedEffect
+        val list = when (request) {
+            is com.zirakusa.stone.nativeapp.playback.ExternalOpen.Request.Search ->
+                com.zirakusa.stone.core.VoicePlay.search(state.songs, request.query, System.currentTimeMillis())
+                    .ifEmpty { com.zirakusa.stone.core.VoicePlay.shuffled(state.songs, System.currentTimeMillis()) }
+            com.zirakusa.stone.nativeapp.playback.ExternalOpen.Request.Daily ->
+                com.zirakusa.stone.core.VoicePlay.daily(state.songs, state.playCounts, state.favoriteIds, java.time.LocalDate.now())
+        }
+        com.zirakusa.stone.nativeapp.playback.ExternalOpen.consumeRequest()
+        list.firstOrNull()?.let { playSong(it, list) }
+    }
     SideEffect { com.zirakusa.stone.nativeapp.feature.player.sheets.AudioOnlySelection.id = audioOnlyId }
-    val currentSong = state.songs.find { it.id == player.currentId }?.let { song ->
+    val currentSong = (state.songs.find { it.id == player.currentId } ?: externalSong?.takeIf { it.id == player.currentId })?.let { song ->
         if (song.id == audioOnlyId && song.isVideo) song.copy(isVideo = false) else song
     }
     val videoPreviewSong = currentSong?.takeIf { it.isVideo }

@@ -1,17 +1,12 @@
 # Stone
 
-Código de Stone y comienzo de su migración a Android nativo con Kotlin.
+Reproductor de música y video para Android (Kotlin + Jetpack Compose + Media3) con servidor MCP dentro del
+teléfono y un relay en Cloudflare para tener un enlace público.
 
-- **`android-native/`**: nueva app Kotlin, organizada por biblioteca, reproducción y pantallas.
-  Abre esa carpeta en Android Studio. [Guía de compilación](android-native/README.md).
-- **`frontend/`**: Stone Expo/React Native conservada, con los cambios previos de 1.3.3.
-- **`backend/`**: servidor original de descargas.
-- **`docs/MIGRACION-KOTLIN.md`**: [funciones trasladadas y pendientes](docs/MIGRACION-KOTLIN.md).
+- **`android-native/`**: la app. [Guía de compilación](android-native/README.md).
+- **`relay/`**: enlace público `https://…/d/<teléfono>/mcp` (Cloudflare Worker).
+- **`docs/`**: guía del MCP y planes vigentes.
+- APK: `android-native/Stone-<versión>-optimized.apk`.
 
-Ruta en este entorno: `/workspace/stone/android-native`.
-El repositorio publicado es `https://github.com/SiriusMagic/Stone`.
-El APK final se encuentra en `android-native/app/build/outputs/apk/debug/app-debug.apk`.
-
-## APK debug actualizado
-
-[Descargar Stone 1.5.13 (APK debug)](https://github.com/SiriusMagic/Stone/raw/main/android-native/app/build/outputs/apk/debug/app-debug.apk)
+La versión web antigua (Expo/React Native y servidor de descargas) ya no está aquí. Si hace falta verla:
+`git checkout a115471` (respaldo completo) o el commit `4f880a7` (último con sus notas).
