@@ -1,3 +1,7 @@
+# Sin publicar
+
+- Stone 1.7.27 permite que Lucía consulte la biblioteca y el reproductor con el permiso MCP local y el relay apagado.
+
 # Stone Kotlin 1.7.26
 
 - **Lucía (Gateway Hub) controla Stone sin internet**: con «Redireccionar a Hub» activado, Lucía usa las herramientas de

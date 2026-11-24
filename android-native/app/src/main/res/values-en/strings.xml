@@ -534,4 +534,6 @@
     <string name="api_usage_hint">Describe what you will use it for (shown in the hub).</string>
     <string name="api_token_link_label_hub">Token (link for the hub)</string>
     <string name="act_permission">Orders between family apps</string>
+    <string name="api_local_mcp">Allow local MCP</string>
+    <string name="api_local_mcp_hint">Lucía can read the Stone library and player on this phone.</string>
 </resources>

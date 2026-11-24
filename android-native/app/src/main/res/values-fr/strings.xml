@@ -632,4 +632,6 @@
     <string name="api_usage_hint">Décrivez à quoi il servira (affiché dans le hub).</string>
     <string name="api_token_link_label_hub">Jeton (lien pour le hub)</string>
     <string name="act_permission">Ordres entre les apps de la famille</string>
+    <string name="api_local_mcp">Autoriser le MCP local</string>
+    <string name="api_local_mcp_hint">Lucía peut consulter la bibliothèque et le lecteur Stone sur ce téléphone.</string>
 </resources>

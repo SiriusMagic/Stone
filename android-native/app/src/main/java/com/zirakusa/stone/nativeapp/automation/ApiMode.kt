@@ -45,6 +45,14 @@ object ApiMode {
     var hubRedirect by mutableStateOf(false)
         private set
 
+    var localMcp by mutableStateOf(false)
+        private set
+
+    fun allowLocalMcp(value: Boolean) {
+        store?.setLook(LocalMcp.SETTING, value.toString())
+        localMcp = value
+    }
+
     fun redirectToHub(value: Boolean) {
         hubRedirect = value; store?.setLook("api.hubRedirect", value.toString())
         if (value) ApiTokens.redirectToken()
@@ -68,6 +76,7 @@ object ApiMode {
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
         enabled = store.look("api.enabled", "false").toBoolean()
         hubRedirect = store.look("api.hubRedirect", "false").toBoolean()
+        localMcp = store.look(LocalMcp.SETTING, "false").toBoolean()
         // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
         for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store, "Principal")

@@ -247,6 +247,13 @@ object McpServer {
      */
     fun local(body: String): String? = dispatch(body, com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.redirectToken()).first?.toString()
 
+    /** In-process dispatch for Stone's signature-protected provider. The grant is never registered for HTTP. */
+    internal fun localRead(body: String, allowed: Set<String>): String? {
+        val blocked = StoneAutomation.actions.map { it.toolName }.toSet() - allowed
+        val grant = ApiToken("lucia-local", "Lucía local", "", AccessMode.READ, 0, disabledTools = blocked)
+        return dispatch(body, grant).first?.toString()
+    }
+
     private fun dispatch(text: String, grant: ApiToken): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {
             val batch = JSONArray(text)

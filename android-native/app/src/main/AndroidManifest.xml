@@ -46,6 +46,7 @@
                 <data android:scheme="content" android:mimeType="audio/*" />
             </intent-filter>
             <meta-data android:name="com.zirakusa.gatewayhub.module" android:value="music_" />
+            <meta-data android:name="com.zirakusa.gatewayhub.local_mcp" android:value="${applicationId}.localmcp" />
             <meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink" />
         </activity>
         <!-- Home-screen mascots (Personalizado › Mascota). Exactly one alias is enabled.
@@ -95,6 +96,8 @@
         </service>
         <!-- «Redireccionar a Hub»: see automation/HubLink.kt (signature permission + own check + user switch). -->
         <provider android:name=".automation.HubLinkProvider" android:authorities="${applicationId}.hublink"
+            android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
+        <provider android:name=".automation.LocalMcpProvider" android:authorities="${applicationId}.localmcp"
             android:exported="true" android:permission="com.zirakusa.gatewayhub.permission.LINK" />
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider" android:exported="false"

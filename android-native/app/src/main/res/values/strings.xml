@@ -597,4 +597,6 @@
     <string name="api_usage_hint">Describe para qué lo vas a usar (se muestra en el hub).</string>
     <string name="api_token_link_label_hub">Token (enlace para el hub)</string>
     <string name="act_permission">Órdenes entre apps de la familia</string>
+    <string name="api_local_mcp">Permitir MCP local</string>
+    <string name="api_local_mcp_hint">Lucía puede consultar la biblioteca y el reproductor de Stone en este teléfono.</string>
 </resources>

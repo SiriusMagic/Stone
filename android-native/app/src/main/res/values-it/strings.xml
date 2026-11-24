@@ -632,4 +632,6 @@
     <string name="api_usage_hint">Descrivi a cosa ti serve (appare nell\'hub).</string>
     <string name="api_token_link_label_hub">Token (link per l\'hub)</string>
     <string name="act_permission">Comandi tra le app della famiglia</string>
+    <string name="api_local_mcp">Consenti MCP locale</string>
+    <string name="api_local_mcp_hint">Lucía può consultare la libreria e il lettore Stone su questo telefono.</string>
 </resources>

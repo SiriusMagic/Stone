@@ -195,3 +195,13 @@ pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca
   Las lecturas nunca se repiten de memoria.
 - El teléfono deja de reconectar si el relay responde 400/401/403/404/426 (no cambiará solo); ante fallos
   de red espera 2, 4, 8… hasta 5 min y reintenta al recuperar la red.
+
+## MCP local con Lucía
+
+En **Stone › Ajustes › Modo MCP**, activa **Permitir MCP local** para que Lucía consulte la biblioteca
+y el estado de reproducción de este teléfono. El ajuste funciona con el relay apagado. Abre Stone
+antes de usar las consultas para que la biblioteca y el reproductor estén disponibles.
+
+El permiso se comprueba en cada llamada y requiere que Stone y Gateway Hub estén firmados con
+la misma clave. El canal local ofrece **library_search** y **player_state**. El permiso se puede
+desactivar en la misma pantalla.

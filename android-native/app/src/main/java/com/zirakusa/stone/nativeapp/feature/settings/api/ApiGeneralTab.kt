@@ -40,6 +40,8 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
             ApiPill(stringResource(label), color, Modifier.padding(top = 10.dp))
         }
     }
+    ApiActionCard(Icons.Default.Key, R.string.api_local_mcp, R.string.api_local_mcp_hint,
+        trailing = { Switch(ApiMode.localMcp, ApiMode::allowLocalMcp) }) { }
     ApiHubCard(copy)
     ApiProgress()
     if (redirect) return

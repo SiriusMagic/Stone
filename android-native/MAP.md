@@ -7,8 +7,9 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (119) User switches for the MCP server (Ajustes › Modo MCP).
-- `HubLink.kt` (54) «Redireccionar a Hub»:
+- `ApiMode.kt` (128) User switches for the MCP server (Ajustes › Modo MCP).
+- `HubLink.kt` (72) «Redireccionar a Hub»:
+- `LocalMcp.kt` (65) The phone-only MCP channel.
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
@@ -45,7 +46,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (352) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (365) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
@@ -213,7 +214,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/feature/settings/api
 - `ApiActivityTab.kt` (92) Actividad tab:
 - `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (67) General:
+- `ApiGeneralTab.kt` (69) General:
 - `ApiHubCard.kt` (55) Package of the Gateway Hub app (same developer);
 - `ApiModeSettings.kt` (69) Ajustes › Modo MCP:
 - `ApiModeShared.kt` (132) Tabs of Ajustes › Modo MCP:
