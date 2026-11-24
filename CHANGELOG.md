@@ -1,3 +1,9 @@
+# Stone Kotlin 1.7.28
+
+- **«Permitir MCP local» en tu Stone de siempre**: el interruptor de Stone Prueba 1.7.27 llega a Stone normal (Ajustes →
+  Modo MCP). Con él, el modelo de Lucía (Gateway Hub 0.0.32) puede buscar en tu biblioteca y saber qué suena, sin internet.
+  Se instala encima de Stone 1.7.26 con la misma firma que Gateway Hub y el resto de la familia.
+
 # Stone Prueba 1.7.27
 
 - Stone Prueba se instala junto a Stone y permite que Lucía Prueba consulte su biblioteca y el reproductor por MCP local, con el relay apagado.
