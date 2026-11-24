@@ -1,3 +1,8 @@
+# Stone Kotlin 1.7.25
+
+- **Conectar todas** (Gateway Hub 0.0.21): con un toque en el Hub se activa en Stone «Redireccionar a Hub» y queda
+  vinculada, sin entrar en Stone. Solo lo puede pedir una app firmada por el mismo desarrollador.
+
 # Stone Kotlin 1.7.24
 
 - **Órdenes del Asistente** (FAMILIA.md §10): «reproduce música» con la orden estándar de Android (cualquier asistente;

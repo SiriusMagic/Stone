@@ -29,20 +29,26 @@ object HubLink {
         else -> Bundle().apply { putString(KEY_LINK, ApiMode.hubLink()) }
     }
 
+    /** «Conectar todas» in Gateway Hub: the user's tap there turns Stone's «Redireccionar a Hub» on. */
+    fun connect(sameDeveloper: Boolean): Bundle {
+        if (sameDeveloper && !ApiMode.hubRedirect) ApiMode.redirectToHub(true)
+        return answer(sameDeveloper)
+    }
+
     private fun error(code: String, message: String) = Bundle().apply { putString(KEY_ERROR, code); putString(KEY_MESSAGE, message) }
 }
 
-/** content://<applicationId>.hublink: only call("link"), see [HubLink]. Nothing else is exposed. */
+/** content://<applicationId>.hublink: only call("link") and call("connect"), see [HubLink]. Nothing else is exposed. */
 class HubLinkProvider : ContentProvider() {
     override fun onCreate() = true
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
-        if (method != HubLink.METHOD) return null
+        if (method != HubLink.METHOD && method != "connect") return null
         val context = context ?: return null
         val caller = callingPackage
         val same = caller != null && context.packageManager.checkSignatures(context.packageName, caller) == PackageManager.SIGNATURE_MATCH
         if (same && !ApiMode.loaded) ApiMode.load(StoneSettingsStore(context.applicationContext), context.applicationContext)
-        return HubLink.answer(same)
+        return if (method == "connect") HubLink.connect(same) else HubLink.answer(same)
     }
 
     override fun query(uri: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?): Cursor? = null

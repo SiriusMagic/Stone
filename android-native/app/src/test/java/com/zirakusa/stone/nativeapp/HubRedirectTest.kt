@@ -83,6 +83,15 @@ class HubRedirectTest {
         assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
     }
 
+    /** «Conectar todas» in Gateway Hub: only the same developer turns the redirect on, and gets the link at once. */
+    @Test fun connectTurnsTheRedirectOn() {
+        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
+        assertEquals("NOT_SAME_DEVELOPER", HubLink.connect(false).getString(HubLink.KEY_ERROR))
+        assertFalse(ApiMode.hubRedirect)
+        val answer = HubLink.connect(true)
+        assertTrue(ApiMode.hubRedirect); assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
+    }
+
     @Test fun redirectScreenHidesTokensAndAnalytics() {
         ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
         ApiTokens.replaceForTests(listOf(own))
