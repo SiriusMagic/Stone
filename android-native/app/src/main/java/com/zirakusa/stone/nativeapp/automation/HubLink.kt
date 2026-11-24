@@ -35,20 +35,32 @@ object HubLink {
         return answer(sameDeveloper)
     }
 
+    /** One tool for Lucía, on the phone: [request] is a JSON-RPC «tools/call»; the answer comes back in «response». */
+    fun tool(sameDeveloper: Boolean, request: String?): Bundle = when {
+        !sameDeveloper || !ApiMode.hubRedirect -> answer(sameDeveloper)
+        request.isNullOrBlank() -> error("BAD_REQUEST", "Falta la petición.")
+        else -> com.zirakusa.stone.nativeapp.automation.server.McpServer.local(request)?.let { r -> Bundle().apply { putString("response", r) } }
+            ?: error("NOT_READY", "Stone aún no está lista.")
+    }
+
     private fun error(code: String, message: String) = Bundle().apply { putString(KEY_ERROR, code); putString(KEY_MESSAGE, message) }
 }
 
-/** content://<applicationId>.hublink: only call("link") and call("connect"), see [HubLink]. Nothing else is exposed. */
+/** content://<applicationId>.hublink: only call("link"), call("connect") and call("tool"), see [HubLink]. Nothing else is exposed. */
 class HubLinkProvider : ContentProvider() {
     override fun onCreate() = true
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle? {
-        if (method != HubLink.METHOD && method != "connect") return null
+        if (method !in setOf(HubLink.METHOD, "connect", "tool")) return null
         val context = context ?: return null
         val caller = callingPackage
         val same = caller != null && context.packageManager.checkSignatures(context.packageName, caller) == PackageManager.SIGNATURE_MATCH
         if (same && !ApiMode.loaded) ApiMode.load(StoneSettingsStore(context.applicationContext), context.applicationContext)
-        return if (method == "connect") HubLink.connect(same) else HubLink.answer(same)
+        return when (method) {
+            "connect" -> HubLink.connect(same)
+            "tool" -> HubLink.tool(same, extras?.getString("request"))
+            else -> HubLink.answer(same)
+        }
     }
 
     override fun query(uri: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?): Cursor? = null

@@ -241,6 +241,12 @@ object McpServer {
     }
 
     /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
+    /**
+     * Lucía (Gateway Hub's voice on this phone) runs one tool without internet, as the hub's own token: the same checks
+     * as through the relay. [HubLink] only calls this while «Redireccionar a Hub» is on.
+     */
+    fun local(body: String): String? = dispatch(body, com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.redirectToken()).first?.toString()
+
     private fun dispatch(text: String, grant: ApiToken): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {
             val batch = JSONArray(text)

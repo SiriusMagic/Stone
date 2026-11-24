@@ -1,3 +1,9 @@
+# Stone Kotlin 1.7.26
+
+- **Lucía (Gateway Hub) controla Stone sin internet**: con «Redireccionar a Hub» activado, Lucía usa las herramientas de
+  Stone en el teléfono, con las mismas reglas que por MCP: aleatorio, repetir, poner una lista por su nombre, qué está
+  sonando, añadir a favoritos, apagar la música en N minutos, ecualizador y cuántas canciones tienes.
+
 # Stone Kotlin 1.7.25
 
 - **Conectar todas** (Gateway Hub 0.0.21): con un toque en el Hub se activa en Stone «Redireccionar a Hub» y queda

@@ -92,6 +92,17 @@ class HubRedirectTest {
         assertTrue(ApiMode.hubRedirect); assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
     }
 
+    /** Lucía runs Stone's tools on the phone, only with «Redireccionar a Hub» on. */
+    @Test fun luciaRunsStoneTools() {
+        val list = """{"jsonrpc":"2.0","id":3,"method":"tools/list"}"""
+        assertEquals("REDIRECT_OFF", HubLink.tool(true, list).getString(HubLink.KEY_ERROR))
+        assertEquals("NOT_SAME_DEVELOPER", HubLink.tool(false, list).getString(HubLink.KEY_ERROR))
+        ApiMode.redirectToHub(true)
+        val answer = org.json.JSONObject(HubLink.tool(true, list).getString("response")!!)
+        assertEquals(3, answer.getInt("id"))
+        assertTrue(answer.getJSONObject("result").getJSONArray("tools").toString().contains("player_set_shuffle"))
+    }
+
     @Test fun redirectScreenHidesTokensAndAnalytics() {
         ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
         ApiTokens.replaceForTests(listOf(own))
