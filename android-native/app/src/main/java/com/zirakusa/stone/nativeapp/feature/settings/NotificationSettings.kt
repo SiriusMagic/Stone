@@ -19,8 +19,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.library.notifications.NotificationScheduler
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /**
  * Ajustes › Notificaciones, in one place: new songs/videos (at once or in a summary at a chosen

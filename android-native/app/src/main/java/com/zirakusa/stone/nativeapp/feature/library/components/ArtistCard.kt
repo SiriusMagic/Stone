@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable fun ArtistCard(name: String, tracks: List<Song>, open: () -> Unit) {
     val representative = tracks.firstOrNull()

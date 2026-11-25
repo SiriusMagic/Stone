@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable fun LibraryEmptyState(videos: Boolean = false) {
     Column(Modifier.fillMaxWidth().padding(vertical = 32.dp), horizontalAlignment = Alignment.CenterHorizontally,

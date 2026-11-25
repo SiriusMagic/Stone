@@ -22,9 +22,6 @@ import com.zirakusa.stone.nativeapp.playback.control.AudioMode
 import com.zirakusa.stone.nativeapp.playback.control.HardwareAcceleration
 import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable internal fun AudioOutputDetail() {
     val context = LocalContext.current

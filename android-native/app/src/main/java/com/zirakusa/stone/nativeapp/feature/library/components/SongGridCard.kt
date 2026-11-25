@@ -20,7 +20,6 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.feature.library.video.SelectionCheck
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Song card of the "Grande" layout: square cover with title and artist below. */
 @Composable internal fun SongGridCard(song: Song, current: Boolean, checked: Boolean?, onEdit: (() -> Unit)?,

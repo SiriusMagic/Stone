@@ -20,8 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable fun LibrarySearch(query: String, onChange: (String) -> Unit) {
     // Always visible under the header: it must not grab the keyboard on its own.

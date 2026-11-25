@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.theme.StoneThemeSpec
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 import com.zirakusa.stone.nativeapp.feature.settings.themeLabel
 
 /** Top of "Temas y personalización": every theme as a small screen preview; tap to apply. */

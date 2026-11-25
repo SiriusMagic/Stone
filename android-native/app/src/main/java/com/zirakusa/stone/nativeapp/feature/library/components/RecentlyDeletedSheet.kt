@@ -31,7 +31,6 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Trash: restore a song or remove its file from the device after confirmation. */
 @OptIn(ExperimentalMaterial3Api::class)

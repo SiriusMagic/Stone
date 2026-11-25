@@ -26,8 +26,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.LauncherIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.roundToInt
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** Small building blocks shared by the Personalizado screens. */
 @Composable internal fun LookSection(title: Int) {

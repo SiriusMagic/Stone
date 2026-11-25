@@ -26,10 +26,6 @@ import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.core.LandscapeLayoutMode
-import com.zirakusa.stone.nativeapp.feature.settings.api.ApiModeSettings
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 import com.zirakusa.stone.nativeapp.feature.settings.feedback.FeedbackDetail
 import com.zirakusa.stone.nativeapp.feature.settings.look.LookSettings
 import com.zirakusa.stone.nativeapp.feature.settings.look.ThemeGrid
@@ -168,7 +164,7 @@ private data class SettingsMenuSection(val title: Int, val items: List<SettingsM
                     }
                     "notifications" -> NotificationSettings(store)
                     "audio-levels" -> AudioLevelSettings(store, playback)
-                    "api-mode" -> ApiModeSettings()
+                    "api-mode" -> McpByArka()
                     "widgets" -> WidgetSettings()
                     "immersive" -> ImmersiveSettingsDetail(immersiveEnabled, onImmersiveEnabledChange)
                     "playback" -> {

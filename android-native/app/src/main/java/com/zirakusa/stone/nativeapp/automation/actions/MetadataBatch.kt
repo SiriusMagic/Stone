@@ -82,14 +82,12 @@ internal object MetadataBatch {
         var limited: RateLimitedException? = null
         val results = withContext(Dispatchers.IO) {
             val done = mutableListOf<JSONObject>()
-            for ((index, item) in items.withIndex()) {
-                if (!dryRun) StoneAutomation.reportProgress(BatchProgress(tool, index, items.size))
+            for (item in items) {
                 try { done += runItem(item, dryRun, locked, preview, work, batch) }
                 catch (stop: RateLimitedException) { limited = stop; break }
             }
             done
         }
-        StoneAutomation.reportProgress(null)
         if (!dryRun && results.any { it.getBoolean("ok") }) host().refreshLibrary()
         return summary(results, dryRun, batch, started).apply {
             limited?.let { stop ->

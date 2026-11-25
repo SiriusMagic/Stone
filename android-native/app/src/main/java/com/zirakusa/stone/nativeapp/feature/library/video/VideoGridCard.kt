@@ -38,7 +38,6 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneGlyph
 import com.zirakusa.stone.nativeapp.ui.components.StoneIcon
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.feature.library.components.EditTagsButton
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 private val VideoShape = RoundedCornerShape(16.dp)
 

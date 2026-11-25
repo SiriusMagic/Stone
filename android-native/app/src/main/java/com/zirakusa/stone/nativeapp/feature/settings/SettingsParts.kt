@@ -14,8 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.onClick
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable internal fun SettingsChoice(label: Int, selected: Boolean, action: () -> Unit) =
     SettingsChoiceText(stringResource(label), selected, action)

@@ -27,7 +27,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryContent
 import com.zirakusa.stone.nativeapp.feature.library.video.VideoLibraryLayout
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun LibraryContent(state: LibraryState, songs: List<Song>, tab: LibraryTab,

@@ -31,9 +31,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** Visual pieces of the feedback form; state lives in FeedbackForm. */
 @Composable internal fun FeedbackHeader(kind: FeedbackKind) {

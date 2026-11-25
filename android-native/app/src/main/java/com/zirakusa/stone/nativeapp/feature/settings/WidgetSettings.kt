@@ -25,7 +25,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.playback.StoneWidgetProvider
 import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Ajustes › Widgets: preview of the home-screen player and a button that asks the launcher to add it. */
 @Composable internal fun WidgetSettings() {

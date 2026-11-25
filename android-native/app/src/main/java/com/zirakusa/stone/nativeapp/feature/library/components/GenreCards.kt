@@ -20,7 +20,6 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.StoneArtwork
 import kotlin.math.abs
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Card colours; each genre always gets the same one (by its name). */
 private val genreColors = listOf(Color(0xFFE8820C), Color(0xFFF2C21B), Color(0xFF2E7DD7), Color(0xFFD9425B),

@@ -42,18 +42,19 @@ Stone/
         │   │       ├── web/        # Ritmo de peticiones a internet
         │   │       └── notifications/
         │   │
-        │   ├── automation/         # 🤖 Servidor MCP, aislado del resto
-        │   │   ├── ApiMode.kt      # Lo único que la interfaz necesita conocer
+        │   ├── automation/         # 🤖 Servidor MCP, aislado del resto; lo controla Arka
+        │   │   ├── ApiMode.kt      # Enlace público encendido o no (lo único que la interfaz lee)
+        │   │   ├── HubLink.kt      # Canal de Arka con firma: link, connect, disconnect, status, tool
         │   │   ├── server/         # HTTP + MCP en 127.0.0.1 (punto de entrada)
         │   │   ├── actions/        # Tools que ve la IA (library_search, playlist_create…)
-        │   │   ├── auth/           # Tokens, permisos (lectura / escritura / total), límite de intentos
+        │   │   ├── auth/           # El token de Arka, permisos (lectura / escritura / total), límite de intentos
         │   │   ├── relay/          # Cliente del relay
-        │   │   └── activity/       # Registro y estadísticas de llamadas
+        │   │   └── activity/       # Registro de llamadas (lo leen los agentes con stone_activity)
         │   │
         │   ├── feature/            # 🧩 Funciones visibles, una carpeta cada una
         │   │   ├── library/        # Biblioteca (components/, video/)
         │   │   ├── player/         # Reproductor (lyrics/, sheets/, tags/, video/)
-        │   │   ├── settings/       # Ajustes (api/, look/, feedback/)
+        │   │   ├── settings/       # Ajustes (look/, feedback/; Modo MCP solo enlaza a Arka)
         │   │   └── onboarding/
         │   │
         │   └── ui/                 # 🎨 Armazón visual compartido (theme/, components/, system/)
@@ -82,14 +83,13 @@ Interfaz (feature/, ui/) ──────────────────�
 
 ## Secretos
 
-- **Ningún token ni clave está en el código ni en Git.** Los tokens se crean en el teléfono, se
-  guardan cifrados con el Android Keystore y se comparan en tiempo constante.
+- **Ningún token ni clave está en el código ni en Git.** Stone guarda un solo token, el de Arka, cifrado con el
+  Android Keystore y comparado en tiempo constante. Activar el Modo MCP, permitirlo en local y crear tokens para cada
+  IA se hace en Arka (el hub); Stone ya no tiene pantalla propia.
 - **El relay no guarda tokens**, así que no necesita `wrangler secret`: quien comprueba el token es
   el teléfono.
 - **Archivos ignorados por Git:** `.env`, `local.properties`, `*.keystore` y `*.jks`.
-- **Menor privilegio:** cada agente recibe su propio token, en modo lectura, escritura o total,
-  con fecha de caducidad y con las tools que no deba usar desactivadas.
+- **Menor privilegio:** cada agente recibe su propio token en el hub (Arka), con sus apps, permisos y caducidad.
 - **Mejor en la cabecera:** `Authorization: Bearer …`. El token dentro del enlace (`?token=`) solo
   existe porque algunos conectores aceptan nada más que una URL.
-- **Si un token se filtra:** Ajustes › Modo MCP › el token › **Rotar** (mismo agente, enlace nuevo)
-  o **Revocar** (deja de funcionar al instante).
+- **Si un token se filtra:** revócalo en Arka › Agentes (deja de funcionar al instante).

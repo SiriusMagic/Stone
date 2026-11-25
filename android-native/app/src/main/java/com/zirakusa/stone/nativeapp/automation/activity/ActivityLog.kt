@@ -9,7 +9,7 @@ import com.zirakusa.stone.nativeapp.automation.actions.RecordStatus
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 
 /**
- * Keeps Ajustes › Modo MCP › Actividad on the phone, so the last calls and their errors are still
+ * Keeps the agents' activity on the phone, so the last calls and their errors are still
  * there after Stone is closed and an agent can read them with stone_activity. Failures are saved
  * at once; successful calls at most every few seconds.
  */

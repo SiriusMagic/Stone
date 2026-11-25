@@ -19,7 +19,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.library.scan.DeviceMediaAccess
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Whole-device scanning (MediaStore + permission) and automatic rescans on open. */
 @Composable internal fun LibraryScanSettings(store: StoneSettingsStore?) {

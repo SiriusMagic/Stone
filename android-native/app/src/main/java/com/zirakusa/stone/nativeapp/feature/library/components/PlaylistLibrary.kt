@@ -26,8 +26,6 @@ import com.zirakusa.stone.nativeapp.feature.library.LibraryState
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable internal fun PlaylistLibrary(state: LibraryState, collection: String?, select: (String?) -> Unit,
     canPlay: Boolean, currentId: String, onPlay: (Song, List<Song>) -> Unit, modifier: Modifier,

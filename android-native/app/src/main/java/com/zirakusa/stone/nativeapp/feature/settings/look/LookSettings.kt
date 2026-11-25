@@ -28,9 +28,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StoneAccent
 import com.zirakusa.stone.nativeapp.ui.theme.StoneInk
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** Ajustes › Personalizado: colours, sizes, images, home icon and name/shortcut. Owns the state. */
 @Composable internal fun LookSettings(store: StoneSettingsStore?) {

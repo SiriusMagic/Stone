@@ -27,9 +27,6 @@ import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.playback.diagnostics.PerformanceDiagnostics
 import kotlinx.coroutines.launch
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 import com.zirakusa.stone.nativeapp.feature.settings.feedback.CrashReportCard
 
 @Composable internal fun SystemDiagnosticsDetail(playback: PlaybackViewModel?) {

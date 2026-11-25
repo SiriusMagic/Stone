@@ -29,7 +29,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.feature.library.components.LayoutSelector
 import com.zirakusa.stone.nativeapp.feature.library.components.LibraryEmptyState
 import com.zirakusa.stone.nativeapp.feature.library.components.SelectionHeader
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable internal fun VideoLibraryContent(videos: List<Song>, state: LibraryState, currentId: String, modifier: Modifier,

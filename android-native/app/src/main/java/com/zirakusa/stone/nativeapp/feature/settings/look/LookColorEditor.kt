@@ -17,8 +17,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /**
  * Mixer for the free accent colour: hue, saturation and brightness sliders plus a hex field.

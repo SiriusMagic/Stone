@@ -1,13 +1,13 @@
 # Stone — guía de conexión para agentes (MCP)
 
-Stone expone un servidor **Model Context Protocol** en el teléfono (Ajustes › Modo MCP). Este
+Stone expone un servidor **Model Context Protocol** en el teléfono; lo enciende y lo administra **Arka** (Arka › MCP). Este
 documento es para pegárselo a un agente de IA que no logre conectarse.
 
 ## Enlace
 
-`https://<relevo>/d/<dispositivo>/mcp?token=<TOKEN>` (botón "Copiar enlace" en Stone).
+`https://<relevo>/d/<dispositivo>/mcp?token=<TOKEN>`. Lo usa el hub de Arka; cada IA recibe su propio enlace del hub (Arka › Agentes).
 El token también se acepta como `Authorization: Bearer <TOKEN>` o `X-Api-Key: <TOKEN>`.
-Stone debe estar abierto en el teléfono con el Modo MCP activado.
+Stone debe estar abierto en el teléfono con «Activar MCP» encendido en Arka.
 
 ## Tres formas de usarlo
 
@@ -102,8 +102,8 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 | Respuesta | Significado | Qué hacer |
 | --- | --- | --- |
 | HTTP 401 "missing token" | No llegó el token | Añadir `?token=` o `Authorization: Bearer`. |
-| HTTP 401 "wrong or revoked token" | El enlace cambió | Copiar el enlace de nuevo en Stone. |
-| HTTP 503 del relevo | Stone no está abierto o el Modo MCP está apagado | Abrir Stone. |
+| HTTP 401 "wrong or revoked token" | El enlace cambió | Pedir un enlace nuevo en Arka › Agentes. |
+| HTTP 503 del relevo | Stone no está abierto o el Modo MCP está apagado | Abrir Stone; encenderlo en Arka › MCP. |
 | HTTP 504 del relevo | El teléfono no respondió a tiempo | Reintentar; revisar la conexión del teléfono. |
 | JSON-RPC `-32602` | Herramienta desconocida | `tools/list` o `stone_help`. |
 | Resultado con `isError: true` | Parámetro inválido o acción rechazada | Leer el texto y corregir. |
@@ -111,19 +111,10 @@ El nombre MCP es `categoria_accion`, por ejemplo `equalizer_set_band`.
 
 ## Permisos y tokens
 
-Stone › Ajustes › Modo MCP › Seguridad. Cada token tiene su propio enlace (se ve y se copia en su
-fila): da uno distinto a cada agente; varios pueden trabajar a la vez y revocar uno no afecta a los
-demás. `stone_activity token=Nombre` filtra las llamadas de un agente. Cada token tiene un modo:
+Stone sirve un solo token, el de Arka (acceso completo). Los permisos de cada IA (qué apps, solo lectura o no,
+caducidad, pausar y revocar) se ponen en el hub, en **Arka › Agentes**: cada agente tiene su propio enlace y revocar
+uno no afecta a los demás. Stone ya no tiene pantalla de tokens.
 
-| Modo | Qué puede hacer | Qué pide aprobación |
-| --- | --- | --- |
-| Solo lectura | Consultas (`*_get`, `library_search`, `player_state`…) | Nada |
-| Lectura y escritura | Todo | Solo lo crítico (`playlist_delete`) |
-| Acceso completo | Todo | Nada |
-
-Cada token tiene sus propias herramientas (Configurar token › Herramientas autorizadas): las apagadas
-no aparecen en `tools/list` y se rechazan con `TOOL_DISABLED`. Un token puede pausarse (se rechaza hasta
-reanudarlo, con el mismo enlace) o revocarse (para siempre, previa confirmación).
 Las ediciones de etiquetas, letras y portadas guardan copia: `metadata_history` las lista y
 `metadata_undo` (por `backupId`, `batchId` o la última) las revierte.
 
@@ -198,10 +189,6 @@ pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca
 
 ## MCP local con Lucía
 
-En **Stone › Ajustes › Modo MCP**, activa **Permitir MCP local** para que Lucía consulte la biblioteca
-y el estado de reproducción de este teléfono. El ajuste funciona con el relay apagado. Abre Stone
-antes de usar las consultas para que la biblioteca y el reproductor estén disponibles.
-
-El permiso se comprueba en cada llamada y requiere que Stone y Gateway Hub estén firmados con
-la misma clave. El canal local ofrece **library_search** y **player_state**. El permiso se puede
-desactivar en la misma pantalla.
+En **Arka › MCP**, activa **Permitir MCP local** para que Lucía (y sus reglas de sentimiento) usen las herramientas
+de Stone en este teléfono, sin internet y con el enlace público apagado. Arka llama a Stone por su canal con firma
+(`content://…hublink`, método `tool`): solo apps firmadas con la misma clave. Lo que borra o cambia pregunta antes.

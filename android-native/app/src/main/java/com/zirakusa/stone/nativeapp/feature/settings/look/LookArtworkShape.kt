@@ -17,9 +17,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.theme.StoneLook
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.hint
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** Title and hint of each player artwork shape, in the order shown in Ajustes. */
 internal val artworkShapeLabels = mapOf(

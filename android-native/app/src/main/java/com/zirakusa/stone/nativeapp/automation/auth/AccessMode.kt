@@ -25,7 +25,8 @@ enum class AccessMode(val key: String) {
  * What a token is for, chosen when it is created:
  * - LLM: its link is pasted straight into Claude, ChatGPT… (IA → relay → Stone).
  * - HUB: its link is pasted into Gateway Hub, which only bridges it; this token's permissions still apply.
- * - REDIRECT: the one token Stone keeps for «Redireccionar a Hub» (FULL, never listed): the hub manages everything.
+ * - REDIRECT: Arka's token, the only one Stone serves now (FULL): the hub manages everything.
+ * LLM and HUB remain only to read what older versions saved.
  */
 enum class TokenKind(val key: String) {
     LLM("llm"), HUB("hub"), REDIRECT("redirect");

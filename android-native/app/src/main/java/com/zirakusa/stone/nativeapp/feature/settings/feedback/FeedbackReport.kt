@@ -33,9 +33,6 @@ import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 internal enum class FeedbackKind(val label: Int, val icon: ImageVector, val send: Int) {
     BUG(R.string.feedback_report_bug, Icons.Outlined.BugReport, R.string.feedback_send_report),

@@ -30,16 +30,6 @@ Las imágenes se escriben en `app/build/screenshots/`.
 Se instala junto a Stone. El APK debug incluye el código Kotlin compilado y no necesita Metro.
 No cambiar al identificador original antes de completar equivalencia y migración de datos.
 
-## Stone Prueba para Lucía
-
-[Stone Prueba 1.7.27](Stone-1.7.27-lucia-preview.apk) se instala junto a Stone y guarda
-su propia biblioteca y ajustes. Abre **Stone Prueba › Ajustes › Modo MCP › Permitir MCP local**
-para usarlo con Lucía Prueba 0.0.27. Esta variante usa un permiso de firma propio y funciona con
-el relay apagado.
-
-El APK se compila con `./gradlew :app:assembleLuciaPreview` y se firma con la misma clave
-de desarrollo que Lucía Prueba.
-
 ## Organización
 
 ```text

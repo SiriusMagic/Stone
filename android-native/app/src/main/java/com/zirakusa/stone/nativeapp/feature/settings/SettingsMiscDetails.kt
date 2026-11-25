@@ -17,7 +17,6 @@ import com.zirakusa.stone.nativeapp.ui.components.StoneAvatar
 import com.zirakusa.stone.nativeapp.BuildConfig
 import com.zirakusa.stone.nativeapp.feature.player.video.VideoScale
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable internal fun AboutDetail(onPage: (String) -> Unit) {
     val context = LocalContext.current

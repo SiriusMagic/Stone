@@ -31,11 +31,9 @@ import com.zirakusa.stone.nativeapp.playback.control.AudioMode
 import com.zirakusa.stone.nativeapp.playback.control.PlaybackViewModel
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.roundToInt
-import com.zirakusa.stone.nativeapp.feature.settings.api.ApiGreen
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.hint
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
+
+/** The «in range» green of the loudness readings. */
+private val AudioGreen = androidx.compose.ui.graphics.Color(0xFF4CD27A)
 
 private class ModeCard(val mode: AudioMode, val label: Int, val hint: Int, val icon: ImageVector)
 
@@ -91,7 +89,7 @@ private val cards = listOf(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(cards.first { it.mode == selected }.label), Modifier.weight(1f), fontSize = 24.sp, fontWeight = FontWeight.Black)
             if (active == selected) Text(stringResource(R.string.audio_levels_active), Modifier.clip(RoundedCornerShape(14.dp))
-                .background(ApiGreen.copy(alpha = .15f)).padding(horizontal = 12.dp, vertical = 4.dp), color = ApiGreen, fontSize = 14.sp)
+                .background(AudioGreen.copy(alpha = .15f)).padding(horizontal = 12.dp, vertical = 4.dp), color = AudioGreen, fontSize = 14.sp)
         }
         Text(stringResource(R.string.audio_levels_independent), Modifier.padding(top = 8.dp), color = StonePalette.Secondary)
         LevelSlider(R.string.audio_levels_max, max, 10f..300f, { max = (it / 10).roundToInt() * 10 }, ::apply)

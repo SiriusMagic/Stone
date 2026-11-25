@@ -24,7 +24,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.feature.library.components.*
 import com.zirakusa.stone.nativeapp.feature.library.video.*
 import com.zirakusa.stone.nativeapp.feature.settings.*
-import com.zirakusa.stone.nativeapp.feature.settings.api.*
 import com.zirakusa.stone.nativeapp.feature.settings.feedback.*
 import com.zirakusa.stone.nativeapp.feature.settings.look.*
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore

@@ -15,9 +15,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.feature.player.video.VideoControlRegistry
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 @Composable fun VideoControlSettingsDetail(store: StoneSettingsStore?, onChanged: () -> Unit) {
     val defaults = remember { VideoControlRegistry.defaultIds }

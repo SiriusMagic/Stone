@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.persistence.CrashLog
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Ajustes › Diagnóstico: the last "Stone se detuvo", to copy or send. Hidden when there is none. */
 @Composable internal fun CrashReportCard() {

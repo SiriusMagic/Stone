@@ -29,8 +29,6 @@ import com.zirakusa.stone.nativeapp.ui.theme.stoneBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** Background photo options: Fondo de pantalla / Foco, a live preview and the opacity slider. */
 @Composable internal fun LookBackgroundEditor(persist: () -> Unit) {

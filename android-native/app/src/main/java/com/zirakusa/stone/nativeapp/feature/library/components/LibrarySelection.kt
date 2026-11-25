@@ -21,9 +21,6 @@ import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.data.library.user.StonePlaylist
 import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
-import com.zirakusa.stone.nativeapp.feature.settings.api.icon
-import com.zirakusa.stone.nativeapp.feature.settings.api.label
 
 /** "N seleccionado" header with back and select-all, shown after a long press. */
 @Composable internal fun SelectionHeader(selected: Int, total: Int, onExit: () -> Unit, onToggleAll: () -> Unit) {

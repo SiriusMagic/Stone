@@ -12,7 +12,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import com.zirakusa.stone.nativeapp.automation.ApiMode
 import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
-import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.auth.AuthContext
 import com.zirakusa.stone.nativeapp.automation.relay.RelayGuard
@@ -24,9 +23,6 @@ class PendingConfirmation(val action: String, val summary: String, val answer: C
 
 /** Android's own write dialog for MediaStore files, asked once for a whole batch. */
 class WriteAccessRequest(val count: Int, val sender: IntentSender, val answer: CompletableDeferred<Boolean>)
-
-/** Progress of a batch tool, shown in Ajustes › Modo MCP while it runs. */
-data class BatchProgress(val action: String, val done: Int, val total: Int, val failed: Int = 0)
 
 /**
  * Single gateway between agents and Stone. It validates parameters, enforces each token's
@@ -40,14 +36,12 @@ object StoneAutomation {
     val confirmation = mutableConfirmation.asStateFlow()
     private val mutableWriteRequest = MutableStateFlow<WriteAccessRequest?>(null)
     val writeRequest = mutableWriteRequest.asStateFlow()
-    private val mutableProgress = MutableStateFlow<BatchProgress?>(null)
-    val progress = mutableProgress.asStateFlow()
     private val mutableHistory = MutableStateFlow<List<ActionRecord>>(emptyList())
     val history = mutableHistory.asStateFlow()
 
     val actions: List<StoneAction> by lazy { StoneActions.all() }
 
-    /** Actions a token with [access] may use (its mode and Ajustes › Modo MCP › Herramientas). */
+    /** Actions a token with [access] may use (its mode and the tools blocked for it). */
     fun available(access: AccessMode, blocked: Set<String> = emptySet()): List<StoneAction> =
         actions.filter { ApiMode.permits(it, access) && it.toolName !in blocked }
 
@@ -61,9 +55,9 @@ object StoneAutomation {
             "Call tools/list or stone_help.")
         return try {
             if (action.toolName in blocked) throw ActionException("The user turned off '${action.toolName}' for this token.",
-                "TOOL_DISABLED", "The user can enable it in Stone > Ajustes > Modo MCP > Seguridad > (this token).")
+                "TOOL_DISABLED", "The user can allow it for this agent in Arka (the hub).")
             if (!access.permits(action.risk)) throw ActionException("This token is read-only.", "READ_ONLY_TOKEN",
-                "The user can change the token's mode in Stone > Ajustes > Modo MCP > Seguridad.")
+                "The user can change the agent's permissions in Arka (the hub).")
             validate(action, arguments)
             val dryRun = arguments.optBoolean("dryRun", false)
             // An agent repeating a change whose first try finished after the relay's 504 gets that first
@@ -160,11 +154,7 @@ object StoneAutomation {
         mutableWriteRequest.update { if (it === request) null else it }
     }
 
-    fun reportProgress(progress: BatchProgress?) { mutableProgress.value = progress }
-
     private fun record(action: StoneAction, status: RecordStatus, detail: String, token: String, code: String, tokenId: String) {
-        RequestStats.record(tokenId, when (status) { RecordStatus.OK -> RequestStats.OK; RecordStatus.DENIED -> RequestStats.DENIED
-            RecordStatus.FAILED -> RequestStats.FAILED })
         val entry = ActionRecord(System.currentTimeMillis(), action.name, status == RecordStatus.OK, detail.take(240),
             status, action.risk, token, code, tokenId)
         val history = mutableHistory.updateAndGet { (listOf(entry) + it).take(HISTORY_SIZE) }

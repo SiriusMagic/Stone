@@ -1,8 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-    <permission android:name="com.zirakusa.gatewayhub.permission.LINK" tools:node="remove" />
-    <permission android:name="com.zirakusa.family.permission.ACT" tools:node="remove" />
-    <permission android:name="${applicationId}.permission.LOCAL_MCP" android:protectionLevel="signature"
-        android:label="@string/hub_link_permission" />
-    <application android:label="@string/lucia_preview_name" tools:replace="android:label" />
-</manifest>

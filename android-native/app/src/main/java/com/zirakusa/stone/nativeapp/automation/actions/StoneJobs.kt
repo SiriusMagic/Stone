@@ -64,7 +64,6 @@ internal object StoneJobs {
                 // A job never outlives its token: revoked, paused or expired stops it before the next song.
                 if (entry.owner.isNotEmpty() && !McpServer.isActive(entry.owner)) { entry.status = "cancelled"; break }
                 val item = entry.items[index]
-                StoneAutomation.reportProgress(BatchProgress(entry.tool, index, entry.items.size))
                 val result = try {
                     MetadataBatch.runItem(item, false, entry.locked, null, entry.work, entry.batch)
                 } catch (limited: RateLimitedException) {
@@ -77,7 +76,6 @@ internal object StoneJobs {
                 }
                 synchronized(entry.results) { entry.results += result }
             }
-            StoneAutomation.reportProgress(null)
             if (entry.status == "running") entry.status = "done"
             if (entry.results.any { it.optBoolean("ok") }) runCatching {
                 withContext(Dispatchers.Main) { MetadataBatch.host().refreshLibrary() }

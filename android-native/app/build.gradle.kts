@@ -7,7 +7,6 @@ android {
     namespace = "com.zirakusa.stone.nativeapp"
     compileSdk = 36
     defaultConfig {
-        manifestPlaceholders["localMcpPermission"] = "com.zirakusa.gatewayhub.permission.LINK"
         // Preview can coexist with Stone 1.3.2; never overwrite its user data.
         applicationId = "com.zirakusa.stone.kotlin.preview"
         minSdk = 26
@@ -55,13 +54,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
             buildConfigField("boolean", "AUDIO_DIAGNOSTICS_ENABLED", "false")
-        }
-        create("luciaPreview") {
-            initWith(getByName("preview"))
-            applicationIdSuffix = ".lucia"
-            manifestPlaceholders["localMcpPermission"] = "com.zirakusa.stone.kotlin.preview.lucia.permission.LOCAL_MCP"
-            matchingFallbacks += listOf("preview", "release")
-            buildConfigField("String", "RELAY_URL", "\"\"")
         }
     }
 }

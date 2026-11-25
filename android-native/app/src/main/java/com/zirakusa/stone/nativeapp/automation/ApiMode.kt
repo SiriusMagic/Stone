@@ -9,24 +9,26 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import java.security.SecureRandom
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAction
 import com.zirakusa.stone.nativeapp.automation.activity.ActivityLog
-import com.zirakusa.stone.nativeapp.automation.activity.RequestStats
 import com.zirakusa.stone.nativeapp.automation.auth.AccessMode
 import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
-/** User switches for the MCP server (Ajustes › Modo MCP). Off by default. */
+/**
+ * Stone's Modo MCP, run by Arka (same developer, through [HubLinkProvider]): «connect» turns the public link on (the
+ * server and the relay, with Arka's own token, so the hub decides who may do what) and «disconnect» turns it off.
+ * Lucía calls the tools on the phone without internet ([McpServer.local]). Off by default; nothing to set up in Stone.
+ */
 object ApiMode {
-    var enabled by mutableStateOf(false)
-        private set
-    /** Secret of the main token (the one behind the big Copy button). */
-    val token: String get() = ApiTokens.primary?.secret.orEmpty()
     /** Fixed: the app offers no way to change it. */
     val port: Int get() = McpServer.DEFAULT_PORT
     var running by mutableStateOf(false)
         private set
     /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
     var relayState by mutableStateOf(RelayClient.State.OFFLINE)
+        private set
+    /** The public link is on (Arka › MCP › «Activar MCP»). Stored under the key of the old «Redireccionar a Hub». */
+    var remote by mutableStateOf(false)
         private set
     private var store: StoneSettingsStore? = null
     private var relay: RelayClient? = null
@@ -37,33 +39,13 @@ object ApiMode {
     /** Relay address; built in through BuildConfig, replaceable in tests. */
     internal var relayUrl: String = BuildConfig.RELAY_URL
 
-    /**
-     * «Redireccionar a Hub»: Gateway Hub manages everything (who may use Stone, permissions, expiry, analytics).
-     * While it is on Stone serves only the hub's own token, starts by itself (no «Activar MCP» needed) and the
-     * user's tokens wait, untouched, until it is turned off. Off by default.
-     */
-    var hubRedirect by mutableStateOf(false)
-        private set
-
-    var localMcp by mutableStateOf(false)
-        private set
-
-    fun allowLocalMcp(value: Boolean) {
-        store?.setLook(LocalMcp.SETTING, value.toString())
-        localMcp = value
-    }
-
-    fun redirectToHub(value: Boolean) {
-        hubRedirect = value; store?.setLook("api.hubRedirect", value.toString())
-        if (value) ApiTokens.redirectToken()
+    fun turnRemote(value: Boolean) {
+        remote = value; store?.setLook(REMOTE, value.toString())
         ApiTokens.publish(); apply()
     }
 
-    /** Whether the server should run: switched on by the user, or managed by the hub. */
-    val active: Boolean get() = enabled || hubRedirect
-
-    /** Link the hub uses to reach Stone while redirecting (only for the Gateway Hub app or the hub's Apps page). */
-    fun hubLink(): String = shareText(ApiTokens.redirectToken().secret)
+    /** Link the hub uses to reach Stone (only for Arka, through [HubLink]). */
+    fun hubLink(): String = linkFor(ApiTokens.arka().secret)
 
     /** Whether [load] already ran in this process (the hub link provider can be called before any screen). */
     val loaded: Boolean get() = store != null
@@ -74,14 +56,12 @@ object ApiMode {
     fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
-        enabled = store.look("api.enabled", "false").toBoolean()
-        hubRedirect = store.look("api.hubRedirect", "false").toBoolean()
-        localMcp = store.look(LocalMcp.SETTING, "false").toBoolean()
-        // Settings the app no longer offers (Wi-Fi access, header-only token, custom port) are wiped.
-        for (old in listOf("api.lan", "api.urlToken", "api.port")) if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
-        ApiTokens.load(store, "Principal")
+        remote = store.look(REMOTE, "false").toBoolean()
+        // Settings the app no longer offers (its own MCP screen before Arka ran it) are wiped.
+        for (old in listOf("api.lan", "api.urlToken", "api.port", "api.enabled", "api.localMcp", "api.stats"))
+            if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
+        ApiTokens.load(store)
         ActivityLog.attach(store)
-        RequestStats.attach(store)
         device = store.look("api.device", "").ifBlank { newToken(10).also { store.setLook("api.device", it) } }
         // Stored encrypted with a Keystore key; values from older versions are re-sealed here.
         val storedRelay = store.look("api.relaySecret", "")
@@ -93,35 +73,25 @@ object ApiMode {
         apply()
     }
 
-    fun enable(value: Boolean) { enabled = value; store?.setLook("api.enabled", value.toString()); apply() }
-    /** Access mode of the main token (the cards of the General tab). */
-    val mode: AccessMode get() = ApiTokens.primary?.mode ?: AccessMode.WRITE
-
-    /** Whether a token with [access] may use [action]: allowed by its mode and not switched off. */
-    fun permits(action: StoneAction, access: AccessMode = mode): Boolean =
-        access.permits(action.risk) // tools are allowed per token (ApiToken.disabledTools)
+    /** Whether a token with [access] may use [action]: allowed by its mode. */
+    fun permits(action: StoneAction, access: AccessMode = AccessMode.FULL): Boolean = access.permits(action.risk)
 
     private fun apply() {
-        running = if (active) McpServer.start(ApiTokens.served(hubRedirect), port) else { McpServer.stop(); false }
-        if (active && running && relayAvailable) {
+        running = if (remote) McpServer.start(ApiTokens.served(), port) else { McpServer.stop(); false }
+        if (remote && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }
 
-    /** The one link users paste into Claude or ChatGPT; changing the token revokes the old one. */
-    fun publicLink(secret: String = token): String? =
-        if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}${tokenQuery(secret)}" else null
-
     /** Internet link when there is a relay, else this phone's address. */
-    fun linkFor(secret: String = token): String = publicLink(secret) ?: "http://127.0.0.1:$port${McpServer.PATH}${tokenQuery(secret)}"
-
-    private fun tokenQuery(secret: String) = "?token=$secret"
-
-    /** What the copy buttons give: the link with its token. */
-    fun shareText(secret: String = token): String = linkFor(secret)
+    fun linkFor(secret: String): String =
+        if (relayAvailable) "${relayUrl.trimEnd('/')}/d/$device${McpServer.PATH}?token=$secret"
+        else "http://127.0.0.1:$port${McpServer.PATH}?token=$secret"
 
     private fun newToken(size: Int = 24): String {
         val bytes = ByteArray(size).also(SecureRandom()::nextBytes)
         return bytes.joinToString("") { "%02x".format(it) }
     }
+
+    private const val REMOTE = "api.hubRedirect"
 }

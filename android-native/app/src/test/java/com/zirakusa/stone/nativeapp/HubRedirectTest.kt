@@ -18,7 +18,9 @@ import com.zirakusa.stone.nativeapp.automation.auth.ApiToken
 import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.auth.TokenKind
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
-import com.zirakusa.stone.nativeapp.feature.settings.api.ApiModeSettings
+import com.zirakusa.stone.nativeapp.data.persistence.SecretBox
+import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
+import com.zirakusa.stone.nativeapp.feature.settings.McpByArka
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import com.zirakusa.stone.nativeapp.ui.theme.StoneTheme
 import org.junit.After
@@ -30,102 +32,77 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Token type (LLM / Hub), its use text, and «Redireccionar a Hub». */
+/** Arka runs Stone's Modo MCP: the public link on and off, the status, Lucía's tools on the phone, and the Ajustes page. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "es-w411dp-h2400dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HubRedirectTest {
     @get:Rule val compose = createComposeRule()
-    private val own = ApiToken("a", "Claude", "stn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", AccessMode.READ, 1, kind = TokenKind.HUB,
-        usage = "Para el hub de casa")
 
     @After fun reset() {
-        if (ApiMode.hubRedirect) ApiMode.redirectToHub(false)
+        if (ApiMode.remote) ApiMode.turnRemote(false)
         McpServer.stop(); ApiMode.relayUrl = ""; ApiTokens.replaceForTests(emptyList())
     }
 
     @Test fun kindAndUseSurviveSaving() {
-        val back = ApiToken.parse(ApiToken.serialize(listOf(own))).single()
-        assertEquals(TokenKind.HUB, back.kind)
-        assertEquals("Para el hub de casa", back.usage)
+        val token = ApiToken("a", "Arka", "stn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", AccessMode.FULL, 1, kind = TokenKind.REDIRECT, usage = "Arka")
+        val back = ApiToken.parse(ApiToken.serialize(listOf(token))).single()
+        assertEquals(TokenKind.REDIRECT, back.kind); assertEquals("Arka", back.usage)
         // Tokens saved by older versions have no type: they are LLM tokens.
         assertEquals(TokenKind.LLM, ApiToken.parse("""[{"id":"x","secret":"s","mode":"write"}]""").single().kind)
-        assertEquals(ApiToken.USAGE_MAX, ApiTokens.create("x", AccessMode.READ, usage = "a".repeat(500)).usage.length)
     }
 
-    @Test fun redirectServesOnlyTheHubTokenAndGivesBackTheUsersOnes() {
-        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
-        ApiTokens.replaceForTests(listOf(own))
-        assertFalse(ApiMode.active)
-        ApiMode.redirectToHub(true)
-        assertTrue("the hub runs MCP without «Activar MCP»", ApiMode.active)
-        val hub = ApiTokens.tokens.single { it.kind == TokenKind.REDIRECT }
-        assertEquals(AccessMode.FULL, hub.mode)
-        assertEquals(listOf(hub), ApiTokens.served(true))
-        assertEquals(listOf(own), ApiTokens.listed)
-        assertTrue(ApiMode.hubLink().endsWith("?token=${hub.secret}"))
-        ApiMode.redirectToHub(false)
-        assertEquals(listOf(own), ApiTokens.served(false))
-        assertFalse(ApiMode.active)
+    /** Only the old hub token survives an update (the hub's link keeps working); the user's own tokens go. */
+    @Test fun onlyTheHubTokenIsKept() {
+        val store = StoneSettingsStore(RuntimeEnvironment.getApplication())
+        val hub = ApiToken("h", "Gateway Hub", "stn_" + "h".repeat(40), AccessMode.FULL, 1, kind = TokenKind.REDIRECT)
+        val own = ApiToken("o", "Claude", "stn_" + "o".repeat(40), AccessMode.READ, 1, kind = TokenKind.LLM)
+        store.setLook("api.tokens", SecretBox.seal(ApiToken.serialize(listOf(own, hub))))
+        ApiTokens.load(store)
+        assertEquals(listOf(hub.secret), ApiTokens.tokens.map { it.secret })
+        assertEquals(hub.secret, ApiTokens.arka().secret)
     }
 
-    @Test fun onlyTheSameDeveloperGetsTheLinkAndOnlyWhenRedirecting() {
+    @Test fun arkaTurnsThePublicLinkOnAndOff() {
         ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
-        assertEquals("NOT_SAME_DEVELOPER", HubLink.answer(false).getString(HubLink.KEY_ERROR))
-        assertEquals("REDIRECT_OFF", HubLink.answer(true).getString(HubLink.KEY_ERROR))
-        ApiMode.redirectToHub(true)
-        assertEquals("NOT_SAME_DEVELOPER", HubLink.answer(false).getString(HubLink.KEY_ERROR))
-        val answer = HubLink.answer(true)
-        assertNull(answer.getString(HubLink.KEY_ERROR))
-        assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
-    }
-
-    /** «Conectar todas» in Gateway Hub: only the same developer turns the redirect on, and gets the link at once. */
-    @Test fun connectTurnsTheRedirectOn() {
-        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
+        assertFalse(ApiMode.remote); assertTrue(ApiTokens.served().isEmpty())
         assertEquals("NOT_SAME_DEVELOPER", HubLink.connect(false).getString(HubLink.KEY_ERROR))
-        assertFalse(ApiMode.hubRedirect)
+        assertEquals("REDIRECT_OFF", HubLink.answer(true).getString(HubLink.KEY_ERROR))
         val answer = HubLink.connect(true)
-        assertTrue(ApiMode.hubRedirect); assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
+        assertTrue(ApiMode.remote); assertEquals(ApiMode.hubLink(), answer.getString(HubLink.KEY_LINK))
+        val arka = ApiTokens.arka()
+        assertEquals(AccessMode.FULL, arka.mode); assertEquals(listOf(arka), ApiTokens.served())
+        assertTrue(ApiMode.hubLink().endsWith("?token=${arka.secret}"))
+        assertTrue(HubLink.status(true).getBoolean("remote"))
+        assertEquals("NOT_SAME_DEVELOPER", HubLink.disconnect(false).getString(HubLink.KEY_ERROR))
+        assertFalse(HubLink.disconnect(true).getBoolean("remote"))
+        assertFalse(ApiMode.remote); assertTrue(ApiTokens.served().isEmpty())
+        assertNull(HubLink.status(true).getString(HubLink.KEY_ERROR))
     }
 
-    /** Lucía runs Stone's tools on the phone, only with «Redireccionar a Hub» on. */
+    /** Lucía runs Stone's tools on the phone, with or without the public link. */
     @Test fun luciaRunsStoneTools() {
         val list = """{"jsonrpc":"2.0","id":3,"method":"tools/list"}"""
-        assertEquals("REDIRECT_OFF", HubLink.tool(true, list).getString(HubLink.KEY_ERROR))
         assertEquals("NOT_SAME_DEVELOPER", HubLink.tool(false, list).getString(HubLink.KEY_ERROR))
-        ApiMode.redirectToHub(true)
+        assertEquals("BAD_REQUEST", HubLink.tool(true, "").getString(HubLink.KEY_ERROR))
         val answer = org.json.JSONObject(HubLink.tool(true, list).getString("response")!!)
         assertEquals(3, answer.getInt("id"))
         assertTrue(answer.getJSONObject("result").getJSONArray("tools").toString().contains("player_set_shuffle"))
     }
 
-    @Test fun redirectScreenHidesTokensAndAnalytics() {
-        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
-        ApiTokens.replaceForTests(listOf(own))
-        ApiMode.redirectToHub(true)
+    @Test fun settingsOnlyPointToArka() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
-            Column(Modifier.padding(16.dp)) { ApiModeSettings() }
+            Column(Modifier.padding(16.dp)) { McpByArka() }
         } } }
         compose.waitForIdle()
-        compose.onNodeWithText("Ir al Hub").assertExists()
+        compose.onNodeWithText("Abrir Arka").assertExists()
+        compose.onNodeWithText("Apagado").assertExists()
         assertTrue(compose.onAllNodesWithText("Crear token").fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodesWithText("Analítica").fetchSemanticsNodes().isEmpty())
-        assertTrue(compose.onAllNodesWithText("Claude").fetchSemanticsNodes().isEmpty())
-        onView(isRoot()).captureRoboImage("build/screenshots/stone-api-hub-redirect.png")
-    }
-
-    @Test fun createTokenAsksWhatItConnects() {
-        ApiMode.relayUrl = "https://stone-relay.example.workers.dev"
-        compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
-            com.zirakusa.stone.nativeapp.feature.settings.api.ApiTokenEditor(null, { _, _ -> }) {}
-        } } }
-        compose.waitForIdle()
-        compose.onNodeWithText("¿Qué vas a conectar?").assertExists()
-        compose.onNodeWithText("Uso del token").assertExists()
-        compose.onNode(androidx.compose.ui.test.isDialog()).captureRoboImage("build/screenshots/stone-api-create-kind.png")
+        onView(isRoot()).captureRoboImage("build/screenshots/stone-api-by-arka.png")
     }
 }

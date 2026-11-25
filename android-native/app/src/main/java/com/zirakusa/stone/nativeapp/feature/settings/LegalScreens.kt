@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Where "Calificarnos" sends people until Stone is on Google Play. */
 const val STONE_REPOSITORY_URL = "https://github.com/SiriusMagic/Stone"

@@ -23,7 +23,6 @@ import com.zirakusa.stone.core.Song
 import com.zirakusa.stone.nativeapp.R
 import com.zirakusa.stone.nativeapp.ui.components.*
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 @Composable fun LibrarySongRow(song: Song, current: Boolean, enabled: Boolean,
     compact: Boolean = false, onLongClick: (() -> Unit)? = null,

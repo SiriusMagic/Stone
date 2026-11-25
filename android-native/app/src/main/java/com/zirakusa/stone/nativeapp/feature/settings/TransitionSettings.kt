@@ -14,7 +14,6 @@ import com.zirakusa.stone.nativeapp.data.persistence.StoneSettingsStore
 import com.zirakusa.stone.nativeapp.playback.StonePlaybackService
 import com.zirakusa.stone.nativeapp.ui.theme.StonePalette
 import kotlin.math.roundToInt
-import com.zirakusa.stone.nativeapp.feature.settings.api.color
 
 /** Reproducción sin pausas and Crossfade switches; saved and applied to the running player at once. */
 @Composable internal fun TransitionSettings(store: StoneSettingsStore?) {
