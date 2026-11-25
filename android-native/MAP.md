@@ -7,21 +7,20 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (128) User switches for the MCP server (Ajustes › Modo MCP).
-- `HubLink.kt` (72) «Redireccionar a Hub»:
-- `LocalMcp.kt` (65) The phone-only MCP channel.
+- `ApiMode.kt` (98) Stone's Modo MCP, run by Arka (same developer, through [HubLinkProvider]):
+- `HubLink.kt` (80) How Arka runs Stone's Modo MCP.
 
 ## app/automation/actions
 - `AutomationHost.kt` (71) What the running app offers to automation.
-- `MetadataBatch.kt` (127) One item of a batch:
+- `MetadataBatch.kt` (125) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
 - `StoneAction.kt` (85) How dangerous an action is;
 - `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
 - `StoneAgentActions.kt` (48) Tools that help agents help themselves:
-- `StoneAutomation.kt` (185) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAutomation.kt` (175) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
 - `StoneGuide.kt` (95) Discovery help for agents:
-- `StoneJobs.kt` (127) Background batches for agents.
+- `StoneJobs.kt` (125) Background batches for agents.
 - `StoneLibraryEditActions.kt` (161) Bulk tools:
 - `StoneLookActions.kt` (100) Appearance and settings actions:
 - `StoneMediaActions.kt` (218) Queue, equalizer, video and library-view actions (added in 1.6.7).
@@ -30,12 +29,11 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `StoneSolutions.kt` (104) Dictionary of solutions for agents, like a skill they can look up:
 
 ## app/automation/activity
-- `ActivityLog.kt` (71) Keeps Ajustes › Modo MCP › Actividad on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them
-- `RequestStats.kt` (91) Requests per minute for Ajustes › Modo MCP › Analítica:
+- `ActivityLog.kt` (71) Keeps the agents' activity on the phone, so the last calls and their errors are still there after Stone is closed and an agent can read them with ston
 
 ## app/automation/auth
-- `AccessMode.kt` (75) What a token lets an agent do.
-- `ApiTokens.kt` (120) Access tokens of Ajustes › Modo MCP › Seguridad.
+- `AccessMode.kt` (76) What a token lets an agent do.
+- `ApiTokens.kt` (65) The one token Stone serves:
 - `AuthContext.kt` (22) Who is making the request being executed:
 - `AuthThrottle.kt` (29) Slows down token guessing:
 
@@ -46,7 +44,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
-- `McpServer.kt` (365) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpServer.kt` (353) Model Context Protocol server exposing [StoneAutomation] actions as tools.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
@@ -110,35 +108,35 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/feature/library
 - `LibraryOrdering.kt` (35)
-- `LibraryScreen.kt` (255)
+- `LibraryScreen.kt` (254)
 - `LibraryViewModel.kt` (188) Refreshes which songs have lyrics (background, cached per file).
 - `LibraryViewState.kt` (13) Library order shared by the sort sheet and automation (MCP mode), so both stay in sync.
 - `QuickActions.kt` (42) Single source of truth for home shortcuts.
 
 ## app/feature/library/components
-- `AlbumCard.kt` (58)
-- `ArtistCard.kt` (55)
-- `GenreCards.kt` (45) Card colours;
-- `HomeNavigationRail.kt` (74)
-- `LandscapeLibraryHeading.kt` (41)
-- `LayoutSelector.kt` (54) Compact / list / "Grande" switch, icons only;
-- `LibraryContent.kt` (243) Callbacks used by long-press selection in the library lists.
-- `LibraryEmptyState.kt` (24)
-- `LibraryHeader.kt` (99)
+- `AlbumCard.kt` (57)
+- `ArtistCard.kt` (54)
+- `GenreCards.kt` (44) Card colours;
+- `HomeNavigationRail.kt` (71)
+- `LandscapeLibraryHeading.kt` (39)
+- `LayoutSelector.kt` (53) Compact / list / "Grande" switch, icons only;
+- `LibraryContent.kt` (242) Callbacks used by long-press selection in the library lists.
+- `LibraryEmptyState.kt` (23)
+- `LibraryHeader.kt` (97)
 - `LibraryLayoutFrame.kt` (28) One content call site keeps the library alive when its surrounding layout changes.
-- `LibrarySearch.kt` (46)
-- `LibrarySelection.kt` (90) "N seleccionado" header with back and select-all, shown after a long press.
-- `LibrarySheets.kt` (61)
-- `LibrarySongRow.kt` (73)
-- `LibraryTabs.kt` (64) Videos holds every video;
-- `PlaylistCards.kt` (95) Icon and tint in front of a smart playlist title.
-- `PlaylistLibrary.kt` (119)
-- `RecentlyDeletedSheet.kt` (117) Trash:
-- `SongGridCard.kt` (42) Song card of the "Grande" layout:
+- `LibrarySearch.kt` (44)
+- `LibrarySelection.kt` (87) "N seleccionado" header with back and select-all, shown after a long press.
+- `LibrarySheets.kt` (59)
+- `LibrarySongRow.kt` (72)
+- `LibraryTabs.kt` (62) Videos holds every video;
+- `PlaylistCards.kt` (93) Icon and tint in front of a smart playlist title.
+- `PlaylistLibrary.kt` (117)
+- `RecentlyDeletedSheet.kt` (116) Trash:
+- `SongGridCard.kt` (41) Song card of the "Grande" layout:
 
 ## app/feature/library/video
-- `VideoGridCard.kt` (224) Round check used on selected cards.
-- `VideoLibraryContent.kt` (127)
+- `VideoGridCard.kt` (223) Round check used on selected cards.
+- `VideoLibraryContent.kt` (126)
 - `VideoLibraryLayout.kt` (16) Presentation used by the portrait video library.
 - `VideoSelection.kt` (60) Long-press selection for video grids/lists (Videos, Shorts, Movies).
 
@@ -197,44 +195,35 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `VideoTimeline.kt` (142) A bounded, YouTube-like preview strip.
 
 ## app/feature/settings
-- `AudioLevelSettings.kt` (117) Ajustes › Niveles de audio:
-- `LegalScreens.kt` (60) Where "Calificarnos" sends people until Stone is on Google Play.
-- `LibraryScanSettings.kt` (63) Whole-device scanning (MediaStore + permission) and automatic rescans on open.
-- `NotificationSettings.kt` (111) Ajustes › Notificaciones, in one place:
-- `SettingsMiscDetails.kt` (75)
-- `SettingsParts.kt` (44)
-- `SettingsPlaybackDetails.kt` (190)
-- `SettingsScreens.kt` (252) Languages Stone ships complete translations for (names in their own language).
-- `SettingsShortcutsDetail.kt` (183) A tap moves once;
-- `SystemDiagnosticsDetail.kt` (229)
-- `TransitionSettings.kt` (41) Reproducción sin pausas and Crossfade switches;
-- `VideoControlSettings.kt` (83)
-- `WidgetSettings.kt` (62) Ajustes › Widgets:
-
-## app/feature/settings/api
-- `ApiActivityTab.kt` (92) Actividad tab:
-- `ApiAnalytics.kt` (144) Time windows:
-- `ApiGeneralTab.kt` (69) General:
-- `ApiHubCard.kt` (55) Package of the Gateway Hub app (same developer);
-- `ApiModeSettings.kt` (69) Ajustes › Modo MCP:
-- `ApiModeShared.kt` (132) Tabs of Ajustes › Modo MCP:
-- `ApiTokenEditor.kt` (206) Create ([token] null) or configure a token, in this order:
-- `ApiTokenRow.kt` (74) Compact token card:
+- `AudioLevelSettings.kt` (115) The «in range» green of the loudness readings.
+- `LegalScreens.kt` (59) Where "Calificarnos" sends people until Stone is on Google Play.
+- `LibraryScanSettings.kt` (62) Whole-device scanning (MediaStore + permission) and automatic rescans on open.
+- `McpByArka.kt` (52) Ajustes › Modo MCP:
+- `NotificationSettings.kt` (109) Ajustes › Notificaciones, in one place:
+- `SettingsMiscDetails.kt` (74)
+- `SettingsParts.kt` (42)
+- `SettingsPlaybackDetails.kt` (187)
+- `SettingsScreens.kt` (248) Languages Stone ships complete translations for (names in their own language).
+- `SettingsShortcutsDetail.kt` (180) A tap moves once;
+- `SystemDiagnosticsDetail.kt` (226)
+- `TransitionSettings.kt` (40) Reproducción sin pausas and Crossfade switches;
+- `VideoControlSettings.kt` (80)
+- `WidgetSettings.kt` (61) Ajustes › Widgets:
 
 ## app/feature/settings/feedback
-- `CrashReportCard.kt` (42) Ajustes › Diagnóstico:
-- `FeedbackFormParts.kt` (120) Visual pieces of the feedback form;
-- `FeedbackReport.kt` (169)
+- `CrashReportCard.kt` (41) Ajustes › Diagnóstico:
+- `FeedbackFormParts.kt` (117) Visual pieces of the feedback form;
+- `FeedbackReport.kt` (166)
 - `ReportScreenshot.kt` (58) Captures what the user is looking at when they ask to report a problem, so they don't have to take a screenshot and attach it from the gallery.
 
 ## app/feature/settings/look
-- `LookArtworkShape.kt` (58) Title and hint of each player artwork shape, in the order shown in Ajustes.
-- `LookBackgroundEditor.kt` (69) Background photo options:
-- `LookColorEditor.kt` (60) Mixer for the free accent colour:
+- `LookArtworkShape.kt` (55) Title and hint of each player artwork shape, in the order shown in Ajustes.
+- `LookBackgroundEditor.kt` (67) Background photo options:
+- `LookColorEditor.kt` (58) Mixer for the free accent colour:
 - `LookColorPalette.kt` (51) Touch palette:
-- `LookSettings.kt` (123) Ajustes › Personalizado:
-- `LookSettingsParts.kt` (94) Small building blocks shared by the Personalizado screens.
-- `ThemeExtras.kt` (51) Top of "Temas y personalización":
+- `LookSettings.kt` (120) Ajustes › Personalizado:
+- `LookSettingsParts.kt` (92) Small building blocks shared by the Personalizado screens.
+- `ThemeExtras.kt` (50) Top of "Temas y personalización":
 
 ## app/playback
 - `ExternalOpen.kt` (59) «Abrir con Stone» from another app (Luma, a file manager):

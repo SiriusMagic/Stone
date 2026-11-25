@@ -1,3 +1,15 @@
+# Stone Kotlin 1.7.30
+
+- **El Modo MCP lo controla Arka**: se quita la pantalla «Modo MCP» de Stone (Activar MCP, Permitir MCP local,
+  Redireccionar a Hub, Crear token, la lista de tokens, Actividad y Analítica). Activarlo, permitirlo en local para
+  Lucía y crear tokens para cada IA se hace en **Arka › MCP** (Arka 0.2.0). Ajustes › Modo MCP solo muestra el estado
+  y el botón «Abrir Arka».
+- Si Stone ya estaba conectada al hub, sigue conectada con el mismo enlace. Los tokens LLM y Hub creados en Stone dejan
+  de funcionar: crea uno por IA en Arka › Agentes.
+- Lucía usa todas las herramientas de Stone por el mismo canal que el resto de la familia (sin el «MCP local» aparte).
+- Se retira la variante «Stone Prueba» (`luciaPreview`) y su APK.
+- App más ligera: 4,58 MB → 4,49 MB.
+
 # Stone Kotlin 1.7.29
 
 - **Mascotas nuevas**, todas con auriculares amarillos: **Nutria** (sustituye al zorro), Koala, Pingüino (la de fábrica) y
