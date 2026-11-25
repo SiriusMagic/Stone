@@ -276,7 +276,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `VolumeOverlay.kt` (110) Compact volume card.
 
 ## app/ui/theme
-- `LauncherIcon.kt` (69) Stone's mascots.
+- `LauncherIcon.kt` (70) Stone's mascots.
 - `StoneBackdrop.kt` (64) Theme backdrop:
 - `StoneLook.kt` (140) Accent colour that replaces Stone's gold everywhere (lines, highlights, active icons).
 - `StoneTheme.kt` (105) Accent ("dorado" by default);

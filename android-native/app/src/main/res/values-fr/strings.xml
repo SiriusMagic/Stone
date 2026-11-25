@@ -440,7 +440,7 @@
     <string name="mascot_penguin">Pingouin</string>
     <string name="mascot_panda">Panda</string>
     <string name="mascot_koala">Koala</string>
-    <string name="mascot_fox">Renard</string>
+    <string name="mascot_otter">Loutre</string>
     <string name="feedback_header_hint">Partagez votre suggestion, idée ou problème pour nous aider à améliorer l\'application.</string>
     <string name="feedback_send_report">Envoyer le rapport</string>
     <string name="feedback_send_suggestion">Envoyer la suggestion</string>

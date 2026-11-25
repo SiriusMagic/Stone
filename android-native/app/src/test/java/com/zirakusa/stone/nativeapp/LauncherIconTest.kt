@@ -27,7 +27,7 @@ class LauncherIconTest {
     }
 
     @Test fun choosingAMascotKeepsOneEntry() {
-        LauncherIcon.apply(context, LauncherIcon.FOX)
+        LauncherIcon.apply(context, LauncherIcon.OTTER)
         assertEquals(listOf("HomeFox"), launcherEntries())
         LauncherIcon.apply(context, LauncherIcon.PENGUIN)
         assertEquals(listOf("Home"), launcherEntries())

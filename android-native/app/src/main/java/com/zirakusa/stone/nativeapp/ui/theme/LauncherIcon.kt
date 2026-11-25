@@ -20,7 +20,8 @@ enum class LauncherIcon(val key: String, val alias: String, val drawable: Int, v
     PENGUIN("penguin", "Home", R.drawable.mascot_penguin, R.string.mascot_penguin),
     PANDA("panda", "HomePanda", R.drawable.mascot_panda, R.string.mascot_panda),
     KOALA("koala", "HomeKoala", R.drawable.mascot_koala, R.string.mascot_koala),
-    FOX("fox", "HomeFox", R.drawable.mascot_fox, R.string.mascot_fox);
+    // «HomeFox» keeps its name (Android remembers aliases by name) but now shows the otter.
+    OTTER("otter", "HomeFox", R.drawable.mascot_otter, R.string.mascot_otter);
 
     companion object {
         /** The mascot currently in use, read from the package manager at start-up. */

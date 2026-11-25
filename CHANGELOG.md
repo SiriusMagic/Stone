@@ -1,3 +1,9 @@
+# Stone Kotlin 1.7.29
+
+- **Mascotas nuevas**, todas con auriculares amarillos: **Nutria** (sustituye al zorro), Koala, Pingüino (la de fábrica) y
+  Panda. Se ven como icono de la pantalla de inicio y dentro de Stone (cabecera, menú lateral, «Acerca de»); se eligen en
+  Personalizado › Mascota. Si tenías el zorro, pasa solo a la nutria.
+
 # Stone Kotlin 1.7.28
 
 - **«Permitir MCP local» en tu Stone de siempre**: el interruptor de Stone Prueba 1.7.27 llega a Stone normal (Ajustes →
