@@ -11,13 +11,14 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `HubLink.kt` (80) How Arka runs Stone's Modo MCP.
 
 ## app/automation/actions
-- `AutomationHost.kt` (71) What the running app offers to automation.
+- `AutomationHost.kt` (77) What the running app offers to automation.
 - `MetadataBatch.kt` (125) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
-- `StoneAction.kt` (85) How dangerous an action is;
-- `StoneActions.kt` (129) Catalogue of Stone actions, grouped by domain:
+- `PlayByTitle.kt` (107) The signed local client makes one request.
+- `StoneAction.kt` (86) How dangerous an action is;
+- `StoneActions.kt` (130) Catalogue of Stone actions, grouped by domain:
 - `StoneAgentActions.kt` (48) Tools that help agents help themselves:
-- `StoneAutomation.kt` (175) A CRITICAL action waiting for the user's answer on screen.
+- `StoneAutomation.kt` (176) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
 - `StoneGuide.kt` (95) Discovery help for agents:
 - `StoneJobs.kt` (125) Background batches for agents.
@@ -227,18 +228,18 @@ si es grande, busca con grep la función antes de leerlo entero.
 
 ## app/playback
 - `ExternalOpen.kt` (59) «Abrir con Stone» from another app (Luma, a file manager):
-- `StonePlaybackService.kt` (497) Sole owner of playback;
+- `StonePlaybackService.kt` (504) Sole owner of playback;
 - `StoneWidgetProvider.kt` (109) Home-screen player (4×2):
 
 ## app/playback/audio
 - `AndroidVolumeMapper.kt` (33) Conversion between Android's discrete STREAM_MUSIC levels and Stone's native 0..100% display.
 - `AudioGenreAnalyzer.kt` (50) On-demand metadata classifier.
 - `GenreEqualizer.kt` (45) Equalizer by genre:
-- `PlaybackEqualizer.kt` (89) Read-only state used by the audio investigation;
+- `PlaybackEqualizer.kt` (91) Read-only state used by the audio investigation;
 - `PlaybackVolumeBoost.kt` (164) A percentage above 100 maps to a logarithmic gain;
 
 ## app/playback/control
-- `PlaybackViewModel.kt` (709) [gain] is a software attenuation applied on top of Android's volume.
+- `PlaybackViewModel.kt` (711) [gain] is a software attenuation applied on top of Android's volume.
 - `RequestedItemGuard.kt` (26) Keeps the song the user just tapped as the current one while the player loads the new list.
 - `StoneEcoEngine.kt` (132) Lightweight playback policy.
 - `SystemArtworkOverlay.kt` (108) Builds the artwork sent to Android's media controls without changing the artwork embedded in, or next to, the user's media file.
@@ -250,7 +251,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `PerformanceDiagnostics.kt` (88) /proc exposes this count without allocating a stack trace for every thread.
 
 ## app/ui
-- `AutomationBridge.kt` (161) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
+- `AutomationBridge.kt` (170) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
 - `StoneApp.kt` (470) Mini player button:
 
 ## app/ui/components

@@ -192,3 +192,17 @@ pulsa "Cambiar enlace" en Stone para revocarlo. Usa un token por agente y revoca
 En **Arka › MCP**, activa **Permitir MCP local** para que Lucía (y sus reglas de sentimiento) usen las herramientas
 de Stone en este teléfono, sin internet y con el enlace público apagado. Arka llama a Stone por su canal con firma
 (`content://…hublink`, método `tool`): solo apps firmadas con la misma clave. Lo que borra o cambia pregunta antes.
+
+## Reproducir por título desde Arka
+
+La herramienta `player_play_by_title` se anuncia en `tools/list` del canal firmado
+`content://com.zirakusa.stone.kotlin.preview.hublink` (método `tool`). Recibe `titulo`, `volumen`
+opcional de 0 a 100, `ecualizador` opcional, `segundoPlano` opcional e `idPista` para resolver
+una coincidencia ambigua. Este canal mantiene los permisos Android de la familia.
+
+Stone aplica los ajustes con el mismo motor del reproductor y devuelve `playing`, `partial`,
+`ambiguous` o `failed`. `track` es la pista confirmada por el motor. `matches` contiene
+opciones cuando hay ambigüedad. `steps` contiene el resultado de búsqueda, volumen, ecualizador
+y reproducción, según los pasos ejecutados. Si el volumen es rechazado, la reproducción se
+detiene antes de empezar. Arka usa `segundoPlano` para intentar recuperar su pantalla una vez
+confirmada la reproducción.

@@ -102,6 +102,12 @@ class StonePlaybackService : MediaSessionService() {
         }
 
         fun setVolumePercent(percent: Int, showOverlay: Boolean = true) {
+            applyVolumePercent(percent, showOverlay)
+        }
+
+        /** Returns the achieved percentage after Android quantizes the request, or null if it rejected the level. */
+        internal fun applyVolumePercent(percent: Int, showOverlay: Boolean): Int? {
+            var applied: Int? = null
             val service = instance
             val before = service?.let {
                 AudioDiagnostics.capture(it, diagnosticState(), includeSystemEffects = false)
@@ -133,9 +139,8 @@ class StonePlaybackService : MediaSessionService() {
                     }
                 }
 
-                val actualNativeLevel = runCatching {
-                    audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                }.getOrDefault(targetNativeLevel).coerceIn(range.minLevel, range.maxLevel)
+                val measured = runCatching { audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) }.getOrNull()
+                val actualNativeLevel = (measured ?: targetNativeLevel).coerceIn(range.minLevel, range.maxLevel)
                 lastAppliedNativeLevel = actualNativeLevel
                 val actualNativePercent = range.levelToPercent(actualNativeLevel)
                 // Above 100% is valid only while Android is actually at its
@@ -144,6 +149,7 @@ class StonePlaybackService : MediaSessionService() {
                 volumePercent = if (requestedPercent > 100 && actualNativeLevel >= range.maxLevel) {
                     requestedPercent
                 } else actualNativePercent
+                if (measured == targetNativeLevel && requestedPercent == percent) applied = volumePercent
                 if (requestedPercent > 100 && actualNativeLevel >= range.maxLevel) {
                     volumeBoost?.setPercent(volumePercent, maxVolumePercent > 100)
                 } else {
@@ -165,6 +171,7 @@ class StonePlaybackService : MediaSessionService() {
                 AudioDiagnostics.log(it, "Stone.setVolumePercent(requested=$percent,overlay=$showOverlay)",
                     before = before, state = diagnosticState(), includeSystemEffects = false)
             }
+            return applied
         }
 
         /**

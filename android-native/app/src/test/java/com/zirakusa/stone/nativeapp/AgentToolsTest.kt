@@ -9,6 +9,7 @@ import com.zirakusa.stone.nativeapp.automation.actions.AutomationHost
 import com.zirakusa.stone.nativeapp.automation.actions.BatchItem
 import com.zirakusa.stone.nativeapp.automation.actions.MetadataBatch
 import com.zirakusa.stone.nativeapp.automation.actions.RecordStatus
+import com.zirakusa.stone.nativeapp.automation.actions.PlayByTitle
 import com.zirakusa.stone.nativeapp.automation.actions.StoneAutomation
 import com.zirakusa.stone.nativeapp.automation.actions.StoneJobs
 import com.zirakusa.stone.nativeapp.automation.actions.StoneSolutions
@@ -56,6 +57,68 @@ class AgentToolsTest {
         }
     }
     @After fun clear() { StoneAutomation.host = null }
+
+    @Test fun titleActionChangesSettingsOnceAndConfirmsTheCorrectSong() = runBlocking {
+        val song = songs[0].copy(title = "New Americana")
+        var current: String? = null
+        val calls = mutableListOf<String>()
+        StoneAutomation.host = object : AutomationHost by requireNotNull(StoneAutomation.host) {
+            override val songs = listOf(song, this@AgentToolsTest.songs[1].copy(title = "New Americana Live"))
+            override fun canPlayForIntent() = true
+            override fun audibleIntentTrack() = current
+            override fun applyIntentVolume(percent: Int): Int { calls += "volume:$percent"; return 53 }
+            override fun applyIntentEqualizer(enabled: Boolean): Boolean { calls += "eq:$enabled"; return false }
+            override fun play(song: Song, queue: List<Song>) { calls += "play"; assertEquals(listOf(song), queue); current = song.id }
+        }
+        val args = JSONObject().put("titulo", "New Americana").put("volumen", 50).put("ecualizador", true).put("segundoPlano", true)
+        val result = PlayByTitle.run(requireNotNull(StoneAutomation.host), args)
+        assertEquals(listOf("volume:50", "eq:true", "play"), calls)
+        assertEquals("partial", result.getString("status"))
+        assertEquals(song.id, result.getJSONObject("track").getString("id"))
+        assertEquals(53, result.getJSONObject("steps").getJSONObject("volume").getInt("actual"))
+        assertEquals("EQ_NOT_ACTIVE", result.getJSONObject("steps").getJSONObject("equalizer").getString("code"))
+        assertTrue(result.getBoolean("segundoPlano"))
+    }
+
+    @Test fun titleActionAsksOnAmbiguityAndStopsOnRejectedVolume() = runBlocking {
+        val candidates = songs.take(2).map { it.copy(title = "New Americana") }
+        var volume = 0
+        var plays = 0
+        StoneAutomation.host = object : AutomationHost by requireNotNull(StoneAutomation.host) {
+            override val songs = candidates
+            override fun canPlayForIntent() = true
+            override fun applyIntentVolume(percent: Int): Int? { volume++; return null }
+            override fun play(song: Song, queue: List<Song>) { plays++ }
+        }
+        val args = JSONObject().put("titulo", "New Americana").put("volumen", 50)
+        val ambiguous = PlayByTitle.run(requireNotNull(StoneAutomation.host), args)
+        assertEquals("ambiguous", ambiguous.getString("status"))
+        assertEquals(2, ambiguous.getJSONArray("matches").length())
+        assertEquals(0, volume)
+        args.put("idPista", candidates.last().id)
+        val denied = PlayByTitle.run(requireNotNull(StoneAutomation.host), args)
+        assertEquals("VOLUME_REJECTED", denied.getJSONObject("steps").getJSONObject("volume").getString("code"))
+        assertEquals(1, volume)
+        assertEquals(0, plays)
+        args.remove("idPista")
+        args.put("titulo", "Missing title")
+        val missing = PlayByTitle.run(requireNotNull(StoneAutomation.host), args)
+        assertEquals("TRACK_NOT_FOUND", missing.getJSONObject("steps").getJSONObject("search").getString("code"))
+        assertEquals(1, volume)
+    }
+
+    @Test fun titleActionRequiresTheLocalChannelAndIsDiscoverableThere() = runBlocking {
+        val tool = "player_play_by_title"
+        val access = com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL
+        assertTrue(StoneAutomation.available(access, local = true).any { it.toolName == tool })
+        assertFalse(StoneAutomation.available(access).any { it.toolName == tool })
+        assertEquals("LOCAL_ONLY", runCatching {
+            StoneAutomation.execute(tool, JSONObject().put("titulo", "Song 1"))
+        }.exceptionOrNull().let { (it as ActionException).code })
+        assertEquals("INVALID_PARAM", runCatching {
+            StoneAutomation.execute(tool, JSONObject(), local = true)
+        }.exceptionOrNull().let { (it as ActionException).code })
+    }
 
     private fun items() = songs.map { BatchItem(it.id, it, JSONObject()) }
 

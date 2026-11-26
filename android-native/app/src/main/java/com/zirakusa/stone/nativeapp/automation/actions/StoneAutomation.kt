@@ -42,18 +42,19 @@ object StoneAutomation {
     val actions: List<StoneAction> by lazy { StoneActions.all() }
 
     /** Actions a token with [access] may use (its mode and the tools blocked for it). */
-    fun available(access: AccessMode, blocked: Set<String> = emptySet()): List<StoneAction> =
-        actions.filter { ApiMode.permits(it, access) && it.toolName !in blocked }
+    fun available(access: AccessMode, blocked: Set<String> = emptySet(), local: Boolean = false): List<StoneAction> =
+        actions.filter { (!it.localOnly || local) && ApiMode.permits(it, access) && it.toolName !in blocked }
 
 
     fun find(toolName: String) = actions.firstOrNull { it.toolName == toolName || it.name == toolName }
 
     /** Runs [toolName] with [arguments]; throws [ActionException] with a code and message for the agent. */
     suspend fun execute(toolName: String, arguments: JSONObject, access: AccessMode = AccessMode.WRITE, token: String = "",
-        tokenId: String = "", blocked: Set<String> = emptySet(), relay: RelayInfo? = null): Any {
+        tokenId: String = "", blocked: Set<String> = emptySet(), relay: RelayInfo? = null, local: Boolean = false): Any {
         val action = find(toolName) ?: throw ActionException("Unknown tool: $toolName", "UNKNOWN_TOOL",
             "Call tools/list or stone_help.")
         return try {
+            if (action.localOnly && !local) throw ActionException("Esta acción requiere el canal local de Android.", "LOCAL_ONLY")
             if (action.toolName in blocked) throw ActionException("The user turned off '${action.toolName}' for this token.",
                 "TOOL_DISABLED", "The user can allow it for this agent in Arka (the hub).")
             if (!access.permits(action.risk)) throw ActionException("This token is read-only.", "READ_ONLY_TOKEN",

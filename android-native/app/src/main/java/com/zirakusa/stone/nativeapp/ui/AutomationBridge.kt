@@ -59,6 +59,15 @@ import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
             override val playlists get() = currentLibrary.playlists
             override val theme get() = currentTheme
             override val language get() = currentLanguage
+            override fun canPlayForIntent() = playback.player() != null
+            override fun applyIntentVolume(percent: Int) = playback.applyIntentVolume(percent)
+            override fun applyIntentEqualizer(enabled: Boolean): Boolean {
+                playback.setEqualizerEnabled(enabled)
+                return playback.isEqualizerActive() == enabled
+            }
+            override fun isIntentEqualizerActive() = playback.isEqualizerActive()
+            override fun audibleIntentTrack(): String? = playback.player()?.takeIf { it.isPlaying }?.currentMediaItem?.mediaId
+            override fun intentPlaybackFailed() = playback.player()?.playerError != null
             override fun progress() = playback.progress()
             override fun toggle() = playback.toggle()
             override fun next() = playback.next()

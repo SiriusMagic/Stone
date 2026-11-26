@@ -28,6 +28,8 @@ class PlaybackEqualizer {
         apply()
     }
 
+    fun isActive(): Boolean = runCatching { effect?.enabled == true }.getOrDefault(false)
+
     /** Read-only state used by the audio investigation; it does not touch either effect. */
     fun diagnostics(): String {
         val equalizerState = effect?.let { equalizer -> runCatching {

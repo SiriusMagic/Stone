@@ -287,6 +287,8 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     }
     fun toggle() { controller?.run { if (isPlaying) pause() else { prepare(); play() } } }
     fun setVolumePercent(value: Int) { StonePlaybackService.setVolumePercent(value) }
+    internal fun applyIntentVolume(value: Int) = StonePlaybackService.applyVolumePercent(value, showOverlay = false)
+    internal fun isEqualizerActive() = equalizer.isActive()
     fun setAudioMode(mode: AudioMode) {
         audioMode = mode
         volumePercent = volumePercent.coerceAtMost(mode.maxVolumePercent)

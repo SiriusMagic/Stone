@@ -239,24 +239,24 @@ object McpServer {
     }
 
     /** Lucía (Arka's voice on this phone) runs one request without internet, with Arka's token: the same checks as the relay. */
-    fun local(body: String): String? = dispatch(body, com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.arka()).first?.toString()
+    fun local(body: String): String? = dispatch(body, com.zirakusa.stone.nativeapp.automation.auth.ApiTokens.arka(), local = true).first?.toString()
 
     /** Parses one message or a batch; returns the reply (null for notifications) and whether it initialized. */
-    private fun dispatch(text: String, grant: ApiToken): Pair<Any?, Boolean> = try {
+    private fun dispatch(text: String, grant: ApiToken, local: Boolean = false): Pair<Any?, Boolean> = try {
         if (text.startsWith("[")) {
             val batch = JSONArray(text)
             val messages = (0 until batch.length()).map { batch.getJSONObject(it) }
-            JSONArray(messages.mapNotNull { handle(it, grant) }).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
+            JSONArray(messages.mapNotNull { handle(it, grant, local) }).takeIf { it.length() > 0 } to messages.any { it.optString("method") == "initialize" }
         } else {
             val message = JSONObject(text)
-            handle(message, grant) to (message.optString("method") == "initialize")
+            handle(message, grant, local) to (message.optString("method") == "initialize")
         }
     } catch (parse: org.json.JSONException) {
         error(null, -32700, "Invalid JSON") to false
     }
 
     /** Returns the JSON-RPC response, or null for notifications. */
-    private fun handle(message: JSONObject, grant: ApiToken): JSONObject? {
+    private fun handle(message: JSONObject, grant: ApiToken, local: Boolean): JSONObject? {
         val id = message.opt("id")
         val method = message.optString("method")
         ServerMetrics.rpc(method.ifBlank { "none" }, if (method == "tools/call") message.optJSONObject("params")?.optString("name") else null)
@@ -281,13 +281,13 @@ object McpServer {
                         .put("kind", grant.kind.key).put("usage", grant.usage).put("mode", grant.mode.key)
                         .put("expiresAt", grant.expiresAt)))
                 "ping" -> JSONObject()
-                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode, grant.disabledTools).map { action ->
+                "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode, grant.disabledTools, local).map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)
                         .put("inputSchema", action.inputSchema())
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)
                             .put("destructiveHint", action.risk == ActionRisk.CRITICAL))
                 }))
-                "tools/call" -> callTool(params, grant)
+                "tools/call" -> callTool(params, grant, local)
                 // Optional lists some clients request at start-up; Stone has none of these.
                 "resources/list" -> JSONObject().put("resources", JSONArray())
                 "resources/templates/list" -> JSONObject().put("resourceTemplates", JSONArray())
@@ -302,11 +302,11 @@ object McpServer {
         }
     }
 
-    private fun callTool(params: JSONObject, grant: ApiToken): JSONObject {
+    private fun callTool(params: JSONObject, grant: ApiToken, local: Boolean): JSONObject {
         val name = params.optString("name")
         val arguments = params.optJSONObject("arguments") ?: JSONObject()
         return try {
-            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools, currentRelay.get()) }
+            val result = runBlocking { StoneAutomation.execute(name, arguments, grant.mode, grant.name, grant.id, grant.disabledTools, currentRelay.get(), local) }
             JSONObject().put("content", JSONArray().put(JSONObject().put("type", "text").put("text", result.toString())))
                 .put("isError", false).apply { if (result is JSONObject) put("structuredContent", result) }
         } catch (failure: ActionException) {
