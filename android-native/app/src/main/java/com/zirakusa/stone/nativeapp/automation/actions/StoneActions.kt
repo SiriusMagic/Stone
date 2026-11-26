@@ -28,6 +28,7 @@ internal object StoneActions {
     fun all(): List<StoneAction> = listOf(
         // ---- player ----
         PlayByTitle.action,
+        PlayByTitle.collection,
         StoneAction("player.state", "Current playback state: song, position, speed, volume and audio mode.", ActionRisk.READ) { state() },
         StoneAction("player.play", "Resume playback of the current song.", ActionRisk.REVERSIBLE) {
             if (!host().playback.playing) host().toggle(); ok("Playing")

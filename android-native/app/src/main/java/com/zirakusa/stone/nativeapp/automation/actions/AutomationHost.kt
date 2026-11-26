@@ -44,6 +44,7 @@ interface AutomationHost {
 
     // Added in 1.6.7. Defaults keep older hosts (tests) compiling.
     val favoriteIds: Set<String> get() = emptySet()
+    val playCounts: Map<String, Int> get() = emptyMap()
     /** Sort key (LibrarySort name in lowercase) and whether it is descending. */
     val librarySort: Pair<String, Boolean> get() = "title" to false
     val videoScale: String get() = "auto"

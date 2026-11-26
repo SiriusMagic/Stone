@@ -322,7 +322,7 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
         StonePlaybackService.instance?.applyHardwareAcceleration(mode)
         publish()
     }
-    fun previous() { requested.clear(); controller?.seekToPrevious() }
+    fun previous() { requested.clear(); controller?.seekToPreviousMediaItem() }
     fun next() { requested.clear(); controller?.seekToNext() }
     fun shuffle() { setShuffle(!mutable.value.shuffle) }
     fun repeat() { setRepeat((mutable.value.repeat + 1) % 3) }

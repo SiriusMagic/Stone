@@ -33,7 +33,7 @@ class StoneWidgetProvider : AppWidgetProvider() {
             ACTION_PLAY -> if (player == null || player.mediaItemCount == 0) openApp(context)
                 else if (player.isPlaying) player.pause() else { player.prepare(); player.play() }
             ACTION_NEXT -> player?.seekToNext()
-            ACTION_PREVIOUS -> player?.seekToPrevious()
+            ACTION_PREVIOUS -> player?.seekToPreviousMediaItem()
             ACTION_FAVORITE -> player?.currentMediaItem?.mediaId?.takeIf { it.isNotEmpty() }
                 ?.let { PlaybackDataStore(context).toggleFavorite(it) }
             else -> return
