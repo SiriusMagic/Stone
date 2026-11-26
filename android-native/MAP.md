@@ -11,12 +11,12 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `HubLink.kt` (80) How Arka runs Stone's Modo MCP.
 
 ## app/automation/actions
-- `AutomationHost.kt` (77) What the running app offers to automation.
+- `AutomationHost.kt` (78) What the running app offers to automation.
 - `MetadataBatch.kt` (125) One item of a batch:
 - `MetadataEdits.kt` (177) Tag, lyrics and cover edits made by agents.
-- `PlayByTitle.kt` (107) The signed local client makes one request.
+- `PlayByTitle.kt` (131) The signed local client makes one request.
 - `StoneAction.kt` (86) How dangerous an action is;
-- `StoneActions.kt` (130) Catalogue of Stone actions, grouped by domain:
+- `StoneActions.kt` (131) Catalogue of Stone actions, grouped by domain:
 - `StoneAgentActions.kt` (48) Tools that help agents help themselves:
 - `StoneAutomation.kt` (176) A CRITICAL action waiting for the user's answer on screen.
 - `StoneBulkActions.kt` (81) Many songs at once:
@@ -251,7 +251,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `PerformanceDiagnostics.kt` (88) /proc exposes this count without allocating a stack trace for every thread.
 
 ## app/ui
-- `AutomationBridge.kt` (170) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
+- `AutomationBridge.kt` (171) Registers the running UI as the automation host (so agents use the same view models as the buttons) and shows the confirmation dialog for actions that
 - `StoneApp.kt` (470) Mini player button:
 
 ## app/ui/components

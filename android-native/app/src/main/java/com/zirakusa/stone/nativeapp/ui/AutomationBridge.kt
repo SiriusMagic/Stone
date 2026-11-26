@@ -89,6 +89,7 @@ import com.zirakusa.stone.nativeapp.ui.system.ImmersiveWindowEffect
             override fun extendSleepTimer(minutes: Int) = playback.extendSleepTimer(minutes)
             override fun setLauncherIcon(key: String) = LauncherIcon.apply(context, LauncherIcon.from(key))
             override val favoriteIds get() = currentLibrary.favoriteIds
+            override val playCounts get() = currentLibrary.playCounts
             override val librarySort get() = LibraryViewState.sort.name.lowercase() to LibraryViewState.descending
             override val videoScale get() = currentVideoScale
             override fun setShuffle(enabled: Boolean) = playback.setShuffle(enabled)

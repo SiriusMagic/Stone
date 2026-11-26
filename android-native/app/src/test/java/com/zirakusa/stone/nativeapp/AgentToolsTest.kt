@@ -120,6 +120,39 @@ class AgentToolsTest {
         }.exceptionOrNull().let { (it as ActionException).code })
     }
 
+    @Test fun collectionUsesTheSharedDailyMixAndIsLocalOnly() = runBlocking {
+        var current: String? = null
+        var played = emptyList<Song>()
+        StoneAutomation.host = object : AutomationHost by requireNotNull(StoneAutomation.host) {
+            override val songs = this@AgentToolsTest.songs + this@AgentToolsTest.songs.first().copy(isVideo = true)
+            override fun canPlayForIntent() = true
+            override fun audibleIntentTrack() = current
+            override fun play(song: Song, queue: List<Song>) { current = song.id; played = queue }
+        }
+        val tool = "player_play_collection"
+        val args = JSONObject().put("coleccion", "diaria")
+        val access = com.zirakusa.stone.nativeapp.automation.auth.AccessMode.FULL
+        assertFalse(StoneAutomation.available(access).any { it.toolName == tool })
+        assertTrue(StoneAutomation.available(access, local = true).any { it.toolName == tool })
+        val result = requireNotNull(StoneAutomation.find(tool)).run(args) as JSONObject
+        assertEquals("playing", result.getString("status"))
+        assertEquals(current, result.getJSONObject("track").getString("id"))
+        assertEquals(com.zirakusa.stone.core.VoicePlay.daily(songs, emptyMap(), emptySet(), java.time.LocalDate.now()), played)
+    }
+
+    @Test fun localPlaybackButtonsUseSeparateHostOperations() = runBlocking {
+        val calls = mutableListOf<String>()
+        StoneAutomation.host = object : AutomationHost by requireNotNull(StoneAutomation.host) {
+            override fun next() { calls += "next" }
+            override fun previous() { calls += "previous" }
+            override fun seek(positionMs: Long) { calls += "seek:$positionMs" }
+        }
+        requireNotNull(StoneAutomation.find("player_next")).run(JSONObject())
+        requireNotNull(StoneAutomation.find("player_previous")).run(JSONObject())
+        requireNotNull(StoneAutomation.find("player_seek")).run(JSONObject().put("positionSeconds", 0))
+        assertEquals(listOf("next", "previous", "seek:0"), calls)
+    }
+
     private fun items() = songs.map { BatchItem(it.id, it, JSONObject()) }
 
     @Test fun pacerSpacesRequestsHonoursRetryAfterAndFailsFastDuringCoolDown() {
