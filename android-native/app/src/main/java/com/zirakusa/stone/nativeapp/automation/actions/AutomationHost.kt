@@ -16,6 +16,12 @@ interface AutomationHost {
     val theme: String
     val language: String
 
+    fun canPlayForIntent(): Boolean = playback.ready
+    fun applyIntentVolume(percent: Int): Int? = null
+    fun applyIntentEqualizer(enabled: Boolean): Boolean = false
+    fun isIntentEqualizerActive(): Boolean = false
+    fun audibleIntentTrack(): String? = playback.currentId.takeIf { playback.playing }
+    fun intentPlaybackFailed(): Boolean = playback.failed
     fun progress(): Pair<Long, Long>
     fun toggle()
     fun next()

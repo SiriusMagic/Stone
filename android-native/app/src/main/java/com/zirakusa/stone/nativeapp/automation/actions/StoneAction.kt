@@ -29,6 +29,7 @@ class StoneAction(
     val params: List<ActionParam> = emptyList(),
     /** Human sentence for the confirmation dialog of PERSISTENT actions. */
     val summary: (JSONObject) -> String = { name },
+    val localOnly: Boolean = false,
     val run: suspend (JSONObject) -> Any,
 ) {
     /** MCP tool names cannot contain dots. */
