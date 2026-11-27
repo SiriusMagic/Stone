@@ -280,14 +280,14 @@ object McpServer {
                     .put("_meta", JSONObject().put(TOKEN_META, JSONObject().put("name", grant.name)
                         .put("kind", grant.kind.key).put("usage", grant.usage).put("mode", grant.mode.key)
                         .put("expiresAt", grant.expiresAt)))
-                "ping" -> JSONObject()
+                "ping" -> McpTrace.track(id, "ping", local) { JSONObject() }
                 "tools/list" -> JSONObject().put("tools", JSONArray(StoneAutomation.available(grant.mode, grant.disabledTools, local).map { action ->
                     JSONObject().put("name", action.toolName).put("description", action.description)
                         .put("inputSchema", action.inputSchema())
                         .put("annotations", JSONObject().put("readOnlyHint", action.risk == ActionRisk.READ)
                             .put("destructiveHint", action.risk == ActionRisk.CRITICAL))
                 }))
-                "tools/call" -> callTool(params, grant, local)
+                "tools/call" -> McpTrace.track(id, params.optString("name"), local) { callTool(params, grant, local) }
                 // Optional lists some clients request at start-up; Stone has none of these.
                 "resources/list" -> JSONObject().put("resources", JSONArray())
                 "resources/templates/list" -> JSONObject().put("resourceTemplates", JSONArray())

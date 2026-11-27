@@ -7,8 +7,8 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `MainActivity.kt` (138) Volume keys drive Stone's own overlay;
 
 ## app/automation
-- `ApiMode.kt` (98) Stone's Modo MCP, run by Arka (same developer, through [HubLinkProvider]):
-- `HubLink.kt` (80) How Arka runs Stone's Modo MCP.
+- `ApiMode.kt` (114) Fixed:
+- `HubLink.kt` (84) How Arka runs Stone's Modo MCP.
 
 ## app/automation/actions
 - `AutomationHost.kt` (78) What the running app offers to automation.
@@ -46,6 +46,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 ## app/automation/server
 - `McpHttp.kt` (119) One parsed HTTP/1.1 request;
 - `McpServer.kt` (353) Model Context Protocol server exposing [StoneAutomation] actions as tools.
+- `McpTrace.kt` (35) A receipt observable on the phone even when the reply never reached the caller.
 - `ServerMetrics.kt` (87) What the MCP server and the relay link actually do, since Stone started, to measure before optimising:
 
 ## app/data/library
@@ -199,7 +200,7 @@ si es grande, busca con grep la función antes de leerlo entero.
 - `AudioLevelSettings.kt` (115) The «in range» green of the loudness readings.
 - `LegalScreens.kt` (59) Where "Calificarnos" sends people until Stone is on Google Play.
 - `LibraryScanSettings.kt` (62) Whole-device scanning (MediaStore + permission) and automatic rescans on open.
-- `McpByArka.kt` (52) Ajustes › Modo MCP:
+- `McpByArka.kt` (65) Arka (the family's Gateway Hub and Lucía), same developer.
 - `NotificationSettings.kt` (109) Ajustes › Notificaciones, in one place:
 - `SettingsMiscDetails.kt` (74)
 - `SettingsParts.kt` (42)

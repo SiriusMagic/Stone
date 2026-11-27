@@ -14,11 +14,6 @@ import com.zirakusa.stone.nativeapp.automation.auth.ApiTokens
 import com.zirakusa.stone.nativeapp.automation.relay.RelayClient
 import com.zirakusa.stone.nativeapp.automation.server.McpServer
 
-/**
- * Stone's Modo MCP, run by Arka (same developer, through [HubLinkProvider]): «connect» turns the public link on (the
- * server and the relay, with Arka's own token, so the hub decides who may do what) and «disconnect» turns it off.
- * Lucía calls the tools on the phone without internet ([McpServer.local]). Off by default; nothing to set up in Stone.
- */
 object ApiMode {
     /** Fixed: the app offers no way to change it. */
     val port: Int get() = McpServer.DEFAULT_PORT
@@ -27,9 +22,14 @@ object ApiMode {
     /** Connection to the public relay (fixed internet link); OFFLINE when off or not configured. */
     var relayState by mutableStateOf(RelayClient.State.OFFLINE)
         private set
-    /** The public link is on (Arka › MCP › «Activar MCP»). Stored under the key of the old «Redireccionar a Hub». */
+    /** Redirect through Arka. Keep its existing stored key. */
     var remote by mutableStateOf(false)
         private set
+    var enabled by mutableStateOf(false)
+        private set
+    var localMcp by mutableStateOf(false)
+        private set
+    val active: Boolean get() = enabled || remote
     private var store: StoneSettingsStore? = null
     private var relay: RelayClient? = null
     /** Only to reconnect the relay as soon as the phone has a network again. */
@@ -38,6 +38,18 @@ object ApiMode {
     private var relaySecret = ""
     /** Relay address; built in through BuildConfig, replaceable in tests. */
     internal var relayUrl: String = BuildConfig.RELAY_URL
+
+    fun enable(value: Boolean) {
+        enabled = value
+        store?.setLook(ENABLED, value.toString())
+        ApiTokens.publish()
+        apply()
+    }
+
+    fun allowLocal(value: Boolean) {
+        localMcp = value
+        store?.setLook(LOCAL, value.toString())
+    }
 
     fun turnRemote(value: Boolean) {
         remote = value; store?.setLook(REMOTE, value.toString())
@@ -56,9 +68,11 @@ object ApiMode {
     fun load(store: StoneSettingsStore, context: android.content.Context? = null) {
         this.store = store
         connectivity = context?.applicationContext?.getSystemService(android.net.ConnectivityManager::class.java)
-        remote = store.look(REMOTE, "false").toBoolean()
+        remote = store.look(REMOTE, "true").ifBlank { "true" }.toBoolean()
+        enabled = store.look(ENABLED, "false").toBoolean()
+        localMcp = store.look(LOCAL, "false").toBoolean()
         // Settings the app no longer offers (its own MCP screen before Arka ran it) are wiped.
-        for (old in listOf("api.lan", "api.urlToken", "api.port", "api.enabled", "api.localMcp", "api.stats"))
+        for (old in listOf("api.lan", "api.urlToken", "api.port", "api.stats"))
             if (store.look(old, "").isNotEmpty()) store.setLook(old, "")
         ApiTokens.load(store)
         ActivityLog.attach(store)
@@ -77,8 +91,8 @@ object ApiMode {
     fun permits(action: StoneAction, access: AccessMode = AccessMode.FULL): Boolean = access.permits(action.risk)
 
     private fun apply() {
-        running = if (remote) McpServer.start(ApiTokens.served(), port) else { McpServer.stop(); false }
-        if (remote && running && relayAvailable) {
+        running = if (active) McpServer.start(ApiTokens.served(), port) else { McpServer.stop(); false }
+        if (active && running && relayAvailable) {
             if (relay == null) relay = RelayClient(relayUrl, device, relaySecret, { port }, connectivity) { relayState = it }.also { it.start() }
         } else { relay?.stop(); relay = null; relayState = RelayClient.State.OFFLINE }
     }
@@ -93,5 +107,7 @@ object ApiMode {
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
+    private const val ENABLED = "api.enabled"
+    private const val LOCAL = "api.localMcp"
     private const val REMOTE = "api.hubRedirect"
 }

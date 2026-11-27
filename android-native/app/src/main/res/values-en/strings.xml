@@ -450,7 +450,6 @@
     <string name="api_state_online">Connected to the internet</string>
     <string name="api_state_connecting">Connecting…</string>
     <string name="api_state_offline">No internet connection</string>
-    <string name="api_by_arka">Arka controls the MCP mode of Stone and the whole family: turning it on, allowing it locally for Lucía and creating tokens for your agents (Claude, ChatGPT…).</string>
     <string name="api_no_arka">Install Arka to turn MCP mode on.</string>
     <string name="api_open_arka">Open Arka</string>
 </resources>

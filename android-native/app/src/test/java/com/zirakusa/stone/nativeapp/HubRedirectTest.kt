@@ -44,6 +44,8 @@ class HubRedirectTest {
     @get:Rule val compose = createComposeRule()
 
     @After fun reset() {
+        ApiMode.enable(false)
+        ApiMode.allowLocal(false)
         if (ApiMode.remote) ApiMode.turnRemote(false)
         McpServer.stop(); ApiMode.relayUrl = ""; ApiTokens.replaceForTests(emptyList())
     }
@@ -89,18 +91,51 @@ class HubRedirectTest {
         val list = """{"jsonrpc":"2.0","id":3,"method":"tools/list"}"""
         assertEquals("NOT_SAME_DEVELOPER", HubLink.tool(false, list).getString(HubLink.KEY_ERROR))
         assertEquals("BAD_REQUEST", HubLink.tool(true, "").getString(HubLink.KEY_ERROR))
+        assertEquals("LOCAL_DISABLED", HubLink.tool(true, list).getString(HubLink.KEY_ERROR))
+        ApiMode.allowLocal(true)
         val answer = org.json.JSONObject(HubLink.tool(true, list).getString("response")!!)
         assertEquals(3, answer.getInt("id"))
         assertTrue(answer.getJSONObject("result").getJSONArray("tools").toString().contains("player_set_shuffle"))
     }
 
-    @Test fun settingsOnlyPointToArka() {
+    @Test fun trustedReadProbeKeepsTheRequestId() {
+        val trace = "7ff7419e-069c-4450-be51-305779a066f4"
+        val request = """{"jsonrpc":"2.0","id":"$trace","method":"ping"}"""
+        ApiMode.turnRemote(false)
+        ApiMode.allowLocal(true)
+        val answer = org.json.JSONObject(HubLink.tool(true, request).getString("response")!!)
+        assertEquals(trace, answer.getString("id"))
+        val hosted = com.zirakusa.stone.nativeapp.automation.server.McpTrace.last
+        assertEquals(trace, hosted?.id)
+        assertEquals("OK", hosted?.code)
+    }
+
+    @Test fun redirectDefaultsOnAndPreservesAnExplicitChoice() {
+        ApiMode.relayUrl = ""
+        val store = StoneSettingsStore(RuntimeEnvironment.getApplication())
+        store.setLook("api.hubRedirect", "")
+        ApiMode.load(store)
+        assertTrue(ApiMode.remote)
+        assertFalse(ApiMode.enabled)
+        assertFalse(ApiMode.localMcp)
+        assertTrue(ApiMode.active)
+        ApiMode.turnRemote(false)
+        ApiMode.allowLocal(true)
+        ApiMode.load(store)
+        assertFalse(ApiMode.remote)
+        assertFalse(ApiMode.active)
+        assertTrue(ApiMode.localMcp)
+    }
+
+    @Test fun settingsRestoreIndependentControls() {
         compose.setContent { StoneTheme { Surface(color = StonePalette.Surface) {
             Column(Modifier.padding(16.dp)) { McpByArka() }
         } } }
         compose.waitForIdle()
         compose.onNodeWithText("Abrir Arka").assertExists()
-        compose.onNodeWithText("Apagado").assertExists()
+        compose.onNodeWithText("Activar MCP").assertExists()
+        compose.onNodeWithText("Permitir MCP local").assertExists()
+        compose.onNodeWithText("Redireccionar a Hub").assertExists()
         assertTrue(compose.onAllNodesWithText("Crear token").fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodesWithText("Analítica").fetchSemanticsNodes().isEmpty())
         onView(isRoot()).captureRoboImage("build/screenshots/stone-api-by-arka.png")

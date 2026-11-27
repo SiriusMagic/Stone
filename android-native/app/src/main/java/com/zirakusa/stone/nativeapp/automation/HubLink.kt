@@ -23,7 +23,7 @@ object HubLink {
 
     fun answer(sameDeveloper: Boolean): Bundle = when {
         !sameDeveloper -> error("NOT_SAME_DEVELOPER", "Solo apps firmadas por el mismo desarrollador que Stone.")
-        !ApiMode.remote -> error("REDIRECT_OFF", "Activa el Modo MCP de Stone en Arka › MCP.")
+        !ApiMode.remote -> error("REDIRECT_OFF", "Activa «Redireccionar a Hub» en Stone › Ajustes › Modo MCP.")
         !ApiMode.relayAvailable -> error("NO_RELAY", "Esta versión de Stone no tiene enlace público (relay).")
         else -> Bundle().apply { putString(KEY_LINK, ApiMode.hubLink()) }
     }
@@ -37,12 +37,16 @@ object HubLink {
         if (!sameDeveloper) answer(false) else { if (ApiMode.remote) ApiMode.turnRemote(false); status(true) }
 
     fun status(sameDeveloper: Boolean): Bundle = if (!sameDeveloper) answer(false) else Bundle().apply {
-        putBoolean("remote", ApiMode.remote); putString("state", ApiMode.relayState.name)
+        putBoolean("remote", ApiMode.remote)
+        putBoolean("enabled", ApiMode.enabled)
+        putBoolean("localMcp", ApiMode.localMcp)
+        putString("state", ApiMode.relayState.name)
     }
 
     fun tool(sameDeveloper: Boolean, request: String?): Bundle = when {
         !sameDeveloper -> answer(false)
         request.isNullOrBlank() -> error("BAD_REQUEST", "Falta la petición.")
+        !ApiMode.localMcp -> error("LOCAL_DISABLED", "Activa «Permitir MCP local» en Stone › Ajustes › Modo MCP.")
         else -> com.zirakusa.stone.nativeapp.automation.server.McpServer.local(request)?.let { r -> Bundle().apply { putString("response", r) } }
             ?: error("NOT_READY", "Stone aún no está lista.")
     }
